@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Locian</string>
+	<key>CFBundleName</key>
+	<string>Locian</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Locian needs camera access to take photos for language learning and translation features.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Locian needs photo library access to let you choose images for language learning and translation features.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Locian needs photo library access to let you choose images for language learning and translation features.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Locian needs microphone access to enable voice conversation practice for language learning.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Locian needs location access to provide location-based language learning features and context.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Locian needs location access to provide location-based language learning features and context.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+</dict>
+</plist>

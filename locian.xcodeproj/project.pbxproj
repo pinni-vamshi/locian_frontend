@@ -10,9 +10,22 @@
 		EEDDA61B2EAAAA5C00959DDB /* locian.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = locian.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		EED184FD2EB03AE800E00976 /* Exceptions for "locian" folder in "locian" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = EEDDA61A2EAAAA5C00959DDB /* locian */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		EEDDA61D2EAAAA5C00959DDB /* locian */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				EED184FD2EB03AE800E00976 /* Exceptions for "locian" folder in "locian" target */,
+			);
 			path = locian;
 			sourceTree = "<group>";
 		};
@@ -178,7 +191,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -236,7 +249,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -256,6 +269,9 @@
 				DEVELOPMENT_TEAM = VPGVF647K2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = locian/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Locian needs camera access to take photos for language learning and translation features.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Locian needs photo library access to let you choose images for language learning and translation features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +304,9 @@
 				DEVELOPMENT_TEAM = VPGVF647K2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = locian/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Locian needs camera access to take photos for language learning and translation features.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Locian needs photo library access to let you choose images for language learning and translation features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
