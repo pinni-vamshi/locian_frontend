@@ -32,7 +32,7 @@ struct PermissionsService {
     
     static func requestPhotoLibraryAccess(completion: @escaping (Bool) -> Void) {
         let photoStatus = PHPhotoLibrary.authorizationStatus()
-        
+
         switch photoStatus {
         case .authorized, .limited:
             completion(true)

@@ -26,8 +26,14 @@ class LocalizationManager: ObservableObject {
         
         // Observe LanguageManager changes
         LanguageManager.shared.$currentLanguage
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] newLanguage in
-                self?.currentLanguage = newLanguage
+                guard let self = self else { return }
+                self.currentLanguage = newLanguage
+                // Explicitly notify observers
+                DispatchQueue.main.async {
+                    self.objectWillChange.send()
+                }
             }
             .store(in: &cancellables)
         
@@ -35,7 +41,21 @@ class LocalizationManager: ObservableObject {
     }
     
     private func loadStrings() {
-        switch currentLanguage {
+        print("📚 LOCALIZATION: Loading \(currentLanguage.rawValue) language file")
+        
+        // Resolve system language to actual language
+        let languageToLoad: AppLanguage
+        if currentLanguage == .system {
+            languageToLoad = AppLanguage.detectSystemLanguage()
+            print("📚 LOCALIZATION: System language detected as \(languageToLoad.rawValue)")
+        } else {
+            languageToLoad = currentLanguage
+        }
+        
+        switch languageToLoad {
+        case .system:
+            // This shouldn't happen since we resolved .system above, but fallback to English
+            currentStrings = EnglishStrings()
         case .english:
             currentStrings = EnglishStrings()
         case .japanese:
@@ -61,6 +81,7 @@ class LocalizationManager: ObservableObject {
         case .malayalam:
             currentStrings = MalayalamStrings()
         }
+        print("✅ LOCALIZATION: \(currentLanguage.rawValue) strings loaded successfully")
         // Notify observers that strings have changed
         objectWillChange.send()
     }
@@ -74,20 +95,14 @@ class LocalizationManager: ObservableObject {
 // MARK: - String Keys
 enum StringKey: String {
     // Settings
-    case languagePairs = "languagePairs"
     case notifications = "notifications"
-    case aesthetics = "aesthetics"
     case account = "account"
-    case appLanguage = "appLanguage"
     
     // Common
     case login = "login"
     case register = "register"
     case settings = "settings"
-    case home = "home"
     case back = "back"
-    case next = "next"
-    case previous = "previous"
     case done = "done"
     case cancel = "cancel"
     case save = "save"
@@ -96,56 +111,88 @@ enum StringKey: String {
     case remove = "remove"
     case edit = "edit"
     
-    // Quiz
-    case quizCompleted = "quizCompleted"
-    case sessionCompleted = "sessionCompleted"
-    case masteredEnvironment = "masteredEnvironment"
-    case learnMoreAbout = "learnMoreAbout"
-    case backToHome = "backToHome"
-    case tryAgain = "tryAgain"
-    case check = "check"
+    // Tab Bar
+    case learnTab = "learnTab"
+    case addTab = "addTab"
+    case progressTab = "progressTab"
+    case settingsTab = "settingsTab"
     
+    // Quiz
     // Vocabulary
-    case exploreCategories = "exploreCategories"
-    case testYourself = "testYourself"
-    case similarWords = "similarWords"
-    case wordTenses = "wordTenses"
-    case wordBreakdown = "wordBreakdown"
+    case loading = "loading"
     
     // Scene
-    case analyzingImage = "analyzingImage"
-    case imageAnalysisCompleted = "imageAnalysisCompleted"
-    case imageSelected = "imageSelected"
-    case placeNotSelected = "placeNotSelected"
-    case locianChoose = "locianChoose"
-    case chooseLanguages = "chooseLanguages"
-    
     // Scene Places
-    case lociansChoice = "lociansChoice"
-    case airport = "airport"
-    case cafe = "cafe"
-    case gym = "gym"
-    case library = "library"
-    case office = "office"
-    case park = "park"
-    case restaurant = "restaurant"
-    case shoppingMall = "shoppingMall"
-    case travelling = "travelling"
-    case university = "university"
+    case user = "user"
+    case unknownPlace = "unknownPlace"
+    case noLanguageAvailable = "noLanguageAvailable"
+    case noInternetConnection = "noInternetConnection"
+    case retry = "retry"
+    case tapToGetMoments = "tapToGetMoments"
+    case startLearningThisMoment = "startLearningThisMoment"
+    case daysLabel = "daysLabel"
+                
+     // New Settings Keys
+    case systemLanguage = "systemLanguage"
+    case targetLanguages = "targetLanguages"
+    case pastLanguagesArchived = "pastLanguagesArchived"
+    case theme = "theme"
+    case logout = "logout"
+    case learnNewLanguage = "learnNewLanguage"
+    case profile = "profile"
+    case addLanguagePair = "addLanguagePair"
+    case otherPlaces = "otherPlaces"
+    case deleteAllData = "deleteAllData"
+    case deleteAccount = "deleteAccount"
+    case selectLevel = "selectLevel"
+    case proFeatures = "proFeatures"
+    case showSimilarWordsToggle = "showSimilarWordsToggle"
+    case speaks = "speaks"
+    case neuralEngine = "neuralEngine"
+                                
+    // Scene & History Labels
+    case cameraLabel = "cameraLabel"
+    case galleryLabel = "galleryLabel"
+    case nextUp = "nextUp"
+    case historyLog = "historyLog"
+
+    case moments = "moments"
+    case pastMoments = "pastMoments"
+    case welcomeLabel = "welcomeLabel"
+    case noUpcomingPlaces = "noUpcomingPlaces"
+    case noDetailsRecorded = "noDetailsRecorded"
+
+    case startLearningLabel = "startLearningLabel"
+    case continueLearningLabel = "continueLearningLabel"
+    case noPastMomentsFor = "noPastMomentsFor"
+    case useCameraToStartLearning = "useCameraToStartLearning"
+    case previouslyLearning = "previouslyLearning"
+    case noHistoryRecorded = "noHistoryRecorded"
+    case tapNextUpToGenerate = "tapNextUpToGenerate"
+    case generatingHistory = "generatingHistory"
+    case generatingMoments = "generatingMoments"
+    case analyzingImage = "analyzingImage"
+    
+    // Progress & Streak
+    case startPracticingMessage = "startPracticingMessage"
+    case consistencyQuote = "consistencyQuote"
+    case practiceDateSavingDisabled = "practiceDateSavingDisabled"
+    
+    // Day Names (Short)
+    case sunShort = "sunShort"
+    case monShort = "monShort"
+    case tueShort = "tueShort"
+    case wedShort = "wedShort"
+    case thuShort = "thuShort"
+    case friShort = "friShort"
+    case satShort = "satShort"
     
     // Settings
-    case enableNotifications = "enableNotifications"
-    case thisPlace = "thisPlace"
-    case tapOnAnySection = "tapOnAnySection"
-    case addNewLanguagePair = "addNewLanguagePair"
-    case noLanguagePairsAdded = "noLanguagePairsAdded"
+                    case noLanguagePairsAdded = "noLanguagePairsAdded"
     case setDefault = "setDefault"
     case defaultText = "defaultText"
-    case user = "user"
-    case noPhone = "noPhone"
-    case signOutFromAccount = "signOutFromAccount"
-    case removeAllPracticeData = "removeAllPracticeData"
-    case permanentlyDeleteAccount = "permanentlyDeleteAccount"
+        case signOutFromAccount = "signOutFromAccount"
+        case permanentlyDeleteAccount = "permanentlyDeleteAccount"
     case currentLevel = "currentLevel"
     case selectPhoto = "selectPhoto"
     case camera = "camera"
@@ -160,43 +207,30 @@ enum StringKey: String {
     case selectNativeLanguage = "selectNativeLanguage"
     case targetLanguage = "targetLanguage"
     case selectTargetLanguage = "selectTargetLanguage"
-    case addPair = "addPair"
-    case adding = "adding"
-    case failedToAddLanguagePair = "failedToAddLanguagePair"
-    case settingAsDefault = "settingAsDefault"
-    case beginner = "beginner"
+        case targetLanguageDescription = "targetLanguageDescription"
+                    case beginner = "beginner"
     case intermediate = "intermediate"
     case advanced = "advanced"
-    
+    case currentlyLearning = "currentlyLearning"
+    case learn = "learn"
+        
     // Theme color names
     case neonGreen = "neonGreen"
-    case cyanMist = "cyanMist"
-    case solarAmber = "solarAmber"
-    case violetHaze = "violetHaze"
-    case silverPulse = "silverPulse"
-    case softPink = "softPink"
+    case neonFuchsia = "neonFuchsia"
+    case electricIndigo = "electricIndigo"
+    case graphiteBlack = "graphiteBlack"
     
     // Quiz
-    case goBack = "goBack"
-    case fillInTheBlank = "fillInTheBlank"
-    case arrangeWordsInOrder = "arrangeWordsInOrder"
-    case tapWordsBelowToAdd = "tapWordsBelowToAdd"
-    case availableWords = "availableWords"
-    case correctAnswer = "correctAnswer"
-    
     // Common
     case error = "error"
     case ok = "ok"
-    case close = "close"
     
     // Onboarding
     case locianHeading = "locianHeading"
     case locianDescription = "locianDescription"
     case awarenessHeading = "awarenessHeading"
     case awarenessDescription = "awarenessDescription"
-    case inputsHeading = "inputsHeading"
-    case inputsDescription = "inputsDescription"
-    case breakdownHeading = "breakdownHeading"
+            case breakdownHeading = "breakdownHeading"
     case breakdownDescription = "breakdownDescription"
     case progressHeading = "progressHeading"
     case progressDescription = "progressDescription"
@@ -206,23 +240,105 @@ enum StringKey: String {
     // Onboarding additional strings
     case loginOrRegister = "loginOrRegister"
     case pageIndicator = "pageIndicator"
-    case tapToNavigate = "tapToNavigate"
-    case selectAppLanguage = "selectAppLanguage"
     case selectLanguageDescription = "selectLanguageDescription"
     
+    // Welcome View
+    case fromWhereYouStand = "fromWhereYouStand"
+    case toEveryWord = "toEveryWord"
+    case everyWord = "everyWord"
+    case youNeed = "youNeed"
+    case lessonEngine = "lessonEngine"
+    
+    // Brain Awareness View
+    case nodesLive = "nodesLive"
+    case locEngineVersion = "locEngineVersion"
+    case holoGridActive = "holoGridActive"
+    case adaCr02 = "adaCr02"
+    case your = "your"
+    case places = "places"
+    case lessons = "lessons"
+    case yourPlaces = "yourPlaces"
+    case yourLessons = "yourLessons"
+    case nearbyCafes = "nearbyCafes"
+    case unlockOrderFlow = "unlockOrderFlow"
+    case modules = "modules"
+    case activeHubs = "activeHubs"
+    case synthesizeGym = "synthesizeGym"
+    case vocabulary = "vocabulary"
+    case locationOpportunity = "locationOpportunity"
+    
+    // Language Inputs View
+    case module03 = "module03"
+    case notJustMemorization = "notJustMemorization"
+    case philosophy = "philosophy"
+    case locianTeaches = "locianTeaches"
+    case think = "think"
+    case inTargetLanguage = "inTargetLanguage"
+    case patternBasedLearning = "patternBasedLearning"
+    case patternBasedDesc = "patternBasedDesc"
+    case situationalIntelligence = "situationalIntelligence"
+    case situationalDesc = "situationalDesc"
+    case adaptiveDrills = "adaptiveDrills"
+    case adaptiveDesc = "adaptiveDesc"
+    
+    // Language Progress View
+    case systemReady = "systemReady"
+    case quickSetup = "quickSetup"
+    case levelB2 = "levelB2"
+    case authorized = "authorized"
+    case notificationsPermission = "notificationsPermission"
+    case notificationsDesc = "notificationsDesc"
+    case microphonePermission = "microphonePermission"
+    case microphoneDesc = "microphoneDesc"
+    case geolocationPermission = "geolocationPermission"
+    case geolocationDesc = "geolocationDesc"
+    case granted = "granted"
+    case allow = "allow"
+    case skip = "skip"
+
+    // Onboarding Container
+    case letsStart = "letsStart"
+    case continueText = "continueText"
+    
+    // Onboarding Lesson
+    case wordTenses = "wordTenses"
+    case similarWords = "similarWords"
+    case wordBreakdown = "wordBreakdown"
+    case consonant = "consonant"
+    case vowel = "vowel"
+    
+    // Quiz/Check
+    case adaptiveQuiz = "adaptiveQuiz"
+    case adaptiveQuizDescription = "adaptiveQuizDescription"
+    case wordCheck = "wordCheck"
+    case wordCheckDescription = "wordCheckDescription"
+    case wordCheckExamplePrompt = "wordCheckExamplePrompt"
+    case quizPrompt = "quizPrompt"
+    case answerConfirmation = "answerConfirmation"
+    case tryAgain = "tryAgain"
+    case verify = "verify"
+    case selectProfession = "selectProfession"
+    
     // Login
+    case selectProfessionInstruction = "selectProfessionInstruction"
+    case showMore = "showMore"
+    case showLess = "showLess"
+    case forReview = "forReview"
     case username = "username"
     case phoneNumber = "phoneNumber"
-    case sending = "sending"
-    case verifying = "verifying"
-    case verifyOTP = "verifyOTP"
-    case sendOTP = "sendOTP"
-    case resendOTP = "resendOTP"
-    case resendOTPIn = "resendOTPIn"
-    case changePhoneNumber = "changePhoneNumber"
-    case loginOrRegisterDescription = "loginOrRegisterDescription"
     case guestLogin = "guestLogin"
-    case guestLoginDescription = "guestLoginDescription"
+    case authenticatingUser = "authenticatingUser" // Added for redesign
+    case bySigningInYouAgreeToOur = "bySigningInYouAgreeToOur" // Added for redesign
+    case termsOfService = "termsOfService" // Added for redesign
+    case privacyPolicy = "privacyPolicy" // Added for redesign
+    case selectUserProfession = "selectUserProfession" // Added for redesign
+    
+    // Quick Look
+    // Streak
+    case editYourStreaks = "editYourStreaks"
+    case editStreaks = "editStreaks"
+    case selectDatesToAddOrRemove = "selectDatesToAddOrRemove"
+    case saving = "saving"
     
     // Professions
     case student = "student"
@@ -237,11 +353,98 @@ enum StringKey: String {
     case chef = "chef"
     case police = "police"
     case bankEmployee = "bankEmployee"
+    case nurse = "nurse"
+    case designer = "designer"
+    case engineerManager = "engineerManager"
+    case photographer = "photographer"
+    case contentCreator = "contentCreator"
+    case entrepreneur = "entrepreneur"
     case other = "other"
+    
+    // Stats Label
+    case activityDistribution = "activityDistribution"
+    case studiedTime = "studiedTime"
+    case currentLabel = "currentLabel"
+    case streakLabel = "streakLabel"
+    case longestLabel = "longestLabel"
+    
+    // Chronotypes
+    case earlyBird = "earlyBird"
+    case earlyBirdDesc = "earlyBirdDesc"
+    case dayWalker = "dayWalker"
+    case dayWalkerDesc = "dayWalkerDesc"
+    case nightOwl = "nightOwl"
+    case nightOwlDesc = "nightOwlDesc"
+    
+    // UI Common
+    
+    // Phase 2 Keys
+    case currentStreak = "currentStreak"
+    case notSet = "notSet"
+    case past = "past"
+    case present = "present"
+    case future = "future"
+    case learnWord = "learnWord"
+    case languageAddedSuccessfully = "languageAddedSuccessfully"
+    case failedToAddLanguage = "failedToAddLanguage"
+    case pleaseSelectLanguage = "pleaseSelectLanguage"
+    case systemConfig = "systemConfig"
+    case statusOnFire = "statusOnFire"
+    case youPracticed = "youPracticed"
+    case yesterday = "yesterday"
+    case checkInNow = "checkInNow"
+    case nextGoal = "nextGoal"
+    case reward = "reward"
+    case historyLogProgress = "historyLogProgress"
+    
+    // New Progress Design
+    case streakStatus = "streakStatus"
+    case streakLog = "streakLog"
+    case consistency = "consistency"
+    case consistencyHigh = "consistencyHigh"
+    case consistencyMedium = "consistencyMedium"
+    case consistencyLow = "consistencyLow"
+    case progress = "progress"
+    case current = "current"
+    case longest = "longest"
+    case days = "days"
+    case reachMilestone = "reachMilestone"
+    case nextMilestone = "nextMilestone"
+    case actionRequired = "actionRequired"
+    case logActivity = "logActivity"
+    case maintainStreak = "maintainStreak"
+    case manualEntry = "manualEntry"
+    case longestStreakLabel = "longestStreakLabel"
+    case streakData = "streakData"
+    case activeLabel = "activeLabel"
+    case missedLabel = "missedLabel"
+    case saveChanges = "saveChanges"
+    case discardChanges = "discardChanges"
+    case editLabel = "editLabel"
+    case lastPracticed = "lastPracticed"
+    case addLanguagePairToSeeProgress = "addLanguagePairToSeeProgress"
+    case noNewPlace = "noNewPlace"
+    case addNewPlaceInstruction = "addNewPlaceInstruction"
+    case start = "start"
+    case callingAI = "callingAI"
+    case preparingLesson = "preparingLesson"
+    
+    // Advanced Stats
+    case skillBalance = "skillBalance"
+    case fluencyVelocity = "fluencyVelocity"
+    case vocabVault = "vocabVault"
+    case chronotype = "chronotype"
+    case timeMastery = "timeMastery"
+    case wordsMastered = "wordsMastered"
+    case patternsMastered = "patternsMastered"
+    case avgResponseTime = "avgResponseTime"
+    case patternGalaxy = "patternGalaxy"
+    case typeYourMoment = "typeYourMoment"
+    
+
 }
 
 // MARK: - Localized Strings Protocol (for LocalizationManager)
 protocol LocalizedStrings {
     func getString(for key: StringKey) -> String
 }
-

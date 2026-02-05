@@ -8,113 +8,218 @@
 import SwiftUI
 
 struct BrainAwarenessView: View {
-    @State private var pulseScale: CGFloat = 1.0
-    @State private var ring1Scale: CGFloat = 1.0
-    @State private var ring2Scale: CGFloat = 1.0
-    @State private var ring3Scale: CGFloat = 1.0
+
+    @State private var radarScale: CGFloat = 0.5
+    @State private var radarOpacity: Double = 0.0
+    @State private var cardsOffset: CGFloat = 100
+    @State private var cardsOpacity: Double = 0.0
+    
+    @ObservedObject private var localizationManager = LocalizationManager.shared
+    
+    // Neon Colors
+    // Neon Colors
+    private let neonPink = ThemeColors.secondaryAccent
+    private let neonCyan = ThemeColors.primaryAccent
     
     var body: some View {
         ZStack {
-            // Ring 1 (Outer) - 200px
-            Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                .frame(width: 200, height: 200)
-                .scaleEffect(ring1Scale)
-                .opacity(0.6)
+            Color.black.ignoresSafeArea()
             
-            // Ring 1 Icons (Outer ring) - Triangular positions
-            Image(systemName: "airplane")
-                .font(.system(size: 20))
-                .foregroundColor(.white.opacity(0.7))
-                .offset(y: -100) // Top of ring 1
-                .scaleEffect(ring1Scale)
-                .opacity(0.6)
-            
-            Image(systemName: "car")
-                .font(.system(size: 20))
-                .foregroundColor(.white.opacity(0.7))
-                .offset(x: 87, y: 50) // Bottom right of ring 1
-                .scaleEffect(ring1Scale)
-                .opacity(0.6)
-            
-            Image(systemName: "house")
-                .font(.system(size: 20))
-                .foregroundColor(.white.opacity(0.7))
-                .offset(x: -87, y: 50) // Bottom left of ring 1
-                .scaleEffect(ring1Scale)
-                .opacity(0.6)
-            
-            // Ring 2 (Middle) - 160px
-            Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 2)
-                .frame(width: 160, height: 160)
-                .scaleEffect(ring2Scale)
-                .opacity(0.4)
-            
-            // Ring 2 Icons (Middle ring) - Time, Weather, Temperature
-            Image(systemName: "clock")
-                .font(.system(size: 18))
-                .foregroundColor(.white.opacity(0.6))
-                .offset(y: -80) // Top of ring 2
-                .rotationEffect(.degrees(45)) // Rotate 45 degrees
-                .scaleEffect(ring2Scale)
-                .opacity(0.4)
-            
-            Image(systemName: "cloud.sun")
-                .font(.system(size: 18))
-                .foregroundColor(.white.opacity(0.6))
-                .offset(x: 69, y: 40) // Bottom right of ring 2
-                .rotationEffect(.degrees(45)) // Rotate 45 degrees
-                .scaleEffect(ring2Scale)
-                .opacity(0.4)
-            
-            Image(systemName: "thermometer")
-                .font(.system(size: 18))
-                .foregroundColor(.white.opacity(0.6))
-                .offset(x: -69, y: 40) // Bottom left of ring 2
-                .rotationEffect(.degrees(45)) // Rotate 45 degrees
-                .scaleEffect(ring2Scale)
-                .opacity(0.4)
-            
-            // Ring 3 (Inner) - 120px
-            Circle()
-                .stroke(Color.white.opacity(0.1), lineWidth: 2)
-                .frame(width: 120, height: 120)
-                .scaleEffect(ring3Scale)
-                .opacity(0.3)
-            
-            // Central brain icon
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 60))
-                .foregroundColor(.white)
-                .scaleEffect(pulseScale)
+            VStack(spacing: 0) {
+                headerView()
+                
+                titleView()
+                
+                radarView()
+                
+                ScrollView {
+                    VStack(spacing: 0) {
+                        cardsView()
+                        
+                        Spacer()
+                        
+                        Spacer().frame(height: 120) // Bottom padding for global footer
+                    }
+                }
+            }
         }
         .onAppear {
-            startPulseAnimation()
+            withAnimation(.spring(duration: 0.8)) {
+                radarScale = 1.0
+                radarOpacity = 1.0
+            }
+            
+            withAnimation(.easeOut(duration: 0.6).delay(0.4)) {
+                cardsOffset = 0
+                cardsOpacity = 1.0
+            }
         }
     }
     
-    private func startPulseAnimation() {
-        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
-            pulseScale = 1.2
+    // MARK: - Subviews
+    
+    @ViewBuilder
+    private func headerView() -> some View {
+        HStack {
+            Spacer()
         }
-        
-        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-            ring1Scale = 1.3
-        }
-        
-        withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true).delay(0.3)) {
-            ring2Scale = 1.2
-        }
-        
-        withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true).delay(0.6)) {
-            ring3Scale = 1.1
-        }
+        .padding(.horizontal, 24)
+        .padding(.top, 60)
     }
+    
+    @ViewBuilder
+    private func radarView() -> some View {
+        ZStack {
+            // Ring 1 (Inner) - Radius 60 (Diameter 120)
+            Circle()
+                .stroke(LinearGradient(colors: [neonCyan.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                .frame(width: 120, height: 120)
+            
+            // Ring 2 (Middle) - Radius 90 (Diameter 180)
+            Circle()
+                .stroke(LinearGradient(colors: [neonCyan.opacity(0.3), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                .frame(width: 180, height: 180)
+            
+            // Ring 3 (Outer) - Radius 120 (Diameter 240)
+            Circle()
+                .stroke(LinearGradient(colors: [neonCyan.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom), lineWidth: 1)
+                .frame(width: 240, height: 240)
+            
+            // Planet/Grid Icon
+            Image(systemName: "globe")
+                .font(.system(size: 30))
+                .foregroundColor(neonCyan)
+            
+            // Place Icons with Black Backgrounds
+            
+            // Home (Ring 1 - Top)
+            Image(systemName: "house.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.black)
+                .padding(6)
+                .background(Circle().fill(neonPink))
+                .offset(y: -60)
+            
+            // School (Ring 2 - Bottom Right)
+            Image(systemName: "graduationcap.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.black)
+                .padding(6)
+                .background(Circle().fill(neonCyan))
+                .offset(x: 64, y: 64)
+                
+            // Park (Ring 2 - Bottom Left)
+            Image(systemName: "tree.fill")
+                .font(.system(size: 12))
+                .foregroundColor(.black)
+                .padding(6)
+                .background(Circle().fill(neonCyan))
+                .offset(x: -64, y: 64)
+        }
+        .frame(height: 280)
+        .scaleEffect(radarScale)
+        .opacity(radarOpacity)
+    }
+    
+    @ViewBuilder
+    private func titleView() -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(localizationManager.string(.your))
+                .font(.system(size: 32, weight: .heavy))
+                .foregroundColor(.white)
+            + Text(" " + localizationManager.string(.places))
+                .font(.system(size: 32, weight: .heavy))
+                .foregroundColor(neonCyan)
+            
+            Text(localizationManager.string(.your))
+                .font(.system(size: 32, weight: .heavy))
+                .foregroundColor(.white)
+            + Text(" " + localizationManager.string(.lessons))
+                .font(.system(size: 32, weight: .heavy))
+                .foregroundColor(neonPink)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
+    }
+    
+    
+    @ViewBuilder
+    private func cardsView() -> some View {
+        VStack(spacing: 12) {
+            // Card 1
+            HStack(spacing: 16) {
+                Rectangle().fill(neonPink).frame(width: 4)
+                Image(systemName: "cup.and.saucer.fill")
+                    .foregroundColor(neonPink)
+                    .font(.system(size: 24))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(localizationManager.string(.nearbyCafes))
+                        .foregroundColor(.white)
+                        .font(.system(size: 16, weight: .bold))
+                    + Text(localizationManager.string(.unlockOrderFlow))
+                        .foregroundColor(neonPink)
+                        .font(.system(size: 16, weight: .bold))
+                    
+                    Text(localizationManager.string(.modules))
+                        .foregroundColor(neonPink)
+                        .font(.system(size: 16, weight: .bold))
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(Color(white: 0.1))
+            
+            // Card 2
+            HStack(spacing: 16) {
+                Rectangle().fill(neonCyan).frame(width: 4)
+                Image(systemName: "dumbbell.fill")
+                    .foregroundColor(neonCyan)
+                    .font(.system(size: 24))
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(localizationManager.string(.activeHubs))
+                        .foregroundColor(.white)
+                        .font(.system(size: 16, weight: .bold))
+                    + Text(localizationManager.string(.synthesizeGym))
+                        .foregroundColor(neonCyan)
+                        .font(.system(size: 16, weight: .bold))
+                    
+                    Text(localizationManager.string(.vocabulary))
+                        .foregroundColor(neonCyan)
+                        .font(.system(size: 16, weight: .bold))
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(Color(white: 0.1))
+            
+            // Card 3
+            HStack(spacing: 16) {
+                Rectangle().fill(Color.gray).frame(width: 4)
+                Image(systemName: "safari.fill")
+                    .foregroundColor(.gray)
+                    .font(.system(size: 24))
+                
+                Text(localizationManager.string(.locationOpportunity))
+                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .bold))
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                Spacer()
+            }
+            .padding(16)
+            .background(Color(white: 0.1))
+        }
+        .padding(.horizontal, 24)
+        .offset(y: cardsOffset)
+        .opacity(cardsOpacity)
+    }
+    
 }
 
 #Preview {
     BrainAwarenessView()
-        .background(Color.black)
         .preferredColorScheme(.dark)
 }

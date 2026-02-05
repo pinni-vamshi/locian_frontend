@@ -16,42 +16,43 @@ class AuthAPIManager {
     // MARK: - Session Validation
     func checkSession(request: SessionCheckRequest, completion: @escaping (Result<SessionCheckResponse, Error>) -> Void) {
         let endpoint = "\(baseURL)/api/auth/session"
-        
+
         guard let url = URL(string: endpoint) else {
             completion(.failure(APIError.invalidURL))
             return
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.timeoutInterval = 60.0
-        
+
         do {
             urlRequest.httpBody = try JSONEncoder().encode(request)
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         let task = URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             DispatchQueue.main.async {
-            if let error = error {
-                        completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
+
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                guard let data = data else {
                     completion(.failure(APIError.noData))
                     return
                 }
-                
+
                 if let httpResponse = response as? HTTPURLResponse,
                    httpResponse.statusCode != 200 {
-                        completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
-                return
-            }
-            
+                    completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
+                    return
+                }
+
                 do {
                     let sessionResponse = try JSONDecoder().decode(SessionCheckResponse.self, from: data)
                     completion(.success(sessionResponse))
@@ -60,7 +61,7 @@ class AuthAPIManager {
                 }
             }
         }
-        
+
         task.resume()
         return
     }
@@ -118,17 +119,17 @@ class AuthAPIManager {
     // MARK: - Sign in with Apple
     func loginWithApple(request: AppleLoginRequest, completion: @escaping (Result<AppleLoginResponse, Error>) -> Void) {
         let endpoint = "\(self.baseURL)/api/auth/apple"
-        
+
         guard let url = URL(string: endpoint) else {
             completion(.failure(APIError.invalidURL))
             return
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.timeoutInterval = 60.0
-        
+
         do {
             let encoded = try JSONEncoder().encode(request)
             urlRequest.httpBody = encoded
@@ -136,29 +137,30 @@ class AuthAPIManager {
             completion(.failure(error))
             return
         }
-        
+
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             DispatchQueue.main.async {
+
                 if let error = error {
                     completion(.failure(error))
                     return
                 }
-                
+
                 guard let data = data else {
                     completion(.failure(APIError.noData))
                     return
                 }
-                
+
                 guard let httpResponse = response as? HTTPURLResponse else {
                     completion(.failure(APIError.networkError("Invalid response")))
                     return
                 }
-                
-                    if httpResponse.statusCode != 200 {
-                            completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
-                        return
+
+                if httpResponse.statusCode != 200 {
+                    completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
+                    return
                 }
-                
+
                 do {
                     let decoded = try JSONDecoder().decode(AppleLoginResponse.self, from: data)
                     completion(.success(decoded))
@@ -171,34 +173,36 @@ class AuthAPIManager {
     
     // MARK: - Guest Login
     func guestLogin(request: GuestLoginRequest, completion: @escaping (Result<GuestLoginResponse, Error>) -> Void) {
+
         guard let url = URL(string: "\(self.baseURL)/api/auth/guest-login") else {
             completion(.failure(APIError.invalidURL))
             return
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         do {
             urlRequest.httpBody = try JSONEncoder().encode(request)
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             DispatchQueue.main.async {
+
                 if let error = error {
                     completion(.failure(error))
                     return
                 }
-                
+
                 guard let data = data else {
                     completion(.failure(APIError.noData))
                     return
                 }
-                
+
                 if let httpResponse = response as? HTTPURLResponse {
                     if httpResponse.statusCode == 200 {
                         do {
@@ -225,39 +229,41 @@ class AuthAPIManager {
     
     // MARK: - Logout
     func logout(request: LogoutRequest, completion: @escaping (Result<LogoutResponse, Error>) -> Void) {
+
         guard let url = URL(string: "\(self.baseURL)/api/user/logout") else {
             completion(.failure(APIError.invalidURL))
             return
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         do {
             urlRequest.httpBody = try JSONEncoder().encode(request)
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             DispatchQueue.main.async {
-            if let error = error {
+
+                if let error = error {
                     completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
+                    return
+                }
+
+                guard let data = data else {
                     completion(.failure(APIError.noData))
                     return
                 }
-                
+
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
                     completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
-                return
-            }
-            
+                    return
+                }
+
                 do {
                     let logoutResponse = try JSONDecoder().decode(LogoutResponse.self, from: data)
                     completion(.success(logoutResponse))
@@ -327,39 +333,41 @@ class AuthAPIManager {
     
     // MARK: - Delete Account
     func deleteAccount(request: DeleteAccountRequest, completion: @escaping (Result<DeleteAccountResponse, Error>) -> Void) {
+
         guard let url = URL(string: "\(self.baseURL)/api/user/delete") else {
             completion(.failure(APIError.invalidURL))
             return
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         do {
             urlRequest.httpBody = try JSONEncoder().encode(request)
         } catch {
             completion(.failure(error))
             return
         }
-        
+
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             DispatchQueue.main.async {
-            if let error = error {
+
+                if let error = error {
                     completion(.failure(error))
-                return
-            }
-            
-            guard let data = data else {
+                    return
+                }
+
+                guard let data = data else {
                     completion(.failure(APIError.noData))
                     return
                 }
-                
+
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
                     completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
-                return
-            }
-            
+                    return
+                }
+
                 do {
                     let deleteResponse = try JSONDecoder().decode(DeleteAccountResponse.self, from: data)
                     completion(.success(deleteResponse))

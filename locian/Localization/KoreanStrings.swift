@@ -2,475 +2,621 @@
 //  KoreanStrings.swift
 //  locian
 //
-//  Korean localization strings
-//
 
 import Foundation
 
 struct KoreanStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "퀴즈 완료!",
-            masteredEnvironment: "환경을 마스터했습니다!",
-            learnMoreAbout: "에 대해 더 알아보기",
-            backToHome: "홈으로 돌아가기",
-            next: "다음",
-            previous: "이전",
-            check: "확인",
-            tryAgain: "다시 시도",
-            shuffled: "섞였습니다",
-            noQuizAvailable: "사용 가능한 퀴즈 없음",
-            question: "문제",
-            correct: "정답",
-            incorrect: "오답",
-            notAttempted: "시도하지 않음"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "카메라",
+            gallery: "갤러리",
+            nextUp: "다음",
+            historyLog: "기록 로그",
+
+            moments: "순간",
+            pastMoments: "지난 순간",
+            noHistory: "기록 없음",
+            generatingHistory: "기록 생성 중",
+            generatingMoments: "생성 중...",
+            analyzingImage: "이미지 분석...",
+            tapNextUpToGenerate: "다음을 탭하여 생성",
+            noUpcomingPlaces: "예정된 장소 없음",
+            noDetails: "세부 정보 없음",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "학습 시작",
+            continueLearning: "학습 계속",
+            noPastMoments: "지난 순간 없음",
+            useCamera: "카메라 사용",
+            previouslyLearning: "이전 학습",
+            sunShort: "일",
+            monShort: "월",
+            tueShort: "화",
+            wedShort: "수",
+            thuShort: "목",
+            friShort: "금",
+            satShort: "토",
+            login: "로그인",
+            register: "등록",
+            settings: "설정",
+            back: "뒤로",
+            done: "완료",
+            cancel: "취소",
+            save: "저장",
+            delete: "삭제",
+            add: "추가",
+            remove: "제거",
+            edit: "편집",
+            error: "오류",
+            ok: "확인",
+            welcomeLabel: "환영합니다",
+            currentStreak: "현재 스트리크",
+            notSet: "설정되지 않음",
+            learnTab: "학습",
+            addTab: "추가",
+            progressTab: "진도",
+            settingsTab: "설정",
+            loading: "로딩 중...",
+            unknownPlace: "알 수 없는 장소",
+            noLanguageAvailable: "사용 가능한 언어 없음",
+            noInternetConnection: "인터넷 연결 없음",
+            retry: "다시 시도",
+            tapToGetMoments: "탭하여 현재 순간 보기",
+            startLearningThisMoment: "지금 바로 학습 시작",
+            daysLabel: "일",
+            noNewPlace: "새 장소 추가",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "시작",
+            typeYourMoment: "당신의 순간을 입력하세요...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "내 언어",
+            systemLanguage: "앱 인터페이스",
+            targetLanguages: "목표 언어",
+            pastLanguagesArchived: "이전 학습 언어",
+            theme: "테마",
             notifications: "알림",
-            appearance: "미학",
             account: "계정",
             profile: "프로필",
             addLanguagePair: "언어 쌍 추가",
-            enableNotifications: "알림 활성화",
             logout: "로그아웃",
             deleteAllData: "모든 데이터 삭제",
-            deleteAccount: "계정 삭제",
+            deleteAccount: "계정 영구 삭제",
             selectLevel: "레벨 선택",
-            selectAppLanguage: "앱 인터페이스",
             proFeatures: "프로 기능",
-            showSimilarWordsToggle: "유사 단어 표시",
-            showWordTensesToggle: "단어 시제 표시",
-            nativeLanguage: "모국어:",
-            selectNativeLanguage: "모국어를 선택하세요",
-            targetLanguage: "목표 언어:",
-            selectTargetLanguage: "학습하고 싶은 언어를 선택하세요",
-            nativeLanguageDescription: "모국어는 읽기, 쓰기, 말하기를 유창하게 할 수 있는 언어입니다. 가장 편안하게 느끼는 언어입니다.",
-            targetLanguageDescription: "목표 언어는 학습하고 연습하고 싶은 언어입니다. 실력을 향상시키고 싶은 언어를 선택하세요.",
-            addPair: "쌍 추가",
-            adding: "추가 중...",
-            failedToAddLanguagePair: "언어 쌍 추가에 실패했습니다. 다시 시도해 주세요.",
-            settingAsDefault: "기본값으로 설정 중...",
+            showSimilarWordsToggle: "유사한 단어 표시",
+            nativeLanguage: "모국 어",
+            selectNativeLanguage: "모국어 선택",
+            targetLanguage: "목표 언어",
+            selectTargetLanguage: "목표 언어 선택",
+            targetLanguageDescription: "배우고 싶은 언어",
             beginner: "초급",
             intermediate: "중급",
             advanced: "고급",
-            currentlyLearning: "학습 중",
-            otherLanguages: "기타 언어",
+            currentlyLearning: "현재 학습 중",
             learnNewLanguage: "새 언어 배우기",
-            learn: "배우기",
-            tapToSelectNativeLanguage: "모국어를 선택하려면 탭하세요",
+            learn: "학습",
             neonGreen: "네온 그린",
-            cyanMist: "시안 미스트",
-            violetHaze: "바이올렛 헤이즈",
-            softPink: "소프트 핑크",
-            pureWhite: "순백색"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "카테고리 탐색",
-            testYourself: "자신을 테스트",
-            slideToStartQuiz: "퀴즈 시작을 위해 슬라이드",
-            similarWords: "유사한 단어",
-            wordTenses: "단어 시제",
-            wordBreakdown: "단어 분해",
-            tapToSeeBreakdown: "단어 분해를 보려면 탭",
-            tapToHideBreakdown: "단어 분해를 숨기려면 탭",
-            tapWordsToExplore: "단어를 탭하여 번역을 읽고 탐색하세요",
-            loading: "로딩 중...",
-            learnTheWord: "단어 배우기",
-            tryFromMemory: "기억에서 시도",
-            adjustingTo: "조정 중",
-            settingPlace: "설정 중",
-            settingTime: "설정 중",
-            generatingVocabulary: "생성 중",
-            analyzingVocabulary: "분석 중",
-            analyzingCategories: "분석 중",
-            analyzingWords: "분석 중",
-            creatingQuiz: "생성 중",
-            organizingContent: "정리 중",
-            to: "에",
-            place: "장소",
-            time: "시간",
-            vocabulary: "어휘",
-            your: "당신의",
-            interested: "관심있는",
-            categories: "카테고리",
-            words: "단어",
-            quiz: "퀴즈",
-            content: "내용"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "안녕하세요,",
-            learnFromSurroundings: "주변에서 배우기",
-            learnFromSurroundingsDescription: "환경을 캡처하고 실제 상황에서 어휘를 배우세요",
-            locianChoosing: "선택 중...",
-            chooseLanguages: "언어를 선택하세요",
-            continueWith: "Locian이 선택한 것으로 계속",
-            slideToLearn: "학습을 위해 슬라이드",
-            recommended: "추천",
-            intoYourLearningFlow: "학습 흐름으로",
-            intoYourLearningFlowDescription: "학습 기록을 기반으로 연습할 추천 장소",
-            customSituations: "사용자 지정 상황",
-            customSituationsDescription: "자신만의 개인화된 학습 시나리오를 만들고 연습하세요",
-            max: "최대",
-            recentPlacesTitle: "최근 장소",
-            allPlacesTitle: "모든 장소",
-            recentPlacesEmpty: "어휘를 생성하면 추천이 표시됩니다.",
-            showMore: "더 보기",
-            showLess: "접기",
-            takePhoto: "사진 찍기",
-            chooseFromGallery: "갤러리에서 선택",
-            letLocianChoose: "Locian이 선택하도록 하기",
-            lociansChoice: "Locian 제공",
-            cameraTileDescription: "이 사진은 환경을 분석하고 학습할 수 있는 순간을 보여줍니다.",
-            airport: "공항",
-            aquarium: "아쿠아리움",
-            bakery: "빵집",
-            beach: "해변",
-            bookstore: "서점",
-            cafe: "카페",
-            cinema: "영화관",
-            gym: "체육관",
-            hospital: "병원",
-            hotel: "호텔",
-            home: "집",
-            library: "도서관",
-            market: "시장",
-            museum: "박물관",
-            office: "사무실",
-            park: "공원",
-            restaurant: "레스토랑",
-            shoppingMall: "쇼핑몰",
-            stadium: "경기장",
-            supermarket: "슈퍼마켓",
-            temple: "사원",
-            travelling: "여행",
-            university: "대학교",
-            addCustomPlace: "사용자 지정 장소 추가",
-            addPlace: "장소 추가",
-            enterCustomPlaceName: "사용자 지정 장소 이름을 입력하세요 (최대 30자)",
-            maximumCustomPlaces: "최대 10개의 사용자 지정 장소",
-            welcome: "환영합니다",
+            neonFuchsia: "네온 푹시아",
+            electricIndigo: "일렉트릭 인디고",
+            graphiteBlack: "그라파이트 블랙",
+            student: "학생",
+            softwareEngineer: "소프트웨어 엔지니어",
+            teacher: "교사",
+            doctor: "의사",
+            artist: "예술가",
+            businessProfessional: "비즈니스 전문가",
+            salesOrMarketing: "영업 또는 마케팅",
+            traveler: "여행자",
+            homemaker: "주부/주부",
+            chef: "셰프",
+            police: "경찰",
+            bankEmployee: "은행원",
+            nurse: "간호사",
+            designer: "디자이너",
+            engineerManager: "엔지니어링 매니저",
+            photographer: "사진작가",
+            contentCreator: "콘텐츠 크리에이터",
+            entrepreneur: "사업가",
+            other: "기타",
+            otherPlaces: "다른 장소",
+            speaks: "사용 언어",
+            neuralEngine: "뉴럴 엔진",
+            noLanguagePairsAdded: "추가된 언어 쌍 없음",
+            setDefault: "기본값으로 설정",
+            defaultText: "기본값",
             user: "사용자",
-            tapToCaptureContext: "탭하여 컨텍스트를 캡처하고 학습을 시작하세요",
-            customSection: "사용자 지정",
-            examples: "예:",
-            customPlacePlaceholder: "예: 사무실로 이동",
-            exampleTravellingToOffice: "사무실로 이동",
-            exampleTravellingToHome: "집으로 이동",
-            exampleExploringParis: "파리 탐험",
-            exampleVisitingMuseum: "박물관 방문",
-            exampleCoffeeShop: "커피숍",
-            characterCount: "자",
-            situationExample1: "바쁜 카페에서 커피 주문하기",
-            situationExample2: "새로운 도시에서 길 묻기",
-            situationExample3: "시장에서 식료품 쇼핑하기",
-            situationExample4: "의사 예약하기",
-            situationExample5: "호텔 체크인하기"
-        )
+            signOutFromAccount: "계정에서 로그아웃",
+            permanentlyDeleteAccount: "계정 영구 삭제",
+            languageAddedSuccessfully: "언어가 성공적으로 추가되었습니다",
+            failedToAddLanguage: "언어 추가에 실패했습니다. 다시 시도해 주세요.",
+            pleaseSelectLanguage: "언어를 선택하세요",
+            systemConfig: "시스템 // 설정",
+            currentLevel: "현재 레벨",
+            selectPhoto: "사진 선택",
+            camera: "카메라",
+            photoLibrary: "사진 라이브러리",
+            selectTime: "시간 선택",
+            hour: "시간",
+            minute: "분",
+            addTime: "시간 추가",
+            location: "위치",
+            diagnosticBorders: "진단 경계",
+            areYouSureLogout: "로그아웃하시겠습니까?",
+            areYouSureDeleteAccount: "계정을 영구히 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "로그인",
             verify: "확인",
             selectProfession: "직업 선택",
+            selectUserProfession: "SELECT_USER_PROFESSION",
             username: "사용자 이름",
             phoneNumber: "전화번호",
             guestLogin: "게스트 로그인",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "시작하려면 직업을 선택하세요",
+            showMore: "더 보기",
+            showLess: "간략히 보기",
+            forReview: "[검토용]",
+            authenticatingUser: "AUTHENTICATING_USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS_OF_SERVICE",
+            privacyPolicy: "PRIVACY_POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "당신이 서 있는 곳에서 필요한 모든 시제까지",
+            locianDescription: "일상생활을 통해 자연스럽게 언어를 배우세요",
             awarenessHeading: "인식",
-            awarenessDescription: "AI가 당신의 주변 환경에서 학습합니다",
-            inputsHeading: "입력",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
+            awarenessDescription: "주변의 단어를 실시간으로 인지하세요",
             breakdownHeading: "분해",
-            breakdownDescription: "Locian은 문장을 시제로 분해하고 단어별 번역을 제공합니다",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
-            readyHeading: "준비됨",
-            readyDescription: "",
-            loginOrRegister: "로그인 / 등록",
-            pageIndicator: " / 6",
-            tapToNavigate: "왼쪽 또는 오른쪽을 탭하여 탐색",
-            selectAppLanguage: "앱 언어 선택",
-            selectLanguageDescription: "이 언어는 앱 사용자 인터페이스, 제목, 설명, 버튼, 이름 및 모든 것을 선택한 언어로 변경합니다"
-        )
+            breakdownDescription: "단어가 어떻게 구성되는지 이해하세요",
+            progressHeading: "진행",
+            progressDescription: "학습 여정을 추적하세요",
+            readyHeading: "준비 완료",
+            readyDescription: "지금 학습을 시작하세요",
+            loginOrRegister: "로그인 또는 등록",
+            pageIndicator: "페이지",
+            selectLanguageDescription: "선호 언어를 선택하세요",
+
+            fromWhereYouStand: "서 있는\n곳에서",
+            toEveryWord: "모든",
+            everyWord: "단어로",
+            youNeed: "당신에게 필요한",
+            lessonEngine: "레슨_엔진",
+            nodesLive: "노드_라이브",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "홀로_그리드_활성",
+            adaCr02: "ADA_CR-02",
+            your: "당신의",
+            places: "장소,",
+            lessons: "레슨.",
+            yourPlaces: "당신의 장소,",
+            yourLessons: " 당신의 레슨.",
+            nearbyCafes: "근처 카페?",
+            unlockOrderFlow: " 주문 흐름 잠금 해제",
+            modules: "모듈",
+            activeHubs: "활성 허브?",
+            synthesizeGym: " 체육관 합성",
+            vocabulary: "어휘",
+            locationOpportunity: "모든 장소가 학습 기회가 됩니다",
+            module03: "모듈_03",
+            notJustMemorization: "단순한\n암기가 아닙니다",
+            philosophy: "철학",
+            locianTeaches: "Locian은 단어만 가르치지 않습니다.\nLocian은 목표 언어로 ",
+            think: "생각하는 법",
+            inTargetLanguage: "을 가르칩니다.",
+            patternBasedLearning: "패턴 기반 학습",
+            patternBasedDesc: "건조한 규칙 없이 문법 구조를 직관적으로 인식합니다.",
+            situationalIntelligence: "상황 지능",
+            situationalDesc: "환경과 기록에 적응하는 동적 시나리오.",
+            adaptiveDrills: "적응형 드릴",
+            adaptiveDesc: "레슨 엔진이 약점을 파악하고 재조정합니다.",
+            systemReady: "시스템_준비",
+            quickSetup: "빠른_설정",
+            levelB2: "레벨_B2",
+            authorized: "승인됨",
+            notificationsPermission: "알림",
+            notificationsDesc: "근처 연습 기회와 연속 기록 알림에 대한 실시간 업데이트를 받으세요.",
+            microphonePermission: "마이크",
+            microphoneDesc: "실제 상황에서의 발음 채점 및 레슨 상호 작용에 필수적입니다.",
+            geolocationPermission: "위치",
+            geolocationDesc: "몰입형 연습을 위해 카페나 도서관 같은 근처 \"레슨 구역\"을 식별합니다.",
+            granted: "허용됨",
+            allow: "허용",
+            skip: "건너뛰기",
+            letsStart: "시작합시다",
+            continueText: "계속",
+            wordTenses: "단어 시제:",
+            similarWords: "비슷한 단어:",
+            wordBreakdown: "단어 분해:",
+            consonant: "자음",
+            vowel: "모음",
+            past: "과거",
+            present: "현재",
+            future: "미래",
+            learnWord: "학습")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "취소",
-            save: "저장",
-            done: "완료",
-            ok: "확인",
-            back: "뒤로",
-            next: "다음",
-            continueText: "계속"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "사용자 지정",
-            hint: "힌트",
-            practiceDescription: "아무 단어나 탭하여 목표 언어로 번역하세요. 도움이 필요하면 힌트 버튼을 사용하여 제안을 받으세요.",
-            practiceTitle: "연습",
-            practiceFollowUp: "다음 연습",
-            camera: "카메라",
-            cameraDescription: "Locian은 {native}로 대화를 생성하고 {target}로 변환하는 연습을 할 수 있습니다.",
-            useCamera: "카메라 사용",
-            cameraButtonDescription: "사진에서 순간 생성",
-            typeConversation: "대화 입력",
-            typeConversationDescription: "Locian은 {native}로 대화를 생성하고 {target}로 변환하는 연습을 할 수 있습니다.",
-            conversationPlaceholder: "예: 바쁜 카페에서 커피 주문하기",
-            submit: "제출",
-            fullCustomText: "전체 사용자 지정 텍스트",
-            examples: "예:",
-            conversationExample1: "비 오는 날 길 묻기",
-            conversationExample2: "늦은 밤 야채 사기",
-            conversationExample3: "붐비는 사무실에서 일하기",
-            describeConversation: "Locian이 만들 대화를 설명하세요.",
-            fullTextPlaceholder: "전체 텍스트 또는 대화를 여기에 입력...",
-            startCustomPractice: "사용자 지정 연습 시작"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "진행 상황",
-            edit: "편집",
             current: "현재",
-            longest: "가장 긴",
+            longest: "최장",
             lastPracticed: "마지막 연습",
             days: "일",
-            addLanguagePairToSeeProgress: "진행 상황을 보려면 언어 쌍을 추가하세요."
-        )
+            addLanguagePairToSeeProgress: "진행 상황을 보려면 언어 쌍을 추가하세요",
+            startPracticingMessage: "연속 기록을 쌓으려면 연습을 시작하세요",
+            consistencyQuote: "일관성은 언어 학습의 핵심입니다",
+            practiceDateSavingDisabled: "연습 날짜 저장이 비활성화되었습니다",
+            editYourStreaks: "연속 기록 편집",
+            editStreaks: "연속 기록 편집",
+            selectDatesToAddOrRemove: "연속 기록에서 추가하거나 제거할 날짜를 선택하세요",
+            saving: "저장 중",
+            statusOnFire: "상태: 최고조",
+            youPracticed: "연습했습니다 ",
+            yesterday: " 어제.",
+            checkInNow: "지금 체크인",
+            nextGoal: "다음 목표",
+            reward: "보상",
+            historyLogProgress: "역사 로그",
+            streakStatus: "스트릭 상태",
+            streakLog: "스트릭 로그",
+            consistency: "일관성",
+            consistencyHigh: "활동 로그가 높은 참여도를 보여줍니다.",
+            consistencyMedium: "좋은 추진력을 구축하고 있습니다.",
+            consistencyLow: "일관성이 핵심입니다. 계속 추진하세요.",
+            reachMilestone: "%d일에 도달하도록 노력해보세요!",
+            nextMilestone: "다음 마일스톤",
+            actionRequired: "조치 필요",
+            logActivity: "활동 기록",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "최장 스트릭",
+            streakData: "스트릭 데이터",
+            activeLabel: "활성",
+            missedLabel: "실패",
+            saveChanges: "변경 사항 저장",
+            discardChanges: "변경 사항 취소",
+            editLabel: "편집",
+            // Advanced Stats
+            skillBalance: "기술 균형",
+            fluencyVelocity: "유창성 속도",
+            vocabVault: "어휘 저장소",
+            chronotype: "크로노타입",
+            activityDistribution: "활동 분포 (24시간)",
+            studiedTime: "학습 시간",
+            currentLabel: "현재",
+            streakLabel: "스트릭",
+            longestLabel: "최장",
+            earlyBird: "얼리 버드",
+            earlyBirdDesc: "오전에 가장 활발함",
+            dayWalker: "데이 워커",
+            dayWalkerDesc: "오후에 가장 활발함",
+            nightOwl: "올빼미형",
+            nightOwlDesc: "밤에 가장 활발함",
+            timeMastery: "시간 숙달",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "로딩 중...",
+            adaptiveQuiz: "적응형 퀴즈",
+            adaptiveQuizDescription: "오답을 먼저 보여준 다음 정답을 강조합니다.",
+            wordCheck: "단어 확인",
+            wordCheckDescription: "타일이 섞인 후 제자리에 맞춰져 정답을 확인합니다.",
+            wordCheckExamplePrompt: "문자를 탭하여 단어를 올바른 순서로 배열하세요.",
+            quizPrompt: "단어의 올바른 번역을 선택하세요.",
+            answerConfirmation: "올바른 단어를 만들었습니다!",
+            tryAgain: "이런! 다시 시도하세요.")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "내 언어"
-        case .notifications: return "알림"
-        case .aesthetics: return "미학"
-        case .account: return "계정"
-        case .appLanguage: return "앱 인터페이스"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "로그인 /"
-        case .register: return "등록"
-        case .settings: return "설정"
-        case .home: return "홈"
-        case .back: return "뒤로"
-        case .next: return "다음"
-        case .previous: return "이전"
-        case .done: return "완료"
-        case .cancel: return "취소"
-        case .save: return "저장"
-        case .delete: return "삭제"
-        case .add: return "추가"
-        case .remove: return "제거"
-        case .edit: return "편집"
-        case .continueText: return "계속"
-        
-        // Quiz
-        case .quizCompleted: return "퀴즈 완료!"
-        case .sessionCompleted: return "세션 완료!"
-        case .masteredEnvironment: return "환경을 마스터했습니다!"
-        case .learnMoreAbout: return "에 대해 더 알아보기"
-        case .backToHome: return "홈으로 돌아가기"
-        case .tryAgain: return "다시 시도"
-        case .shuffled: return "섞였습니다"
-        case .check: return "확인"
-        
-        // Vocabulary
-        case .exploreCategories: return "카테고리 탐색"
-        case .testYourself: return "자신을 테스트"
-        case .similarWords: return "유사한 단어:"
-        case .wordTenses: return "단어 시제:"
-        case .tapWordsToExplore: return "단어를 탭하여 번역을 읽고 탐색하세요"
-        case .wordBreakdown: return "단어 분석:"
-        
-        // Scene
-        case .analyzingImage: return "이미지 분석 중..."
-        case .imageAnalysisCompleted: return "이미지 분석 완료"
-        case .imageSelected: return "이미지 선택됨"
-        case .placeNotSelected: return "장소가 선택되지 않음"
-        case .locianChoose: return "Locian이 선택"
-        case .chooseLanguages: return "언어를 선택하세요"
-        
-        // Settings
-        case .enableNotifications: return "알림 활성화"
-        case .thisPlace: return "이 곳"
-        case .tapOnAnySection: return "위의 섹션을 탭하여 설정을 보고 관리하세요"
-        case .addNewLanguagePair: return "새 언어 쌍 추가"
-        case .noLanguagePairsAdded: return "아직 언어 쌍이 추가되지 않았습니다"
-        case .setDefault: return "기본값으로 설정"
-        case .defaultText: return "기본값"
-        case .user: return "사용자"
-        case .noPhone: return "전화 없음"
-        case .signOutFromAccount: return "계정에서 로그아웃"
-        case .removeAllPracticeData: return "모든 연습 데이터 제거"
-        case .permanentlyDeleteAccount: return "계정 및 모든 데이터 영구 삭제"
-        case .currentLevel: return "현재 레벨"
-        case .selectPhoto: return "사진 선택"
-        case .camera: return "카메라"
-        case .photoLibrary: return "사진 라이브러리"
-        case .selectTime: return "시간 선택"
-        case .hour: return "시간"
-        case .minute: return "분"
-        case .addTime: return "시간 추가"
-        case .areYouSureLogout: return "정말 로그아웃하시겠습니까?"
-        case .areYouSureDeleteAccount: return "정말 계정을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다."
-        
-        // Quiz
-        case .goBack: return "돌아가기"
-        case .fillInTheBlank: return "빈칸 채우기:"
-        case .arrangeWordsInOrder: return "단어를 올바른 순서로 배열:"
-        case .tapWordsBelowToAdd: return "아래 단어를 탭하여 여기에 추가"
-        case .availableWords: return "사용 가능한 단어:"
-        case .correctAnswer: return "정답:"
-        
-        // Common
-        case .error: return "오류"
-        case .ok: return "확인"
-        case .close: return "닫기"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "당신이 서 있는 곳에서 필요한 모든 시제까지"
-        case .awarenessHeading: return "인식"
-        case .awarenessDescription: return "AI가 당신의 주변 환경에서 학습합니다"
-        case .inputsHeading: return "입력"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "분해"
-        case .breakdownDescription: return "Locian은 문장을 시제로 분해하고 단어별 번역을 제공합니다"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "준비됨"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "로그인 / 등록"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "왼쪽 또는 오른쪽을 탭하여 탐색"
-        case .selectAppLanguage: return "앱 언어 선택"
-        case .selectLanguageDescription: return "이 언어는 앱 사용자 인터페이스, 제목, 설명, 버튼, 이름 및 모든 것을 선택한 언어로 변경합니다"
-        
-        // Login
-        case .username: return "사용자 이름"
-        case .phoneNumber: return "전화번호"
-        case .guestLogin: return "게스트 로그인"
-        case .guestLoginDescription: return "게스트 로그인은 검증을 위한 것이며 게스트가 모든 앱 기능에 액세스할 수 있도록 합니다. 검증 후 제거됩니다."
-        
-        // Professions
-        case .student: return "학생"
-        case .softwareEngineer: return "소프트웨어 엔지니어"
-        case .teacher: return "교사"
-        case .doctor: return "의사"
-        case .artist: return "예술가"
-        case .businessProfessional: return "비즈니스 전문가"
-        case .salesOrMarketing: return "영업 또는 마케팅"
-        case .traveler: return "여행자"
-        case .homemaker: return "주부"
-        case .chef: return "셰프"
-        case .police: return "경찰"
-        case .bankEmployee: return "은행 직원"
-        case .nurse: return "간호사"
-        case .designer: return "디자이너"
-        case .engineerManager: return "엔지니어 매니저"
-        case .photographer: return "사진작가"
-        case .contentCreator: return "콘텐츠 크리에이터"
-        case .other: return "기타"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian의 선택"
-        case .airport: return "공항"
-        case .cafe: return "카페"
-        case .gym: return "체육관"
-        case .library: return "도서관"
-        case .office: return "사무실"
-        case .park: return "공원"
-        case .restaurant: return "레스토랑"
-        case .shoppingMall: return "쇼핑몰"
-        case .travelling: return "여행"
-        case .university: return "대학교"
-        case .addCustomPlace: return "사용자 지정 장소 추가"
-        case .enterCustomPlaceName: return "사용자 지정 장소 이름을 입력하세요 (최대 30자)"
-        case .maximumCustomPlaces: return "최대 10개의 사용자 지정 장소"
-        case .welcome: return "환영합니다"
-        case .tapToCaptureContext: return "탭하여 컨텍스트를 캡처하고 학습을 시작하세요"
-        case .customSection: return "사용자 지정"
-        case .examples: return "예:"
-        case .customPlacePlaceholder: return "예: 사무실로 이동"
-        case .exampleTravellingToOffice: return "사무실로 이동"
-        case .exampleTravellingToHome: return "집으로 이동"
-        case .exampleExploringParis: return "파리 탐험"
-        case .exampleVisitingMuseum: return "박물관 방문"
-        case .exampleCoffeeShop: return "커피숍"
-        case .characterCount: return "자"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "모국어:"
-        case .selectNativeLanguage: return "모국어를 선택하세요"
-        case .targetLanguage: return "목표 언어:"
-        case .selectTargetLanguage: return "학습하고 싶은 언어를 선택하세요"
-        case .nativeLanguageDescription: return "모국어는 읽기, 쓰기, 말하기를 유창하게 할 수 있는 언어입니다. 가장 편안하게 느끼는 언어입니다."
-        case .targetLanguageDescription: return "목표 언어는 학습하고 연습하고 싶은 언어입니다. 실력을 향상시키고 싶은 언어를 선택하세요."
-        case .addPair: return "쌍 추가"
-        case .adding: return "추가 중..."
-        case .failedToAddLanguagePair: return "언어 쌍 추가에 실패했습니다. 다시 시도해 주세요."
-        case .settingAsDefault: return "기본값으로 설정 중..."
-        case .beginner: return "초급"
-        case .intermediate: return "중급"
-        case .advanced: return "고급"
-        case .currentlyLearning: return "학습 중"
-        case .otherLanguages: return "기타 언어"
-        case .learnNewLanguage: return "새 언어 배우기"
-        case .learn: return "배우기"
-        case .tapToSelectNativeLanguage: return "모국어를 선택하려면 탭하세요"
-        case .neonGreen: return "네온 그린"
-        
-        // Theme color names
-        case .cyanMist: return "시안 미스트"
-        case .violetHaze: return "바이올렛 헤이즈"
-        case .softPink: return "소프트 핑크"
-        case .pureWhite: return "순백색"
-        
-        // Quick Look
-        case .quickRecall: return "빠른 회상"
-        case .startQuickPuzzle: return "빠른 퍼즐 시작"
-        case .stopPuzzle: return "퍼즐 중지"
-        
-        // Streak
-        case .streak: return "연속"
-        case .dayStreak: return "일 연속"
-        case .daysStreak: return "일 연속"
-        case .editYourStreaks: return "연속 기록 편집"
-        case .editStreaks: return "연속 기록 편집"
-        case .selectDatesToAddOrRemove: return "연습일을 추가하거나 제거할 날짜 선택"
-        case .saving: return "저장 중..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

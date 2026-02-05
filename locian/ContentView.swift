@@ -8,42 +8,29 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var appState = AppStateManager()
+    @StateObject private var appState = AppStateManager.shared
     
     var body: some View {
-        NavigationStack {
-            Group {
-                if !appState.hasCompletedOnboarding {
-                    OnboardingContainerView(appState: appState)
-                } else if appState.isLoadingSession {
-                    LoadingView(appState: appState)
-                } else if appState.isLoggedIn {
-                    MainTabView(appState: appState)
-                } else {
-                    LoginView(appState: appState)
-                }
-            }
-            // Separate navigation destinations for vocabulary
-            .navigationDestination(isPresented: $appState.shouldShowVocabularyView) {
-                VocabularyView(
-                    appState: appState,
-                    isImageSelected: appState.vocabularyIsImageSelected,
-                    selectedPlace: appState.vocabularySelectedPlace,
-                    selectedColor: AppStateManager.selectedColor
-                )
-            }
-            
-            // Settings navigation
-            .navigationDestination(isPresented: $appState.shouldShowSettingsView) {
-                SettingsView(appState: appState)
+        Group {
+            if !appState.hasCompletedOnboarding {
+                OnboardingContainerView(appState: appState)
+            } else if appState.isLoadingSession {
+                LoadingView(appState: appState)
+            } else if appState.isLoggedIn {
+                MainTabView(appState: appState)
+            } else {
+                LoginView(appState: appState)
             }
         }
         .onAppear {
             if appState.hasCompletedOnboarding {
                 appState.checkUserSession()
             }
-            // Request location permission on app launch
-            LocationManager.shared.requestPermission()
+            // Permission request removed to respect onboarding flow
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SessionExpired"))) { _ in
+            // Perform local logout when session expires due to API errors
+            appState.logoutLocalOnly()
         }
         // First Launch Language Selection Modal - Shows before onboarding
         .fullScreenCover(isPresented: $appState.showFirstLaunchLanguageModal) {
@@ -61,6 +48,7 @@ struct ContentView: View {
 struct LoadingView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject private var languageManager = LanguageManager.shared
+    @ObservedObject private var localizationManager = LocalizationManager.shared
     
     var body: some View {
         ZStack {
@@ -73,11 +61,11 @@ struct LoadingView: View {
                     .font(.system(size: 50))
                     .foregroundColor(.white)
                 
-                Text("No internet connection")
+                Text(localizationManager.string(.noInternetConnection))
                     .font(.system(size: 18))
                     .foregroundColor(.white.opacity(0.8))
                 
-                Button("Retry") {
+                Button(localizationManager.string(.retry)) {
                     appState.checkUserSession()
                 }
                 .font(.system(size: 16, weight: .semibold))
@@ -103,7 +91,7 @@ struct LoadingView: View {
                     .scaleEffect(1.5)
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 
-                Text("Loading...")
+                Text(localizationManager.string(.loading))
                     .font(.system(size: 18))
                     .foregroundColor(.white.opacity(0.8))
             }

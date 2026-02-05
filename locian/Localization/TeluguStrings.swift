@@ -2,475 +2,620 @@
 //  TeluguStrings.swift
 //  locian
 //
-//  Telugu localization strings
-//
 
 import Foundation
 
 struct TeluguStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "క్విజ్ పూర్తయింది!",
-            masteredEnvironment: "మీరు మీ వాతావరణాన్ని నేర్చుకున్నారు!",
-            learnMoreAbout: "గురించి మరింత తెలుసుకోండి",
-            backToHome: "హోమ్‌కు తిరిగి",
-            next: "తర్వాత",
-            previous: "మునుపటి",
-            check: "తనిఖీ",
-            tryAgain: "మళ్లీ ప్రయత్నించండి",
-            shuffled: "షఫుల్ చేయబడింది",
-            noQuizAvailable: "క్విజ్ అందుబాటులో లేదు",
-            question: "ప్రశ్న",
-            correct: "సరైనది",
-            incorrect: "తప్పు",
-            notAttempted: "ప్రయత్నించలేదు"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "కెమెరా",
+            gallery: "గ్యాలరీ",
+            nextUp: "తదుపరి",
+            historyLog: "చరిత్ర లాగ్",
+
+            moments: "క్షణాలు",
+            pastMoments: "గత క్షణాలు",
+            noHistory: "చరిత్ర లేదు",
+            generatingHistory: "చరిత్ర రూపొందిస్తోంది",
+            generatingMoments: "సృష్టిస్తోంది...",
+            analyzingImage: "చిత్ర విశ్లేషణ...",
+            tapNextUpToGenerate: "రూపొందించడానికి తదుపరి ట్యాప్ చేయండి",
+            noUpcomingPlaces: "రాబోయే ప్రదేశాలు లేవు",
+            noDetails: "వివరాలు లేవు",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "నేర్చుకోవడం ప్రారంభించండి",
+            continueLearning: "నేర్చుకోవడం కొనసాగించండి",
+            noPastMoments: "గత క్షణాలు లేవు",
+            useCamera: "కెమెరా ఉపయోగించండి",
+            previouslyLearning: "గతంలో నేర్చుకున్నారు",
+            sunShort: "ఆది",
+            monShort: "సోమ",
+            tueShort: "మంగళ",
+            wedShort: "బుధ",
+            thuShort: "గురు",
+            friShort: "శుక్ర",
+            satShort: "శని",
+            login: "లాగిన్",
+            register: "నోందణి",
+            settings: "సెట్టింగులు",
+            back: "వెనుకకు",
+            done: "పూర్తయింది",
+            cancel: "రద్దు చేయండి",
+            save: "సేవ్ చేయండి",
+            delete: "తొలగించండి",
+            add: "జోడించండి",
+            remove: "తొలగించండి",
+            edit: "సవరించు",
+            error: "లోపం",
+            ok: "సరే",
+            welcomeLabel: "స్వాగతం",
+            currentStreak: "ప్రస్తుత స్ట్రీక్",
+            notSet: "సెట్ చేయబడలేదు",
+            learnTab: "నేర్చుకోండి",
+            addTab: "జోడించండి",
+            progressTab: "ప్రగతి",
+            settingsTab: "సెట్టింగులు",
+            loading: "లోడ్ అవుతోంది...",
+            unknownPlace: "తెలియని ప్రదేశం",
+            noLanguageAvailable: "భాష అందుబాటులో లేదు",
+            noInternetConnection: "ఇంటర్‌నెట్ కనెక్షన్ లేదు",
+            retry: "మళ్ళీ ప్రయత్నించండి",
+            tapToGetMoments: "క్షణాలు పొందడానికి ట్యాప్ చేయండి",
+            startLearningThisMoment: "ఈ క్షణం నుండి నేర్చుకోవడం ప్రారంభించండి",
+            daysLabel: "రోజులు",
+            noNewPlace: "కొత్త స్థలాన్ని జోడించండి",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "ప్రారంభించు",
+            typeYourMoment: "మీ క్షణాన్ని టైప్ చేయండి...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "నా భాషలు",
-            notifications: "నోటిఫికేషన్‌లు",
-            appearance: "సౌందర్యం",
+            systemLanguage: "యాప్ ఇంటర్‌ఫేస్",
+            targetLanguages: "లక్ష్య భాషలు",
+            pastLanguagesArchived: "గతంలో నేర్చుకున్న భాషలు",
+            theme: "థీమ్",
+            notifications: "నోటిఫికేషన్లు",
             account: "ఖాతా",
             profile: "ప్రొఫైల్",
-            addLanguagePair: "భాషా జత జోడించండి",
-            enableNotifications: "నోటిఫికేషన్‌లను ప్రారంభించండి",
-            logout: "లాగ్అవుట్",
+            addLanguagePair: "భాషా జంటను జోడించండి",
+            logout: "లాగ్ అవుట్",
             deleteAllData: "అన్ని డేటాను తొలగించండి",
-            deleteAccount: "ఖాతాను తొలగించండి",
+            deleteAccount: "ఖాతాను శాశ్వతంగా తొలగించండి",
             selectLevel: "స్థాయిని ఎంచుకోండి",
-            selectAppLanguage: "అనువర్తన ఇంటర్ఫేస్",
-            proFeatures: "పవర్ టూల్స్",
-            showSimilarWordsToggle: "సమాన పదాలను చూపించు",
-            showWordTensesToggle: "పదాల కాలాలను చూపించు",
-            nativeLanguage: "స్థానిక భాష:",
-            selectNativeLanguage: "మీ స్థానిక భాషను ఎంచుకోండి",
-            targetLanguage: "లక్ష్య భాష:",
-            selectTargetLanguage: "మీరు నేర్చుకోవాలనుకున్న భాషను ఎంచుకోండి",
-            nativeLanguageDescription: "మీ స్థానిక భాష అనేది మీరు చదవగల, వ్రాయగల మరియు సుళ్లగా మాట్లాడగల భాష. ఇది మీకు అత్యంత సౌకర్యవంతమైన భాష.",
-            targetLanguageDescription: "మీ లక్ష్య భాష అనేది మీరు నేర్చుకోవాలనుకున్న మరియు అభ్యాసం చేయాలనుకున్న భాష. మీరు మీ నైపుణ్యాలను మెరుగుపరచాలనుకున్న భాషను ఎంచుకోండి.",
-            addPair: "జత జోడించండి",
-            adding: "జోడిస్తోంది...",
-            failedToAddLanguagePair: "భాషా జత జోడించడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
-            settingAsDefault: "డిఫాల్ట్‌గా సెట్ చేస్తోంది...",
-            beginner: "ప్రారంభం",
-            intermediate: "మధ్యస్థ",
-            advanced: "అధునాతన",
-            currentlyLearning: "నేర్చుకుంటున్నాను",
-            otherLanguages: "ఇతర భాషలు",
+            proFeatures: "ప్రో ఫీచర్లు",
+            showSimilarWordsToggle: "సారూప్య పదాలను చూపించు",
+            nativeLanguage: "మాతృ భాష",
+            selectNativeLanguage: "మాతృభాషను ఎంచుకోండి",
+            targetLanguage: "లక్ష్య భాష",
+            selectTargetLanguage: "లక్ష్య భాషను ఎంచుకోండి",
+            targetLanguageDescription: "మీరు నేర్చుకోవాలనుకునే భాష",
+            beginner: "ప్రారంభ స్థాయి",
+            intermediate: "మధ్యస్థ స్థాయి",
+            advanced: "ఉన్నత స్థాయి",
+            currentlyLearning: "ప్రస్తుతం నేర్చుకుంటున్నారు",
             learnNewLanguage: "కొత్త భాష నేర్చుకోండి",
             learn: "నేర్చుకోండి",
-            tapToSelectNativeLanguage: "మీ స్థానిక భాషను ఎంచుకోవడానికి టాప్ చేయండి",
-            neonGreen: "నియాన్ గ్రీన్",
-            cyanMist: "సియాన్ మిస్ట్",
-            violetHaze: "వైలెట్ హేజ్",
-            softPink: "సాఫ్ట్ పింక్",
-            pureWhite: "శుద్ధ తెలుపు"
-        )
+            neonGreen: "నియాన్ ఆకుపచ్చ",
+            neonFuchsia: "నియాన్ ఫ్యూషియా",
+            electricIndigo: "ఎలక్ట్రిక్ ఇండిగో",
+            graphiteBlack: "గ్రాఫైట్ బ్లాక్",
+            student: "విద్యార్థి",
+            softwareEngineer: "సాఫ్ట్‌వేర్ ఇంజనీర్",
+            teacher: "ఉపాధ్యాయుడు",
+            doctor: "వైద్యుడు",
+            artist: "కళాకారుడు",
+            businessProfessional: "వ్యాపార నిపుణుడు",
+            salesOrMarketing: "అమ్మకాలు లేదా మార్కెటింగ్",
+            traveler: "ప్రయాణికుడు",
+            homemaker: "గృహిణి/గృహస్థుడు",
+            chef: "షెఫ్",
+            police: "పోలీసు",
+            bankEmployee: "బ్యాంక్ ఉద్యోగి",
+            nurse: "నర్స్",
+            designer: "డిజైనర్",
+            engineerManager: "ఇంజనీరింగ్ మేనేజర్",
+            photographer: "ఫోటోగ్రాఫర్",
+            contentCreator: "కంటెంట్ క్రియేటర్",
+            entrepreneur: "పారిశ్రామికవేత్త",
+            other: "ఇతర",
+            otherPlaces: "ఇతర ప్రదేశాలు",
+            speaks: "మాట్లాడతారు",
+            neuralEngine: "న్యూరల్ ఇంజిన్",
+            noLanguagePairsAdded: "భాషా జంటలు జోడించలేదు",
+            setDefault: "డీఫాల్ట్‌గా సెట్ చేయండి",
+            defaultText: "డీఫాల్ట్",
+            user: "వినియోగదారుడు",
+            signOutFromAccount: "ఖాతా నుండి లాగ్ అవుట్ అవండి",
+            permanentlyDeleteAccount: "ఖాతాను శాశ్వతంగా తొలగించండి",
+            languageAddedSuccessfully: "భాష విజయవంతంగా జోడించబడింది",
+            failedToAddLanguage: "భాషను జోడించడంలో విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి.",
+            pleaseSelectLanguage: "దయచేసి ఒక భాషను ఎంచుకోండి",
+            systemConfig: "సిస్టమ్ // కాన్ఫిగ్",
+            currentLevel: "ప్రస్తుత స్థాయి",
+            selectPhoto: "ఫోటో ఎంచుకోండి",
+            camera: "కెమెరా",
+            photoLibrary: "ఫోటో లైబ్రరీ",
+            selectTime: "సమయం ఎంచుకోండి",
+            hour: "గంట",
+            minute: "నిమిషం",
+            addTime: "సమయం జోడించండి",
+            location: "స్థానం",
+            diagnosticBorders: "డయాగ్నోస్టిక్ బోర్డర్స్",
+            areYouSureLogout: "మీరు ఖచ్చితంగా లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?",
+            areYouSureDeleteAccount: "మీరు మీ ఖాతాను శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను తిరిగి పొందలేము.")
     }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "వర్గాలను అన్వేషించండి",
-            testYourself: "మిమ్మల్ని పరీక్షించుకోండి",
-            slideToStartQuiz: "క్విజ్ ప్రారంభించడానికి స్లైడ్ చేయండి",
-            similarWords: "సమానమైన పదాలు",
-            wordTenses: "పద కాలాలు",
-            wordBreakdown: "పద విభజన",
-            tapToSeeBreakdown: "పద విభజన చూడటానికి టాప్ చేయండి",
-            tapToHideBreakdown: "పద విభజన దాచడానికి టాప్ చేయండి",
-            tapWordsToExplore: "వాటి అనువాదాలను చదవడానికి మరియు అన్వేషించడానికి పదాలను టాప్ చేయండి",
-            loading: "లోడ్ అవుతోంది...",
-            learnTheWord: "పదాన్ని నేర్చుకోండి",
-            tryFromMemory: "మెమరీ నుండి ప్రయత్నించండి",
-            adjustingTo: "సర్దుబాటు",
-            settingPlace: "సెట్ చేస్తోంది",
-            settingTime: "సెట్ చేస్తోంది",
-            generatingVocabulary: "ఉత్పత్తి చేస్తోంది",
-            analyzingVocabulary: "విశ్లేషిస్తోంది",
-            analyzingCategories: "విశ్లేషిస్తోంది",
-            analyzingWords: "విశ్లేషిస్తోంది",
-            creatingQuiz: "సృష్టిస్తోంది",
-            organizingContent: "ఆయోజిస్తోంది",
-            to: "కు",
-            place: "స్థలం",
-            time: "సమయం",
-            vocabulary: "శబ్దభండారం",
-            your: "మీ",
-            interested: "ఆసక్తి",
-            categories: "వర్గాలు",
-            words: "పదాలు",
-            quiz: "క్విజ్",
-            content: "విషయం"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "నమస్కారం,",
-            learnFromSurroundings: "మీ చుట్టూ నుండి నేర్చుకోండి",
-            learnFromSurroundingsDescription: "మీ వాతావరణాన్ని క్యాప్చర్ చేసి నిజ ప్రపంచ సందర్భాల నుండి పదజాలాన్ని నేర్చుకోండి",
-            locianChoosing: "ఎంచుకుంటోంది...",
-            chooseLanguages: "భాషలను ఎంచుకోండి",
-            continueWith: "Locian ఎంచుకున్న దానితో కొనసాగించండి",
-            slideToLearn: "నెర్చుకోవడానికి స్లైడ్ చేయండి",
-            recommended: "సిఫార్సు చేసినవి",
-            intoYourLearningFlow: "మీ అభ్యాస ప్రవాహంలోకి",
-            intoYourLearningFlowDescription: "మీ అభ్యాస చరిత్ర ఆధారంగా సాధన చేయడానికి సిఫార్సు చేయబడిన ప్రదేశాలు",
-            customSituations: "మీ కస్టమ్ పరిస్థితులు",
-            customSituationsDescription: "మీ స్వంత వ్యక్తిగతీకరించిన అభ్యాస దృశ్యాలతో సృష్టించండి మరియు సాధన చేయండి",
-            max: "గరిష్టం",
-            recentPlacesTitle: "మీ ఇటీవలి ప్రదేశాలు",
-            allPlacesTitle: "అన్ని ప్రదేశాలు",
-            recentPlacesEmpty: "ఇక్కడ సూచనలు చూడడానికి పదజాలాన్ని సృష్టించండి.",
-            showMore: "మరింత చూపించు",
-            showLess: "తక్కువ చూపించు",
-            takePhoto: "ఫోటో తీయండి",
-            chooseFromGallery: "గ్యాలరీ నుండి ఎంచుకోండి",
-            letLocianChoose: "Locian ను ఎంచుకోనివ్వండి",
-            lociansChoice: "Locian ద్వారా",
-            cameraTileDescription: "ఈ ఫోటో మీ వాతావరణాన్ని విశ్లేషించి నేర్చుకోవడానికి క్షణాలను చూపుతుంది.",
-            airport: "విమానాశ్రయం",
-            aquarium: "జలజంతుశాల",
-            bakery: "బేకరీ",
-            beach: "బీచ్",
-            bookstore: "పుస్తక దుకాణం",
-            cafe: "కాఫీ",
-            cinema: "సినిమా హాల్",
-            gym: "వ్యాయామశాల",
-            hospital: "ఆసుపత్రి",
-            hotel: "హోటల్",
-            home: "గృహం",
-            library: "గ్రంథాలయం",
-            market: "మార్కెట్",
-            museum: "సంగ్రహాలయం",
-            office: "కార్యాలయం",
-            park: "పార్క్",
-            restaurant: "రెస్టారెంట్",
-            shoppingMall: "షాపింగ్ మాల్",
-            stadium: "స్టేడియం",
-            supermarket: "సూపర్ మార్కెట్",
-            temple: "దేవాలయం",
-            travelling: "ప్రయాణం",
-            university: "విశ్వవిద్యాలయం",
-            addCustomPlace: "కస్టమ్ స్థలాన్ని జోడించండి",
-            addPlace: "స్థలాన్ని జోడించండి",
-            enterCustomPlaceName: "కస్టమ్ స్థలం పేరును నమోదు చేయండి (గరిష్టంగా 30 అక్షరాలు)",
-            maximumCustomPlaces: "గరిష్టంగా 10 కస్టమ్ స్థలాలు",
-            welcome: "స్వాగతం",
-            user: "వినియోగదారు",
-            tapToCaptureContext: "మీ సందర్భాన్ని క్యాప్చర్ చేయడానికి మరియు నేర్చుకోవడం ప్రారంభించడానికి టాప్ చేయండి",
-            customSection: "కస్టమ్",
-            examples: "ఉదాహరణలు:",
-            customPlacePlaceholder: "ఉదా., ఆఫీసుకు ప్రయాణం",
-            exampleTravellingToOffice: "ఆఫీసుకు ప్రయాణం",
-            exampleTravellingToHome: "ఇంటికి ప్రయాణం",
-            exampleExploringParis: "పారిస్ అన్వేషణ",
-            exampleVisitingMuseum: "మ్యూజియం సందర్శన",
-            exampleCoffeeShop: "కాఫీ షాప్",
-            characterCount: "అక్షరాలు",
-            situationExample1: "బిజీ కాఫీ షాప్‌లో కాఫీ ఆర్డర్ చేయడం",
-            situationExample2: "కొత్త నగరంలో దారి అడగడం",
-            situationExample3: "మార్కెట్‌లో కిరాణా సరుకులు కొనడం",
-            situationExample4: "డాక్టర్ అపాయింట్‌మెంట్ తీసుకోవడం",
-            situationExample5: "హోటల్‌లో చెక్-ఇన్ చేయడం"
-        )
-    }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "లాగిన్",
             verify: "ధృవీకరించండి",
             selectProfession: "వృత్తిని ఎంచుకోండి",
+            selectUserProfession: "SELECT_USER_PROFESSION",
             username: "వినియోగదారు పేరు",
             phoneNumber: "ఫోన్ నంబర్",
             guestLogin: "అతిథి లాగిన్",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "ప్రారంభించడానికి మీ వృత్తిని ఎంచుకోండి",
+            showMore: "మరిన్ని చూపించు",
+            showLess: "తక్కువ చూపించు",
+            forReview: "[సమీక్ష కోసం]",
+            authenticatingUser: "AUTHENTICATING_USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS_OF_SERVICE",
+            privacyPolicy: "PRIVACY_POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "మీరు నిలబడిన చోట నుండి మీకు అవసరమైన ప్రతి కాలం వరకు",
+            locianDescription: "మీ రోజువారీ జీవితం ద్వారా సహజంగా భాషలు నేర్చుకోండి",
             awarenessHeading: "అవగాహన",
-            awarenessDescription: "AI మీ చుట్టూ నుండి నేర్చుకుంటుంది",
-            inputsHeading: "ఇన్‌పుట్‌లు",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
-            breakdownHeading: "విభజన",
-            breakdownDescription: "Locian వాక్యాలను కాలాలుగా విభజిస్తుంది, పదం-పదం అనువాదాలను అందిస్తుంది",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
-            readyHeading: "సిద్ధంగా ఉంది",
-            readyDescription: "",
-            loginOrRegister: "లాగిన్ / నమోదు",
-            pageIndicator: " / 6",
-            tapToNavigate: "నావిగేట్ చేయడానికి ఎడమ లేదా కుడి వైపు టాప్ చేయండి",
-            selectAppLanguage: "అనువర్తన భాషను ఎంచుకోండి",
-            selectLanguageDescription: "ఈ భాష అనువర్తన వినియోగదారు ఇంటర్ఫేస్, శీర్షికలు, వివరణలు, బటన్లు, పేర్లు మరియు అన్నింటినీ ఎంచుకున్న భాషగా మారుస్తుంది"
-        )
+            awarenessDescription: "రియల్ టైమ్‌లో మీ చుట్టూ ఉన్న పదాలను గమనించండి",
+            breakdownHeading: "విశ్లేషణ",
+            breakdownDescription: "పదాలు ఎలా నిర్మించబడతాయో అర్థం చేసుకోండి",
+            progressHeading: "ప్రగతి",
+            progressDescription: "మీ నేర్చుకున్న ప్రయాణాన్ని ట్రాక్ చేయండి",
+            readyHeading: "సిద్ధం",
+            readyDescription: "ఇప్పుడు నేర్చుకోవడం ప్రారంభించండి",
+            loginOrRegister: "లాగిన్ లేదా నోందణి",
+            pageIndicator: "పేజీ",
+            selectLanguageDescription: "మీ ఇష్టమైన భాషను ఎంచుకోండి",
+            fromWhereYouStand: "మీరు నిలబడిన\nచోటి నుండి",
+            toEveryWord: "ప్రతి",
+            everyWord: "పదానికి",
+            youNeed: "మీకు కావాలి",
+            lessonEngine: "పాఠం_ఇంజిన్",
+            nodesLive: "నోడ్స్_లైవ్",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "హోలో_గ్రిడ్_యాక్టివ్",
+            adaCr02: "ADA_CR-02",
+            your: "మీ",
+            places: "ప్రదేశాలు,",
+            lessons: "పాఠాలు.",
+            yourPlaces: "మీ ప్రదేశాలు,",
+            yourLessons: " మీ పాఠాలు.",
+            nearbyCafes: "సమీపంలోని కేఫ్‌లు?",
+            unlockOrderFlow: " ఆర్డర్-ఫ్లో అన్‌లాక్ చేయండి",
+            modules: "మాడ్యూల్స్",
+            activeHubs: "యాక్టివ్ హబ్‌లు?",
+            synthesizeGym: " జిమ్ సంశ్లేషణ",
+            vocabulary: "పదజాలం",
+            locationOpportunity: "ప్రతి ప్రదేశం నేర్చుకునే అవకాశంగా మారుతుంది",
+            module03: "మాడ్యూల్_03",
+            notJustMemorization: "కేవలం కంఠస్థం\nకాదు",
+            philosophy: "తత్వం",
+            locianTeaches: "లోసియన్ కేవలం పదాలను మాత్రమే నేర్పించదు.\nలోసియన్ మీకు బోధిస్తుంది ",
+            think: "ఆలోచించడం",
+            inTargetLanguage: "మీ లక్ష్య భాషలో.",
+            patternBasedLearning: "నమూనా-ఆధారిత అభ్యాసం",
+            patternBasedDesc: "పొడి నియమాలు లేకుండా వ్యాకరణ నిర్మాణాలను అకారణంగా గుర్తించండి.",
+            situationalIntelligence: "సందర్భోచిత మేధస్సు",
+            situationalDesc: "మీ వాతావరణం మరియు చరిత్రకు అనుగుణంగా ఉండే డైనమిక్ దృశ్యాలు.",
+            adaptiveDrills: "అనుకూల కసరత్తులు",
+            adaptiveDesc: "లెసన్ ఇంజిన్ మీ బలహీనతలను గుర్తిస్తుంది మరియు రీకాలిబ్రేట్ చేస్తుంది.",
+            systemReady: "సిస్టమ్_రెడీ",
+            quickSetup: "త్వరిత_సెటప్",
+            levelB2: "స్థాయి_B2",
+            authorized: "అధికారం",
+            notificationsPermission: "నోటిఫికేషన్‌లు",
+            notificationsDesc: "సమీపంలోని అభ్యాస అవకాశాలు మరియు స్ట్రీక్ అలర్ట్‌ల గురించి నిజ-సమయ నవీకరణలను పొందండి.",
+            microphonePermission: "మైక్రోఫోన్",
+            microphoneDesc: "వాస్తవ ప్రపంచ సందర్భాలలో ఉచ్చారణ స్కోరింగ్ మరియు పాఠ్య పరస్పర చర్యలకు అవసరం.",
+            geolocationPermission: "జియోలొకేషన్",
+            geolocationDesc: "లీనమయ్యే అభ్యాసం కోసం కాఫీ షాప్‌లు లేదా లైబ్రరీల వంటి సమీపంలోని \"లెసన్ జోన్‌ల\"ను గుర్తించండి.",
+            granted: "మంజూరు చేయబడింది",
+            allow: "అనుమతించు",
+            skip: "దాటవేయి",
+            letsStart: "ప్రారంభిద్దాం",
+            continueText: "కొనసాగించు",
+            wordTenses: "పద కాలాలు:",
+            similarWords: "సమాన పదాలు:",
+            wordBreakdown: "పద విశ్లేషణ:",
+            consonant: "హల్లు",
+            vowel: "అచ్చు",
+            past: "గతం",
+            present: "వర్తమానం",
+            future: "భవిష్యత్తు",
+            learnWord: "నేర్చుకోండి")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "రద్దు చేయండి",
-            save: "సేవ్ చేయండి",
-            done: "పూర్తి",
-            ok: "సరే",
-            back: "వెనక్కి",
-            next: "తర్వాత",
-            continueText: "కొనసాగించండి"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "కస్టమ్",
-            hint: "సూచన",
-            practiceDescription: "ఏదైనా పదాన్ని నొక్కండి దానిని మీ లక్ష్య భాషలోకి అనువదించడానికి. సహాయం అవసరమైతే, సూచన బటన్‌ను ఉపయోగించి సూచనలను పొందండి.",
-            practiceTitle: "అభ్యాసం",
-            practiceFollowUp: "తదుపరి అభ్యాసం",
-            camera: "కెమెరా",
-            cameraDescription: "Locian {native} లో సంభాషణను సృష్టిస్తుంది మరియు మీరు {target} కు మార్చడాన్ని అభ్యాసం చేయవచ్చు.",
-            useCamera: "కెమెరాను ఉపయోగించండి",
-            cameraButtonDescription: "ఫోటో నుండి క్షణాలను సృష్టించండి",
-            typeConversation: "సంభాషణను టైప్ చేయండి",
-            typeConversationDescription: "Locian {native} లో సంభాషణను సృష్టిస్తుంది మరియు మీరు {target} కు మార్చడాన్ని అభ్యాసం చేయవచ్చు.",
-            conversationPlaceholder: "ఉదా. బిజీ కాఫీ షాప్‌లో కాఫీ ఆర్డర్ చేయడం",
-            submit: "సమర్పించండి",
-            fullCustomText: "పూర్తి కస్టమ్ టెక్స్ట్",
-            examples: "ఉదాహరణలు:",
-            conversationExample1: "వర్షంలో దారి అడగడం",
-            conversationExample2: "రాత్రి తర్వాత కూరగాయలు కొనడం",
-            conversationExample3: "గుమిగూడిన ఆఫీస్‌లో పని చేయడం",
-            describeConversation: "Locian నిర్మించాలనుకునే సంభాషణను వివరించండి.",
-            fullTextPlaceholder: "పూర్తి టెక్స్ట్ లేదా సంభాషణను ఇక్కడ టైప్ చేయండి...",
-            startCustomPractice: "కస్టమ్ ప్రాక్టీస్ ప్రారంభించండి"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "ప్రగతి",
-            edit: "సవరించు",
             current: "ప్రస్తుత",
             longest: "అత్యంత పొడవైన",
-            lastPracticed: "చివరిగా ప్రాక్టీస్ చేసినది",
+            lastPracticed: "చివరి సాధన",
             days: "రోజులు",
-            addLanguagePairToSeeProgress: "మీ ప్రగతిని చూడటానికి భాషా జతను జోడించండి."
-        )
+            addLanguagePairToSeeProgress: "మీ ప్రగతిని చూడటానికి భాషా జంటను జోడించండి",
+            startPracticingMessage: "మీ స్ట్రీక్ నిర్మించడానికి సాధన ప్రారంభించండి",
+            consistencyQuote: "స్థిరత్వం భాషా అభ్యాసానికి కీలకం",
+            practiceDateSavingDisabled: "సాధన తేదీ సేవింగ్ నిలిపివేయబడింది",
+            editYourStreaks: "మీ స్ట్రీక్‌లను సవరించండి",
+            editStreaks: "స్ట్రీక్‌లను సవరించండి",
+            selectDatesToAddOrRemove: "జోడించడానికి లేదా తీసివేయడానికి తేదీలను ఎంచుకోండి",
+            saving: "సేవ్ చేస్తోంది",
+            statusOnFire: "స్థితి: ఆన్ ఫైర్",
+            youPracticed: "మీరు సాధన చేశారు ",
+            yesterday: " నిన్న.",
+            checkInNow: "ఇప్పుడే చెక్ ఇన్ చేయండి",
+            nextGoal: "తదుపరి లక్ష్యం",
+            reward: "బహుమతి",
+            historyLogProgress: "చరిత్ర లాగ్",
+            streakStatus: "స్ట్రీక్ స్థితి",
+            streakLog: "స్ట్రీక్ లాగ్",
+            consistency: "స్థిరత్వం",
+            consistencyHigh: "మీ కార్యాచరణ లాగ్ అధిక ఆసక్తిని చూపుతుంది.",
+            consistencyMedium: "మీరు మంచి వేగాన్ని అందుకుంటున్నారు.",
+            consistencyLow: "స్థిరత్వం ముఖ్యం. ప్రయత్నిస్తూనే ఉండండి.",
+            reachMilestone: "%d రోజులు చేరుకోవడానికి ప్రయత్నించండి!",
+            nextMilestone: "తదుపరి మైలురాయి",
+            actionRequired: "చర్య అవసరం",
+            logActivity: "కార్యాచరణను నమోదు చేయండి",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "అత్యధిక స్కోరు",
+            streakData: "స్ట్రీక్ డేటా",
+            activeLabel: "యాక్టివ్",
+            missedLabel: "మిస్డ్",
+            saveChanges: "మార్పులను సేవ్ చేయి",
+            discardChanges: "మార్పులను రద్దు చేయి",
+            editLabel: "ఎడిట్",
+            // Advanced Stats
+            skillBalance: "నైపుణ్య సమతుల్యత",
+            fluencyVelocity: "ధారాళత వేగం",
+            vocabVault: "పదజాల భాండాగారం",
+            chronotype: "కాలప్రకృతి",
+            activityDistribution: "కార్యకలాప పంపిణీ (24 గం)",
+            studiedTime: "అధ్యయన సమయం",
+            currentLabel: "ప్రస్తుత",
+            streakLabel: "స్ట్రీక్",
+            longestLabel: "సుదీర్ఘ",
+            earlyBird: "తెల్లవారుజాము పక్షి",
+            earlyBirdDesc: "ఉదయాన్నే చురుకుగా ఉంటారు",
+            dayWalker: "పగలు తిరిగే వారు",
+            dayWalkerDesc: "మధ్యాహ్నం చురుకుగా ఉంటారు",
+            nightOwl: "రాత్రి గుడ్లగూబ",
+            nightOwlDesc: "చీకటి పడ్డాక చురుకుగా ఉంటారు",
+            timeMastery: "TIME MASTERY",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "లోడ్ అవుతోంది...",
+            adaptiveQuiz: "అడాప్టివ్ క్విజ్",
+            adaptiveQuizDescription: "మేము మొదట తప్పు అనువాదాన్ని చూపిస్తాం, తర్వాత సరైన పదాన్ని హైలైట్ చేస్తాం.",
+            wordCheck: "పద తనిఖీ",
+            wordCheckDescription: "టైల్స్ ముందుగా కలిసిపోయి, తర్వాత సరైన పదాన్ని నిర్ధారించడానికి అమర్చబడతాయి.",
+            wordCheckExamplePrompt: "పదాన్ని సరైన క్రమంలో అమర్చడానికి అక్షరాలను ట్యాప్ చేయండి.",
+            quizPrompt: "పదం కోసం సరైన అనువాదాన్ని ఎంచుకోండి.",
+            answerConfirmation: "మీరు సరైన పదాన్ని నిర్మించారు!",
+            tryAgain: "అయ్యో! మళ్ళీ ప్రయత్నించండి.")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizationManager protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "నా భాషలు"
-        case .notifications: return "నోటిఫికేషన్‌లు"
-        case .aesthetics: return "సౌందర్యం"
-        case .account: return "ఖాతా"
-        case .appLanguage: return "అనువర్తన ఇంటర్ఫేస్"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "లాగిన్ /"
-        case .register: return "నమోదు"
-        case .settings: return "సెట్టింగ్‌లు"
-        case .home: return "హోమ్"
-        case .back: return "వెనక్కి"
-        case .next: return "తర్వాత"
-        case .previous: return "మునుపటి"
-        case .done: return "పూర్తి"
-        case .cancel: return "రద్దు చేయి"
-        case .save: return "సేవ్ చేయి"
-        case .delete: return "తొలగించు"
-        case .add: return "జోడించు"
-        case .remove: return "తీసివేయి"
-        case .edit: return "సవరించు"
-        case .continueText: return "కొనసాగించండి"
-        
-        // Quiz
-        case .quizCompleted: return "క్విజ్ పూర్తయింది!"
-        case .sessionCompleted: return "సెషన్ పూర్తయింది!"
-        case .masteredEnvironment: return "మీరు మీ వాతావరణాన్ని నేర్చుకున్నారు!"
-        case .learnMoreAbout: return "గురించి మరింత తెలుసుకోండి"
-        case .backToHome: return "హోమ్‌కు తిరిగి వెళ్లండి"
-        case .tryAgain: return "మళ్లీ ప్రయత్నించండి"
-        case .shuffled: return "షఫుల్ చేయబడింది"
-        case .check: return "తనిఖీ చేయి"
-        
-        // Vocabulary
-        case .exploreCategories: return "వర్గాలను అన్వేషించండి"
-        case .testYourself: return "మిమ్మల్ని పరీక్షించుకోండి"
-        case .similarWords: return "సమానమైన పదాలు:"
-        case .wordTenses: return "పద కాలాలు:"
-        case .tapWordsToExplore: return "వాటి అనువాదాలను చదవడానికి మరియు అన్వేషించడానికి పదాలను టాప్ చేయండి"
-        case .wordBreakdown: return "పద విభజన:"
-        
-        // Scene
-        case .analyzingImage: return "చిత్రాన్ని విశ్లేషిస్తోంది..."
-        case .imageAnalysisCompleted: return "చిత్ర విశ్లేషణ పూర్తయింది"
-        case .imageSelected: return "చిత్రం ఎంచుకున్నారు"
-        case .placeNotSelected: return "స్థలం ఎంచుకోలేదు"
-        case .chooseLanguages: return "భాషలను ఎంచుకోండి"
-        case .locianChoose: return "Locian ఎంచుకుంటుంది"
-        
-        // Settings
-        case .enableNotifications: return "నోటిఫికేషన్‌లను ప్రారంభించండి"
-        case .thisPlace: return "ఈ స్థలం"
-        case .tapOnAnySection: return "సెట్టింగ్‌లను వీక్షించడానికి మరియు నిర్వహించడానికి పైన ఏదైనా విభాగాన్ని టాప్ చేయండి"
-        case .addNewLanguagePair: return "కొత్త భాషా జత జోడించండి"
-        case .noLanguagePairsAdded: return "ఇంకా భాషా జతలు జోడించబడలేదు"
-        case .setDefault: return "డిఫాల్ట్‌గా సెట్ చేయండి"
-        case .defaultText: return "డిఫాల్ట్"
-        case .user: return "వినియోగదారు"
-        case .noPhone: return "ఫోన్ లేదు"
-        case .signOutFromAccount: return "మీ ఖాతా నుండి సైన్ అవుట్ చేయండి"
-        case .removeAllPracticeData: return "మీ అన్ని ప్రాక్టీస్ డేటాను తొలగించండి"
-        case .permanentlyDeleteAccount: return "మీ ఖాతా మరియు అన్ని డేటాను శాశ్వతంగా తొలగించండి"
-        case .currentLevel: return "ప్రస్తుత స్థాయి"
-        case .selectPhoto: return "ఫోటో ఎంచుకోండి"
-        case .camera: return "కెమెరా"
-        case .photoLibrary: return "ఫోటో లైబ్రరీ"
-        case .selectTime: return "సమయం ఎంచుకోండి"
-        case .hour: return "గంట"
-        case .minute: return "నిమిషం"
-        case .addTime: return "సమయం జోడించండి"
-        case .areYouSureLogout: return "మీరు నిజంగా లాగ్ అవుట్ చేయాలనుకుంటున్నారా?"
-        case .areYouSureDeleteAccount: return "మీరు నిజంగా మీ ఖాతాను తొలగించాలనుకుంటున్నారా? ఈ చర్యను తిరిగి రద్దు చేయలేరు."
-        
-        // Quiz
-        case .goBack: return "వెనక్కి వెళ్లండి"
-        case .fillInTheBlank: return "ఖాళీని పూరించండి:"
-        case .arrangeWordsInOrder: return "పదాలను సరైన క్రమంలో అమర్చండి:"
-        case .tapWordsBelowToAdd: return "వాటిని ఇక్కడ జోడించడానికి క్రింద ఉన్న పదాలను టాప్ చేయండి"
-        case .availableWords: return "అందుబాటులో ఉన్న పదాలు:"
-        case .correctAnswer: return "సరైన సమాధానం:"
-        
-        // Common
-        case .error: return "దోషం"
-        case .ok: return "సరే"
-        case .close: return "మూసివేయి"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "మీరు నిలబడిన చోట నుండి మీకు అవసరమైన ప్రతి కాలం వరకు"
-        case .awarenessHeading: return "అవగాహన"
-        case .awarenessDescription: return "AI మీ చుట్టూ నుండి నేర్చుకుంటుంది"
-        case .inputsHeading: return "ఇన్‌పుట్‌లు"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "విభజన"
-        case .breakdownDescription: return "Locian వాక్యాలను కాలాలుగా విభజిస్తుంది, పదం-పదం అనువాదాలను అందిస్తుంది"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "సిద్ధంగా ఉంది"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "లాగిన్ / నమోదు"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "నావిగేట్ చేయడానికి ఎడమ లేదా కుడి వైపు టాప్ చేయండి"
-        case .selectAppLanguage: return "అనువర్తన భాషను ఎంచుకోండి"
-        case .selectLanguageDescription: return "ఈ భాష అనువర్తన వినియోగదారు ఇంటర్ఫేస్, శీర్షికలు, వివరణలు, బటన్లు, పేర్లు మరియు అన్నింటినీ ఎంచుకున్న భాషగా మారుస్తుంది"
-        
-        // Login
-        case .username: return "వినియోగదారు పేరు"
-        case .phoneNumber: return "ఫోన్ నంబర్"
-        case .guestLogin: return "అతిథి లాగిన్"
-        case .guestLoginDescription: return "అతిథి లాగిన్ ధృవీకరణ కోసం మరియు అతిథికి అన్ని అనువర్తన సౌకర్యాలకు ప్రాప్యతను అనుమతిస్తుంది. ధృవీకరణ తర్వాత తీసివేయబడుతుంది."
-        
-        // Professions
-        case .student: return "విద్యార్థి"
-        case .softwareEngineer: return "సాఫ్ట్‌వేర్ ఇంజనీర్"
-        case .teacher: return "ఉపాధ్యాయుడు"
-        case .doctor: return "డాక్టర్"
-        case .artist: return "కళాకారుడు"
-        case .businessProfessional: return "వ్యాపార నిపుణుడు"
-        case .salesOrMarketing: return "విక్రయాలు లేదా మార్కెటింగ్"
-        case .traveler: return "ప్రయాణికుడు"
-        case .homemaker: return "గృహిణి"
-        case .chef: return "శెఫ్"
-        case .police: return "పోలీసు"
-        case .bankEmployee: return "బ్యాంకు ఉద్యోగి"
-        case .nurse: return "నర్స్"
-        case .designer: return "డిజైనర్"
-        case .engineerManager: return "ఇంజనీర్ మేనేజర్"
-        case .photographer: return "ఫోటోగ్రాఫర్"
-        case .contentCreator: return "కంటెంట్ క్రియేటర్"
-        case .other: return "ఇతరులు"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian యొక్క ఎంపిక"
-        case .airport: return "విమానాశ్రయం"
-        case .cafe: return "కాఫీ"
-        case .gym: return "వ్యాయామశాల"
-        case .library: return "గ్రంథాలయం"
-        case .office: return "కార్యాలయం"
-        case .park: return "పార్క్"
-        case .restaurant: return "రెస్టారెంట్"
-        case .shoppingMall: return "షాపింగ్ మాల్"
-        case .travelling: return "ప్రయాణం"
-        case .university: return "విశ్వవిద్యాలయం"
-        case .addCustomPlace: return "కస్టమ్ స్థలాన్ని జోడించండి"
-        case .enterCustomPlaceName: return "కస్టమ్ స్థలం పేరును నమోదు చేయండి (గరిష్టంగా 30 అక్షరాలు)"
-        case .maximumCustomPlaces: return "గరిష్టంగా 10 కస్టమ్ స్థలాలు"
-        case .welcome: return "స్వాగతం"
-        case .tapToCaptureContext: return "మీ సందర్భాన్ని క్యాప్చర్ చేయడానికి మరియు నేర్చుకోవడం ప్రారంభించడానికి టాప్ చేయండి"
-        case .customSection: return "కస్టమ్"
-        case .examples: return "ఉదాహరణలు:"
-        case .customPlacePlaceholder: return "ఉదా., ఆఫీసుకు ప్రయాణం"
-        case .exampleTravellingToOffice: return "ఆఫీసుకు ప్రయాణం"
-        case .exampleTravellingToHome: return "ఇంటికి ప్రయాణం"
-        case .exampleExploringParis: return "పారిస్ అన్వేషణ"
-        case .exampleVisitingMuseum: return "మ్యూజియం సందర్శన"
-        case .exampleCoffeeShop: return "కాఫీ షాప్"
-        case .characterCount: return "అక్షరాలు"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "స్థానిక భాష:"
-        case .selectNativeLanguage: return "మీ స్థానిక భాషను ఎంచుకోండి"
-        case .targetLanguage: return "లక్ష్య భాష:"
-        case .selectTargetLanguage: return "మీరు నేర్చుకోవాలనుకున్న భాషను ఎంచుకోండి"
-        case .nativeLanguageDescription: return "మీ స్థానిక భాష అనేది మీరు చదవగల, వ్రాయగల మరియు సుళ్లగా మాట్లాడగల భాష. ఇది మీకు అత్యంత సౌకర్యవంతమైన భాష."
-        case .targetLanguageDescription: return "మీ లక్ష్య భాష అనేది మీరు నేర్చుకోవాలనుకున్న మరియు అభ్యాసం చేయాలనుకున్న భాష. మీరు మీ నైపుణ్యాలను మెరుగుపరచాలనుకున్న భాషను ఎంచుకోండి."
-        case .addPair: return "జత జోడించండి"
-        case .adding: return "జోడిస్తోంది..."
-        case .failedToAddLanguagePair: return "భాషా జత జోడించడంలో విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి."
-        case .settingAsDefault: return "డిఫాల్ట్‌గా సెట్ చేస్తోంది..."
-        case .beginner: return "ప్రారంభం"
-        case .intermediate: return "మధ్యస్థ"
-        case .advanced: return "అధునాతన"
-        case .currentlyLearning: return "నేర్చుకుంటున్నాను"
-        case .otherLanguages: return "ఇతర భాషలు"
-        case .learnNewLanguage: return "కొత్త భాష నేర్చుకోండి"
-        case .learn: return "నేర్చుకోండి"
-        case .tapToSelectNativeLanguage: return "మీ స్థానిక భాషను ఎంచుకోవడానికి టాప్ చేయండి"
-        case .neonGreen: return "నియాన్ గ్రీన్"
-        
-        // Theme color names
-        case .cyanMist: return "సియాన్ మిస్ట్"
-        case .violetHaze: return "వైలెట్ హేజ్"
-        case .softPink: return "సాఫ్ట్ పింక్"
-        case .pureWhite: return "శుద్ధ తెలుపు"
-        
-        // Quick Look
-        case .quickRecall: return "త్వరిత గుర్తుకు"
-        case .startQuickPuzzle: return "త్వరిత పజిల్ ప్రారంభించండి"
-        case .stopPuzzle: return "పజిల్ ఆపు"
-        
-        // Streak
-        case .streak: return "స్ట్రీక్"
-        case .dayStreak: return "రోజు స్ట్రీక్"
-        case .daysStreak: return "రోజులు స్ట్రీక్"
-        case .editYourStreaks: return "మీ స్ట్రీక్‌లను సవరించండి"
-        case .editStreaks: return "స్ట్రీక్‌లను సవరించండి"
-        case .selectDatesToAddOrRemove: return "అభ్యాస రోజులను జోడించడానికి లేదా తీసివేయడానికి తేదీలను ఎంచుకోండి"
-        case .saving: return "సేవ్ చేస్తోంది..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

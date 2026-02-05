@@ -104,6 +104,36 @@ class NotificationService {
         }
     }
     
+    // Schedule an immediate smart location notification
+    func scheduleSmartLocationNotification(title: String, body: String, placeName: String, hour: Int) {
+        requestPermission { granted in
+            guard granted else { return }
+            
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = .default
+            content.userInfo = [
+                "place_name": placeName,
+                "hour": hour
+            ]
+            
+            // Trigger 1 second from now to ensure it pops up even if app is transitioning
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: "smart_location_\(UUID().uuidString)",
+                content: content,
+                trigger: trigger
+            )
+            
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ [NotificationService] Failed to schedule smart notification: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+    
     // Schedule notification for specific day of week (1 = Sunday, 2 = Monday, ..., 7 = Saturday)
     func scheduleWeeklyNotification(
         identifier: String,

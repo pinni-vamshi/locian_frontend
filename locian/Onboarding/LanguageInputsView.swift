@@ -8,88 +8,144 @@
 import SwiftUI
 
 struct LanguageInputsView: View {
-    @State private var currentLanguage = 0
-    @State private var languageNameOpacity: Double = 0
-    @State private var nativeScriptOpacity: Double = 0
-    @State private var transliterationOpacity: Double = 0
-    @State private var languageNameScale: CGFloat = 0.01
-    @State private var nativeScriptScale: CGFloat = 0.01
-    @State private var transliterationScale: CGFloat = 0.01
     
-    private let languages = [
-        ("Japanese", "こんにちは", "Konnichiwa"),
-        ("Hindi", "नमस्ते", "Namaste"),
-        ("Arabic", "مرحبا", "Marhaba"),
-        ("Korean", "안녕하세요", "Annyeonghaseyo")
-    ]
+    @State private var itemsVisible = false
+    
+    @ObservedObject private var localizationManager = LocalizationManager.shared
+    
+    // Neon Colors
+    // Neon Colors
+    private let neonPink = ThemeColors.secondaryAccent
+    private let neonCyan = ThemeColors.primaryAccent
     
     var body: some View {
-        VStack(spacing: 25) {
-            // Language name
-            Text(languages[currentLanguage].0)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .scaleEffect(languageNameScale)
-                .opacity(languageNameOpacity)
+        ZStack {
+            Color.black.ignoresSafeArea()
             
-            // Native script
-            Text(languages[currentLanguage].1)
-                .font(.system(size: 36))
-                .foregroundColor(.white)
-                .scaleEffect(nativeScriptScale)
-                .opacity(nativeScriptOpacity)
-            
-            // transliteration
-            Text(languages[currentLanguage].2)
-                .font(.system(size: 22))
-                .foregroundColor(.white.opacity(0.8))
-                .scaleEffect(transliterationScale)
-                .opacity(transliterationOpacity)
+            VStack(spacing: 0) {
+                // FIXED HEADER SECTION
+                VStack(spacing: 0) {
+                    // Header
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(localizationManager.string(.module03))
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.gray)
+                            
+                            Text(localizationManager.string(.notJustMemorization))
+                                .font(.system(size: 36, weight: .heavy))
+                                .foregroundColor(.white)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 60)
+                    
+                    // Philosophy Bar
+                    HStack(spacing: 12) {
+                        Rectangle().fill(neonCyan).frame(width: 40, height: 2)
+                        Text(localizationManager.string(.philosophy))
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundColor(neonCyan)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 30)
+                    
+                    // Body Text
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(localizationManager.string(.locianTeaches))
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        HStack(spacing: 0) {
+                            Text(localizationManager.string(.think))
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(neonPink)
+                            Text(" " + localizationManager.string(.inTargetLanguage))
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                    .padding(.bottom, 20) // Add some spacing before scroll area
+                }
+                
+                // SCROLLABLE CONTENT SECTION
+                ScrollView {
+                    VStack(spacing: 16) {
+                        checklistCard(
+                            iconColor: neonCyan,
+                            title: localizationManager.string(.patternBasedLearning),
+                            desc: localizationManager.string(.patternBasedDesc),
+                            delay: 0.2
+                        )
+                        
+                        checklistCard(
+                            iconColor: neonPink,
+                            title: localizationManager.string(.situationalIntelligence),
+                            desc: localizationManager.string(.situationalDesc),
+                            delay: 0.4
+                        )
+                        
+                        checklistCard(
+                            iconColor: neonCyan,
+                            title: localizationManager.string(.adaptiveDrills),
+                            desc: localizationManager.string(.adaptiveDesc),
+                            delay: 0.6
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 10)
+                    
+                    Spacer()
+                    
+                    Spacer().frame(height: 120) // Bottom padding for global footer
+                }
+            }
         }
         .onAppear {
-            startInitialAnimation()
-            startLanguageRotation()
+            itemsVisible = true
         }
     }
     
-    private func startInitialAnimation() {
-        // Language Name: Scale + opacity fade (0.3s delay)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
-                languageNameScale = 1.0
-                languageNameOpacity = 1.0
+    @ViewBuilder
+    func checklistCard(iconColor: Color, title: String, desc: String, delay: Double) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            // Line
+            Rectangle().fill(iconColor).frame(width: 2)
+            
+            // Check
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(iconColor)
+            
+            // Text
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
+                
+                Text(desc)
+                    .font(.system(size: 14, weight: .medium, design: .monospaced))
+                    .foregroundColor(.gray)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        
-        // Native Script: Scale + opacity fade (0.4s delay)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
-                nativeScriptScale = 1.0
-                nativeScriptOpacity = 1.0
-            }
-        }
-        
-        // Transliteration: Scale + opacity fade (0.4s + 0.1s stagger = 0.5s delay)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.9)) {
-                transliterationScale = 1.0
-                transliterationOpacity = 1.0
-            }
-        }
-    }
-    
-    private func startLanguageRotation() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            // Smooth crossfade transition - no flashing
-            withAnimation(.easeInOut(duration: 0.5)) {
-                currentLanguage = (currentLanguage + 1) % languages.count
-            }
-        }
+        .padding(16)
+        .background(Color(white: 0.05))
+        .opacity(itemsVisible ? 1.0 : 0.0)
+        .offset(x: itemsVisible ? 0 : 50)
+        .frame(maxWidth: .infinity, alignment: .leading) // Ensure full width and left alignment
+        .animation(.spring(dampingFraction: 0.8).delay(delay), value: itemsVisible)
     }
 }
 
 #Preview {
     LanguageInputsView()
-        .background(Color.black)
         .preferredColorScheme(.dark)
 }
+

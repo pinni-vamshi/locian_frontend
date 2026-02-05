@@ -2,475 +2,620 @@
 //  HindiStrings.swift
 //  locian
 //
-//  Hindi localization strings
-//
 
 import Foundation
 
 struct HindiStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "क्विज़ पूर्ण!",
-            masteredEnvironment: "आपने अपने वातावरण में महारत हासिल कर ली है!",
-            learnMoreAbout: "के बारे में और जानें",
-            backToHome: "होम पर वापस",
-            next: "अगला",
-            previous: "पिछला",
-            check: "जांचें",
-            tryAgain: "फिर से कोशिश करें",
-            shuffled: "शफल किया गया",
-            noQuizAvailable: "कोई क्विज़ उपलब्ध नहीं",
-            question: "प्रश्न",
-            correct: "सही",
-            incorrect: "गलत",
-            notAttempted: "अप्रयासित"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "कैमरा",
+            gallery: "गैलरी",
+            nextUp: "आगे",
+            historyLog: "इतिहास लॉग",
+
+            moments: "पल",
+            pastMoments: "पिछले पल",
+            noHistory: "कोई इतिहास नहीं",
+            generatingHistory: "इतिहास तैयार हो रहा है",
+            generatingMoments: "बना रहा है...",
+            analyzingImage: "छवि विश्लेषण...",
+            tapNextUpToGenerate: "तैयार करने के लिए आगे टैप करें",
+            noUpcomingPlaces: "कोई आने वाले स्थान नहीं",
+            noDetails: "कोई विवरण नहीं",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "सीखना शुरू करें",
+            continueLearning: "सीखना जारी रखें",
+            noPastMoments: "कोई पिछले पल नहीं",
+            useCamera: "कैमरा उपयोग करें",
+            previouslyLearning: "पहले सीखा",
+            sunShort: "रवि",
+            monShort: "सोम",
+            tueShort: "मंगल",
+            wedShort: "बुध",
+            thuShort: "गुरु",
+            friShort: "शुक्र",
+            satShort: "शनि",
+            login: "लॉगिन",
+            register: "पंजीकरण",
+            settings: "सेटिंग्स",
+            back: "वापस",
+            done: "हो गया",
+            cancel: "रद्द करें",
+            save: "सहेजें",
+            delete: "हटाएं",
+            add: "जोड़ें",
+            remove: "हटाएं",
+            edit: "संपादित करें",
+            error: "त्रुटि",
+            ok: "ठीक है",
+            welcomeLabel: "स्वागत है",
+            currentStreak: "वर्तमान स्ट्रैक",
+            notSet: "सेट नहीं है",
+            learnTab: "सीखें",
+            addTab: "जोड़ें",
+            progressTab: "प्रगति",
+            settingsTab: "सेटिंग्स",
+            loading: "लोड हो रहा है...",
+            unknownPlace: "अज्ञात स्थान",
+            noLanguageAvailable: "कोई भाषा उपलब्ध नहीं",
+            noInternetConnection: "इंटरनेट कनेक्शन नहीं है",
+            retry: "पुन: प्रयास करें",
+            tapToGetMoments: "पल पाने के लिए टैप करें",
+            startLearningThisMoment: "इस पल से सीखना शुरू करें",
+            daysLabel: "दिन",
+            noNewPlace: "नई जगह जोड़ें",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "शुरू",
+            typeYourMoment: "अपना पल टाइप करें...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "मेरी भाषाएं",
+            systemLanguage: "ऐप इंटरफ़ेस",
+            targetLanguages: "लक्ष्य भाषाएँ",
+            pastLanguagesArchived: "पहले सीखी गई भाषाएँ",
+            theme: "थीम",
             notifications: "सूचनाएं",
-            appearance: "सौंदर्य",
             account: "खाता",
             profile: "प्रोफ़ाइल",
-            addLanguagePair: "भाषा युग्म जोड़ें",
-            enableNotifications: "सूचनाएं सक्षम करें",
-            logout: "लॉगआउट",
+            addLanguagePair: "भाषा जोड़ी जोड़ें",
+            logout: "लॉग आउट",
             deleteAllData: "सभी डेटा हटाएं",
-            deleteAccount: "खाता हटाएं",
+            deleteAccount: "खाता स्थायी रूप से हटाएं",
             selectLevel: "स्तर चुनें",
-            selectAppLanguage: "ऐप इंटरफ़ेस",
             proFeatures: "प्रो सुविधाएँ",
-            showSimilarWordsToggle: "समान शब्द दिखाएँ",
-            showWordTensesToggle: "शब्दों के काल दिखाएँ",
-            nativeLanguage: "मूल भाषा:",
-            selectNativeLanguage: "अपनी मूल भाषा चुनें",
-            targetLanguage: "लक्ष्य भाषा:",
-            selectTargetLanguage: "वह भाषा चुनें जो आप सीखना चाहते हैं",
-            nativeLanguageDescription: "आपकी मूल भाषा वह भाषा है जिसे आप पढ़, लिख और धाराप्रवाह बोल सकते हैं। यह वह भाषा है जिसमें आप सबसे अधिक सहज हैं।",
-            targetLanguageDescription: "आपकी लक्ष्य भाषा वह भाषा है जिसे आप सीखना और अभ्यास करना चाहते हैं। वह भाषा चुनें जिसमें आप अपने कौशल में सुधार करना चाहते हैं।",
-            addPair: "जोड़ी जोड़ें",
-            adding: "जोड़ रहे हैं...",
-            failedToAddLanguagePair: "भाषा जोड़ी जोड़ने में विफल। कृपया पुनः प्रयास करें।",
-            settingAsDefault: "डिफ़ॉल्ट के रूप में सेट कर रहे हैं...",
+            showSimilarWordsToggle: "समान शब्द दिखाएं",
+            nativeLanguage: "मातृ भाषा",
+            selectNativeLanguage: "मातृभाषा चुनें",
+            targetLanguage: "लक्ष्य भाषा",
+            selectTargetLanguage: "लक्ष्य भाषा चुनें",
+            targetLanguageDescription: "वह भाषा जो आप सीखना चाहते हैं",
             beginner: "शुरुआती",
-            intermediate: "मध्यम",
+            intermediate: "मध्यवर्ती",
             advanced: "उन्नत",
-            currentlyLearning: "सीख रहे हैं",
-            otherLanguages: "अन्य भाषाएं",
+            currentlyLearning: "वर्तमान में सीख रहे हैं",
             learnNewLanguage: "नई भाषा सीखें",
             learn: "सीखें",
-            tapToSelectNativeLanguage: "अपनी मूल भाषा चुनने के लिए टैप करें",
-            neonGreen: "नीयन ग्रीन",
-            cyanMist: "सियान मिस्ट",
-            violetHaze: "वायलेट हेज़",
-            softPink: "सॉफ्ट पिंक",
-            pureWhite: "शुद्ध सफेद"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "श्रेणियां खोजें",
-            testYourself: "अपना परीक्षण करें",
-            slideToStartQuiz: "Slide to start the quiz",
-            similarWords: "समान शब्द",
-            wordTenses: "शब्द काल",
-            wordBreakdown: "शब्द विभाजन",
-            tapToSeeBreakdown: "शब्द का विभाजन देखने के लिए टैप करें",
-            tapToHideBreakdown: "शब्द का विभाजन छुपाने के लिए टैप करें",
-            tapWordsToExplore: "उनके अनुवाद पढ़ने और अन्वेषण करने के लिए शब्दों पर टैप करें",
-            loading: "लोड हो रहा है...",
-            learnTheWord: "शब्द सीखें",
-            tryFromMemory: "याद से कोशिश करें",
-            adjustingTo: "समायोजन",
-            settingPlace: "सेट करना",
-            settingTime: "सेट करना",
-            generatingVocabulary: "उत्पन्न करना",
-            analyzingVocabulary: "विश्लेषण",
-            analyzingCategories: "विश्लेषण",
-            analyzingWords: "विश्लेषण",
-            creatingQuiz: "बनाना",
-            organizingContent: "व्यवस्थित करना",
-            to: "को",
-            place: "स्थान",
-            time: "समय",
-            vocabulary: "शब्दावली",
-            your: "आपका",
-            interested: "रुचि",
-            categories: "श्रेणियां",
-            words: "शब्द",
-            quiz: "क्विज़",
-            content: "सामग्री"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "नमस्ते,",
-            learnFromSurroundings: "अपने आसपास से सीखें",
-            learnFromSurroundingsDescription: "अपने वातावरण को कैप्चर करें और वास्तविक दुनिया के संदर्भों से शब्दावली सीखें",
-            locianChoosing: "चुन रहा है...",
-            chooseLanguages: "भाषाएँ चुनें",
-            continueWith: "Locian ने जो चुना उससे जारी रखें",
-            slideToLearn: "Slide to learn",
-            recommended: "अनुशंसित",
-            intoYourLearningFlow: "आपकी सीखने की धारा में",
-            intoYourLearningFlowDescription: "आपके सीखने के इतिहास के आधार पर अभ्यास करने के लिए अनुशंसित स्थान",
-            customSituations: "आपकी कस्टम स्थितियाँ",
-            customSituationsDescription: "अपने स्वयं के व्यक्तिगत सीखने के परिदृश्यों के साथ बनाएं और अभ्यास करें",
-            max: "अधिकतम",
-            recentPlacesTitle: "आपके हाल के स्थान",
-            allPlacesTitle: "सभी स्थान",
-            recentPlacesEmpty: "सुझाव देखने के लिए शब्दावली जनरेट करें।",
-            showMore: "और दिखाएं",
-            showLess: "कम दिखाएं",
-            takePhoto: "फोटो लें",
-            chooseFromGallery: "गैलरी से चुनें",
-            letLocianChoose: "Locian को चुनने दें",
-            lociansChoice: "Locian द्वारा",
-            cameraTileDescription: "यह फोटो आपके वातावरण का विश्लेषण करता है और सीखने के लिए क्षण दिखाता है।",
-            airport: "हवाई अड्डा",
-            aquarium: "जलजीवालय",
-            bakery: "बेकरी",
-            beach: "समुद्र तट",
-            bookstore: "पुस्तक दुकान",
-            cafe: "कैफे",
-            cinema: "सिनेमा",
-            gym: "जिम",
-            hospital: "अस्पताल",
-            hotel: "होटल",
-            home: "घर",
-            library: "पुस्तकालय",
-            market: "बाज़ार",
-            museum: "संग्रहालय",
-            office: "ऑफ़िस",
-            park: "पार्क",
-            restaurant: "रेस्तरां",
-            shoppingMall: "शॉपिंग मॉल",
-            stadium: "स्टेडियम",
-            supermarket: "सुपरमार्केट",
-            temple: "मंदिर",
-            travelling: "यात्रा",
-            university: "विश्वविद्यालय",
-            addCustomPlace: "कस्टम स्थान जोड़ें",
-            addPlace: "स्थान जोड़ें",
-            enterCustomPlaceName: "कस्टम स्थान का नाम दर्ज करें (अधिकतम 30 अक्षर)",
-            maximumCustomPlaces: "अधिकतम 10 कस्टम स्थान",
-            welcome: "स्वागत है",
+            neonGreen: "नियॉन हरा",
+            neonFuchsia: "नियॉन फ्यूशिया",
+            electricIndigo: "इलेक्ट्रिक इंडिगो",
+            graphiteBlack: "ग्रेफाइट ब्लैक",
+            student: "छात्र",
+            softwareEngineer: "सॉफ्टवेयर इंजीनियर",
+            teacher: "शिक्षक",
+            doctor: "डॉक्टर",
+            artist: "कलाकार",
+            businessProfessional: "बिजनेस पेशेवर",
+            salesOrMarketing: "बिक्री या मार्केटिंग",
+            traveler: "यात्री",
+            homemaker: "गृहिणी/गृहपति",
+            chef: "शेफ",
+            police: "पुलिस",
+            bankEmployee: "बैंक कर्मचारी",
+            nurse: "नर्स",
+            designer: "डिज़ाइनर",
+            engineerManager: "इंजीनियरिंग मैनेजर",
+            photographer: "फोटोग्राफर",
+            contentCreator: "कंटेंट क्रिएटर",
+            entrepreneur: "उद्यमी",
+            other: "अन्य",
+            otherPlaces: "अन्य स्थान",
+            speaks: "बोलते हैं",
+            neuralEngine: "न्यूरल इंजन",
+            noLanguagePairsAdded: "कोई भाषा जोड़ी नहीं जोड़ी गई",
+            setDefault: "डिफ़ॉल्ट सेट करें",
+            defaultText: "डिफ़ॉल्ट",
             user: "उपयोगकर्ता",
-            tapToCaptureContext: "अपने संदर्भ को कैप्चर करने और सीखना शुरू करने के लिए टैप करें",
-            customSection: "कस्टम",
-            examples: "उदाहरण:",
-            customPlacePlaceholder: "उदा., कार्यालय की यात्रा",
-            exampleTravellingToOffice: "कार्यालय की यात्रा",
-            exampleTravellingToHome: "घर की यात्रा",
-            exampleExploringParis: "पेरिस की खोज",
-            exampleVisitingMuseum: "संग्रहालय का दौरा",
-            exampleCoffeeShop: "कॉफी की दुकान",
-            characterCount: "अक्षर",
-            situationExample1: "एक व्यस्त कैफे में कॉफी ऑर्डर करना",
-            situationExample2: "एक नए शहर में रास्ता पूछना",
-            situationExample3: "बाजार में किराने का सामान खरीदना",
-            situationExample4: "डॉक्टर की अपॉइंटमेंट लेना",
-            situationExample5: "होटल में चेक-इन करना"
-        )
+            signOutFromAccount: "खाते से लॉग आउट",
+            permanentlyDeleteAccount: "खाता स्थायी रूप से हटाएं",
+            languageAddedSuccessfully: "भाषा सफलतापूर्वक जोड़ी गई",
+            failedToAddLanguage: "भाषा जोड़ने में विफल। कृपया पुन: प्रयास करें।",
+            pleaseSelectLanguage: "कृपया एक भाषा चुनें",
+            systemConfig: "सिस्टम // कॉन्फ़िगर",
+            currentLevel: "वर्तमान स्तर",
+            selectPhoto: "फोटो चुनें",
+            camera: "कैमरा",
+            photoLibrary: "फोटो लाइब्रेरी",
+            selectTime: "समय चुनें",
+            hour: "घंटा",
+            minute: "मिनट",
+            addTime: "समय जोड़ें",
+            location: "स्थान",
+            diagnosticBorders: "डायग्नोस्टिक बॉर्डर्स",
+            areYouSureLogout: "क्या आप वाकई लॉग आउट करना चाहते?",
+            areYouSureDeleteAccount: "क्या आप वाकई अपना खाता स्थायी रूप से हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "लॉगिन",
             verify: "सत्यापित करें",
             selectProfession: "पेशा चुनें",
+            selectUserProfession: "SELECT_USER_PROFESSION",
             username: "उपयोगकर्ता नाम",
-            phoneNumber: "फोन नंबर",
+            phoneNumber: "फ़ोन नंबर",
             guestLogin: "अतिथि लॉगिन",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "शुरू करने के लिए अपना पेशा चुनें",
+            showMore: "और दिखाएं",
+            showLess: "कम दिखाएं",
+            forReview: "[समीक्षा के लिए]",
+            authenticatingUser: "AUTHENTICATING_USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS_OF_SERVICE",
+            privacyPolicy: "PRIVACY_POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "जहाँ आप खड़े हैं से लेकर हर tense जो आपको चाहिए",
+            locianDescription: "अपनी दैनिक जीवन के माध्यम से स्वाभाविक रूप से भाषाएँ सीखें",
             awarenessHeading: "जागरूकता",
-            awarenessDescription: "AI आपके आसपास से सीखता है",
-            inputsHeading: "इनपुट",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
-            breakdownHeading: "विभाजन",
-            breakdownDescription: "Locian वाक्यों को tenses में विभाजित करता है, शब्द-दर-शब्द अनुवाद प्रदान करता है",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
+            awarenessDescription: "रियल टाइम में अपने आसपास के शब्दों को नोटिस करें",
+            breakdownHeading: "विश्लेषण",
+            breakdownDescription: "समझें कि शब्द कैसे बनते हैं",
+            progressHeading: "प्रगति",
+            progressDescription: "अपनी सीखने की यात्रा को ट्रैक करें",
             readyHeading: "तैयार",
-            readyDescription: "",
-            loginOrRegister: "लॉगिन / पंजीकरण",
-            pageIndicator: " / 6",
-            tapToNavigate: "नेविगेट करने के लिए बाएं या दाएं टैप करें",
-            selectAppLanguage: "ऐप भाषा चुनें",
-            selectLanguageDescription: "यह भाषा ऐप यूजर इंटरफ़ेस, हेडिंग, विवरण, बटन, नाम और सभी चीजों को चयनित भाषा में बदल देगी"
-        )
+            readyDescription: "अभी सीखना शुरू करें",
+            loginOrRegister: "लॉगिन या पंजीकरण",
+            pageIndicator: "पृष्ठ",
+            selectLanguageDescription: "अपनी पसंदीदा भाषा चुनें",
+            fromWhereYouStand: "तुम जहां\nखड़े हो",
+            toEveryWord: "हर शब्द",
+            everyWord: "तक",
+            youNeed: "तुम्हें चाहिए",
+            lessonEngine: "लेसन_इंजन",
+            nodesLive: "नोड्स_लाइव",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "होलो_ग्रिड_सक्रिय",
+            adaCr02: "ADA_CR-02",
+            your: "तुम्हारी",
+            places: "जगहें,",
+            lessons: "सबक।",
+            yourPlaces: "तुम्हारी जगहें,",
+            yourLessons: " तुम्हारे सबक।",
+            nearbyCafes: "पास के कैफे?",
+            unlockOrderFlow: " अनलॉक ऑर्डर",
+            modules: "मॉड्यूल",
+            activeHubs: "सक्रिय हब?",
+            synthesizeGym: " जिम संश्लेषित करें",
+            vocabulary: "शब्दावली",
+            locationOpportunity: "हर स्थान सीखने का अवसर बन जाता है",
+            module03: "मॉड्यूल_03",
+            notJustMemorization: "सिर्फ रटना\nनहीं",
+            philosophy: "दर्शन",
+            locianTeaches: "Locian सिर्फ शब्द नहीं सिखाता।\nLocian आपको सिखाता है ",
+            think: "सोचना",
+            inTargetLanguage: "अपनी लक्षित भाषा में।",
+            patternBasedLearning: "पैटर्न-आधारित शिक्षा",
+            patternBasedDesc: "सूखे नियमों के बिना व्याकरणिक संरचनाओं को सहजता से पहचानें।",
+            situationalIntelligence: "स्थितिजन्य बुद्धि",
+            situationalDesc: "गतिशील परिदृश्य जो आपके वातावरण और इतिहास के अनुकूल होते हैं।",
+            adaptiveDrills: "अनुकूलनीय अभ्यास",
+            adaptiveDesc: "लेसन इंजन आपकी कमजोरियों की पहचान करता है और पुनर्गणना करता है।",
+            systemReady: "सिस्टम_तैयार",
+            quickSetup: "त्वरित_सेटअप",
+            levelB2: "स्तर_B2",
+            authorized: "अधिकृत",
+            notificationsPermission: "सूचनाएं",
+            notificationsDesc: "आस-पास के अभ्यास के अवसरों और स्ट्रीक अलर्ट पर रीयल-टाइम अपडेट प्राप्त करें।",
+            microphonePermission: "माइक्रोफ़ोन",
+            microphoneDesc: "वास्तविक दुनिया के संदर्भों में उच्चारण स्कोरिंग और पाठ बातचीत के लिए आवश्यक।",
+            geolocationPermission: "जियोलोकेशन",
+            geolocationDesc: "विसर्जित अभ्यास के लिए कॉफी शॉप या लाइब्रेरी जैसे नजदीकी \"लेसन ज़ोन\" की पहचान करें।",
+            granted: "स्वीकृत",
+            allow: "अनुमति दें",
+            skip: "छोड़ें",
+            letsStart: "चलिए शुरू करते हैं",
+            continueText: "जारी रखें",
+            wordTenses: "काल:",
+            similarWords: "समान शब्द:",
+            wordBreakdown: "शब्द विश्लेषण:",
+            consonant: "व्यंजन",
+            vowel: "स्वर",
+            past: "भूतकाल",
+            present: "वर्तमान",
+            future: "भविष्य",
+            learnWord: "सीखें")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "रद्द करें",
-            save: "सहेजें",
-            done: "पूर्ण",
-            ok: "ठीक",
-            back: "वापस",
-            next: "अगला",
-            continueText: "जारी रखें"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "कस्टम",
-            hint: "संकेत",
-            practiceDescription: "किसी भी शब्द पर टैप करें इसे अपनी लक्ष्य भाषा में अनुवाद करने के लिए। यदि आपको मदद चाहिए, तो सुझाव प्राप्त करने के लिए संकेत बटन का उपयोग करें।",
-            practiceTitle: "अभ्यास",
-            practiceFollowUp: "अगला अभ्यास",
-            camera: "कैमरा",
-            cameraDescription: "Locian {native} में एक बातचीत उत्पन्न करेगा और आप {target} में परिवर्तित करने का अभ्यास कर सकते हैं।",
-            useCamera: "कैमरा उपयोग करें",
-            cameraButtonDescription: "फोटो से क्षण उत्पन्न करें",
-            typeConversation: "एक बातचीत टाइप करें",
-            typeConversationDescription: "Locian {native} में एक बातचीत उत्पन्न करेगा और आप {target} में परिवर्तित करने का अभ्यास कर सकते हैं।",
-            conversationPlaceholder: "उदा. एक व्यस्त कैफे में कॉफी ऑर्डर करना",
-            submit: "सबमिट करें",
-            fullCustomText: "पूर्ण कस्टम पाठ",
-            examples: "उदाहरण:",
-            conversationExample1: "बारिश में रास्ता पूछना",
-            conversationExample2: "रात में देर से सब्जियां खरीदना",
-            conversationExample3: "भीड़भाड़ वाले कार्यालय में काम करना",
-            describeConversation: "वह बातचीत वर्णन करें जिसे आप Locian से बनाना चाहते हैं।",
-            fullTextPlaceholder: "पूर्ण पाठ या संवाद यहाँ टाइप करें...",
-            startCustomPractice: "कस्टम अभ्यास शुरू करें"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "प्रगति",
-            edit: "संपादित करें",
             current: "वर्तमान",
             longest: "सबसे लंबा",
             lastPracticed: "अंतिम अभ्यास",
             days: "दिन",
-            addLanguagePairToSeeProgress: "अपनी प्रगति देखने के लिए एक भाषा युग्म जोड़ें।"
-        )
+            addLanguagePairToSeeProgress: "अपनी प्रगति देखने के लिए भाषा जोड़ी जोड़ें",
+            startPracticingMessage: "अपनी स्ट्रीक बनाने के लिए अभ्यास शुरू करें",
+            consistencyQuote: "निरंतरता भाषा सीखने की कुंजी है",
+            practiceDateSavingDisabled: "अभ्यास तिथि सहेजना अक्षम है",
+            editYourStreaks: "अपनी स्ट्रीक संपादित करें",
+            editStreaks: "स्ट्रीक संपादित करें",
+            selectDatesToAddOrRemove: "जोड़ने या हटाने के लिए तिथियां चुनें",
+            saving: "सहेज रहा है",
+            statusOnFire: "स्थिति: सक्रिय",
+            youPracticed: "आपने अभ्यास किया ",
+            yesterday: " कल।",
+            checkInNow: "अभी चेक इन करें",
+            nextGoal: "अगला लक्ष्य",
+            reward: "इनाम",
+            historyLogProgress: "इतिहास लॉग",
+            streakStatus: "स्ट्रीक स्थिति",
+            streakLog: "स्ट्रीक लॉग",
+            consistency: "एकाग्रता",
+            consistencyHigh: "आपका गतिविधि लॉग उच्च सक्रियता दिखाता है।",
+            consistencyMedium: "आप अच्छी गति बना रहे हैं।",
+            consistencyLow: "निरंतरता महत्वपूर्ण है। प्रयास करते रहें।",
+            reachMilestone: "%d दिनों तक पहुँचने का प्रयास करें!",
+            nextMilestone: "अगला माइलस्टोन",
+            actionRequired: "कार्रवाई आवश्यक",
+            logActivity: "गतिविधि दर्ज करें",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "सबसे लंबी स्ट्रीक",
+            streakData: "स्ट्रीक डेटा",
+            activeLabel: "सक्रिय",
+            missedLabel: "छूटा हुआ",
+            saveChanges: "परिवर्तन सहेजें",
+            discardChanges: "परिवर्तन छोड़ें",
+            editLabel: "संपादित करें",
+            // Advanced Stats
+            skillBalance: "कौशल संतुलन",
+            fluencyVelocity: "प्रवाह वेग",
+            vocabVault: "शब्दों का खजाना",
+            chronotype: "कालप्रकार",
+            activityDistribution: "गतिविधि वितरण (24 घंटे)",
+            studiedTime: "अध्ययन समय",
+            currentLabel: "वर्तमान",
+            streakLabel: "स्ट्रीक",
+            longestLabel: "लंबी",
+            earlyBird: "सुबह का पंछी",
+            earlyBirdDesc: "सुबह के समय सबसे सक्रिय",
+            dayWalker: "दिन का राही",
+            dayWalkerDesc: "दोपहर के समय सबसे सक्रिय",
+            nightOwl: "रात का उल्लू",
+            nightOwlDesc: "अंधेरा होने के बाद सबसे सक्रिय",
+            timeMastery: "समय महारत",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "लोड हो रहा है...",
+            adaptiveQuiz: "अनुकूल प्रश्नोत्तरी",
+            adaptiveQuizDescription: "हम पहले गलत अनुवाद दिखाते हैं, फिर सही शब्द।",
+            wordCheck: "शब्द जाँच",
+            wordCheckDescription: "टाइल्स पहले मिलती हैं, फिर सही शब्द की पुष्टि के लिए सेट होती हैं।",
+            wordCheckExamplePrompt: "शब्द को सही क्रम में व्यवस्थित करने के लिए अक्षरों को टैप करें।",
+            quizPrompt: "शब्द के लिए सही अनुवाद चुनें।",
+            answerConfirmation: "आपने सही शब्द बनाया है!",
+            tryAgain: "ओह! फिर से प्रयास करें।")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "मेरी भाषाएं"
-        case .notifications: return "सूचनाएं"
-        case .aesthetics: return "सौंदर्य"
-        case .account: return "खाता"
-        case .appLanguage: return "ऐप इंटरफ़ेस"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "लॉगिन /"
-        case .register: return "पंजीकरण"
-        case .settings: return "सेटिंग्स"
-        case .home: return "होम"
-        case .back: return "वापस"
-        case .next: return "अगला"
-        case .previous: return "पिछला"
-        case .done: return "पूर्ण"
-        case .cancel: return "रद्द करें"
-        case .save: return "सहेजें"
-        case .delete: return "हटाएं"
-        case .add: return "जोड़ें"
-        case .remove: return "हटाएं"
-        case .edit: return "संपादित करें"
-        case .continueText: return "जारी रखें"
-        
-        // Quiz
-        case .quizCompleted: return "क्विज़ पूर्ण!"
-        case .sessionCompleted: return "सत्र पूर्ण!"
-        case .masteredEnvironment: return "आपने अपने वातावरण में महारत हासिल कर ली है!"
-        case .learnMoreAbout: return "के बारे में और जानें"
-        case .backToHome: return "होम पर वापस जाएं"
-        case .tryAgain: return "फिर से कोशिश करें"
-        case .shuffled: return "शफल किया गया"
-        case .check: return "जांचें"
-        
-        // Vocabulary
-        case .exploreCategories: return "श्रेणियां खोजें"
-        case .testYourself: return "अपना परीक्षण करें"
-        case .similarWords: return "समान शब्द:"
-        case .wordTenses: return "शब्द काल:"
-        case .tapWordsToExplore: return "उनके अनुवाद पढ़ने और अन्वेषण करने के लिए शब्दों पर टैप करें"
-        case .wordBreakdown: return "शब्द विभाजन:"
-        
-        // Scene
-        case .analyzingImage: return "छवि का विश्लेषण कर रहे हैं..."
-        case .imageAnalysisCompleted: return "छवि विश्लेषण पूर्ण"
-        case .imageSelected: return "छवि चुनी गई"
-        case .placeNotSelected: return "स्थान चयनित नहीं"
-        case .locianChoose: return "Locian चुनता है"
-        case .chooseLanguages: return "भाषाएँ चुनें"
-        
-        // Settings
-        case .enableNotifications: return "सूचनाएं सक्षम करें"
-        case .thisPlace: return "यह स्थान"
-        case .tapOnAnySection: return "सेटिंग्स देखने और प्रबंधित करने के लिए ऊपर किसी भी सेक्शन पर टैप करें"
-        case .addNewLanguagePair: return "नया भाषा युग्म जोड़ें"
-        case .noLanguagePairsAdded: return "अभी तक कोई भाषा युग्म जोड़ा नहीं गया"
-        case .setDefault: return "डिफ़ॉल्ट सेट करें"
-        case .defaultText: return "डिफ़ॉल्ट"
-        case .user: return "उपयोगकर्ता"
-        case .noPhone: return "कोई फोन नहीं"
-        case .signOutFromAccount: return "अपने खाते से साइन आउट करें"
-        case .removeAllPracticeData: return "अपना सभी अभ्यास डेटा हटाएं"
-        case .permanentlyDeleteAccount: return "अपने खाते और सभी डेटा को स्थायी रूप से हटाएं"
-        case .currentLevel: return "वर्तमान स्तर"
-        case .selectPhoto: return "फोटो चुनें"
-        case .camera: return "कैमरा"
-        case .photoLibrary: return "फोटो लाइब्रेरी"
-        case .selectTime: return "समय चुनें"
-        case .hour: return "घंटा"
-        case .minute: return "मिनट"
-        case .addTime: return "समय जोड़ें"
-        case .areYouSureLogout: return "क्या आप वाकई लॉगआउट करना चाहते हैं?"
-        case .areYouSureDeleteAccount: return "क्या आप वाकई अपना खाता हटाना चाहते हैं? यह कार्रवाई पूर्ववत नहीं की जा सकती।"
-        
-        // Quiz
-        case .goBack: return "वापस जाएं"
-        case .fillInTheBlank: return "रिक्त स्थान भरें:"
-        case .arrangeWordsInOrder: return "शब्दों को सही क्रम में व्यवस्थित करें:"
-        case .tapWordsBelowToAdd: return "उन्हें यहाँ जोड़ने के लिए नीचे के शब्दों पर टैप करें"
-        case .availableWords: return "उपलब्ध शब्द:"
-        case .correctAnswer: return "सही उत्तर:"
-        
-        // Common
-        case .error: return "त्रुटि"
-        case .ok: return "ठीक"
-        case .close: return "बंद करें"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "जहाँ आप खड़े हैं से लेकर हर tense जो आपको चाहिए"
-        case .awarenessHeading: return "जागरूकता"
-        case .awarenessDescription: return "AI आपके आसपास से सीखता है"
-        case .inputsHeading: return "इनपुट"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "विभाजन"
-        case .breakdownDescription: return "Locian वाक्यों को tenses में विभाजित करता है, शब्द-दर-शब्द अनुवाद प्रदान करता है"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "तैयार"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "लॉगिन / पंजीकरण"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "नेविगेट करने के लिए बाएं या दाएं टैप करें"
-        case .selectAppLanguage: return "ऐप भाषा चुनें"
-        case .selectLanguageDescription: return "यह भाषा ऐप यूजर इंटरफ़ेस, हेडिंग, विवरण, बटन, नाम और सभी चीजों को चयनित भाषा में बदल देगी"
-        
-        // Login
-        case .username: return "उपयोगकर्ता नाम"
-        case .phoneNumber: return "फोन नंबर"
-        case .guestLogin: return "अतिथि लॉगिन"
-        case .guestLoginDescription: return "अतिथि लॉगिन सत्यापन के लिए है और अतिथि को सभी ऐप सुविधाओं तक पहुंच देगा। सत्यापन के बाद हटा दिया जाएगा।"
-        
-        // Professions
-        case .student: return "छात्र"
-        case .softwareEngineer: return "सॉफ्टवेयर इंजीनियर"
-        case .teacher: return "शिक्षक"
-        case .doctor: return "डॉक्टर"
-        case .artist: return "कलाकार"
-        case .businessProfessional: return "व्यापार पेशेवर"
-        case .salesOrMarketing: return "बिक्री या विपणन"
-        case .traveler: return "यात्री"
-        case .homemaker: return "गृहिणी"
-        case .chef: return "शेफ"
-        case .police: return "पुलिस"
-        case .bankEmployee: return "बैंक कर्मचारी"
-        case .nurse: return "नर्स"
-        case .designer: return "डिज़ाइनर"
-        case .engineerManager: return "इंजीनियर मैनेजर"
-        case .photographer: return "फोटोग्राफर"
-        case .contentCreator: return "कंटेंट क्रिएटर"
-        case .other: return "अन्य"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian की पसंद"
-        case .airport: return "हवाई अड्डा"
-        case .cafe: return "कैफे"
-        case .gym: return "जिम"
-        case .library: return "पुस्तकालय"
-        case .office: return "ऑफ़िस"
-        case .park: return "पार्क"
-        case .restaurant: return "रेस्तरां"
-        case .shoppingMall: return "शॉपिंग मॉल"
-        case .travelling: return "यात्रा"
-        case .university: return "विश्वविद्यालय"
-        case .addCustomPlace: return "कस्टम स्थान जोड़ें"
-        case .enterCustomPlaceName: return "कस्टम स्थान का नाम दर्ज करें (अधिकतम 30 अक्षर)"
-        case .maximumCustomPlaces: return "अधिकतम 10 कस्टम स्थान"
-        case .welcome: return "स्वागत है"
-        case .tapToCaptureContext: return "अपने संदर्भ को कैप्चर करने और सीखना शुरू करने के लिए टैप करें"
-        case .customSection: return "कस्टम"
-        case .examples: return "उदाहरण:"
-        case .customPlacePlaceholder: return "उदा., कार्यालय की यात्रा"
-        case .exampleTravellingToOffice: return "कार्यालय की यात्रा"
-        case .exampleTravellingToHome: return "घर की यात्रा"
-        case .exampleExploringParis: return "पेरिस की खोज"
-        case .exampleVisitingMuseum: return "संग्रहालय का दौरा"
-        case .exampleCoffeeShop: return "कॉफी की दुकान"
-        case .characterCount: return "अक्षर"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "मूल भाषा:"
-        case .selectNativeLanguage: return "अपनी मूल भाषा चुनें"
-        case .targetLanguage: return "लक्ष्य भाषा:"
-        case .selectTargetLanguage: return "वह भाषा चुनें जो आप सीखना चाहते हैं"
-        case .nativeLanguageDescription: return "आपकी मूल भाषा वह भाषा है जिसे आप पढ़, लिख और धाराप्रवाह बोल सकते हैं। यह वह भाषा है जिसमें आप सबसे अधिक सहज हैं।"
-        case .targetLanguageDescription: return "आपकी लक्ष्य भाषा वह भाषा है जिसे आप सीखना और अभ्यास करना चाहते हैं। वह भाषा चुनें जिसमें आप अपने कौशल में सुधार करना चाहते हैं।"
-        case .addPair: return "जोड़ी जोड़ें"
-        case .adding: return "जोड़ रहे हैं..."
-        case .failedToAddLanguagePair: return "भाषा जोड़ी जोड़ने में विफल। कृपया पुनः प्रयास करें।"
-        case .settingAsDefault: return "डिफ़ॉल्ट के रूप में सेट कर रहे हैं..."
-        case .beginner: return "शुरुआती"
-        case .intermediate: return "मध्यम"
-        case .advanced: return "उन्नत"
-        case .currentlyLearning: return "सीख रहे हैं"
-        case .otherLanguages: return "अन्य भाषाएं"
-        case .learnNewLanguage: return "नई भाषा सीखें"
-        case .learn: return "सीखें"
-        case .tapToSelectNativeLanguage: return "अपनी मूल भाषा चुनने के लिए टैप करें"
-        case .neonGreen: return "नीयन ग्रीन"
-        
-        // Theme color names
-        case .cyanMist: return "सियान मिस्ट"
-        case .violetHaze: return "वायलेट हेज़"
-        case .softPink: return "सॉफ्ट पिंक"
-        case .pureWhite: return "शुद्ध सफेद"
-        
-        // Quick Look
-        case .quickRecall: return "त्वरित याद"
-        case .startQuickPuzzle: return "त्वरित पहेली शुरू करें"
-        case .stopPuzzle: return "पहेली रोकें"
-        
-        // Streak
-        case .streak: return "स्ट्रीक"
-        case .dayStreak: return "दिन की स्ट्रीक"
-        case .daysStreak: return "दिनों की स्ट्रीक"
-        case .editYourStreaks: return "अपनी स्ट्रीक संपादित करें"
-        case .editStreaks: return "स्ट्रीक संपादित करें"
-        case .selectDatesToAddOrRemove: return "अभ्यास दिनों को जोड़ने या हटाने के लिए तारीखें चुनें"
-        case .saving: return "सहेजा जा रहा है..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

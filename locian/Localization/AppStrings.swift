@@ -8,193 +8,185 @@
 import Foundation
 
 protocol AppStrings {
-    var quiz: QuizStrings { get }
     var settings: SettingsStrings { get }
-    var vocabulary: VocabularyStrings { get }
-    var scene: SceneStrings { get }
     var login: LoginStrings { get }
     var onboarding: OnboardingStrings { get }
-    var common: CommonStrings { get }
-    var customPractice: CustomPracticeStrings { get }
     var progress: ProgressStrings { get }
+    var ui: UIStrings { get }
+    var quiz: QuizStrings { get }
+    var scene: SceneStrings { get }
     
     func getString(_ key: String) -> String
 }
 
-// MARK: - String Groups
-struct QuizStrings {
-    let completed: String
-    let masteredEnvironment: String
-    let learnMoreAbout: String
-    let backToHome: String
-    let next: String
-    let previous: String
-    let check: String
-    let tryAgain: String
-    let shuffled: String
-    let noQuizAvailable: String
-    let question: String
-    let correct: String
-    let incorrect: String
-    let notAttempted: String
-}
+struct UIStrings {
+        let camera: String
+    let gallery: String
+    let nextUp: String
+    let historyLog: String
+
+    let moments: String
+    let pastMoments: String
+    let noHistory: String
+    let generatingHistory: String
+    let generatingMoments: String
+    let analyzingImage: String
+    let tapNextUpToGenerate: String
+    let noUpcomingPlaces: String
+    let noDetails: String
+    let callingAI: String     // New
+    let preparingLesson: String // New
+
+    let startLearning: String
+    let continueLearning: String
+    let noPastMoments: String
+    let useCamera: String
+    let previouslyLearning: String
+    let sunShort: String
+    let monShort: String
+    let tueShort: String
+    let wedShort: String
+    let thuShort: String
+    let friShort: String
+    let satShort: String
+    
+    // Common UI elements
+    let login: String
+    let register: String
+    let settings: String
+        let back: String
+            let done: String
+    let cancel: String
+    let save: String
+    let delete: String
+    let add: String
+    let remove: String
+    let edit: String
+    let error: String
+    let ok: String
+    let welcomeLabel: String
+    let currentStreak: String
+    let notSet: String
+    
+    // Tab Bar
+    let learnTab: String
+    let addTab: String
+    let progressTab: String
+    let settingsTab: String
+    
+    // Scene & Loading
+    let loading: String
+    let unknownPlace: String
+    let noLanguageAvailable: String
+    let noInternetConnection: String
+    let retry: String
+    let tapToGetMoments: String
+    let startLearningThisMoment: String
+    let daysLabel: String
+    let noNewPlace: String
+    let addNewPlaceInstruction: String
+    let start: String
+    let typeYourMoment: String
+    }
 
 struct SettingsStrings {
-    let languagePairs: String
+    let systemLanguage: String
+    let targetLanguages: String
+    let pastLanguagesArchived: String
+    let theme: String
     let notifications: String
-    let appearance: String
     let account: String
     let profile: String
     let addLanguagePair: String
-    let enableNotifications: String
-    let logout: String
+        let logout: String
     let deleteAllData: String
     let deleteAccount: String
     let selectLevel: String
-    let selectAppLanguage: String
     let proFeatures: String
     let showSimilarWordsToggle: String
-    let showWordTensesToggle: String
     let nativeLanguage: String
     let selectNativeLanguage: String
     let targetLanguage: String
     let selectTargetLanguage: String
-    let nativeLanguageDescription: String
-    let targetLanguageDescription: String
-    let addPair: String
-    let adding: String
-    let failedToAddLanguagePair: String
-    let settingAsDefault: String
-    let beginner: String
+        let targetLanguageDescription: String
+                    let beginner: String
     let intermediate: String
     let advanced: String
     let currentlyLearning: String
-    let otherLanguages: String
-    let learnNewLanguage: String
+        let learnNewLanguage: String
     let learn: String
-    let tapToSelectNativeLanguage: String
-    // Theme color names
+        // Theme color names
     let neonGreen: String
-    let cyanMist: String
-    let violetHaze: String
-    let softPink: String
-    let pureWhite: String
-}
-
-struct VocabularyStrings {
-    let exploreCategories: String
-    let testYourself: String
-    let slideToStartQuiz: String
-    let similarWords: String
-    let wordTenses: String
-    let wordBreakdown: String
-    let tapToSeeBreakdown: String
-    let tapToHideBreakdown: String
-    let tapWordsToExplore: String
-    let loading: String
-    let learnTheWord: String
-    let tryFromMemory: String
-    // Loading animation strings
-    let adjustingTo: String
-    let settingPlace: String
-    let settingTime: String
-    let generatingVocabulary: String
-    let analyzingVocabulary: String
-    let analyzingCategories: String
-    let analyzingWords: String
-    let creatingQuiz: String
-    let organizingContent: String
-    // Context words for loading animations
-    let to: String
-    let place: String
-    let time: String
-    let vocabulary: String
-    let your: String
-    let interested: String
-    let categories: String
-    let words: String
-    let quiz: String
-    let content: String
-}
-
-struct SceneStrings {
-    let hi: String
-    let learnFromSurroundings: String
-    let learnFromSurroundingsDescription: String
-    let locianChoosing: String
-    let chooseLanguages: String
-    let continueWith: String
-    let slideToLearn: String
-    let recommended: String
-    let intoYourLearningFlow: String
-    let intoYourLearningFlowDescription: String
-    let customSituations: String
-    let customSituationsDescription: String
-    let max: String
-    let recentPlacesTitle: String
-    let allPlacesTitle: String
-    let recentPlacesEmpty: String
-    let showMore: String
-    let showLess: String
-    let takePhoto: String
-    let chooseFromGallery: String
-    let letLocianChoose: String
-    let lociansChoice: String
-    let cameraTileDescription: String
-    let airport: String
-    let aquarium: String
-    let bakery: String
-    let beach: String
-    let bookstore: String
-    let cafe: String
-    let cinema: String
-    let gym: String
-    let hospital: String
-    let hotel: String
-    let home: String
-    let library: String
-    let market: String
-    let museum: String
-    let office: String
-    let park: String
-    let restaurant: String
-    let shoppingMall: String
-    let stadium: String
-    let supermarket: String
-    let temple: String
-    let travelling: String
-    let university: String
-    let addCustomPlace: String
-    let addPlace: String
-    let enterCustomPlaceName: String
-    let maximumCustomPlaces: String
-    let welcome: String
+    let neonFuchsia: String
+    let electricIndigo: String
+    let graphiteBlack: String
+        
+    // Professions
+    let student: String
+    let softwareEngineer: String
+    let teacher: String
+    let doctor: String
+    let artist: String
+    let businessProfessional: String
+    let salesOrMarketing: String
+    let traveler: String
+    let homemaker: String
+    let chef: String
+    let police: String
+    let bankEmployee: String
+    let nurse: String
+    let designer: String
+    let engineerManager: String
+    let photographer: String
+    let contentCreator: String
+    let entrepreneur: String
+    let other: String
+    let otherPlaces: String
+    
+    // Additional settings labels
+    let speaks: String
+    let neuralEngine: String
+                let noLanguagePairsAdded: String
+    let setDefault: String
+    let defaultText: String
     let user: String
-    let tapToCaptureContext: String
-    let customSection: String
-    let examples: String
-    let customPlacePlaceholder: String
-    let exampleTravellingToOffice: String
-    let exampleTravellingToHome: String
-    let exampleExploringParis: String
-    let exampleVisitingMuseum: String
-    let exampleCoffeeShop: String
-    let characterCount: String
-    let situationExample1: String
-    let situationExample2: String
-    let situationExample3: String
-    let situationExample4: String
-    let situationExample5: String
+        let signOutFromAccount: String
+        let permanentlyDeleteAccount: String
+        let languageAddedSuccessfully: String
+        let failedToAddLanguage: String
+        let pleaseSelectLanguage: String
+        let systemConfig: String
+    let currentLevel: String
+    let selectPhoto: String
+    let camera: String
+    let photoLibrary: String
+    let selectTime: String
+    let hour: String
+    let minute: String
+    let addTime: String
+    let location: String
+    let diagnosticBorders: String
+    let areYouSureLogout: String
+    let areYouSureDeleteAccount: String
 }
+
 
 struct LoginStrings {
     let login: String
     let verify: String
     let selectProfession: String
+    let selectUserProfession: String // Added for redesign
     let username: String
     let phoneNumber: String
     let guestLogin: String
-    let guestLoginDescription: String
+    let selectProfessionInstruction: String
+    let showMore: String
+    let showLess: String
+    let forReview: String
+    let authenticatingUser: String // Added for redesign
+    let bySigningInYouAgreeToOur: String // Added for redesign
+    let termsOfService: String // Added for redesign
+    let privacyPolicy: String // Added for redesign
 }
 
 struct OnboardingStrings {
@@ -202,9 +194,7 @@ struct OnboardingStrings {
     let locianDescription: String
     let awarenessHeading: String
     let awarenessDescription: String
-    let inputsHeading: String
-    let inputsDescription: String
-    let breakdownHeading: String
+            let breakdownHeading: String
     let breakdownDescription: String
     let progressHeading: String
     let progressDescription: String
@@ -212,52 +202,163 @@ struct OnboardingStrings {
     let readyDescription: String
     let loginOrRegister: String
     let pageIndicator: String
-    let tapToNavigate: String
-    let selectAppLanguage: String
     let selectLanguageDescription: String
-}
+    
+    // Welcome View
+    let fromWhereYouStand: String
+    let toEveryWord: String
+    let everyWord: String
+    let youNeed: String
+    let lessonEngine: String
+    
+    // Brain Awareness View
+    let nodesLive: String
+    let locEngineVersion: String
+    let holoGridActive: String
+    let adaCr02: String
+    let your: String
+    let places: String
+    let lessons: String
+    let yourPlaces: String
+    let yourLessons: String
+    let nearbyCafes: String
+    let unlockOrderFlow: String
+    let modules: String
+    let activeHubs: String
+    let synthesizeGym: String
+    let vocabulary: String
+    let locationOpportunity: String
+    
+    // Language Inputs View
+    let module03: String
+    let notJustMemorization: String
+    let philosophy: String
+    let locianTeaches: String
+    let think: String
+    let inTargetLanguage: String
+    let patternBasedLearning: String
+    let patternBasedDesc: String
+    let situationalIntelligence: String
+    let situationalDesc: String
+    let adaptiveDrills: String
+    let adaptiveDesc: String
+    
+    // Language Progress View
+    let systemReady: String
+    let quickSetup: String
+    let levelB2: String
+    let authorized: String
+    let notificationsPermission: String
+    let notificationsDesc: String
+    let microphonePermission: String
+    let microphoneDesc: String
+    let geolocationPermission: String
+    let geolocationDesc: String
+    let granted: String
+    let allow: String
+    let skip: String
 
-struct CommonStrings {
-    let cancel: String
-    let save: String
-    let done: String
-    let ok: String
-    let back: String
-    let next: String
+    // Onboarding Container
+    let letsStart: String
     let continueText: String
-}
-
-struct CustomPracticeStrings {
-    let custom: String
-    let hint: String
-    let practiceDescription: String
-    let practiceTitle: String
-    let practiceFollowUp: String
-    let camera: String
-    let cameraDescription: String
-    let useCamera: String
-    let cameraButtonDescription: String
-    let typeConversation: String
-    let typeConversationDescription: String
-    let conversationPlaceholder: String
-    let submit: String
-    let fullCustomText: String
-    let examples: String
-    let conversationExample1: String
-    let conversationExample2: String
-    let conversationExample3: String
-    let describeConversation: String
-    let fullTextPlaceholder: String
-    let startCustomPractice: String
+    
+    // Lesson Specific
+    let wordTenses: String
+    let similarWords: String
+    let wordBreakdown: String
+    let consonant: String
+    let vowel: String
+    let past: String
+    let present: String
+    let future: String
+    let learnWord: String
 }
 
 struct ProgressStrings {
     let progress: String
-    let edit: String
-    let current: String
+        let current: String
     let longest: String
     let lastPracticed: String
     let days: String
     let addLanguagePairToSeeProgress: String
+    let startPracticingMessage: String
+    let consistencyQuote: String
+    let practiceDateSavingDisabled: String
+    
+    // Streak
+                let editYourStreaks: String
+    let editStreaks: String
+    let selectDatesToAddOrRemove: String
+    let saving: String
+    let statusOnFire: String
+    let youPracticed: String
+    let yesterday: String
+    let checkInNow: String
+    let nextGoal: String
+    let reward: String
+    let historyLogProgress: String
+    
+    // New Progress Design
+    let streakStatus: String
+    let streakLog: String
+    let consistency: String
+    let consistencyHigh: String
+    let consistencyMedium: String
+    let consistencyLow: String
+    let reachMilestone: String
+    let nextMilestone: String
+    let actionRequired: String
+    let logActivity: String
+    let maintainStreak: String
+    let manualEntry: String
+    let longestStreakLabel: String
+    let streakData: String
+    let activeLabel: String
+    let missedLabel: String
+    let saveChanges: String
+    let discardChanges: String
+    let editLabel: String
+    
+    // Advanced Stats
+    let skillBalance: String
+    let fluencyVelocity: String
+    let vocabVault: String
+    let chronotype: String
+    let activityDistribution: String
+    let studiedTime: String
+    let currentLabel: String
+    let streakLabel: String
+    let longestLabel: String
+    
+    // Chronotypes
+    let earlyBird: String
+    let earlyBirdDesc: String
+    let dayWalker: String
+    let dayWalkerDesc: String
+    let nightOwl: String
+    let nightOwlDesc: String
+    
+    let timeMastery: String
+    let wordsMastered: String
+    let patternsMastered: String
+    let avgResponseTime: String
+    let patternGalaxy: String
+}
+struct QuizStrings {
+    let loading: String
+    
+    // Onboarding Phase
+    let adaptiveQuiz: String
+    let adaptiveQuizDescription: String
+    let wordCheck: String
+    let wordCheckDescription: String
+    let wordCheckExamplePrompt: String
+    let quizPrompt: String
+    let answerConfirmation: String
+    let tryAgain: String
 }
 
+struct SceneStrings {
+                                                
+    // Places
+                                                                                }

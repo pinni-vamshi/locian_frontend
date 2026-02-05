@@ -2,475 +2,620 @@
 //  TamilStrings.swift
 //  locian
 //
-//  Tamil localization strings
-//
 
 import Foundation
 
 struct TamilStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "வினாடி வினா முடிந்தது!",
-            masteredEnvironment: "நீங்கள் உங்கள் சூழலை மாஸ்டர் செய்துள்ளீர்கள்!",
-            learnMoreAbout: "பற்றி மேலும் அறிய",
-            backToHome: "வீட்டிற்கு திரும்ப",
-            next: "அடுத்து",
-            previous: "முந்தைய",
-            check: "சரிபார்",
-            tryAgain: "மீண்டும் முயற்சிக்கவும்",
-            shuffled: "கலக்கப்பட்டது",
-            noQuizAvailable: "வினாடி வினா இல்லை",
-            question: "கேள்வி",
-            correct: "சரியானது",
-            incorrect: "தவறானது",
-            notAttempted: "முயற்சிக்கப்படவில்லை"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "காம்ரா",
+            gallery: "கேலரி",
+            nextUp: "அடுத்தது",
+            historyLog: "வரலாற்று தாள்",
+
+            moments: "தருணங்கள்",
+            pastMoments: "கடந்த தருణங்கள்",
+            noHistory: "வரலாறு இல்லை",
+            generatingHistory: "வரலாறு உருவாக்கப்படுகிறது",
+            generatingMoments: "உருவாக்குகிறது...",
+            analyzingImage: "படம் ஆய்வு...",
+            tapNextUpToGenerate: "உருவாக்க அடுத்ததை தட்டவும்",
+            noUpcomingPlaces: "வரும் இடங்கள் இல்லை",
+            noDetails: "விவரங்கள் இல்லை",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "கற்கத் தொடங்குங்கள்",
+            continueLearning: "கற்க தொடருங்கள்",
+            noPastMoments: "கடந்த தருணங்கள் இல்லை",
+            useCamera: "காம்ரா பயன்படுத்துக",
+            previouslyLearning: "முன்பு கற்று",
+            sunShort: "ஞா",
+            monShort: "தி",
+            tueShort: "செ",
+            wedShort: "பு",
+            thuShort: "வி",
+            friShort: "வெ",
+            satShort: "ச",
+            login: "உள்நுழைவு",
+            register: "பதிவு செய்க",
+            settings: "அமைப்புகள்",
+            back: "பின்செல்லுக",
+            done: "முடிந்தது",
+            cancel: "ரத்து செய்க",
+            save: "சேமிக்க",
+            delete: "நீக்கு",
+            add: "சேர்க்க",
+            remove: "நீக்கு",
+            edit: "திருத்து",
+            error: "பிழை",
+            ok: "சரி",
+            welcomeLabel: "வரவேற்கிறோம்",
+            currentStreak: "தற்போதைய தொடர்",
+            notSet: "அமைக்கப்படவில்லை",
+            learnTab: "கற்க",
+            addTab: "சேர்",
+            progressTab: "முன்னேற்றம்",
+            settingsTab: "அமைப்புகள்",
+            loading: "ஏற்றுகிறது...",
+            unknownPlace: "அறியப்படாத இடம்",
+            noLanguageAvailable: "மொழி கிடைக்கவில்லை",
+            noInternetConnection: "இணைய இணைப்பு இல்லை",
+            retry: "மீண்டும் முயற்சிக்கవు",
+            tapToGetMoments: "தருணங்களைப் பெற தட்டவும்",
+            startLearningThisMoment: "இந்த தருணத்திலிருந்து கற்கத் தொடங்குங்கள்",
+            daysLabel: "நாட்கள்",
+            noNewPlace: "புதிய இடத்தைச் சேர்க்கவும்",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "தொடங்கு",
+            typeYourMoment: "உங்கள் தருணத்தை தட்டச்சு செய்க...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "எனது மொழிகள்",
+            systemLanguage: "செயலி இடைமுகம்",
+            targetLanguages: "இலக்கு மொழிகள்",
+            pastLanguagesArchived: "முன்பு கற்ற மொழிகள்",
+            theme: "தீம்",
             notifications: "அறிவிப்புகள்",
-            appearance: "அழகியல்",
             account: "கணக்கு",
             profile: "சுயவிவரம்",
-            addLanguagePair: "மொழி இணை சேர்",
-            enableNotifications: "அறிவிப்புகளை இயக்கு",
+            addLanguagePair: "மொழி ஜோடியைச் சேர்க்கவும்",
             logout: "வெளியேறு",
             deleteAllData: "அனைத்து தரவையும் நீக்கு",
-            deleteAccount: "கணக்கை நீக்கு",
-            selectLevel: "நிலை தேர்ந்தெடு",
-            selectAppLanguage: "பயன்பாட்டு இடைமுகம்",
+            deleteAccount: "கணக்கை நிரந்தரமாக நீக்கு",
+            selectLevel: "நிலையைத் தேர்ந்தெடுக்கவும்",
             proFeatures: "ப்ரோ அம்சங்கள்",
-            showSimilarWordsToggle: "ஒத்த சொற்களை காண்பி",
-            showWordTensesToggle: "சொல் காலங்களை காண்பி",
-            nativeLanguage: "முதன்மை மொழி:",
-            selectNativeLanguage: "உங்கள் முதன்மை மொழியைத் தேர்ந்தெடுக்கவும்",
-            targetLanguage: "இலக்கு மொழி:",
-            selectTargetLanguage: "நீங்கள் கற்றுக்கொள்ள விரும்பும் மொழியைத் தேர்ந்தெடுக்கவும்",
-            nativeLanguageDescription: "உங்கள் முதன்மை மொழி என்பது நீங்கள் படிக்க, எழுத மற்றும் சரளமாக பேசக்கூடிய மொழியாகும். இது நீங்கள் மிகவும் வசதியாக உள்ள மொழியாகும்.",
-            targetLanguageDescription: "உங்கள் இலக்கு மொழி என்பது நீங்கள் கற்றுக்கொள்ளவும் பயிற்சி செய்யவும் விரும்பும் மொழியாகும். உங்கள் திறன்களை மேம்படுத்த விரும்பும் மொழியைத் தேர்ந்தெடுக்கவும்.",
-            addPair: "இணை சேர்",
-            adding: "சேர்க்கிறது...",
-            failedToAddLanguagePair: "மொழி இணையை சேர்க்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.",
-            settingAsDefault: "இயல்புநிலையாக அமைக்கிறது...",
-            beginner: "தொடக்க",
+            showSimilarWordsToggle: "ஒத்த சொற்களைக் காட்டு",
+            nativeLanguage: "தாய் மொழி",
+            selectNativeLanguage: "தாய்மொழியைத் தேர்ந்தெடுக்கவும்",
+            targetLanguage: "இலக்கு மொழி",
+            selectTargetLanguage: "இலக்கு மொழியைத் தேர்ந்தெடுக்கவும்",
+            targetLanguageDescription: "நீங்கள் கற்க விரும்பும் மொழி",
+            beginner: "தொடக்கநிலை",
             intermediate: "இடைநிலை",
             advanced: "மேம்பட்ட",
-            currentlyLearning: "கற்றுக்கொள்கிறேன்",
-            otherLanguages: "மற்ற மொழிகள்",
-            learnNewLanguage: "புதிய மொழி கற்றுக்கொள்ள",
-            learn: "கற்றுக்கொள்",
-            tapToSelectNativeLanguage: "உங்கள் முதன்மை மொழியைத் தேர்ந்தெடுக்க தட்டவும்",
+            currentlyLearning: "தற்போது கற்றுக்கொண்டிருக்கிறது",
+            learnNewLanguage: "புதிய மொழியைக் கற்கவும்",
+            learn: "கற்கவும்",
             neonGreen: "நியான் பச்சை",
-            cyanMist: "சையான் மிஸ்ட்",
-            violetHaze: "வயலட் ஹேஸ்",
-            softPink: "சாஃப்ட் பிங்க்",
-            pureWhite: "தூய வெள்ளை"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "வகைகளை ஆராயுங்கள்",
-            testYourself: "நீங்களே சோதிக்கவும்",
-            slideToStartQuiz: "வினாடி வினாவை தொடங்க ஸ்லைடு செய்யவும்",
-            similarWords: "ஒத்த வார்த்தைகள்",
-            wordTenses: "வார்த்தை காலங்கள்",
-            wordBreakdown: "வார்த்தை பிரித்தல்",
-            tapToSeeBreakdown: "சொல் பிரித்தலைப் பார்க்க தட்டவும்",
-            tapToHideBreakdown: "சொல் பிரித்தலை மறைக்க தட்டவும்",
-            tapWordsToExplore: "அவற்றின் மொழிபெயர்ப்புகளைப் படிக்கவும் மற்றும் ஆராயவும் சொற்களைத் தொடவும்",
-            loading: "லோட் செய்கிறது...",
-            learnTheWord: "சொல்லைக் கற்றுக்கொள்ளுங்கள்",
-            tryFromMemory: "நினைவிலிருந்து முயற்சிக்கவும்",
-            adjustingTo: "சரிசெய்தல்",
-            settingPlace: "அமைத்தல்",
-            settingTime: "அமைத்தல்",
-            generatingVocabulary: "உருவாக்குதல்",
-            analyzingVocabulary: "பகுப்பாய்வு",
-            analyzingCategories: "பகுப்பாய்வு",
-            analyzingWords: "பகுப்பாய்வு",
-            creatingQuiz: "உருவாக்குதல்",
-            organizingContent: "ஒழுங்கமைத்தல்",
-            to: "க்கு",
-            place: "இடம்",
-            time: "நேரம்",
-            vocabulary: "சொற்களஞ்சியம்",
-            your: "உங்கள்",
-            interested: "ஆர்வம்",
-            categories: "வகைகள்",
-            words: "வார்த்தைகள்",
-            quiz: "வினாடி",
-            content: "உள்ளடக்கம்"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "வணக்கம்,",
-            learnFromSurroundings: "உங்கள் சூழலிலிருந்து கற்றுக்கொள்ளுங்கள்",
-            learnFromSurroundingsDescription: "உங்கள் சூழலைப் பிடித்து உண்மையான உலக சூழல்களிலிருந்து சொற்களஞ்சியத்தைக் கற்றுக்கொள்ளுங்கள்",
-            locianChoosing: "தேர்ந்தெடுக்கிறது...",
-            chooseLanguages: "மொழிகளைத் தேர்ந்தெடுக்கவும்",
-            continueWith: "Locian தேர்ந்தெடுத்ததைத் தொடரவும்",
-            slideToLearn: "கற்க ஸ்லைட் செய்யவும்",
-            recommended: "பரிந்துரைகள்",
-            intoYourLearningFlow: "உங்கள் கற்றல் ஓட்டத்தில்",
-            intoYourLearningFlowDescription: "உங்கள் கற்றல் வரலாற்றின் அடிப்படையில் பயிற்சி செய்வதற்கான பரிந்துரைக்கப்பட்ட இடங்கள்",
-            customSituations: "உங்கள் தனிப்பயன் சூழ்நிலைகள்",
-            customSituationsDescription: "உங்கள் சொந்த தனிப்பயனாக்கப்பட்ட கற்றல் காட்சிகளுடன் உருவாக்கி பயிற்சி செய்யுங்கள்",
-            max: "அதிகபட்சம்",
-            recentPlacesTitle: "உங்கள் சமீபத்திய இடங்கள்",
-            allPlacesTitle: "அனைத்து இடங்கள்",
-            recentPlacesEmpty: "இங்கே பரிந்துரைகளை பார்க்க சொற்களை உருவாக்கவும்.",
-            showMore: "மேலும் காட்டு",
-            showLess: "குறைவாக காட்டு",
-            takePhoto: "படம் எடுக்க",
-            chooseFromGallery: "கேலரியிலிருந்து தேர்ந்தெடுக்க",
-            letLocianChoose: "Locian தேர்ந்தெடுக்க விடுங்கள்",
-            lociansChoice: "Locian மூலம்",
-            cameraTileDescription: "இந்த படம் உங்கள் சூழலை பகுப்பாய்வு செய்து கற்றுக்கொள்ளக்கூடிய தருணங்களைக் காட்டுகிறது।",
-            airport: "விமான நிலையம்",
-            aquarium: "ஆக்வேரியம்",
-            bakery: "பேக்கரி",
-            beach: "கடற்கரை",
-            bookstore: "நூல் கடை",
-            cafe: "காபி",
-            cinema: "திரையரங்கம்",
-            gym: "விளையாட்டு அரங்கம்",
-            hospital: "மருத்துவமனை",
-            hotel: "ஹோட்டல்",
-            home: "வீடு",
-            library: "நூலகம்",
-            market: "சந்தை",
-            museum: "அருங்காட்சியகம்",
-            office: "அலுவலகம்",
-            park: "பூங்கா",
-            restaurant: "உணவகம்",
-            shoppingMall: "வணிக மையம்",
-            stadium: "விளையாட்டரங்கம்",
-            supermarket: "சூப்பர் மார்க்கெட்",
-            temple: "கோவில்",
-            travelling: "பயணம்",
-            university: "பல்கலைக்கழகம்",
-            addCustomPlace: "தனிப்பயன் இடத்தைச் சேர்",
-            addPlace: "இடத்தைச் சேர்",
-            enterCustomPlaceName: "தனிப்பயன் இடத்தின் பெயரை உள்ளிடவும் (அதிகபட்சம் 30 எழுத்துக்கள்)",
-            maximumCustomPlaces: "அதிகபட்சம் 10 தனிப்பயன் இடங்கள்",
-            welcome: "வரவேற்கிறோம்",
+            neonFuchsia: "நியான் ஃப்யூஷியா",
+            electricIndigo: "எலக்ட்ரிக் இண்டிகோ",
+            graphiteBlack: "கிராஃபைட் கருப்பு",
+            student: "மாணவர்",
+            softwareEngineer: "மென்பொருள் பொறியாளர்",
+            teacher: "ஆசிரியர்",
+            doctor: "மருத்துவர்",
+            artist: "கலைஞர்",
+            businessProfessional: "வியாபார நிபுணர்",
+            salesOrMarketing: "விற்பனை அல்லது சந்தைப்படுத்தல்",
+            traveler: "பயணி",
+            homemaker: "வீட்டுப்பணியாளர்",
+            chef: "செஃப்",
+            police: "காவல்",
+            bankEmployee: "வங்கி நிருவனர்",
+            nurse: "செவிலியர்",
+            designer: "வடிவமைப்பாளர்",
+            engineerManager: "பொறியியல் மேலாளர்",
+            photographer: "படப்பிடிப்பாளர்",
+            contentCreator: "உள்ளடக்க உருவாக்குநர்",
+            entrepreneur: "தொழில்முனைவோர்",
+            other: "மற்றவை",
+            otherPlaces: "மற்ற இடங்கள்",
+            speaks: "பேசும் மொழி",
+            neuralEngine: "நியூரல் இன்ஜின்",
+            noLanguagePairsAdded: "மொழி ஜோடிகள் சேர்க்கப்படவில்லை",
+            setDefault: "இயல்புநிலையாக அமைக்க",
+            defaultText: "இயல்புநிலை",
             user: "பயனர்",
-            tapToCaptureContext: "உங்கள் சூழலை பிடிக்கவும் மற்றும் கற்றலைத் தொடங்கவும் தட்டவும்",
-            customSection: "தனிப்பயன்",
-            examples: "எடுத்துக்காட்டுகள்:",
-            customPlacePlaceholder: "எ.கா., அலுவலகத்திற்கு பயணம்",
-            exampleTravellingToOffice: "அலுவலகத்திற்கு பயணம்",
-            exampleTravellingToHome: "வீட்டிற்கு பயணம்",
-            exampleExploringParis: "பாரிஸை ஆராய்தல்",
-            exampleVisitingMuseum: "அருங்காட்சியகத்தை பார்வையிடுதல்",
-            exampleCoffeeShop: "காபி கடை",
-            characterCount: "எழுத்துக்கள்",
-            situationExample1: "நிறைந்த காபி கடையில் காபி ஆர்டர் செய்தல்",
-            situationExample2: "புதிய நகரத்தில் திசை கேட்டல்",
-            situationExample3: "சந்தையில் மளிகை பொருட்கள் வாங்குதல்",
-            situationExample4: "மருத்துவர் நேரம் எடுத்தல்",
-            situationExample5: "ஹோட்டலில் சேர்க்கை செய்தல்"
-        )
+            signOutFromAccount: "கணக்கிலிருந்து வெளியேறுக",
+            permanentlyDeleteAccount: "கணக்கை நிரந்தரமாக நீக்கு",
+            languageAddedSuccessfully: "மொழி வெற்றிகரமாக சேர்க்கப்பட்டது",
+            failedToAddLanguage: "மொழியைச் சேர்ப்பதில் தோல்வி. மீண்டும் முயற்சிக்கவும்.",
+            pleaseSelectLanguage: "தயவுசெய்து ஒரு மொழியைத் தேர்ந்தெடுக்கவும்",
+            systemConfig: "கணினி // கட்டமைப்பு",
+            currentLevel: "தற்போதைய நிலை",
+            selectPhoto: "படத்தை தேர்ந்தெடுக்கவும்",
+            camera: "காம்ரா",
+            photoLibrary: "பட நூலகம்",
+            selectTime: "நேரத்தை தேர்ந்தெடுக்கவும்",
+            hour: "மணி",
+            minute: "நிமிடம்",
+            addTime: "நேரத்தை சேர்க்கவும்",
+            location: "இருப்பிடம்",
+            diagnosticBorders: "கண்டறியும் எல்லைகள்",
+            areYouSureLogout: "நீங்கள் நிச்சயமாக வெளியேற விரும்புகிறீர்களா?",
+            areYouSureDeleteAccount: "உங்கள் கணக்கை நிரந்தரமாக நீக்க விரும்புகிறீர்களா? இந்த நடவடிக்கையை மாற்ற முடியாது?")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
-            login: "உள்நுழை",
-            verify: "சரிபார்க்க",
+            login: "உள்நுழைவு",
+            verify: "சரிபார்க்கவும்",
             selectProfession: "தொழிலைத் தேர்ந்தெடுக்கவும்",
+            selectUserProfession: "பயனர் தொழிலைத் தேர்ந்தெடுக்கவும்",
             username: "பயனர் பெயர்",
             phoneNumber: "தொலைபேசி எண்",
             guestLogin: "விருந்தினர் உள்நுழைவு",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "தொடங்க உங்கள் தொழிலைத் தேர்ந்தெடுக்கவும்",
+            showMore: "மேலும் காண்பி",
+            showLess: "குறைவாக காண்பி",
+            forReview: "[மதிப்பாய்விற்கு]",
+            authenticatingUser: "பயனர் அங்கீகரிக்கப்படுகிறார்...",
+            bySigningInYouAgreeToOur: "உள்நுழைவதன் மூலம், நீங்கள் எங்கள்",
+            termsOfService: "சேவை விதிமுறைகள்",
+            privacyPolicy: "தனியுரிமைக் கொள்கை"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "நீங்கள் நிற்கும் இடத்திலிருந்து நீங்கள் தேவையான ஒவ்வொரு காலமும்",
+            locianDescription: "உங்கள் தினசரி வாழ்க்கையின் மூலம் இயற்கையாக மொழிகளைக் கற்றுக்கொள்ளுங்கள்",
             awarenessHeading: "விழிப்புணர்வு",
-            awarenessDescription: "AI உங்கள் சூழலிலிருந்து கற்றுக்கொள்கிறது",
-            inputsHeading: "உள்ளீடுகள்",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
-            breakdownHeading: "பிரிவு",
-            breakdownDescription: "Locian வாக்கியங்களை காலங்களாக பிரிக்கிறது, சொல்-படி-சொல் மொழிபெயர்ப்புகளை வழங்குகிறது",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
+            awarenessDescription: "நேரமுநேரமாக உங்களைச் சுற்றியுள்ள சொற்களை கவனிக்கவும்",
+            breakdownHeading: "பகுப்பாய்வு",
+            breakdownDescription: "சொற்கள் எவ்வாறு உருவாக்கப்படுகின்றன என்பதைப் புரிந்துகொள்ளுங்கள்",
+            progressHeading: "முன்னேற்றம்",
+            progressDescription: "உங்கள் கற்ரல் பயணத்தை கண்காணிக்கவும்",
             readyHeading: "தயார்",
-            readyDescription: "",
-            loginOrRegister: "உள்நுழை / பதிவு",
-            pageIndicator: " / 6",
-            tapToNavigate: "வழிசெல்ல இடது அல்லது வலது பக்கத்தைத் தட்டவும்",
-            selectAppLanguage: "பயன்பாட்டு மொழியைத் தேர்ந்தெடுக்கவும்",
-            selectLanguageDescription: "இந்த மொழி பயன்பாட்டு பயனர் இடைமுகம், தலைப்புகள், விளக்கங்கள், பொத்தான்கள், பெயர்கள் மற்றும் அனைத்தையும் தேர்ந்தெடுக்கப்பட்ட மொழியாக மாற்றும்"
-        )
+            readyDescription: "இப்போதே கற்கத் தொடங்குங்கள்",
+            loginOrRegister: "உள்நுழைவு அல்லது பதிவு செய்க",
+            pageIndicator: "பக்கம்",
+            selectLanguageDescription: "உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
+            fromWhereYouStand: "நீங்கள் நிற்கும்\nஇடத்திலிருந்து",
+            toEveryWord: "ஒவ்வொரு",
+            everyWord: "வார்த்தைக்கும்",
+            youNeed: "உங்களுக்கு தேவை",
+            lessonEngine: "பாடம்_இயந்திரம்",
+            nodesLive: "முனைகள்_நேரலை",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "ஹோலோ_கிரிட்_செயலில்",
+            adaCr02: "ADA_CR-02",
+            your: "உங்கள்",
+            places: "இடங்கள்,",
+            lessons: "பாடங்கள்.",
+            yourPlaces: "உங்கள் இடங்கள்,",
+            yourLessons: " உங்கள் பாடங்கள்.",
+            nearbyCafes: "அருகிலுள்ள கஃபேக்கள்?",
+            unlockOrderFlow: " ஆர்டர்-ஓட்டத்தை திற",
+            modules: "தொகுதிகள்",
+            activeHubs: "செயலில் உள்ள ஹப்கள்?",
+            synthesizeGym: " உடற்பயிற்சி கூடம் தொகுத்தல்",
+            vocabulary: "சொல்லகராதி",
+            locationOpportunity: "ஒவ்வொரு இடமும் ஒரு கற்றல் வாய்ப்பாகிறது",
+            module03: "தொகுதி_03",
+            notJustMemorization: "வெறும் மனப்பாடம்\nஅல்ல",
+            philosophy: "தத்துவம்",
+            locianTeaches: "லோசியன் வெறும் வார்த்தைகளை மட்டும் கற்பிப்பதில்லை.\nலோசியன் உங்களுக்கு கற்பிக்கிறது ",
+            think: "சிந்திக்க",
+            inTargetLanguage: "உங்கள் இலக்கு மொழியில்.",
+            patternBasedLearning: "மாதிரி அடிப்படையிலான கற்றல்",
+            patternBasedDesc: "உலர் விதிகள் இல்லாமல் இலக்கண கட்டமைப்புகளை உள்ளுணர்வுடன் அங்கீகரிக்கவும்.",
+            situationalIntelligence: "சூழ்நிலை நுண்ணறிவு",
+            situationalDesc: "உங்கள் சூழல் மற்றும் வரலாற்றுக்கு ஏற்ப மாறும் காட்சிகள்.",
+            adaptiveDrills: "தகவமைப்பு பயிற்சிகள்",
+            adaptiveDesc: "பாடம் இயந்திரம் உங்கள் பலவீனங்களை கண்டறிந்து மறுசீரமைக்கிறது.",
+            systemReady: "அமைப்பு_தயார்",
+            quickSetup: "விரைவு_அமைப்பு",
+            levelB2: "நிலை_B2",
+            authorized: "அங்கீகரிக்கப்பட்டது",
+            notificationsPermission: "அறிவிப்புகள்",
+            notificationsDesc: "அருகிலுள்ள பயிற்சி வாய்ப்புகள் மற்றும் ஸ்ட்ரீக் விழிப்பூட்டல்கள் பற்றிய நிகழ்நேர அறிவிப்புகளைப் பெறுங்கள்.",
+            microphonePermission: "மைக்ரோஃபோன்",
+            microphoneDesc: "நிஜ உலக சூழல்களில் உச்சரிப்பு மதிப்பெண் மற்றும் பாடம் தொடர்புகளுக்கு அவசியம்.",
+            geolocationPermission: "புவி இருப்பிடம்",
+            geolocationDesc: "அதிவேக பயிற்சிக்காக காபி ஷாப்கள் அல்லது நூலகங்கள் போன்ற அருகிலுள்ள \"பாடம் மண்டலங்களை\" அடையாளம் காணவும்.",
+            granted: "வழங்கப்பட்டது",
+            allow: "அனுமதி",
+            skip: "தவிர்த்து",
+            letsStart: "தொடங்குவோம்",
+            continueText: "தொடரவும்",
+            wordTenses: "சொல் காலங்கள்:",
+            similarWords: "ஒத்த சொற்கள்:",
+            wordBreakdown: "சொல் பகுப்பாய்வு:",
+            consonant: "மெய்யெழுத்து",
+            vowel: "உயிரெழுத்து",
+            past: "இறந்தகாலம்",
+            present: "நிகழ்காலம்",
+            future: "எதிர்காலம்",
+            learnWord: "கற்க")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "ரத்துசெய்",
-            save: "சேமி",
-            done: "முடிந்தது",
-            ok: "சரி",
-            back: "பின்",
-            next: "அடுத்து",
-            continueText: "தொடர்க"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "தனிப்பயன்",
-            hint: "குறிப்பு",
-            practiceDescription: "எந்த வார்த்தையையும் தட்டவும் அதை உங்கள் இலக்கு மொழியில் மொழிபெயர்க்க. உதவி தேவைப்பட்டால், குறிப்பு பொத்தானைப் பயன்படுத்தி பரிந்துரைகளைப் பெறுங்கள்।",
-            practiceTitle: "பயிற்சி",
-            practiceFollowUp: "அடுத்த பயிற்சிக்குச் செல்",
-            camera: "கேமரா",
-            cameraDescription: "Locian {native} இல் ஒரு உரையாடலை உருவாக்கும், மேலும் நீங்கள் {target} க்கு மாற்றுவதை பயிற்சி செய்யலாம்.",
-            useCamera: "கேமராவைப் பயன்படுத்த",
-            cameraButtonDescription: "படத்திலிருந்து தருணங்களை உருவாக்க",
-            typeConversation: "ஒரு உரையாடலை தட்டச்சு செய்ய",
-            typeConversationDescription: "Locian {native} இல் ஒரு உரையாடலை உருவாக்கும், மேலும் நீங்கள் {target} க்கு மாற்றுவதை பயிற்சி செய்யலாம்.",
-            conversationPlaceholder: "எ.கா. ஒரு நிறைந்த காபி கடையில் காபி ஆர்டர் செய்தல்",
-            submit: "சமர்ப்பி",
-            fullCustomText: "முழு தனிப்பயன் உரை",
-            examples: "எடுத்துக்காட்டுகள்:",
-            conversationExample1: "மழையில் திசை கேட்டல்",
-            conversationExample2: "இரவு நேரத்தில் காய்கறிகள் வாங்குதல்",
-            conversationExample3: "நிறைந்த அலுவலகத்தில் பணிபுரிதல்",
-            describeConversation: "Locian உருவாக்க விரும்பும் உரையாடலை விவரிக்கவும்.",
-            fullTextPlaceholder: "முழு உரை அல்லது உரையாடலை இங்கே தட்டச்சு செய்ய...",
-            startCustomPractice: "தனிப்பயன் பயிற்சியைத் தொடங்க"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "முன்னேற்றம்",
-            edit: "திருத்து",
             current: "தற்போதைய",
-            longest: "நீளமான",
-            lastPracticed: "கடைசியாக பயிற்சி செய்தது",
+            longest: "நீண்ட",
+            lastPracticed: "கடைசி பயிற்சி",
             days: "நாட்கள்",
-            addLanguagePairToSeeProgress: "உங்கள் முன்னேற்றத்தைக் காண ஒரு மொழி இணையைச் சேர்க்கவும்."
-        )
+            addLanguagePairToSeeProgress: "உங்கள் முன்னேற்றத்தைக் காண மொழி ஜோடியைச் சேர்க்கவும்",
+            startPracticingMessage: "உங்கள் தொடரை உருவாக்க பயிற்சி தொடங்குங்கள்",
+            consistencyQuote: "நிலைத்தன்மை மொழி கற்றலின் திறவுகோல்",
+            practiceDateSavingDisabled: "பயிற்சி தேதி சேமிப்பு முடக்கப்பட்டது",
+            editYourStreaks: "உங்கள் தொடர்களை திருத்தவும்",
+            editStreaks: "தொடர்களை திருத்தவும்",
+            selectDatesToAddOrRemove: "சேர்க்க அல்லது நீக்க தேதிகளைத் தேர்ந்தெடுக்கவும்",
+            saving: "சேமிக்கிறது",
+            statusOnFire: "நிலை: சிறப்பானது",
+            youPracticed: "நீங்கள் பயிற்சி செய்தீர்கள் ",
+            yesterday: " நேற்று.",
+            checkInNow: "இப்போதே பதிவு செய்யவும்",
+            nextGoal: "அடுத்த இலக்கு",
+            reward: "வெகுமதி",
+            historyLogProgress: "வரலாறு பதிவு",
+            streakStatus: "தொடர் நிலை",
+            streakLog: "தொடர் பதிவு",
+            consistency: "நிலைத்தன்மை",
+            consistencyHigh: "உங்கள் செயல்பாடு பதிவு அதிக ஈடுபாட்டைக் காட்டுகிறது.",
+            consistencyMedium: "நீங்கள் நல்ல வேகத்தை உருவாக்குகிறீர்கள்.",
+            consistencyLow: "நிலைத்தன்மையே முக்கியம். தொடர்ந்து முயற்சி செய்யுங்கள்.",
+            reachMilestone: "%d நாட்களை எட்ட முயற்சி செய்யுங்கள்!",
+            nextMilestone: "அடுத்த மைல்கல்",
+            actionRequired: "நடவடிக்கை தேவை",
+            logActivity: "செயல்பாட்டைப் பதிவுசெய்",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "மிக நீண்ட தொடர்",
+            streakData: "தொடர் தரவு",
+            activeLabel: "செயலில்",
+            missedLabel: "தவறியது",
+            saveChanges: "மாற்றங்களைச் சேமி",
+            discardChanges: "மாற்றங்களைக் கைவிடு",
+            editLabel: "திருத்து",
+            // Advanced Stats
+            skillBalance: "திறன் சமநிலை",
+            fluencyVelocity: "சரள வேகவீதம்",
+            vocabVault: "சொற்களஞ்சியம்",
+            chronotype: "காலவகை",
+            activityDistribution: "செயல்பாட்டுப் பகிர்வு (24ம)",
+            studiedTime: "பயின்ற நேரம்",
+            currentLabel: "தற்போதைய",
+            streakLabel: "ஸ்ட்ரீக்",
+            longestLabel: "நீண்ட",
+            earlyBird: "அதிகாலைப் பறவை",
+            earlyBirdDesc: "காலையில் மிகவும் சுறுசுறுப்பாக இருப்பார்",
+            dayWalker: "பகல் நேரத்தவர்",
+            dayWalkerDesc: "மதியத்தில் மிகவும் சுறுசுறுப்பாக இருப்பார்",
+            nightOwl: "இரவு ஆந்தை",
+            nightOwlDesc: "இருட்டிய பின் மிகவும் சுறுசுறுப்பாக இருப்பார்",
+            timeMastery: "TIME MASTERY",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "ஏற்றுகிறது...",
+            adaptiveQuiz: "மாற்றியமைக்கக்கூடிய வினாடிவினா",
+            adaptiveQuizDescription: "நாங்கள் முதலில் தவறான மொழிபெயர்ப்பைக் காட்டி, பின் சரியான சொல்லைக் காட்டுகிறோம்.",
+            wordCheck: "சொல் சரிபார்ப்பு",
+            wordCheckDescription: "டைல்கள் முதலில் கலைந்து, பின் சரியான சொல்லை உறுதிப்படுத்த இடத்தில் அமரும்.",
+            wordCheckExamplePrompt: "சொல்லைச் சரியான வரிசையில் அமைக்க எழுத்துகளைத் தட்டவும்",
+            quizPrompt: "சொல்லுக்கான சரியான மொழிபெயர்ப்பைத் தேர்ந்தெடுக்கவும்.",
+            answerConfirmation: "நீங்கள் சரியான சொல்லை உருவாக்கிவிட்டீர்கள்!",
+            tryAgain: "அச்சச்சோ! மீண்டும் முயற்சிக்கவும்.")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "எனது மொழிகள்"
-        case .notifications: return "அறிவிப்புகள்"
-        case .aesthetics: return "அழகியல்"
-        case .account: return "கணக்கு"
-        case .appLanguage: return "பயன்பாட்டு இடைமுகம்"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace 
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "உள்நுழை /"
-        case .register: return "பதிவு"
-        case .settings: return "அமைப்புகள்"
-        case .home: return "வீடு"
-        case .back: return "பின்"
-        case .next: return "அடுத்து"
-        case .previous: return "முந்தைய"
-        case .done: return "முடிந்தது"
-        case .cancel: return "ரத்து"
-        case .save: return "சேமி"
-        case .delete: return "நீக்கு"
-        case .add: return "சேர்"
-        case .remove: return "அகற்று"
-        case .edit: return "திருத்து"
-        case .continueText: return "தொடர்க"
-        
-        // Quiz
-        case .quizCompleted: return "வினாடி வினா முடிந்தது!"
-        case .sessionCompleted: return "அமர்வு முடிந்தது!"
-        case .masteredEnvironment: return "நீங்கள் உங்கள் சூழலை தேர்ச்சி பெற்றீர்கள்!"
-        case .learnMoreAbout: return "பற்றி மேலும் அறிய"
-        case .backToHome: return "வீட்டுக்கு திரும்பு"
-        case .tryAgain: return "மீண்டும் முயற்சி"
-        case .shuffled: return "கலக்கப்பட்டது"
-        case .check: return "சரிபார்"
-        
-        // Vocabulary
-        case .exploreCategories: return "வகைகளை ஆராய்க"
-        case .testYourself: return "உங்களை சோதிக்கவும்"
-        case .similarWords: return "ஒத்த சொற்கள்:"
-        case .wordTenses: return "சொல் காலங்கள்:"
-        case .tapWordsToExplore: return "அவற்றின் மொழிபெயர்ப்புகளைப் படிக்கவும் மற்றும் ஆராயவும் சொற்களைத் தொடவும்"
-        case .wordBreakdown: return "சொல் பிரிவு:"
-        
-        // Scene
-        case .analyzingImage: return "படத்தை பகுப்பாய்வு செய்கிறது..."
-        case .imageAnalysisCompleted: return "பட பகுப்பாய்வு முடிந்தது"
-        case .imageSelected: return "படம் தேர்ந்தெடுக்கப்பட்டது"
-        case .placeNotSelected: return "இடம் தேர்ந்தெடுக்கப்படவில்லை"
-        case .chooseLanguages: return "மொழிகளைத் தேர்ந்தெடுக்கவும்"
-        case .locianChoose: return "Locian தேர்ந்தெடுக்கிறது"
-        
-        // Settings
-        case .enableNotifications: return "அறிவிப்புகளை இயக்கு"
-        case .thisPlace: return "இந்த இடம்"
-        case .tapOnAnySection: return "அமைப்புகளைக் காணவும் நிர்வகிக்கவும் மேலே உள்ள எந்தப் பிரிவையும் தொடவும்"
-        case .addNewLanguagePair: return "புதிய மொழி இணையைச் சேர்க்க"
-        case .noLanguagePairsAdded: return "இன்னும் மொழி இணைகள் சேர்க்கப்படவில்லை"
-        case .setDefault: return "இயல்புநிலையாக அமை"
-        case .defaultText: return "இயல்புநிலை"
-        case .user: return "பயனர்"
-        case .noPhone: return "தொலைபேசி இல்லை"
-        case .signOutFromAccount: return "உங்கள் கணக்கிலிருந்து வெளியேறவும்"
-        case .removeAllPracticeData: return "உங்கள் அனைத்து பயிற்சி தரவையும் நீக்கவும்"
-        case .permanentlyDeleteAccount: return "உங்கள் கணக்கு மற்றும் அனைத்து தரவையும் நிரந்தரமாக நீக்கவும்"
-        case .currentLevel: return "தற்போதைய நிலை"
-        case .selectPhoto: return "படத்தைத் தேர்ந்தெடுக்கவும்"
-        case .camera: return "கேமரா"
-        case .photoLibrary: return "பட நூலகம்"
-        case .selectTime: return "நேரத்தைத் தேர்ந்தெடுக்கவும்"
-        case .hour: return "மணி"
-        case .minute: return "நிமிடம்"
-        case .addTime: return "நேரத்தைச் சேர்க்க"
-        case .areYouSureLogout: return "நீங்கள் உறுதியாக வெளியேற விரும்புகிறீர்களா?"
-        case .areYouSureDeleteAccount: return "நீங்கள் உறுதியாக உங்கள் கணக்கை நீக்க விரும்புகிறீர்களா? இந்த செயலை மீண்டும் செய்ய முடியாது."
-        
-        // Quiz
-        case .goBack: return "பின் செல்ல"
-        case .fillInTheBlank: return "வெற்று இடத்தை நிரப்பவும்:"
-        case .arrangeWordsInOrder: return "சொற்களை சரியான வரிசையில் அமைக்கவும்:"
-        case .tapWordsBelowToAdd: return "அவற்றை இங்கே சேர்க்க கீழே உள்ள சொற்களைத் தொடவும்"
-        case .availableWords: return "கிடைக்கும் சொற்கள்:"
-        case .correctAnswer: return "சரியான பதில்:"
-        
-        // Common
-        case .error: return "பிழை"
-        case .ok: return "சரி"
-        case .close: return "மூடு"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "நீங்கள் நிற்கும் இடத்திலிருந்து நீங்கள் தேவையான ஒவ்வொரு காலமும்"
-        case .awarenessHeading: return "விழிப்புணர்வு"
-        case .awarenessDescription: return "AI உங்கள் சூழலிலிருந்து கற்றுக்கொள்கிறது"
-        case .inputsHeading: return "உள்ளீடுகள்"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "பிரிவு"
-        case .breakdownDescription: return "Locian வாக்கியங்களை காலங்களாக பிரிக்கிறது, சொல்-படி-சொல் மொழிபெயர்ப்புகளை வழங்குகிறது"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "தயார்"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "உள்நுழை / பதிவு"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "வழிசெல்ல இடது அல்லது வலது பக்கத்தைத் தட்டவும்"
-        case .selectAppLanguage: return "பயன்பாட்டு மொழியைத் தேர்ந்தெடுக்கவும்"
-        case .selectLanguageDescription: return "இந்த மொழி பயன்பாட்டு பயனர் இடைமுகம், தலைப்புகள், விளக்கங்கள், பொத்தான்கள், பெயர்கள் மற்றும் அனைத்தையும் தேர்ந்தெடுக்கப்பட்ட மொழியாக மாற்றும்"
-        
-        // Login
-        case .username: return "பயனர் பெயர்"
-        case .phoneNumber: return "தொலைபேசி எண்"
-        case .guestLogin: return "விருந்தினர் உள்நுழைவு"
-        case .guestLoginDescription: return "விருந்தினர் உள்நுழைவு சரிபார்ப்புக்காக மற்றும் விருந்தினருக்கு அனைத்து பயன்பாட்டு அம்சங்களுக்கும் அணுகலை அனுமதிக்கும். சரிபார்ப்புக்குப் பிறகு அகற்றப்படும்."
-        
-        // Professions
-        case .student: return "மாணவர்"
-        case .softwareEngineer: return "மென்பொருள் பொறியாளர்"
-        case .teacher: return "ஆசிரியர்"
-        case .doctor: return "மருத்துவர்"
-        case .artist: return "கலைஞர்"
-        case .businessProfessional: return "வணிக நிபுணர்"
-        case .salesOrMarketing: return "விற்பனை அல்லது சந்தைப்படுத்தல்"
-        case .traveler: return "பயணி"
-        case .homemaker: return "வீட்டு உழைப்பாளி"
-        case .chef: return "செஃப்"
-        case .police: return "போலீஸ்"
-        case .bankEmployee: return "வங்கி ஊழியர்"
-        case .nurse: return "நர்ஸ்"
-        case .designer: return "வடிவமைப்பாளர்"
-        case .engineerManager: return "பொறியாளர் மேலாளர்"
-        case .photographer: return "புகைப்படக்காரர்"
-        case .contentCreator: return "உள்ளடக்க படைப்பாளர்"
-        case .other: return "மற்றவை"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian இன் தேர்வு"
-        case .airport: return "விமான நிலையம்"
-        case .cafe: return "காபி"
-        case .gym: return "விளையாட்டு அரங்கம்"
-        case .library: return "நூலகம்"
-        case .office: return "அலுவலகம்"
-        case .park: return "பூங்கா"
-        case .restaurant: return "உணவகம்"
-        case .shoppingMall: return "வணிக மையம்"
-        case .travelling: return "பயணம்"
-        case .university: return "பல்கலைக்கழகம்"
-        case .addCustomPlace: return "தனிப்பயன் இடத்தைச் சேர்"
-        case .enterCustomPlaceName: return "தனிப்பயன் இடத்தின் பெயரை உள்ளிடவும் (அதிகபட்சம் 30 எழுத்துக்கள்)"
-        case .maximumCustomPlaces: return "அதிகபட்சம் 10 தனிப்பயன் இடங்கள்"
-        case .welcome: return "வரவேற்கிறோம்"
-        case .tapToCaptureContext: return "உங்கள் சூழலை பிடிக்கவும் மற்றும் கற்றலைத் தொடங்கவும் தட்டவும்"
-        case .customSection: return "தனிப்பயன்"
-        case .examples: return "எடுத்துக்காட்டுகள்:"
-        case .customPlacePlaceholder: return "எ.கா., அலுவலகத்திற்கு பயணம்"
-        case .exampleTravellingToOffice: return "அலுவலகத்திற்கு பயணம்"
-        case .exampleTravellingToHome: return "வீட்டிற்கு பயணம்"
-        case .exampleExploringParis: return "பாரிஸை ஆராய்தல்"
-        case .exampleVisitingMuseum: return "அருங்காட்சியகத்தை பார்வையிடுதல்"
-        case .exampleCoffeeShop: return "காபி கடை"
-        case .characterCount: return "எழுத்துக்கள்"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "முதன்மை மொழி:"
-        case .selectNativeLanguage: return "உங்கள் முதன்மை மொழியைத் தேர்ந்தெடுக்கவும்"
-        case .targetLanguage: return "இலக்கு மொழி:"
-        case .selectTargetLanguage: return "நீங்கள் கற்றுக்கொள்ள விரும்பும் மொழியைத் தேர்ந்தெடுக்கவும்"
-        case .nativeLanguageDescription: return "உங்கள் முதன்மை மொழி என்பது நீங்கள் படிக்க, எழுத மற்றும் சரளமாக பேசக்கூடிய மொழியாகும். இது நீங்கள் மிகவும் வசதியாக உள்ள மொழியாகும்."
-        case .targetLanguageDescription: return "உங்கள் இலக்கு மொழி என்பது நீங்கள் கற்றுக்கொள்ளவும் பயிற்சி செய்யவும் விரும்பும் மொழியாகும். உங்கள் திறன்களை மேம்படுத்த விரும்பும் மொழியைத் தேர்ந்தெடுக்கவும்."
-        case .addPair: return "இணை சேர்"
-        case .adding: return "சேர்க்கிறது..."
-        case .failedToAddLanguagePair: return "மொழி இணையை சேர்க்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
-        case .settingAsDefault: return "இயல்புநிலையாக அமைக்கிறது..."
-        case .beginner: return "தொடக்க"
-        case .intermediate: return "இடைநிலை"
-        case .advanced: return "மேம்பட்ட"
-        case .currentlyLearning: return "கற்றுக்கொள்கிறேன்"
-        case .otherLanguages: return "மற்ற மொழிகள்"
-        case .learnNewLanguage: return "புதிய மொழி கற்றுக்கொள்ள"
-        case .learn: return "கற்றுக்கொள்"
-        case .tapToSelectNativeLanguage: return "உங்கள் முதன்மை மொழியைத் தேர்ந்தெடுக்க தட்டவும்"
-        case .neonGreen: return "நியான் பச்சை"
-        
-        // Theme color names
-        case .cyanMist: return "சையான் மிஸ்ட்"
-        case .violetHaze: return "வயலட் ஹேஸ்"
-        case .softPink: return "சாஃப்ட் பிங்க்"
-        case .pureWhite: return "தூய வெள்ளை"
-        
-        // Quick Look
-        case .quickRecall: return "விரைவு நினைவு"
-        case .startQuickPuzzle: return "விரைவு புதிரைத் தொடங்க"
-        case .stopPuzzle: return "புதிரை நிறுத்த"
-        
-        // Streak
-        case .streak: return "தொடர்"
-        case .dayStreak: return "நாள் தொடர்"
-        case .daysStreak: return "நாட்கள் தொடர்"
-        case .editYourStreaks: return "உங்கள் தொடர்களை திருத்த"
-        case .editStreaks: return "தொடர்களை திருத்த"
-        case .selectDatesToAddOrRemove: return "பயிற்சி நாட்களைச் சேர்க்க அல்லது நீக்க தேதிகளைத் தேர்ந்தெடுக்கவும்"
-        case .saving: return "சேமிக்கிறது..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

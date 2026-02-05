@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 extension Color {
     init(hex: String) {
@@ -31,6 +32,26 @@ extension Color {
             blue: Double(b) / 255,
             opacity: Double(a) / 255
         )
+    }
+    
+    func isLight(threshold: Double = 0.6) -> Bool {
+        let uiColor = UIColor(self)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        
+        if uiColor.getRed(&red, green: &green, blue: &blue, alpha: &alpha) {
+            let luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+            return Double(luminance) > threshold
+        }
+        
+        var white: CGFloat = 0
+        if uiColor.getWhite(&white, alpha: &alpha) {
+            return Double(white) > threshold
+        }
+        
+        return true
     }
 }
 

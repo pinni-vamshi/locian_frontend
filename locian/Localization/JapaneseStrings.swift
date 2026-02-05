@@ -2,475 +2,621 @@
 //  JapaneseStrings.swift
 //  locian
 //
-//  Japanese localization strings
-//
 
 import Foundation
 
 struct JapaneseStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "クイズ完了！",
-            masteredEnvironment: "環境をマスターしました！",
-            learnMoreAbout: "についてもっと学ぶ",
-            backToHome: "ホームに戻る",
-            next: "次へ",
-            previous: "前へ",
-            check: "確認",
-            tryAgain: "もう一度試す",
-            shuffled: "シャッフル済み",
-            noQuizAvailable: "クイズがありません",
-            question: "質問",
-            correct: "正解",
-            incorrect: "不正解",
-            notAttempted: "未回答"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "カメラ",
+            gallery: "ギャラリー",
+            nextUp: "次へ",
+            historyLog: "履歴ログ",
+
+            moments: "瞬間",
+            pastMoments: "過去の瞬間",
+            noHistory: "履歴なし",
+            generatingHistory: "履歴を生成中",
+            generatingMoments: "生成中...",
+            analyzingImage: "画像分析...",
+            tapNextUpToGenerate: "次へをタップして生成",
+            noUpcomingPlaces: "今後の場所なし",
+            noDetails: "詳細なし",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "学習を開始",
+            continueLearning: "学習を続ける",
+            noPastMoments: "過去の瞬間なし",
+            useCamera: "カメラを使用",
+            previouslyLearning: "以前の学習",
+            sunShort: "日",
+            monShort: "月",
+            tueShort: "火",
+            wedShort: "水",
+            thuShort: "木",
+            friShort: "金",
+            satShort: "土",
+            login: "ログイン",
+            register: "登録",
+            settings: "設定",
+            back: "戻る",
+            done: "完了",
+            cancel: "キャンセル",
+            save: "保存",
+            delete: "削除",
+            add: "追加",
+            remove: "削除",
+            edit: "編集",
+            error: "エラー",
+            ok: "OK",
+            welcomeLabel: "ようこそ",
+            currentStreak: "現在のストリーク",
+            notSet: "未設定",
+            learnTab: "学習",
+            addTab: "追加",
+            progressTab: "進捗",
+            settingsTab: "設定",
+            loading: "読み込み中...",
+            unknownPlace: "未知の場所",
+            noLanguageAvailable: "利用可能な言語はありません",
+            noInternetConnection: "インターネット接続なし",
+            retry: "再試行",
+            tapToGetMoments: "タップして瞬間を取得",
+            startLearningThisMoment: "この瞬間から学習を開始",
+            daysLabel: "日",
+            noNewPlace: "新しい場所を追加",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "開始",
+            typeYourMoment: "瞬間を入力...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "私の言語",
+            systemLanguage: "アプリのインターフェース",
+            targetLanguages: "目標言語",
+            pastLanguagesArchived: "過去の学習言語",
+            theme: "テーマ",
             notifications: "通知",
-            appearance: "外観",
             account: "アカウント",
             profile: "プロフィール",
             addLanguagePair: "言語ペアを追加",
-            enableNotifications: "通知を有効にする",
             logout: "ログアウト",
             deleteAllData: "すべてのデータを削除",
-            deleteAccount: "アカウントを削除",
+            deleteAccount: "アカウントを完全に削除",
             selectLevel: "レベルを選択",
-            selectAppLanguage: "アプリインターフェース",
             proFeatures: "プロ機能",
             showSimilarWordsToggle: "類似語を表示",
-            showWordTensesToggle: "単語の時制を表示",
-            nativeLanguage: "母国語:",
-            selectNativeLanguage: "あなたの母国語を選択",
-            targetLanguage: "目標言語:",
-            selectTargetLanguage: "学習したい言語を選択",
-            nativeLanguageDescription: "あなたの母国語は、流暢に読み、書き、話すことができる言語です。これは、あなたが最も快適に感じる言語です。",
-            targetLanguageDescription: "あなたの目標言語は、学習し練習したい言語です。スキルを向上させたい言語を選択してください。",
-            addPair: "ペアを追加",
-            adding: "追加中...",
-            failedToAddLanguagePair: "言語ペアの追加に失敗しました。もう一度お試しください。",
-            settingAsDefault: "デフォルトとして設定中...",
+            nativeLanguage: "母国 語",
+            selectNativeLanguage: "母国語を選択",
+            targetLanguage: "目標言語",
+            selectTargetLanguage: "目標言語を選択",
+            targetLanguageDescription: "学びたい言語",
             beginner: "初級",
             intermediate: "中級",
             advanced: "上級",
-            currentlyLearning: "学習中",
-            otherLanguages: "その他の言語",
+            currentlyLearning: "現在学習中",
             learnNewLanguage: "新しい言語を学ぶ",
             learn: "学ぶ",
-            tapToSelectNativeLanguage: "母国語を選択するにはタップしてください",
             neonGreen: "ネオングリーン",
-            cyanMist: "シアンミスト",
-            violetHaze: "バイオレットヘイズ",
-            softPink: "ソフトピンク",
-            pureWhite: "ピュアホワイト"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "カテゴリを探索",
-            testYourself: "自分をテスト",
-            slideToStartQuiz: "クイズ開始のためにスライド",
-            similarWords: "類似の単語",
-            wordTenses: "動詞の時制",
-            wordBreakdown: "単語の分解",
-            tapToSeeBreakdown: "単語をタップして分解を見る",
-            tapToHideBreakdown: "単語をタップして分解を隠す",
-            tapWordsToExplore: "単語をタップして翻訳を読み、探索する",
-            loading: "読み込み中...",
-            learnTheWord: "単語を学ぶ",
-            tryFromMemory: "記憶から試す",
-            adjustingTo: "調整中",
-            settingPlace: "設定中",
-            settingTime: "設定中",
-            generatingVocabulary: "生成中",
-            analyzingVocabulary: "分析中",
-            analyzingCategories: "分析中",
-            analyzingWords: "分析中",
-            creatingQuiz: "作成中",
-            organizingContent: "整理中",
-            to: "へ",
-            place: "場所",
-            time: "時間",
-            vocabulary: "語彙",
-            your: "あなたの",
-            interested: "興味のある",
-            categories: "カテゴリ",
-            words: "単語",
-            quiz: "クイズ",
-            content: "コンテンツ"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "こんにちは、",
-            learnFromSurroundings: "周囲から学ぶ",
-            learnFromSurroundingsDescription: "環境をキャプチャし、実世界のコンテキストから語彙を学ぶ",
-            locianChoosing: "選択中...",
-            chooseLanguages: "言語を選択",
-            continueWith: "Locianが選択したものを続ける",
-            slideToLearn: "学ぶためにスライド",
-            recommended: "おすすめ",
-            intoYourLearningFlow: "学習フローへ",
-            intoYourLearningFlowDescription: "学習履歴に基づいて練習するための推奨場所",
-            customSituations: "カスタム状況",
-            customSituationsDescription: "独自のパーソナライズされた学習シナリオを作成して練習する",
-            max: "最大",
-            recentPlacesTitle: "最近の場所",
-            allPlacesTitle: "すべての場所",
-            recentPlacesEmpty: "語彙を生成するとここに表示されます。",
-            showMore: "さらに表示",
-            showLess: "折りたたむ",
-            takePhoto: "写真を撮る",
-            chooseFromGallery: "ギャラリーから選択",
-            letLocianChoose: "Locianに選ばせる",
-            lociansChoice: "Locianによる",
-            cameraTileDescription: "この写真は環境を分析し、学習できる瞬間を表示します。",
-            airport: "空港",
-            aquarium: "水族館",
-            bakery: "ベーカリー",
-            beach: "ビーチ",
-            bookstore: "書店",
-            cafe: "カフェ",
-            cinema: "映画館",
-            gym: "ジム",
-            hospital: "病院",
-            hotel: "ホテル",
-            home: "家",
-            library: "図書館",
-            market: "市場",
-            museum: "博物館",
-            office: "オフィス",
-            park: "公園",
-            restaurant: "レストラン",
-            shoppingMall: "ショッピングモール",
-            stadium: "スタジアム",
-            supermarket: "スーパーマーケット",
-            temple: "寺院",
-            travelling: "旅行",
-            university: "大学",
-            addCustomPlace: "カスタム場所を追加",
-            addPlace: "場所を追加",
-            enterCustomPlaceName: "カスタム場所名を入力してください（最大30文字）",
-            maximumCustomPlaces: "最大10個のカスタム場所",
-            welcome: "ようこそ",
+            neonFuchsia: "ネオンフクシア",
+            electricIndigo: "エレクトリックインディゴ",
+            graphiteBlack: "グラファイトブラック",
+            student: "学生",
+            softwareEngineer: "ソフトウェアエンジニア",
+            teacher: "教師",
+            doctor: "医師",
+            artist: "アーティスト",
+            businessProfessional: "ビジネスプロフェッショナル",
+            salesOrMarketing: "営業またはマーケティング",
+            traveler: "旅行者",
+            homemaker: "主婦/主夫",
+            chef: "シェフ",
+            police: "警察官",
+            bankEmployee: "銀行員",
+            nurse: "看護師",
+            designer: "デザイナー",
+            engineerManager: "エンジニアリングマネージャー",
+            photographer: "写真家",
+            contentCreator: "コンテンツクリエイター",
+            entrepreneur: "起業家",
+            other: "その他",
+            otherPlaces: "他の場所",
+            speaks: "話す言語",
+            neuralEngine: "ニューラルエンジン",
+            noLanguagePairsAdded: "言語ペアが追加されていません",
+            setDefault: "デフォルトに設定",
+            defaultText: "デフォルト",
             user: "ユーザー",
-            tapToCaptureContext: "タップしてコンテキストをキャプチャし、学習を開始します",
-            customSection: "カスタム",
-            examples: "例:",
-            customPlacePlaceholder: "例：オフィスへの移動",
-            exampleTravellingToOffice: "オフィスへの移動",
-            exampleTravellingToHome: "家への移動",
-            exampleExploringParis: "パリを探索",
-            exampleVisitingMuseum: "博物館を訪問",
-            exampleCoffeeShop: "コーヒーショップ",
-            characterCount: "文字",
-            situationExample1: "忙しいカフェでコーヒーを注文する",
-            situationExample2: "新しい街で道を尋ねる",
-            situationExample3: "市場で食料品を買い物する",
-            situationExample4: "医者の予約を取る",
-            situationExample5: "ホテルにチェックインする"
-        )
+            signOutFromAccount: "アカウントからサインアウト",
+            permanentlyDeleteAccount: "アカウントを完全に削除",
+            languageAddedSuccessfully: "言語が正常に追加されました",
+            failedToAddLanguage: "言語の追加に失敗しました。もう一度お試しください。",
+            pleaseSelectLanguage: "言語を選択してください",
+            systemConfig: "システム // 設定",
+            currentLevel: "現在のレベル",
+            selectPhoto: "写真を選択",
+            camera: "カメラ",
+            photoLibrary: "フォトライブラリ",
+            selectTime: "時間を選択",
+            hour: "時",
+            minute: "分",
+            addTime: "時間を追加",
+            location: "位置情報",
+            diagnosticBorders: "診断境界",
+            areYouSureLogout: "ログアウトしてもよろしいですか？",
+            areYouSureDeleteAccount: "アカウントを完全に削除してもよろしいですか？この操作は取り消せません。")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "ログイン",
             verify: "確認",
             selectProfession: "職業を選択",
+            selectUserProfession: "SELECT_USER_PROFESSION",
             username: "ユーザー名",
             phoneNumber: "電話番号",
             guestLogin: "ゲストログイン",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "開始するには職業を選択してください",
+            showMore: "もっと見る",
+            showLess: "少なく表示",
+            forReview: "[レビュー用]",
+            authenticatingUser: "AUTHENTICATING_USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS_OF_SERVICE",
+            privacyPolicy: "PRIVACY_POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "あなたが立つ場所から必要なすべての時制まで",
-            awarenessHeading: "認識",
-            awarenessDescription: "AIがあなたの周囲から学ぶ",
-            inputsHeading: "入力",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
+            locianDescription: "日常生活を通じて自然に言語を学ぶ",
+            awarenessHeading: "気づき",
+            awarenessDescription: "周りの言葉にリアルタイムで気づく",
             breakdownHeading: "分解",
-            breakdownDescription: "Locianは文を時制に分解し、単語ごとの翻訳を提供",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
+            breakdownDescription: "言葉がどのように構成されているかを理解する",
+            progressHeading: "進捗",
+            progressDescription: "学習の旅を追跡する",
             readyHeading: "準備完了",
-            readyDescription: "",
-            loginOrRegister: "ログイン / 登録",
-            pageIndicator: " / 6",
-            tapToNavigate: "左右をタップしてナビゲート",
-            selectAppLanguage: "アプリ言語を選択",
-            selectLanguageDescription: "この言語により、アプリのユーザーインターフェース、見出し、説明、ボタン、名前、すべてが選択した言語に変わります"
-        )
+            readyDescription: "今すぐ学習を開始",
+            loginOrRegister: "ログインまたは登録",
+            pageIndicator: "ページ",
+            selectLanguageDescription: "優先言語を選択",
+
+            fromWhereYouStand: "自分の位置から",
+            toEveryWord: "全ての",
+            everyWord: "言葉へ",
+            youNeed: "あなたに必要なのは",
+            lessonEngine: "レッスンエンジン",
+            nodesLive: "ノード稼働中",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "ホログリッド起動",
+            adaCr02: "ADA_CR-02",
+            your: "あなたの",
+            places: "場所が、",
+            lessons: "レッスンになる。",
+            yourPlaces: "あなたの場所が、",
+            yourLessons: " あなたのレッスンになる。",
+            nearbyCafes: "近くのカフェ？",
+            unlockOrderFlow: " 注文フローを解除",
+            modules: "モジュール",
+            activeHubs: "アクティブハブ？",
+            synthesizeGym: " ジムを合成",
+            vocabulary: "語彙",
+            locationOpportunity: "全ての場所が学習の機会になる",
+            module03: "モジュール_03",
+            notJustMemorization: "単なる\n暗記ではない",
+            philosophy: "哲学",
+            locianTeaches: "Locianは単に言葉を教えるだけではありません。\nLocianはターゲット言語で ",
+            think: "思考する",
+            inTargetLanguage: "ことを教えます。",
+            patternBasedLearning: "パターン学習",
+            patternBasedDesc: "乾燥したルールなしで文法構造を直感的に認識します。",
+            situationalIntelligence: "状況別インテリジェンス",
+            situationalDesc: "環境や履歴に適応する動的なシナリオ。",
+            adaptiveDrills: "適応型ドリル",
+            adaptiveDesc: "レッスンエンジンが弱点を特定し、再調整します。",
+            systemReady: "システム準備完了",
+            quickSetup: "クイックセットアップ",
+            levelB2: "レベル_B2",
+            authorized: "認証済み",
+            notificationsPermission: "通知",
+            notificationsDesc: "近くの練習機会やストリークアラートのリアルタイム更新を取得します。",
+            microphonePermission: "マイク",
+            microphoneDesc: "実践的な文脈での発音採点やレッスン対話に不可欠です。",
+            geolocationPermission: "位置情報",
+            geolocationDesc: "没入型練習のために、カフェや図書館のような近くの「レッスンゾーン」を特定します。",
+            granted: "許可されました",
+            allow: "許可",
+            skip: "スキップ",
+            letsStart: "始めましょう",
+            continueText: "続ける",
+            wordTenses: "動詞の時制:",
+            similarWords: "類義語:",
+            wordBreakdown: "単語の構成:",
+            consonant: "子音",
+            vowel: "母音",
+            past: "過去",
+            present: "現在",
+            future: "未来",
+            learnWord: "学ぶ")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "キャンセル",
-            save: "保存",
-            done: "完了",
-            ok: "OK",
-            back: "戻る",
-            next: "次へ",
-            continueText: "続ける"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "カスタム",
-            hint: "ヒント",
-            practiceDescription: "任意の単語をタップして目標言語に翻訳します。助けが必要な場合は、ヒントボタンを使用して提案を取得してください。",
-            practiceTitle: "練習",
-            practiceFollowUp: "次の練習に進む",
-            camera: "カメラ",
-            cameraDescription: "Locianは{native}で会話を生成し、{target}への変換を練習できます。",
-            useCamera: "カメラを使用",
-            cameraButtonDescription: "写真から瞬間を生成",
-            typeConversation: "会話を入力",
-            typeConversationDescription: "Locianは{native}で会話を生成し、{target}への変換を練習できます。",
-            conversationPlaceholder: "例：忙しいカフェでコーヒーを注文",
-            submit: "送信",
-            fullCustomText: "完全なカスタムテキスト",
-            examples: "例:",
-            conversationExample1: "雨の中で道を尋ねる",
-            conversationExample2: "夜遅くに野菜を買う",
-            conversationExample3: "混雑したオフィスで働く",
-            describeConversation: "Locianに作成してほしい会話を説明してください。",
-            fullTextPlaceholder: "完全なテキストまたは対話をここに入力...",
-            startCustomPractice: "カスタム練習を開始"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "進捗",
-            edit: "編集",
             current: "現在",
             longest: "最長",
-            lastPracticed: "最後に練習した日",
+            lastPracticed: "最後の練習",
             days: "日",
-            addLanguagePairToSeeProgress: "言語ペアを追加して進捗を確認してください。"
-        )
+            addLanguagePairToSeeProgress: "進捗を確認するには言語ペアを追加してください",
+            startPracticingMessage: "連続記録を作るには練習を始めてください",
+            consistencyQuote: "一貫性は言語学習の鍵です",
+            practiceDateSavingDisabled: "練習日の保存が無効になっています",
+            editYourStreaks: "連続記録を編集",
+            editStreaks: "連続記録を編集",
+            selectDatesToAddOrRemove: "連続記録に追加または削除する日付を選択してください",
+            saving: "保存中",
+            statusOnFire: "ステータス: 絶好調",
+            youPracticed: "練習しました ",
+            yesterday: " 昨日.",
+            checkInNow: "今すぐチェックイン",
+            nextGoal: "次の目標",
+            reward: "報酬",
+            historyLogProgress: "履歴ログ",
+            streakStatus: "ストリークステータス",
+            streakLog: "ストリークログ",
+            consistency: "一貫性",
+            consistencyHigh: "アクティビティログは高いエンゲージメントを示しています。",
+            consistencyMedium: "良い勢いをつけています。",
+            consistencyLow: "一貫性が鍵です。頑張り続けてください。",
+            reachMilestone: "%d日を目指しましょう！",
+            nextMilestone: "次のマイルストーン",
+            actionRequired: "アクションが必要です",
+            logActivity: "アクティビティを記録",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "最長ストリック",
+            streakData: "ストリックデータ",
+            activeLabel: "アクティブ",
+            missedLabel: "ミス",
+            saveChanges: "変更を保存",
+            discardChanges: "変更を破棄",
+            editLabel: "編集",
+            // Advanced Stats
+            skillBalance: "スキルバランス",
+            fluencyVelocity: "流暢さの速度",
+            vocabVault: "単語バンク",
+            chronotype: "クロノタイプ",
+            activityDistribution: "活動分布 (24時間)",
+            studiedTime: "学習時間",
+            currentLabel: "現在",
+            streakLabel: "ストリーク",
+            longestLabel: "最長",
+            earlyBird: "早起き",
+            earlyBirdDesc: "朝に最も活発",
+            dayWalker: "デイウォーカー",
+            dayWalkerDesc: "午後に最も活発",
+            nightOwl: "夜型",
+            nightOwlDesc: "夜間に最も活発",
+            timeMastery: "タイムマスタリー",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "読み込み中...",
+            adaptiveQuiz: "アダプティブクイズ",
+            adaptiveQuizDescription: "最初は誤った訳を表示し、次に正しい言葉を強調します。",
+            wordCheck: "単語チェック",
+            wordCheckDescription: "タイルが混ざり、次に正しい位置に収まって単語を確認します。",
+            wordCheckExamplePrompt: "文字をタップして単語を正しい順序に並べ替えます。",
+            quizPrompt: "正しい翻訳を選択してください。",
+            answerConfirmation: "正しい単語ができました！",
+            tryAgain: "おっと！再試行してください。")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "私の言語"
-        case .notifications: return "通知"
-        case .aesthetics: return "美観"
-        case .account: return "アカウント"
-        case .appLanguage: return "アプリインターフェース"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "ログイン /"
-        case .register: return "登録"
-        case .settings: return "設定"
-        case .home: return "ホーム"
-        case .back: return "戻る"
-        case .next: return "次へ"
-        case .previous: return "前へ"
-        case .done: return "完了"
-        case .cancel: return "キャンセル"
-        case .save: return "保存"
-        case .delete: return "削除"
-        case .add: return "追加"
-        case .remove: return "削除"
-        case .edit: return "編集"
-        case .continueText: return "続ける"
-        
-        // Quiz
-        case .quizCompleted: return "クイズ完了！"
-        case .sessionCompleted: return "セッション完了！"
-        case .masteredEnvironment: return "環境をマスターしました！"
-        case .learnMoreAbout: return "についてもっと学ぶ"
-        case .backToHome: return "ホームに戻る"
-        case .tryAgain: return "もう一度試す"
-        case .shuffled: return "シャッフル済み"
-        case .check: return "確認"
-        
-        // Vocabulary
-        case .exploreCategories: return "カテゴリを探索"
-        case .testYourself: return "自分をテスト"
-        case .similarWords: return "類似語："
-        case .wordTenses: return "単語の時制："
-        case .tapWordsToExplore: return "単語をタップして翻訳を読み、探索する"
-        case .wordBreakdown: return "単語の分解："
-        
-        // Scene
-        case .analyzingImage: return "画像を分析中..."
-        case .imageAnalysisCompleted: return "画像分析完了"
-        case .imageSelected: return "画像が選択されました"
-        case .placeNotSelected: return "場所が選択されていません"
-        case .chooseLanguages: return "言語を選択"
-        case .locianChoose: return "Locianが選択"
-        
-        // Settings
-        case .enableNotifications: return "通知を有効にする"
-        case .thisPlace: return "この場所"
-        case .tapOnAnySection: return "上記のセクションをタップして設定を表示および管理"
-        case .addNewLanguagePair: return "新しい言語ペアを追加"
-        case .noLanguagePairsAdded: return "言語ペアがまだ追加されていません"
-        case .setDefault: return "デフォルトに設定"
-        case .defaultText: return "デフォルト"
-        case .user: return "ユーザー"
-        case .noPhone: return "電話番号なし"
-        case .signOutFromAccount: return "アカウントからサインアウト"
-        case .removeAllPracticeData: return "すべての練習データを削除"
-        case .permanentlyDeleteAccount: return "アカウントとすべてのデータを完全に削除"
-        case .currentLevel: return "現在のレベル"
-        case .selectPhoto: return "写真を選択"
-        case .camera: return "カメラ"
-        case .photoLibrary: return "フォトライブラリ"
-        case .selectTime: return "時間を選択"
-        case .hour: return "時間"
-        case .minute: return "分"
-        case .addTime: return "時間を追加"
-        case .areYouSureLogout: return "ログアウトしてもよろしいですか？"
-        case .areYouSureDeleteAccount: return "アカウントを削除してもよろしいですか？この操作は元に戻せません。"
-        
-        // Quiz
-        case .goBack: return "戻る"
-        case .fillInTheBlank: return "空白を埋める："
-        case .arrangeWordsInOrder: return "単語を正しい順序で並べる："
-        case .tapWordsBelowToAdd: return "下の単語をタップしてここに追加"
-        case .availableWords: return "利用可能な単語："
-        case .correctAnswer: return "正解："
-        
-        // Common
-        case .error: return "エラー"
-        case .ok: return "OK"
-        case .close: return "閉じる"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "あなたが立つ場所から必要なすべての時制まで"
-        case .awarenessHeading: return "認識"
-        case .awarenessDescription: return "AIがあなたの周囲から学ぶ"
-        case .inputsHeading: return "入力"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "分解"
-        case .breakdownDescription: return "Locianは文を時制に分解し、単語ごとの翻訳を提供"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "準備完了"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "ログイン / 登録"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "左右をタップしてナビゲート"
-        case .selectAppLanguage: return "アプリ言語を選択"
-        case .selectLanguageDescription: return "この言語により、アプリのユーザーインターフェース、見出し、説明、ボタン、名前、すべてが選択した言語に変わります"
-        
-        // Login
-        case .username: return "ユーザー名"
-        case .phoneNumber: return "電話番号"
-        case .guestLogin: return "ゲストログイン"
-        case .guestLoginDescription: return "ゲストログインは検証のためのもので、ゲストがすべてのアプリ機能にアクセスできるようにします。検証後に削除されます。"
-        
-        // Professions
-        case .student: return "学生"
-        case .softwareEngineer: return "ソフトウェアエンジニア"
-        case .teacher: return "教師"
-        case .doctor: return "医師"
-        case .artist: return "芸術家"
-        case .businessProfessional: return "ビジネスプロフェッショナル"
-        case .salesOrMarketing: return "営業またはマーケティング"
-        case .traveler: return "旅行者"
-        case .homemaker: return "主婦"
-        case .chef: return "シェフ"
-        case .police: return "警察"
-        case .bankEmployee: return "銀行員"
-        case .nurse: return "看護師"
-        case .designer: return "デザイナー"
-        case .engineerManager: return "エンジニアマネージャー"
-        case .photographer: return "写真家"
-        case .contentCreator: return "コンテンツクリエイター"
-        case .other: return "その他"
-        
-        // Scene Places
-        case .lociansChoice: return "Locianの選択"
-        case .airport: return "空港"
-        case .cafe: return "カフェ"
-        case .gym: return "ジム"
-        case .library: return "図書館"
-        case .office: return "オフィス"
-        case .park: return "公園"
-        case .restaurant: return "レストラン"
-        case .shoppingMall: return "ショッピングモール"
-        case .travelling: return "旅行"
-        case .university: return "大学"
-        case .addCustomPlace: return "カスタム場所を追加"
-        case .enterCustomPlaceName: return "カスタム場所名を入力してください（最大30文字）"
-        case .maximumCustomPlaces: return "最大10個のカスタム場所"
-        case .welcome: return "ようこそ"
-        case .tapToCaptureContext: return "タップしてコンテキストをキャプチャし、学習を開始します"
-        case .customSection: return "カスタム"
-        case .examples: return "例:"
-        case .customPlacePlaceholder: return "例：オフィスへの移動"
-        case .exampleTravellingToOffice: return "オフィスへの移動"
-        case .exampleTravellingToHome: return "家への移動"
-        case .exampleExploringParis: return "パリを探索"
-        case .exampleVisitingMuseum: return "博物館を訪問"
-        case .exampleCoffeeShop: return "コーヒーショップ"
-        case .characterCount: return "文字"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "母国語:"
-        case .selectNativeLanguage: return "あなたの母国語を選択"
-        case .targetLanguage: return "目標言語:"
-        case .selectTargetLanguage: return "学習したい言語を選択"
-        case .nativeLanguageDescription: return "あなたの母国語は、流暢に読み、書き、話すことができる言語です。これは、あなたが最も快適に感じる言語です。"
-        case .targetLanguageDescription: return "あなたの目標言語は、学習し練習したい言語です。スキルを向上させたい言語を選択してください。"
-        case .addPair: return "ペアを追加"
-        case .adding: return "追加中..."
-        case .failedToAddLanguagePair: return "言語ペアの追加に失敗しました。もう一度お試しください。"
-        case .settingAsDefault: return "デフォルトとして設定中..."
-        case .beginner: return "初級"
-        case .intermediate: return "中級"
-        case .advanced: return "上級"
-        case .currentlyLearning: return "学習中"
-        case .otherLanguages: return "その他の言語"
-        case .learnNewLanguage: return "新しい言語を学ぶ"
-        case .learn: return "学ぶ"
-        case .tapToSelectNativeLanguage: return "母国語を選択するにはタップしてください"
-        
-        // Theme color names
-        case .neonGreen: return "ネオングリーン"
-        case .cyanMist: return "シアンミスト"
-        case .violetHaze: return "バイオレットヘイズ"
-        case .softPink: return "ソフトピンク"
-        case .pureWhite: return "ピュアホワイト"
-        
-        // Quick Look
-        case .quickRecall: return "クイックリコール"
-        case .startQuickPuzzle: return "クイックパズルを開始"
-        case .stopPuzzle: return "パズルを停止"
-        
-        // Streak
-        case .streak: return "ストリーク"
-        case .dayStreak: return "日のストリーク"
-        case .daysStreak: return "日のストリーク"
-        case .editYourStreaks: return "ストリークを編集"
-        case .editStreaks: return "ストリークを編集"
-        case .selectDatesToAddOrRemove: return "練習日を追加または削除する日付を選択"
-        case .saving: return "保存中..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

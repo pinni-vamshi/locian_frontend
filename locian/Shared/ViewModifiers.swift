@@ -50,3 +50,22 @@ extension View {
     }
 }
 
+
+/// Centralized "Hard Shadow" modifier for the Locian retro/neon aesthetic
+struct LocianHardShadowModifier: ViewModifier {
+    var color: Color
+    var offset: CGFloat
+    
+    func body(content: Content) -> some View {
+        content
+            .shadow(color: color, radius: 0, x: offset, y: offset)
+    }
+}
+
+extension View {
+    /// Applies a radius-0 "hard" drop shadow with configurable color and offset
+    func locianHardShadow(color: Color = .white, offset: CGFloat = 4) -> some View {
+        modifier(LocianHardShadowModifier(color: color, offset: offset))
+    }
+}
+

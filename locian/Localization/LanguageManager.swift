@@ -9,6 +9,7 @@ import Foundation
 import Combine
 
 enum AppLanguage: String, CaseIterable, Codable {
+    case system = "System"
     case english = "English"
     case japanese = "Japanese"
     case hindi = "Hindi"
@@ -24,6 +25,7 @@ enum AppLanguage: String, CaseIterable, Codable {
     
     var code: String {
         switch self {
+        case .system: return "system"
         case .english: return "en"
         case .japanese: return "ja"
         case .hindi: return "hi"
@@ -41,6 +43,7 @@ enum AppLanguage: String, CaseIterable, Codable {
     
     var nativeScript: String {
         switch self {
+        case .system: return "🌐 System"
         case .english: return "English"
         case .japanese: return "日本語"
         case .hindi: return "हिन्दी"
@@ -56,8 +59,79 @@ enum AppLanguage: String, CaseIterable, Codable {
         }
     }
     
+    var englishName: String {
+        switch self {
+        case .system: return "System Language"
+        case .english: return "English"
+        case .japanese: return "Japanese"
+        case .hindi: return "Hindi"
+        case .telugu: return "Telugu"
+        case .tamil: return "Tamil"
+        case .french: return "French"
+        case .german: return "German"
+        case .spanish: return "Spanish"
+        case .chinese: return "Chinese"
+        case .korean: return "Korean"
+        case .russian: return "Russian"
+        case .malayalam: return "Malayalam"
+        }
+    }
+    
     var displayName: String {
-        return "\(self.rawValue) / \(self.nativeScript)"
+        if self == .system {
+            let detected = AppLanguage.detectSystemLanguage()
+            return "System Language / \(detected.nativeScript)"
+        }
+        return "\(englishName) / \(nativeScript)"
+    }
+    
+    static func fromCode(_ code: String) -> AppLanguage? {
+        switch code.lowercased() {
+        case "system": return .system
+        case "en": return .english
+        case "ja": return .japanese
+        case "hi": return .hindi
+        case "te": return .telugu
+        case "ta": return .tamil
+        case "fr": return .french
+        case "de": return .german
+        case "es": return .spanish
+        case "zh": return .chinese
+        case "ko": return .korean
+        case "ru": return .russian
+        case "ml": return .malayalam
+        default: return nil
+        }
+    }
+    
+    /// Detect the device's system language and return the closest matching AppLanguage
+    static func detectSystemLanguage() -> AppLanguage {
+        // Get the user's preferred language from device settings
+        let preferredLanguages = Locale.preferredLanguages
+        
+        if let firstLanguage = preferredLanguages.first {
+            // Extract the language code (e.g., "en-US" -> "en")
+            let languageCode = String(firstLanguage.prefix(2)).lowercased()
+            
+            // Map to our supported languages
+            switch languageCode {
+            case "en": return .english
+            case "ja": return .japanese
+            case "hi": return .hindi
+            case "te": return .telugu
+            case "ta": return .tamil
+            case "fr": return .french
+            case "de": return .german
+            case "es": return .spanish
+            case "zh": return .chinese
+            case "ko": return .korean
+            case "ru": return .russian
+            case "ml": return .malayalam
+            default: return .english // Fallback to English if not supported
+            }
+        }
+        
+        return .english // Default fallback
     }
 }
 
@@ -74,18 +148,37 @@ class LanguageManager: ObservableObject {
     private var strings: AppStrings = EnglishStrings()
     
     private init() {
-        // Load saved language or default to English
-        if let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage"),
-           let language = AppLanguage(rawValue: savedLanguage) {
-            self.currentLanguage = language
+        // Load saved language or default to System Language
+        if let savedLanguage = UserDefaults.standard.string(forKey: "appLanguage") {
+            if let language = AppLanguage(rawValue: savedLanguage) {
+                self.currentLanguage = language
+            } else if let languageByCode = AppLanguage.fromCode(savedLanguage) {
+                self.currentLanguage = languageByCode
+            } else {
+                self.currentLanguage = .system // Default to System Language
+            }
         } else {
-            self.currentLanguage = .english
+            self.currentLanguage = .system // Default to System Language for new users
         }
         loadStrings()
     }
     
+    /// Get the effective language (resolves .system to actual language)
+    var effectiveLanguage: AppLanguage {
+        if currentLanguage == .system {
+            return AppLanguage.detectSystemLanguage()
+        }
+        return currentLanguage
+    }
+    
     private func loadStrings() {
-        switch currentLanguage {
+        // Use effective language to handle .system case
+        let languageToLoad = effectiveLanguage
+        
+        switch languageToLoad {
+        case .system:
+            // This shouldn't happen since effectiveLanguage never returns .system
+            strings = EnglishStrings()
         case .english:
             strings = EnglishStrings()
         case .japanese:
@@ -111,8 +204,10 @@ class LanguageManager: ObservableObject {
         case .malayalam:
             strings = MalayalamStrings()
         }
-        // Notify observers that strings have changed
-        objectWillChange.send()
+        // Notify observers that strings have changed (on main thread)
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
     }
     
     func getString(_ key: String) -> String {
@@ -120,12 +215,12 @@ class LanguageManager: ObservableObject {
     }
     
     // Convenience accessors
-    var quiz: QuizStrings { strings.quiz }
     var settings: SettingsStrings { strings.settings }
-    var vocabulary: VocabularyStrings { strings.vocabulary }
-    var scene: SceneStrings { strings.scene }
     var login: LoginStrings { strings.login }
     var onboarding: OnboardingStrings { strings.onboarding }
-    var common: CommonStrings { strings.common }
+    var progress: ProgressStrings { strings.progress }
+    var ui: UIStrings { strings.ui }
+    var quiz: QuizStrings { strings.quiz }
+    var scene: SceneStrings { strings.scene }
 }
 

@@ -2,476 +2,625 @@
 //  EnglishStrings.swift
 //  locian
 //
-//  English localization strings
-//
 
 import Foundation
 
 struct EnglishStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "Quiz Completed!",
-            masteredEnvironment: "You have mastered your environment!",
-            learnMoreAbout: "Learn more about",
-            backToHome: "Back to Home",
-            next: "Next",
-            previous: "Previous",
-            check: "Check",
-            tryAgain: "Try again",
-            shuffled: "Shuffled",
-            noQuizAvailable: "No quiz available",
-            question: "Question",
-            correct: "Correct",
-            incorrect: "Incorrect",
-            notAttempted: "Not Attempted"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "Camera",
+            gallery: "Gallery",
+            nextUp: "Next Up",
+            historyLog: "History Log",
+
+            moments: "Moments",
+            pastMoments: "Past Moments",
+            noHistory: "No History",
+            generatingHistory: "Generating History",
+            generatingMoments: "GENERATING...",
+            analyzingImage: "PROCESSING IMAGE...",
+            tapNextUpToGenerate: "Tap Next Up to Generate",
+            noUpcomingPlaces: "No Upcoming Places",
+            noDetails: "No Details",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "Start Learning",
+            continueLearning: "Continue Learning",
+            noPastMoments: "No Past Moments",
+            useCamera: "Use Camera",
+            previouslyLearning: "Previously Learning",
+            sunShort: "Sun",
+            monShort: "Mon",
+            tueShort: "Tue",
+            wedShort: "Wed",
+            thuShort: "Thu",
+            friShort: "Fri",
+            satShort: "Sat",
+            login: "Login",
+            register: "Register",
+            settings: "Settings",
+            back: "Back",
+            done: "Done",
+            cancel: "Cancel",
+            save: "Save",
+            delete: "Delete",
+            add: "Add",
+            remove: "Remove",
+            edit: "Edit",
+            error: "Error",
+            ok: "OK",
+            welcomeLabel: "Welcome",
+            currentStreak: "CURRENT_STREAK",
+            notSet: "Not Set",
+            learnTab: "Learn",
+            addTab: "Add",
+            progressTab: "Progress",
+            settingsTab: "Settings",
+            loading: "Loading...",
+            unknownPlace: "Unknown Place",
+            noLanguageAvailable: "No language available",
+            noInternetConnection: "No internet connection",
+            retry: "Retry",
+            tapToGetMoments: "Tap to refresh moments",
+            startLearningThisMoment: "Start learning this moment",
+            daysLabel: "DAYS",
+            noNewPlace: "Add New Place",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "Start",
+            typeYourMoment: "Type your moment...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "My Languages",
+            systemLanguage: "App Interface",
+            targetLanguages: "Target Languages",
+            pastLanguagesArchived: "Previously Learning",
+            theme: "Theme",
             notifications: "Notifications",
-            appearance: "Aesthetics",
             account: "Account",
             profile: "Profile",
             addLanguagePair: "Add Language Pair",
-            enableNotifications: "Enable Notifications",
             logout: "Logout",
             deleteAllData: "Delete All Data",
-            deleteAccount: "Delete Account",
+            deleteAccount: "Permanently Delete Account",
             selectLevel: "Select Level",
-            selectAppLanguage: "App Interface",
-            proFeatures: "Power Tools",
+            proFeatures: "Pro Features",
             showSimilarWordsToggle: "Show Similar Words",
-            showWordTensesToggle: "Show Word Tenses",
-            nativeLanguage: "Native Language:",
-            selectNativeLanguage: "Select your native language",
-            targetLanguage: "Target Language:",
-            selectTargetLanguage: "Select the language you want to learn",
-            nativeLanguageDescription: "Your native language is the language you can read, write, and speak fluently. This is the language you are most comfortable with.",
-            targetLanguageDescription: "Your target language is the language you want to learn and practice. Choose the language you wish to improve your skills in.",
-            addPair: "Add Pair",
-            adding: "Adding...",
-            failedToAddLanguagePair: "Failed to add language pair. Please try again.",
-            settingAsDefault: "Setting as default...",
+            nativeLanguage: "Native Language",
+            selectNativeLanguage: "Select Native Language",
+            targetLanguage: "Target Language",
+            selectTargetLanguage: "Tap to Change Target Language",
+            targetLanguageDescription: "Language you want to learn",
             beginner: "Beginner",
             intermediate: "Intermediate",
             advanced: "Advanced",
-            currentlyLearning: "Learning",
-            otherLanguages: "Other Languages",
-            learnNewLanguage: "Learn new language",
+            currentlyLearning: "Currently Learning",
+            learnNewLanguage: "Learn New Language",
             learn: "Learn",
-            tapToSelectNativeLanguage: "Tap to select your native language",
             neonGreen: "Neon Green",
-            cyanMist: "Cyan Mist",
-            violetHaze: "Violet Haze",
-            softPink: "Pink",
-            pureWhite: "Pure White"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "Explore categories",
-            testYourself: "Test yourself",
-            slideToStartQuiz: "Slide to start the quiz",
-            similarWords: "Similar Words",
-            wordTenses: "Word Tenses",
-            wordBreakdown: "Word Breakdown",
-            tapToSeeBreakdown: "Tap the word to see its breakdown",
-            tapToHideBreakdown: "Tap the word to hide the breakdown",
-            tapWordsToExplore: "Tap the words to read their translations and explore",
-            loading: "Loading...",
-            learnTheWord: "Learn the word",
-            tryFromMemory: "Try from memory",
-            adjustingTo: "Adjusting",
-            settingPlace: "Setting",
-            settingTime: "Setting",
-            generatingVocabulary: "Generating",
-            analyzingVocabulary: "Analyzing",
-            analyzingCategories: "Analyzing",
-            analyzingWords: "Analyzing",
-            creatingQuiz: "Creating",
-            organizingContent: "Organizing",
-            to: "to",
-            place: "place",
-            time: "time",
-            vocabulary: "vocabulary",
-            your: "your",
-            interested: "interested",
-            categories: "categories",
-            words: "words",
-            quiz: "quiz",
-            content: "content"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "Hi,",
-            learnFromSurroundings: "Learn from your surroundings",
-            learnFromSurroundingsDescription: "Capture your environment and learn vocabulary from real-world contexts",
-            locianChoosing: "choosing...",
-            chooseLanguages: "Choose languages",
-            continueWith: "Continue with what Locian chose",
-            slideToLearn: "Slide to learn",
-            recommended: "Recommended",
-            intoYourLearningFlow: "Into your learning flow",
-            intoYourLearningFlowDescription: "Recommended places to practice based on your learning history",
-            customSituations: "Your custom situations",
-            customSituationsDescription: "Create and practice with your own personalized learning scenarios",
-            max: "Max",
-            recentPlacesTitle: "Your recent places",
-            allPlacesTitle: "All places",
-            recentPlacesEmpty: "Generate vocabulary to see suggestions here.",
-            showMore: "Show more",
-            showLess: "Show less",
-            takePhoto: "Take Photo",
-            chooseFromGallery: "Choose from Gallery",
-            letLocianChoose: "LET LOCIAN CHOOSE",
-            lociansChoice: "By Locian",
-            cameraTileDescription: "This photo analyzes your environment and shows you moments to learn from.",
-            airport: "Airport",
-            aquarium: "Aquarium",
-            bakery: "Bakery",
-            beach: "Beach",
-            bookstore: "Bookstore",
-            cafe: "Cafe",
-            cinema: "Cinema",
-            gym: "Gym",
-            hospital: "Hospital",
-            hotel: "Hotel",
-            home: "Home",
-            library: "Library",
-            market: "Market",
-            museum: "Museum",
-            office: "Office",
-            park: "Park",
-            restaurant: "Restaurant",
-            shoppingMall: "Shopping Mall",
-            stadium: "Stadium",
-            supermarket: "Supermarket",
-            temple: "Temple",
-            travelling: "Travelling",
-            university: "University",
-            addCustomPlace: "Add Custom Place",
-            addPlace: "Add place",
-            enterCustomPlaceName: "Enter a custom place name (30 characters max)",
-            maximumCustomPlaces: "Maximum 10 custom places",
-            welcome: "Welcome",
+            neonFuchsia: "Neon Fuchsia",
+            electricIndigo: "Electric Indigo",
+            graphiteBlack: "Graphite Black",
+            student: "Student",
+            softwareEngineer: "Software Engineer",
+            teacher: "Teacher",
+            doctor: "Doctor",
+            artist: "Artist",
+            businessProfessional: "Business Professional",
+            salesOrMarketing: "Sales or Marketing",
+            traveler: "Traveler",
+            homemaker: "Homemaker",
+            chef: "Chef",
+            police: "Police",
+            bankEmployee: "Bank Employee",
+            nurse: "Nurse",
+            designer: "Designer",
+            engineerManager: "Engineer Manager",
+            photographer: "Photographer",
+            contentCreator: "Content Creator",
+            entrepreneur: "Entrepreneur",
+            other: "Other",
+            otherPlaces: "OTHER PLACES",
+            speaks: "Speaks",
+            neuralEngine: "Neural Engine",
+            noLanguagePairsAdded: "No Language Pairs Added",
+            setDefault: "Set Default",
+            defaultText: "Default",
             user: "User",
-            tapToCaptureContext: "Tap to capture your context and start learning",
-            customSection: "Custom",
-            examples: "Examples:",
-            customPlacePlaceholder: "e.g., travelling to office",
-            exampleTravellingToOffice: "travelling to office",
-            exampleTravellingToHome: "travelling to home",
-            exampleExploringParis: "exploring paris",
-            exampleVisitingMuseum: "visiting museum",
-            exampleCoffeeShop: "coffee shop",
-            characterCount: "characters",
-            situationExample1: "Ordering coffee at a busy cafe",
-            situationExample2: "Asking for directions in a new city",
-            situationExample3: "Shopping for groceries at the market",
-            situationExample4: "Making a doctor's appointment",
-            situationExample5: "Checking into a hotel"
-        )
+            signOutFromAccount: "Sign Out from Account",
+            permanentlyDeleteAccount: "Permanently Delete Account",
+            languageAddedSuccessfully: "Language added successfully",
+            failedToAddLanguage: "Failed to add language. Please try again.",
+            pleaseSelectLanguage: "Please select a language",
+            systemConfig: "SYSTEM // CONFIG",
+            currentLevel: "Current Level",
+            selectPhoto: "Select Photo",
+            camera: "Camera",
+            photoLibrary: "Photo Library",
+            selectTime: "Select Time",
+            hour: "Hour",
+            minute: "Minute",
+            addTime: "Add Time",
+            location: "Location",
+            diagnosticBorders: "Diagnostic Borders",
+            areYouSureLogout: "Are you sure you want to logout?",
+            areYouSureDeleteAccount: "Are you sure you want to delete your account?")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "Login",
             verify: "Verify",
             selectProfession: "Select Profession",
+            selectUserProfession: "SELECT USER PROFESSION",
             username: "Username",
             phoneNumber: "Phone Number",
             guestLogin: "Guest Login",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "Select your profession to get started",
+            showMore: "Show more",
+            showLess: "Show less",
+            forReview: "[For Review]",
+            authenticatingUser: "AUTHENTICATING USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS OF SERVICE",
+            privacyPolicy: "PRIVACY POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
-            locianHeading: "Locian",
-            locianDescription: "From where you stand to every tense you need",
-            awarenessHeading: "Awareness",
-            awarenessDescription: "AI learns from your surroundings",
-            inputsHeading: "Inputs",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
-            breakdownHeading: "Breakdown",
-            breakdownDescription: "Locian breaks down sentences into tenses, provides word-by-word translations",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
-            readyHeading: "Ready",
-            readyDescription: "",
-            loginOrRegister: "Login / Register",
-            pageIndicator: " / 6",
-            tapToNavigate: "Tap left or right side to navigate",
-            selectAppLanguage: "Select App Language",
-            selectLanguageDescription: "This language will make the app user interface, headings, descriptions, buttons, names, and all things into the selected language"
-        )
+            locianHeading: "LOCIAN",
+            locianDescription: "Next-Gen Language Learning\nEngine v2.0",
+            awarenessHeading: "AWARENESS",
+            awarenessDescription: "Context-aware lessons based on your environment.",
+            breakdownHeading: "BREAKDOWN",
+            breakdownDescription: "Understand grammar through pattern recognition.",
+            progressHeading: "PROGRESS",
+            progressDescription: "Track your fluency with detailed metrics.",
+            readyHeading: "READY?",
+            readyDescription: "Your journey begins now.",
+            loginOrRegister: "Login or Register",
+            pageIndicator: "Page",
+            selectLanguageDescription: "Select your preferred language",
+            fromWhereYouStand: "FROM WHERE YOU\nSTAND",
+            toEveryWord: "T O",
+            everyWord: "EVERY WORD",
+            youNeed: "YOU NEED",
+            lessonEngine: "LESSON_ENGINE",
+            nodesLive: "NODES_LIVE",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "HOLO_GRID_ACTIVE",
+            adaCr02: "ADA_CR-02",
+            your: "YOUR",
+            places: "PLACES,",
+            lessons: "LESSONS.",
+            yourPlaces: "YOUR PLACES,",
+            yourLessons: " YOUR LESSONS.",
+            nearbyCafes: "Nearby Cafés?",
+            unlockOrderFlow: " Unlock order-flow",
+            modules: "modules",
+            activeHubs: "Active Hubs?",
+            synthesizeGym: " Synthesize gym",
+            vocabulary: "vocabulary",
+            locationOpportunity: "Every location becomes a learning opportunity",
+            module03: "MODULE_03",
+            notJustMemorization: "NOT JUST\nMEMORIZATION",
+            philosophy: "PHILOSOPHY",
+            locianTeaches: "Locian doesn't just teach words.\nLocian teaches you to ",
+            think: "THINK",
+            inTargetLanguage: "in your target language.",
+            patternBasedLearning: "PATTERN-BASED LEARNING",
+            patternBasedDesc: "Recognize grammatical structures intuitively without dry rules.",
+            situationalIntelligence: "SITUATIONAL INTELLIGENCE",
+            situationalDesc: "Dynamic scenarios that adapt to your environment and history.",
+            adaptiveDrills: "ADAPTIVE DRILLS",
+            adaptiveDesc: "The Lesson Engine identifies your weaknesses and recalibrates.",
+            systemReady: "SYSTEM_READY",
+            quickSetup: "QUICK_SETUP",
+            levelB2: "LEVEL_B2",
+            authorized: "AUTHORIZED",
+            notificationsPermission: "NOTIFICATIONS",
+            notificationsDesc: "Get real-time updates on nearby practice opportunities and streak alerts.",
+            microphonePermission: "MICROPHONE",
+            microphoneDesc: "Essential for pronunciation scoring and lesson interactions in real-world contexts.",
+            geolocationPermission: "GEOLOCATION",
+            geolocationDesc: "Identify nearby \"Lesson Zones\" like coffee shops or libraries for immersive practice.",
+            granted: "GRANTED",
+            allow: "ALLOW",
+            skip: "SKIP",
+            letsStart: "LET'S START",
+            continueText: "CONTINUE",
+            wordTenses: "Word Tenses:",
+            similarWords: "Similar Words:",
+            wordBreakdown: "Word Breakdown:",
+            consonant: "Consonant",
+            vowel: "Vowel",
+            past: "Past",
+            present: "Present",
+            future: "Future",
+            learnWord: "Learn")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "Cancel",
-            save: "Save",
-            done: "Done",
-            ok: "OK",
-            back: "Back",
-            next: "Next",
-            continueText: "Continue"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "Custom",
-            hint: "Hint",
-            practiceDescription: "Tap any word to translate it into your target language. If you need help, use the hint button to get suggestions.",
-            practiceTitle: "Practice",
-            practiceFollowUp: "Practice follow up",
-            camera: "Camera",
-            cameraDescription: "Locian will generate a conversation in {native} and you can practice converting to {target}.",
-            useCamera: "Use camera",
-            cameraButtonDescription: "Generate moments from photo",
-            typeConversation: "Type of conversation",
-            typeConversationDescription: "Locian will generate a conversation in {native} and you can practice converting to {target}.",
-            conversationPlaceholder: "e.g. Ordering coffee at a busy cafe",
-            submit: "Submit",
-            fullCustomText: "Full custom text",
-            examples: "Examples:",
-            conversationExample1: "Asking for directions in the rain",
-            conversationExample2: "Buying vegetables late at night",
-            conversationExample3: "Working in a crowded office",
-            describeConversation: "Describe the conversation you want Locian to build.",
-            fullTextPlaceholder: "Type the full text or dialogue here...",
-            startCustomPractice: "Start custom practice"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "Progress",
-            edit: "Edit",
             current: "Current",
             longest: "Longest",
-            lastPracticed: "Last practiced",
-            days: "days",
-            addLanguagePairToSeeProgress: "Add a language pair to see your progress."
-        )
+            lastPracticed: "Last Practiced",
+            days: "Days",
+            addLanguagePairToSeeProgress: "Add a language pair to see your progress",
+            startPracticingMessage: "Start practicing to build your streak",
+            consistencyQuote: "Consistency is key to language learning",
+            practiceDateSavingDisabled: "Practice date saving is disabled",
+            editYourStreaks: "Edit Your Streaks",
+            editStreaks: "Edit Streaks",
+            selectDatesToAddOrRemove: "Select dates to add or remove from your streak",
+            saving: "Saving",
+            statusOnFire: "Status: On Fire",
+            youPracticed: "You practiced ",
+            yesterday: " yesterday.",
+            checkInNow: "Check In Now",
+            nextGoal: "Next Goal",
+            reward: "Reward",
+            historyLogProgress: "History Log",
+            streakStatus: "Streak Status",
+            streakLog: "Streak Log",
+            consistency: "Consistency",
+            consistencyHigh: "Your activity log shows high engagement.",
+            consistencyMedium: "You're building good momentum.",
+            consistencyLow: "Consistency is key. Keep pushing.",
+            reachMilestone: "Try to reach %d days!",
+            nextMilestone: "Next Milestone",
+            actionRequired: "Action Required",
+            logActivity: "Log Activity",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "Longest Streak",
+            streakData: "STREAK DATA",
+            activeLabel: "ACTIVE",
+            missedLabel: "MISSED",
+            saveChanges: "SAVE CHANGES",
+            discardChanges: "DISCARD CHANGES",
+            editLabel: "EDIT",
+            
+            // Advanced Stats
+            skillBalance: "SKILL BALANCE",
+            fluencyVelocity: "FLUENCY VELOCITY",
+            vocabVault: "VOCAB VAULT",
+            chronotype: "CHRONOTYPE",
+            activityDistribution: "ACTIVITY DISTRIBUTION (24H)",
+            studiedTime: "STUDIED TIME",
+            currentLabel: "CURRENT",
+            streakLabel: "STREAK",
+            longestLabel: "LONGEST",
+            
+            // Chronotypes
+            earlyBird: "EARLY BIRD",
+            earlyBirdDesc: "Most active in the morning",
+            dayWalker: "DAY WALKER",
+            dayWalkerDesc: "Most active in the afternoon",
+            nightOwl: "NIGHT OWL",
+            nightOwlDesc: "Most active after dark",
+            timeMastery: "TIME MASTERY",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "Loading...",
+            adaptiveQuiz: "Adaptive Quiz",
+            adaptiveQuizDescription: "We flash a wrong translation first, then highlight the correct word.",
+            wordCheck: "Word Check",
+            wordCheckDescription: "Tiles jumble first, then snap into place to confirm the correct word.",
+            wordCheckExamplePrompt: "Tap the letters to arrange the word in the correct order.",
+            quizPrompt: "Pick the correct translation for the word.",
+            answerConfirmation: "You built the correct word!",
+            tryAgain: "Oops! Try again.")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
-        // Fallback to English if key not found
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "My Languages"
-        case .notifications: return "Notifications"
-        case .aesthetics: return "Aesthetics"
-        case .account: return "Account"
-        case .appLanguage: return "App Interface"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI                 // New
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "Login /"
-        case .register: return "Register"
-        case .settings: return "Settings"
-        case .home: return "Home"
-        case .back: return "Back"
-        case .next: return "Next"
-        case .previous: return "Previous"
-        case .done: return "Done"
-        case .cancel: return "Cancel"
-        case .save: return "Save"
-        case .delete: return "Delete"
-        case .add: return "Add"
-        case .remove: return "Remove"
-        case .edit: return "Edit"
-        case .continueText: return "Continue"
-        
-        // Quiz
-        case .quizCompleted: return "Quiz Completed!"
-        case .sessionCompleted: return "Session Completed!"
-        case .masteredEnvironment: return "You have mastered your environment!"
-        case .learnMoreAbout: return "Learn more about"
-        case .backToHome: return "Back to Home"
-        case .tryAgain: return "Try again"
-        case .shuffled: return "Shuffled"
-        case .check: return "Check"
-        
-        // Vocabulary
-        case .exploreCategories: return "Explore categories"
-        case .testYourself: return "Test yourself"
-        case .similarWords: return "Similar Words:"
-        case .wordTenses: return "Word Tenses:"
-        case .tapWordsToExplore: return "Tap the words to read their translations and explore"
-        case .wordBreakdown: return "Word Breakdown:"
-        
-        // Scene
-        case .analyzingImage: return "Analyzing image..."
-        case .imageAnalysisCompleted: return "Image analysis completed"
-        case .imageSelected: return "Image selected"
-        case .placeNotSelected: return "Place not selected"
-        case .locianChoose: return "Locian choose"
-        case .chooseLanguages: return "Choose languages"
-        
-        // Settings
-        case .enableNotifications: return "Enable Notifications"
-        case .thisPlace: return "this place"
-        case .tapOnAnySection: return "Tap on any section above to view and manage settings"
-        case .addNewLanguagePair: return "Add New Language Pair"
-        case .noLanguagePairsAdded: return "No language pairs added yet"
-        case .setDefault: return "Set Default"
-        case .defaultText: return "Default"
-        case .user: return "User"
-        case .noPhone: return "No phone"
-        case .signOutFromAccount: return "Sign out from your account"
-        case .removeAllPracticeData: return "Remove all your practice data"
-        case .permanentlyDeleteAccount: return "Permanently delete your account and all data"
-        case .currentLevel: return "Current Level"
-        case .selectPhoto: return "Select Photo"
-        case .camera: return "Camera"
-        case .photoLibrary: return "Photo Library"
-        case .selectTime: return "Select Time"
-        case .hour: return "Hour"
-        case .minute: return "Minute"
-        case .addTime: return "Add Time"
-        case .areYouSureLogout: return "Are you sure you want to logout?"
-        case .areYouSureDeleteAccount: return "Are you sure you want to delete your account? This action cannot be undone."
-        
-        // Quiz
-        case .goBack: return "Go Back"
-        case .fillInTheBlank: return "Fill in the blank:"
-        case .arrangeWordsInOrder: return "Arrange the words in correct order:"
-        case .tapWordsBelowToAdd: return "Tap words below to add them here"
-        case .availableWords: return "Available words:"
-        case .correctAnswer: return "Correct Answer:"
-        
-        // Common
-        case .error: return "Error"
-        case .ok: return "OK"
-        case .close: return "Close"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "From where you stand to every time you need"
-        case .awarenessHeading: return "Awareness"
-        case .awarenessDescription: return "AI learns from your environment"
-        case .inputsHeading: return "Inputs"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "Breakdown"
-        case .breakdownDescription: return "Locian breaks down sentences into tenses, provides word-by-word translations"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "Ready"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "Login / Register"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "Tap left or right side to navigate"
-        case .selectAppLanguage: return "Select App Language"
-        case .selectLanguageDescription: return "This language will make the app user interface, headings, descriptions, buttons, names, and all things into the selected language"
-        
-        // Login
-        case .username: return "Username"
-        case .phoneNumber: return "Phone Number"
-        case .guestLogin: return "Guest Login"
-        case .guestLoginDescription: return "Guest Login is for verification and will let guest access all app features. Will be removed after verification."
-        
-        // Professions
-        case .student: return "Student"
-        case .softwareEngineer: return "Software Engineer"
-        case .teacher: return "Teacher"
-        case .doctor: return "Doctor"
-        case .artist: return "Artist"
-        case .businessProfessional: return "Business Professional"
-        case .salesOrMarketing: return "Sales or Marketing"
-        case .traveler: return "Traveler"
-        case .homemaker: return "Homemaker"
-        case .chef: return "Chef"
-        case .police: return "Police"
-        case .bankEmployee: return "Bank Employee"
-        case .nurse: return "Nurse"
-        case .designer: return "Designer"
-        case .engineerManager: return "Engineer Manager"
-        case .photographer: return "Photographer"
-        case .contentCreator: return "Content Creator"
-        case .other: return "Other"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian's choice"
-        case .airport: return "Airport"
-        case .cafe: return "Cafe"
-        case .gym: return "Gym"
-        case .library: return "Library"
-        case .office: return "Office"
-        case .park: return "Park"
-        case .restaurant: return "Restaurant"
-        case .shoppingMall: return "Shopping Mall"
-        case .travelling: return "Travelling"
-        case .university: return "University"
-        case .addCustomPlace: return "Add Custom Place"
-        case .enterCustomPlaceName: return "Enter a custom place name (30 characters max)"
-        case .maximumCustomPlaces: return "Maximum 10 custom places"
-        case .welcome: return "Welcome"
-        case .tapToCaptureContext: return "Tap to capture your context and start learning"
-        case .customSection: return "Custom"
-        case .examples: return "Examples:"
-        case .customPlacePlaceholder: return "e.g., travelling to office"
-        case .exampleTravellingToOffice: return "travelling to office"
-        case .exampleTravellingToHome: return "travelling to home"
-        case .exampleExploringParis: return "exploring paris"
-        case .exampleVisitingMuseum: return "visiting museum"
-        case .exampleCoffeeShop: return "coffee shop"
-        case .characterCount: return "characters"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "Native Language:"
-        case .selectNativeLanguage: return "Select your native language"
-        case .targetLanguage: return "Target Language:"
-        case .selectTargetLanguage: return "Select the language you want to learn"
-        case .nativeLanguageDescription: return "Your native language is the language you can read, write, and speak fluently. This is the language you are most comfortable with."
-        case .targetLanguageDescription: return "Your target language is the language you want to learn and practice. Choose the language you wish to improve your skills in."
-        case .addPair: return "Add Pair"
-        case .adding: return "Adding..."
-        case .failedToAddLanguagePair: return "Failed to add language pair. Please try again."
-        case .settingAsDefault: return "Setting as default..."
-        case .beginner: return "Beginner"
-        case .intermediate: return "Intermediate"
-        case .advanced: return "Advanced"
-        case .currentlyLearning: return "Learning"
-        case .otherLanguages: return "Other Languages"
-        case .learnNewLanguage: return "Learn new language"
-        case .learn: return "Learn"
-        case .tapToSelectNativeLanguage: return "Tap to select your native language"
-        
-        // Theme color names
-        case .neonGreen: return "Neon Green"
-        case .cyanMist: return "Cyan Mist"
-        case .violetHaze: return "Violet Haze"
-        case .softPink: return "Soft Pink"
-        case .pureWhite: return "Pure White"
-        
-        // Quick Look
-        case .quickRecall: return "Quick recall"
-        case .startQuickPuzzle: return "Start Quick Puzzle"
-        case .stopPuzzle: return "Stop Puzzle"
-        
-        // Streak
-        case .streak: return "Streak"
-        case .dayStreak: return "day streak"
-        case .daysStreak: return "days streak"
-        case .editYourStreaks: return "Edit your streaks"
-        case .editStreaks: return "Edit Streaks"
-        case .selectDatesToAddOrRemove: return "Select dates to add or remove practice days"
-        case .saving: return "Saving..."
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+            
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

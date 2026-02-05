@@ -2,475 +2,620 @@
 //  ChineseStrings.swift
 //  locian
 //
-//  Chinese localization strings
-//
 
 import Foundation
 
 struct ChineseStrings: AppStrings, LocalizedStrings {
-    var quiz: QuizStrings {
-        QuizStrings(
-            completed: "测验完成！",
-            masteredEnvironment: "您已经掌握了您的环境！",
-            learnMoreAbout: "了解更多关于",
-            backToHome: "返回首页",
-            next: "下一步",
-            previous: "上一步",
-            check: "检查",
-            tryAgain: "再试一次",
-            shuffled: "已打乱",
-            noQuizAvailable: "没有可用的测验",
-            question: "问题",
-            correct: "正确",
-            incorrect: "错误",
-            notAttempted: "未尝试"
-        )
-    }
     
+    var ui: UIStrings {
+        UIStrings(
+            camera: "相机",
+            gallery: "相册",
+            nextUp: "即将进行",
+            historyLog: "历史记录",
+
+            moments: "场景",
+            pastMoments: "过去场景",
+            noHistory: "无历史记录",
+            generatingHistory: "正在生成历史记录",
+            generatingMoments: "正在生成...",
+            analyzingImage: "分析图像...",
+            tapNextUpToGenerate: "点击即将进行以生成",
+            noUpcomingPlaces: "无即将到来的地点",
+            noDetails: "无详细信息",
+            callingAI: "Calling AI...",
+            preparingLesson: "Preparing your lesson...",
+
+            startLearning: "开始学习",
+            continueLearning: "继续学习",
+            noPastMoments: "无过去场景",
+            useCamera: "使用相机",
+            previouslyLearning: "以前学习",
+            sunShort: "日",
+            monShort: "一",
+            tueShort: "二",
+            wedShort: "三",
+            thuShort: "四",
+            friShort: "五",
+            satShort: "六",
+            login: "登录",
+            register: "注册",
+            settings: "设置",
+            back: "返回",
+            done: "完成",
+            cancel: "取消",
+            save: "保存",
+            delete: "删除",
+            add: "添加",
+            remove: "移除",
+            edit: "编辑",
+            error: "错误",
+            ok: "确定",
+            welcomeLabel: "欢迎",
+            currentStreak: "当前连续",
+            notSet: "未设置",
+            learnTab: "学习",
+            addTab: "添加",
+            progressTab: "进度",
+            settingsTab: "设置",
+            loading: "加载中...",
+            unknownPlace: "未知地点",
+            noLanguageAvailable: "无可用语言",
+            noInternetConnection: "无网络连接",
+            retry: "重试",
+            tapToGetMoments: "点击获取当前场景",
+            startLearningThisMoment: "从这一刻开始学习",
+            daysLabel: "天",
+            noNewPlace: "添加新地点",
+            addNewPlaceInstruction: "Add a new place to get moments",
+            start: "开始",
+            typeYourMoment: "在此输入您的瞬间...")
+    }
+
     var settings: SettingsStrings {
         SettingsStrings(
-            languagePairs: "我的语言",
+            systemLanguage: "应用界面",
+            targetLanguages: "目标语言",
+            pastLanguagesArchived: "以前学习的语言",
+            theme: "主题",
             notifications: "通知",
-            appearance: "美学",
             account: "账户",
             profile: "个人资料",
             addLanguagePair: "添加语言对",
-            enableNotifications: "启用通知",
             logout: "登出",
             deleteAllData: "删除所有数据",
-            deleteAccount: "删除账户",
+            deleteAccount: "永久删除账户",
             selectLevel: "选择级别",
-            selectAppLanguage: "应用界面",
-            proFeatures: "高级功能",
+            proFeatures: "专业功能",
             showSimilarWordsToggle: "显示相似词",
-            showWordTensesToggle: "显示词的时态",
-            nativeLanguage: "母语:",
-            selectNativeLanguage: "选择您的母语",
-            targetLanguage: "目标语言:",
-            selectTargetLanguage: "选择您想学习的语言",
-            nativeLanguageDescription: "您的母语是您可以流利地阅读、写作和口语的语言。这是您最舒适的语言。",
-            targetLanguageDescription: "您的目标语言是您想要学习和练习的语言。选择您希望提高技能的语言。",
-            addPair: "添加配对",
-            adding: "添加中...",
-            failedToAddLanguagePair: "添加语言对失败。请重试。",
-            settingAsDefault: "设置为默认...",
+            nativeLanguage: "母 语",
+            selectNativeLanguage: "选择母语",
+            targetLanguage: "目标语言",
+            selectTargetLanguage: "选择目标语言",
+            targetLanguageDescription: "您想学习的语言",
             beginner: "初级",
             intermediate: "中级",
             advanced: "高级",
-            currentlyLearning: "正在学习",
-            otherLanguages: "其他语言",
+            currentlyLearning: "当前学习中",
             learnNewLanguage: "学习新语言",
             learn: "学习",
-            tapToSelectNativeLanguage: "点击选择您的母语",
-            neonGreen: "霓虹綠",
-            cyanMist: "青色薄雾",
-            violetHaze: "紫罗兰薄雾",
-            softPink: "柔和粉红",
-            pureWhite: "纯白"
-        )
-    }
-    
-    var vocabulary: VocabularyStrings {
-        VocabularyStrings(
-            exploreCategories: "探索类别",
-            testYourself: "测试自己",
-            slideToStartQuiz: "Slide to start the quiz",
-            similarWords: "相似词",
-            wordTenses: "词时态",
-            wordBreakdown: "词分解",
-            tapToSeeBreakdown: "点击单词查看分解",
-            tapToHideBreakdown: "点击单词隐藏分解",
-            tapWordsToExplore: "点击单词阅读其翻译并探索",
-            loading: "加载中...",
-            learnTheWord: "学习单词",
-            tryFromMemory: "凭记忆尝试",
-            adjustingTo: "调整中",
-            settingPlace: "设置中",
-            settingTime: "设置中",
-            generatingVocabulary: "生成中",
-            analyzingVocabulary: "分析中",
-            analyzingCategories: "分析中",
-            analyzingWords: "分析中",
-            creatingQuiz: "创建中",
-            organizingContent: "整理中",
-            to: "到",
-            place: "地方",
-            time: "时间",
-            vocabulary: "词汇",
-            your: "你的",
-            interested: "感兴趣的",
-            categories: "类别",
-            words: "单词",
-            quiz: "测验",
-            content: "内容"
-        )
-    }
-    
-    var scene: SceneStrings {
-        SceneStrings(
-            hi: "你好，",
-            learnFromSurroundings: "从周围环境学习",
-            learnFromSurroundingsDescription: "捕捉您的环境并从真实世界的语境中学习词汇",
-            locianChoosing: "正在选择...",
-            chooseLanguages: "选择语言",
-            continueWith: "继续使用Locian选择的",
-            slideToLearn: "滑动以学习",
-            recommended: "推荐",
-            intoYourLearningFlow: "进入你的学习流程",
-            intoYourLearningFlowDescription: "基于您的学习历史推荐的练习地点",
-            customSituations: "您的自定义情况",
-            customSituationsDescription: "创建并练习您自己的个性化学习场景",
-            max: "最大",
-            recentPlacesTitle: "你的常用地点",
-            allPlacesTitle: "所有地点",
-            recentPlacesEmpty: "生成词汇后将在此显示推荐。",
-            showMore: "显示更多",
-            showLess: "收起",
-            takePhoto: "拍照",
-            chooseFromGallery: "从图库选择",
-            letLocianChoose: "让Locian选择",
-            lociansChoice: "由 Locian",
-            cameraTileDescription: "这张照片分析您的环境并显示可学习的时刻。",
-            airport: "机场",
-            aquarium: "水族馆",
-            bakery: "面包店",
-            beach: "海滩",
-            bookstore: "书店",
-            cafe: "咖啡厅",
-            cinema: "电影院",
-            gym: "健身房",
-            hospital: "医院",
-            hotel: "酒店",
-            home: "家",
-            library: "图书馆",
-            market: "市场",
-            museum: "博物馆",
-            office: "办公室",
-            park: "公园",
-            restaurant: "餐厅",
-            shoppingMall: "购物中心",
-            stadium: "体育场",
-            supermarket: "超市",
-            temple: "寺庙",
-            travelling: "旅行",
-            university: "大学",
-            addCustomPlace: "添加自定义地点",
-            addPlace: "添加地点",
-            enterCustomPlaceName: "输入自定义地点名称（最多30个字符）",
-            maximumCustomPlaces: "最多10个自定义地点",
-            welcome: "欢迎",
+            neonGreen: "霓虹绿",
+            neonFuchsia: "霓虹紫",
+            electricIndigo: "电力靛",
+            graphiteBlack: "石墨黑",
+            student: "学生",
+            softwareEngineer: "软件工程师",
+            teacher: "教师",
+            doctor: "医生",
+            artist: "艺术家",
+            businessProfessional: "商务专业人士",
+            salesOrMarketing: "销售或营销",
+            traveler: "旅行者",
+            homemaker: "家庭主妇/夫",
+            chef: "厨师",
+            police: "警察",
+            bankEmployee: "银行职员",
+            nurse: "护士",
+            designer: "设计师",
+            engineerManager: "工程经理",
+            photographer: "摄影师",
+            contentCreator: "内容创作者",
+            entrepreneur: "企业家",
+            other: "其他",
+            otherPlaces: "其他地点",
+            speaks: "说",
+            neuralEngine: "神经引擎",
+            noLanguagePairsAdded: "未添加语言对",
+            setDefault: "设为默认",
+            defaultText: "默认",
             user: "用户",
-            tapToCaptureContext: "点击以捕获您的上下文并开始学习",
-            customSection: "自定义",
-            examples: "示例：",
-            customPlacePlaceholder: "例如：前往办公室",
-            exampleTravellingToOffice: "前往办公室",
-            exampleTravellingToHome: "回家",
-            exampleExploringParis: "探索巴黎",
-            exampleVisitingMuseum: "参观博物馆",
-            exampleCoffeeShop: "咖啡店",
-            characterCount: "字符",
-            situationExample1: "在繁忙的咖啡店点咖啡",
-            situationExample2: "在新城市问路",
-            situationExample3: "在市场购买杂货",
-            situationExample4: "预约医生",
-            situationExample5: "在酒店办理入住"
-        )
+            signOutFromAccount: "退出账户",
+            permanentlyDeleteAccount: "永久删除账户",
+            languageAddedSuccessfully: "语言添加成功",
+            failedToAddLanguage: "添加语言失败。请重试。",
+            pleaseSelectLanguage: "请选择一种语言",
+            systemConfig: "系统 // 配置",
+            currentLevel: "当前级别",
+            selectPhoto: "选择照片",
+            camera: "相机",
+            photoLibrary: "照片库",
+            selectTime: "选择时间",
+            hour: "小时",
+            minute: "分钟",
+            addTime: "添加时间",
+            location: "位置",
+            diagnosticBorders: "诊断边界",
+            areYouSureLogout: "您确定要退出吗？",
+            areYouSureDeleteAccount: "您确定要永久删除您的帐户吗？此操作无法撤消。")
     }
-    
+
     var login: LoginStrings {
         LoginStrings(
             login: "登录",
             verify: "验证",
             selectProfession: "选择职业",
+            selectUserProfession: "SELECT_USER_PROFESSION",
             username: "用户名",
             phoneNumber: "电话号码",
             guestLogin: "访客登录",
-            guestLoginDescription: ""
+            selectProfessionInstruction: "选择您的职业开始",
+            showMore: "显示更多",
+            showLess: "显示更少",
+            forReview: "[待审核]",
+            authenticatingUser: "AUTHENTICATING_USER...",
+            bySigningInYouAgreeToOur: "By signing in, you agree to our",
+            termsOfService: "TERMS_OF_SERVICE",
+            privacyPolicy: "PRIVACY_POLICY"
         )
     }
-    
+
     var onboarding: OnboardingStrings {
         OnboardingStrings(
             locianHeading: "Locian",
-            locianDescription: "从您所在的位置到您需要的每个时态",
+            locianDescription: "通过日常生活自然学习语言",
             awarenessHeading: "意识",
-            awarenessDescription: "AI从您的环境中学习",
-            inputsHeading: "输入",
-            inputsDescription: "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts",
-            breakdownHeading: "分解",
-            breakdownDescription: "Locian将句子分解为时态，提供逐字翻译",
-            progressHeading: "Quiz",
-            progressDescription: "Preview the rebuild puzzle, adaptive quizzes, and smart shuffle that keep practice fresh",
-            readyHeading: "就绪",
-            readyDescription: "",
-            loginOrRegister: "登录 / 注册",
-            pageIndicator: " / 6",
-            tapToNavigate: "点击左侧或右侧进行导航",
-            selectAppLanguage: "选择应用语言",
-            selectLanguageDescription: "此语言将使应用程序用户界面、标题、描述、按钮、名称和所有内容变为所选语言"
-        )
+            awarenessDescription: "实时注意您周围的单词",
+            breakdownHeading: "拆解",
+            breakdownDescription: "了解单词的构成",
+            progressHeading: "进度",
+            progressDescription: "跟踪您的学习之旅",
+            readyHeading: "准备好了",
+            readyDescription: "现在开始学习",
+            loginOrRegister: "登录或注册",
+            pageIndicator: "页面",
+            selectLanguageDescription: "选择您的首选语言",
+            fromWhereYouStand: "从你站的\n地方",
+            toEveryWord: "到",
+            everyWord: "每一个词",
+            youNeed: "你需要",
+            lessonEngine: "课程引擎",
+            nodesLive: "节点在线",
+            locEngineVersion: "LOC_ENGINE_V2.0.4",
+            holoGridActive: "全息网格激活",
+            adaCr02: "ADA_CR-02",
+            your: "你的",
+            places: "地点，",
+            lessons: "课程。",
+            yourPlaces: "你的地点，",
+            yourLessons: " 你的课程。",
+            nearbyCafes: "附近的咖啡馆？",
+            unlockOrderFlow: " 解锁点单流程",
+            modules: "模块",
+            activeHubs: "活跃枢纽？",
+            synthesizeGym: " 合成健身房",
+            vocabulary: "词汇",
+            locationOpportunity: "每个地点都成为了学习的机会",
+            module03: "模块_03",
+            notJustMemorization: "不仅仅是\n死记硬背",
+            philosophy: "哲学",
+            locianTeaches: "Locian 不仅仅教单词。\nLocian 教你在目标语言中 ",
+            think: "思考",
+            inTargetLanguage: "。",
+            patternBasedLearning: "基于模式的学习",
+            patternBasedDesc: "直观地识别语法结构，无需枯燥的规则。",
+            situationalIntelligence: "情境智能",
+            situationalDesc: "适应您的环境和历史的动态场景。",
+            adaptiveDrills: "自适应训练",
+            adaptiveDesc: "课程引擎识别您的弱点并重新校准。",
+            systemReady: "系统就绪",
+            quickSetup: "快速设置",
+            levelB2: "等级_B2",
+            authorized: "已授权",
+            notificationsPermission: "通知",
+            notificationsDesc: "获取附近练习机会和连胜提醒的实时更新。",
+            microphonePermission: "麦克风",
+            microphoneDesc: "对于现实语境中的发音评分和课程互动至关重要。",
+            geolocationPermission: "地理位置",
+            geolocationDesc: "识别附近的“课程区域”，如咖啡馆或图书馆，进行沉浸式练习。",
+            granted: "已授予",
+            allow: "允许",
+            skip: "跳过",
+            letsStart: "开始吧",
+            continueText: "继续",
+            wordTenses: "时态：",
+            similarWords: "相似词：",
+            wordBreakdown: "单词拆解：",
+            consonant: "辅音",
+            vowel: "元音",
+            past: "过去",
+            present: "现在",
+            future: "未来",
+            learnWord: "学习")
     }
-    
-    var common: CommonStrings {
-        CommonStrings(
-            cancel: "取消",
-            save: "保存",
-            done: "完成",
-            ok: "确定",
-            back: "返回",
-            next: "下一步",
-            continueText: "继续"
-        )
-    }
-    
-    var customPractice: CustomPracticeStrings {
-        CustomPracticeStrings(
-            custom: "自定义",
-            hint: "提示",
-            practiceDescription: "点击任何单词将其翻译成您的目标语言。如果需要帮助，请使用提示按钮获取建议。",
-            practiceTitle: "练习",
-            practiceFollowUp: "继续练习",
-            camera: "相机",
-            cameraDescription: "Locian将以{native}生成对话，您可以练习转换为{target}。",
-            useCamera: "使用相机",
-            cameraButtonDescription: "从照片生成时刻",
-            typeConversation: "输入对话",
-            typeConversationDescription: "Locian将以{native}生成对话，您可以练习转换为{target}。",
-            conversationPlaceholder: "例如：在繁忙的咖啡店点咖啡",
-            submit: "提交",
-            fullCustomText: "完整自定义文本",
-            examples: "示例：",
-            conversationExample1: "在雨中问路",
-            conversationExample2: "深夜购买蔬菜",
-            conversationExample3: "在拥挤的办公室工作",
-            describeConversation: "描述您希望Locian创建的对话。",
-            fullTextPlaceholder: "在此输入完整文本或对话...",
-            startCustomPractice: "开始自定义练习"
-        )
-    }
-    
+
     var progress: ProgressStrings {
         ProgressStrings(
             progress: "进度",
-            edit: "编辑",
             current: "当前",
             longest: "最长",
-            lastPracticed: "最后练习",
+            lastPracticed: "上次练习",
             days: "天",
-            addLanguagePairToSeeProgress: "添加语言对以查看您的进度。"
-        )
+            addLanguagePairToSeeProgress: "添加语言对以查看您的进度",
+            startPracticingMessage: "开始练习以建立您的连续记录",
+            consistencyQuote: "坚持是语言学习的关键",
+            practiceDateSavingDisabled: "练习日期保存已禁用",
+            editYourStreaks: "编辑您的连续记录",
+            editStreaks: "编辑连续记录",
+            selectDatesToAddOrRemove: "选择要添加或删除的日期",
+            saving: "保存中",
+            statusOnFire: "状态: 火热",
+            youPracticed: "您练习了 ",
+            yesterday: " 昨天.",
+            checkInNow: "立即打卡",
+            nextGoal: "下个目标",
+            reward: "奖励",
+            historyLogProgress: "历史记录",
+            streakStatus: "连胜状态",
+            streakLog: "连胜记录",
+            consistency: "一致性",
+            consistencyHigh: "您的活动记录显示出很高的参与度。",
+            consistencyMedium: "您正在建立良好的势头。",
+            consistencyLow: "一致性是关键。继续努力。",
+            reachMilestone: "努力达到 %d 天！",
+            nextMilestone: "下一个里程碑",
+            actionRequired: "需要行动",
+            logActivity: "记录活动",
+            maintainStreak: "Maintain Streak",
+            manualEntry: "Manual Entry",
+            longestStreakLabel: "最长连胜",
+            streakData: "连续数据",
+            activeLabel: "活跃",
+            missedLabel: "错过",
+            saveChanges: "保存更改",
+            discardChanges: "放弃更改",
+            editLabel: "编辑",
+            // Advanced Stats
+            skillBalance: "技能平衡",
+            fluencyVelocity: "流利速度",
+            vocabVault: "单词库",
+            chronotype: "昼夜节律型",
+            activityDistribution: "活动分布 (24小时)",
+            studiedTime: "学习时间",
+            currentLabel: "当前",
+            streakLabel: "打卡",
+            longestLabel: "最长",
+            earlyBird: "早起鸟",
+            earlyBirdDesc: "早晨最为活跃",
+            dayWalker: "昼行者",
+            dayWalkerDesc: "下午最为活跃",
+            nightOwl: "夜猫子",
+            nightOwlDesc: "入夜后最为活跃",
+            timeMastery: "时间掌控",
+            wordsMastered: "Words Mastered",
+            patternsMastered: "Patterns Active",
+            avgResponseTime: "Avg Response Time",
+            patternGalaxy: "PATTERN GALAXY")
     }
-    
+
+    var quiz: QuizStrings {
+        QuizStrings(            loading: "加载中...",
+            adaptiveQuiz: "自适应测验",
+            adaptiveQuizDescription: "我们先提示错误翻译，然后显示正确单词。",
+            wordCheck: "单词检查",
+            wordCheckDescription: "拼图块首先被打乱，然后归位以确认正确单词。",
+            wordCheckExamplePrompt: "点击字母按正确顺序排列单词。",
+            quizPrompt: "为单词选择正确的翻译。",
+            answerConfirmation: "您拼出了正确的单词！",
+            tryAgain: "哎呀！再试一次。")
+    }
+
+    var scene: SceneStrings {
+        SceneStrings(
+                                                                                                                                                                                                                                                                                                                                                                                            )
+    }
+
+
     func getString(_ key: String) -> String {
         return key
     }
     
-    // Also implement LocalizedStrings protocol
-    func getString(for key: StringKey) -> String {
+                                    func getString(for key: StringKey) -> String {
         switch key {
-        // Settings
-        case .languagePairs: return "我的语言"
-        case .notifications: return "通知"
-        case .aesthetics: return "美学"
-        case .account: return "账户"
-        case .appLanguage: return "应用界面"
+        case .notifications: return settings.notifications
+        case .account: return settings.account
+        case .login: return ui.login
+        case .register: return ui.register
+        case .settings: return ui.settings
+        case .back: return ui.back
+        case .done: return ui.done
+        case .cancel: return ui.cancel
+        case .save: return ui.save
+        case .delete: return ui.delete
+        case .add: return ui.add
+        case .remove: return ui.remove
+        case .edit: return ui.edit
+        case .learnTab: return ui.learnTab
+        case .addTab: return ui.addTab
+        case .progressTab: return ui.progressTab
+        case .settingsTab: return ui.settingsTab
+        case .loading: return ui.loading
+        case .user: return settings.user
+        case .unknownPlace: return ui.unknownPlace
+        case .noLanguageAvailable: return ui.noLanguageAvailable
+        case .noInternetConnection: return ui.noInternetConnection
+        case .retry: return ui.retry
+        case .tapToGetMoments: return ui.tapToGetMoments
+        case .startLearningThisMoment: return ui.startLearningThisMoment
+        case .daysLabel: return ui.daysLabel
+        case .systemLanguage: return settings.systemLanguage
+        case .targetLanguages: return settings.targetLanguages
+        case .pastLanguagesArchived: return settings.pastLanguagesArchived
+        case .theme: return settings.theme
+        case .logout: return settings.logout
+        case .learnNewLanguage: return settings.learnNewLanguage
+        case .profile: return settings.profile
+        case .addLanguagePair: return settings.addLanguagePair
+        case .deleteAllData: return settings.deleteAllData
+        case .deleteAccount: return settings.deleteAccount
+        case .selectLevel: return settings.selectLevel
+        case .proFeatures: return settings.proFeatures
+        case .showSimilarWordsToggle: return settings.showSimilarWordsToggle
+        case .cameraLabel: return ui.camera
+        case .galleryLabel: return ui.gallery
+        case .nextUp: return ui.nextUp
+        case .historyLog: return ui.historyLog
+
+        case .moments: return ui.moments
+        case .pastMoments: return ui.pastMoments
+        case .welcomeLabel: return ui.welcomeLabel
+        case .noUpcomingPlaces: return ui.noUpcomingPlaces
+        case .noDetailsRecorded: return ui.noDetails
+
+        case .startLearningLabel: return ui.startLearning
+        case .continueLearningLabel: return ui.continueLearning
+        case .noPastMomentsFor: return ui.noPastMoments
+        case .useCameraToStartLearning: return ui.useCamera
+        case .previouslyLearning: return ui.previouslyLearning
+        case .noHistoryRecorded: return ui.noHistory
+        case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
+        case .generatingHistory: return ui.generatingHistory
+        case .generatingMoments: return ui.generatingMoments
+        case .analyzingImage: return ui.analyzingImage
+        case .noNewPlace: return ui.noNewPlace
+        case .addNewPlaceInstruction: return ui.addNewPlaceInstruction
+        case .start: return ui.start
+        case .startPracticingMessage: return progress.startPracticingMessage
+        case .consistencyQuote: return progress.consistencyQuote
+        case .practiceDateSavingDisabled: return progress.practiceDateSavingDisabled
+        case .sunShort: return ui.sunShort
+        case .monShort: return ui.monShort
+        case .tueShort: return ui.tueShort
+        case .wedShort: return ui.wedShort
+        case .thuShort: return ui.thuShort
+        case .friShort: return ui.friShort
+        case .satShort: return ui.satShort
+        case .noLanguagePairsAdded: return settings.noLanguagePairsAdded
+        case .setDefault: return settings.setDefault
+        case .defaultText: return settings.defaultText
+        case .signOutFromAccount: return settings.signOutFromAccount
+        case .permanentlyDeleteAccount: return settings.permanentlyDeleteAccount
+        case .currentLevel: return settings.currentLevel
+        case .selectPhoto: return settings.selectPhoto
+        case .camera: return settings.camera
+        case .photoLibrary: return settings.photoLibrary
+        case .selectTime: return settings.selectTime
+        case .hour: return settings.hour
+        case .minute: return settings.minute
+        case .addTime: return settings.addTime
+        case .areYouSureLogout: return settings.areYouSureLogout
+        case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        case .nativeLanguage: return settings.nativeLanguage
+        case .selectNativeLanguage: return settings.selectNativeLanguage
+        case .targetLanguage: return settings.targetLanguage
+        case .selectTargetLanguage: return settings.selectTargetLanguage
+        case .targetLanguageDescription: return settings.targetLanguageDescription
+        case .beginner: return settings.beginner
+        case .intermediate: return settings.intermediate
+        case .advanced: return settings.advanced
+        case .currentlyLearning: return settings.currentlyLearning
+        case .learn: return settings.learn
+        case .neonGreen: return settings.neonGreen
+        case .neonFuchsia: return settings.neonFuchsia
+        case .electricIndigo: return settings.electricIndigo
+        case .graphiteBlack: return settings.graphiteBlack
+        case .error: return ui.error
+        case .ok: return ui.ok
+        case .locianHeading: return onboarding.locianHeading
+        case .locianDescription: return onboarding.locianDescription
+        case .awarenessHeading: return onboarding.awarenessHeading
+        case .awarenessDescription: return onboarding.awarenessDescription
+        case .breakdownHeading: return onboarding.breakdownHeading
+        case .breakdownDescription: return onboarding.breakdownDescription
+        case .progressHeading: return onboarding.progressHeading
+        case .progressDescription: return onboarding.progressDescription
+        case .readyHeading: return onboarding.readyHeading
+        case .readyDescription: return onboarding.readyDescription
+        case .loginOrRegister: return onboarding.loginOrRegister
+        case .pageIndicator: return onboarding.pageIndicator
+        case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .wordTenses: return onboarding.wordTenses
+        case .similarWords: return onboarding.similarWords
+        case .wordBreakdown: return onboarding.wordBreakdown
+        case .consonant: return onboarding.consonant
+        case .vowel: return onboarding.vowel
+        case .adaptiveQuiz: return quiz.adaptiveQuiz
+        case .adaptiveQuizDescription: return quiz.adaptiveQuizDescription
+        case .wordCheck: return quiz.wordCheck
+        case .wordCheckDescription: return quiz.wordCheckDescription
+        case .wordCheckExamplePrompt: return quiz.wordCheckExamplePrompt
+        case .quizPrompt: return quiz.quizPrompt
+        case .answerConfirmation: return quiz.answerConfirmation
+        case .tryAgain: return quiz.tryAgain
+        case .verify: return login.verify
+        case .selectProfession: return login.selectProfession
+        case .selectProfessionInstruction: return login.selectProfessionInstruction
+        case .showMore: return login.showMore
+        case .showLess: return login.showLess
+        case .forReview: return login.forReview
+        case .username: return login.username
+        case .phoneNumber: return login.phoneNumber
+        case .guestLogin: return login.guestLogin
+        case .authenticatingUser: return login.authenticatingUser
+        case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
+        case .termsOfService: return login.termsOfService
+        case .privacyPolicy: return login.privacyPolicy
+        case .selectUserProfession: return login.selectUserProfession
+        case .editYourStreaks: return progress.editYourStreaks
+        case .editStreaks: return progress.editStreaks
+        case .selectDatesToAddOrRemove: return progress.selectDatesToAddOrRemove
+        case .saving: return progress.saving
+        case .student: return settings.student
+        case .softwareEngineer: return settings.softwareEngineer
+        case .teacher: return settings.teacher
+        case .doctor: return settings.doctor
+        case .artist: return settings.artist
+        case .businessProfessional: return settings.businessProfessional
+        case .salesOrMarketing: return settings.salesOrMarketing
+        case .traveler: return settings.traveler
+        case .activityDistribution: return progress.activityDistribution
+        case .studiedTime: return progress.studiedTime
+        case .currentLabel: return progress.currentLabel
+        case .streakLabel: return progress.streakLabel
+        case .longestLabel: return progress.longestLabel
+        case .earlyBird: return progress.earlyBird
+        case .earlyBirdDesc: return progress.earlyBirdDesc
+        case .dayWalker: return progress.dayWalker
+        case .dayWalkerDesc: return progress.dayWalkerDesc
+        case .nightOwl: return progress.nightOwl
+        case .nightOwlDesc: return progress.nightOwlDesc
+        case .homemaker: return settings.homemaker
+        case .chef: return settings.chef
+        case .police: return settings.police
+        case .bankEmployee: return settings.bankEmployee
+        case .nurse: return settings.nurse
+        case .designer: return settings.designer
+        case .engineerManager: return settings.engineerManager
+        case .photographer: return settings.photographer
+        case .contentCreator: return settings.contentCreator
+        case .entrepreneur: return settings.entrepreneur
+        case .other: return settings.other
+        case .otherPlaces: return settings.otherPlaces
+        case .speaks: return settings.speaks
+        case .neuralEngine: return settings.neuralEngine
+        case .currentStreak: return ui.currentStreak
+        case .notSet: return ui.notSet
+        case .past: return onboarding.past
+        case .present: return onboarding.present
+        case .future: return onboarding.future
+        case .learnWord: return onboarding.learnWord
+        case .languageAddedSuccessfully: return settings.languageAddedSuccessfully
+        case .failedToAddLanguage: return settings.failedToAddLanguage
+        case .pleaseSelectLanguage: return settings.pleaseSelectLanguage
+        case .systemConfig: return settings.systemConfig
+        case .statusOnFire: return progress.statusOnFire
+        case .youPracticed: return progress.youPracticed
+        case .yesterday: return progress.yesterday
+        case .checkInNow: return progress.checkInNow
+        case .nextGoal: return progress.nextGoal
+        case .reward: return progress.reward
+        case .historyLogProgress: return progress.historyLogProgress
+        case .streakStatus: return progress.streakStatus
+        case .streakLog: return progress.streakLog
+        case .consistency: return progress.consistency
+        case .consistencyHigh: return progress.consistencyHigh
+        case .consistencyMedium: return progress.consistencyMedium
+        case .consistencyLow: return progress.consistencyLow
+        case .progress: return progress.progress
+        case .current: return progress.current
+        case .longest: return progress.longest
+        case .days: return progress.days
+        case .reachMilestone: return progress.reachMilestone
+        case .nextMilestone: return progress.nextMilestone
+        case .actionRequired: return progress.actionRequired
+        case .logActivity: return progress.logActivity
+        case .maintainStreak: return progress.maintainStreak
+        case .manualEntry: return progress.manualEntry
+        case .longestStreakLabel: return progress.longestStreakLabel
+        case .streakData: return progress.streakData
+        case .activeLabel: return progress.activeLabel
+        case .missedLabel: return progress.missedLabel
+        case .saveChanges: return progress.saveChanges
+        case .discardChanges: return progress.discardChanges
+        case .editLabel: return progress.editLabel
+        case .lastPracticed: return progress.lastPracticed
+        case .addLanguagePairToSeeProgress: return progress.addLanguagePairToSeeProgress
+        case .callingAI: return ui.callingAI
+        case .preparingLesson: return ui.preparingLesson
         
-        // Common
-        case .login: return "登录 /"
-        case .register: return "注册"
-        case .settings: return "设置"
-        case .home: return "首页"
-        case .back: return "返回"
-        case .next: return "下一步"
-        case .previous: return "上一步"
-        case .done: return "完成"
-        case .cancel: return "取消"
-        case .save: return "保存"
-        case .delete: return "删除"
-        case .add: return "添加"
-        case .remove: return "移除"
-        case .edit: return "编辑"
-        case .continueText: return "继续"
-        
-        // Quiz
-        case .quizCompleted: return "测验完成！"
-        case .sessionCompleted: return "会话完成！"
-        case .masteredEnvironment: return "您已掌握您的环境！"
-        case .learnMoreAbout: return "了解更多关于"
-        case .backToHome: return "返回首页"
-        case .tryAgain: return "再试一次"
-        case .shuffled: return "已打乱"
-        case .check: return "检查"
-        
-        // Vocabulary
-        case .exploreCategories: return "探索类别"
-        case .testYourself: return "测试自己"
-        case .similarWords: return "相似词："
-        case .wordTenses: return "词时态："
-        case .tapWordsToExplore: return "点击单词阅读其翻译并探索"
-        case .wordBreakdown: return "词分解："
-        
-        // Scene
-        case .analyzingImage: return "正在分析图像..."
-        case .imageAnalysisCompleted: return "图像分析完成"
-        case .imageSelected: return "已选择图像"
-        case .placeNotSelected: return "未选择地点"
-        case .chooseLanguages: return "选择语言"
-        case .locianChoose: return "Locian选择"
-        
-        // Settings
-        case .enableNotifications: return "启用通知"
-        case .thisPlace: return "这个地方"
-        case .tapOnAnySection: return "点击上面的任何部分以查看和管理设置"
-        case .addNewLanguagePair: return "添加新语言对"
-        case .noLanguagePairsAdded: return "尚未添加语言对"
-        case .setDefault: return "设为默认"
-        case .defaultText: return "默认"
-        case .user: return "用户"
-        case .noPhone: return "无电话"
-        case .signOutFromAccount: return "从您的帐户退出"
-        case .removeAllPracticeData: return "删除您的所有练习数据"
-        case .permanentlyDeleteAccount: return "永久删除您的帐户和所有数据"
-        case .currentLevel: return "当前级别"
-        case .selectPhoto: return "选择照片"
-        case .camera: return "相机"
-        case .photoLibrary: return "照片库"
-        case .selectTime: return "选择时间"
-        case .hour: return "小时"
-        case .minute: return "分钟"
-        case .addTime: return "添加时间"
-        case .areYouSureLogout: return "您确定要退出吗？"
-        case .areYouSureDeleteAccount: return "您确定要删除您的帐户吗？此操作无法撤销。"
-        
-        // Quiz
-        case .goBack: return "返回"
-        case .fillInTheBlank: return "填空："
-        case .arrangeWordsInOrder: return "按正确顺序排列单词："
-        case .tapWordsBelowToAdd: return "点击下面的单词将它们添加到这里"
-        case .availableWords: return "可用单词："
-        case .correctAnswer: return "正确答案："
-        
-        // Common
-        case .error: return "错误"
-        case .ok: return "确定"
-        case .close: return "关闭"
-        
-        // Onboarding
-        case .locianHeading: return "Locian"
-        case .locianDescription: return "从您所在的位置到您需要的每个时态"
-        case .awarenessHeading: return "意识"
-        case .awarenessDescription: return "AI从您的环境中学习"
-        case .inputsHeading: return "输入"
-        case .inputsDescription: return "Locian surfaces similar words, word tenses, and full word breakdowns—not just consonant and vowel charts"
-        case .breakdownHeading: return "分解"
-        case .breakdownDescription: return "Locian将句子分解为时态，提供逐字翻译"
-        case .progressHeading: return "Quiz"
-        case .progressDescription: return "Preview the rebuild mini-game, adaptive quizzes, and smart shuffle that keep practice fresh"
-        case .readyHeading: return "就绪"
-        case .readyDescription: return ""
-        
-        // Onboarding additional strings
-        case .loginOrRegister: return "登录 / 注册"
-        case .pageIndicator: return " / 6"
-        case .tapToNavigate: return "点击左侧或右侧进行导航"
-        case .selectAppLanguage: return "选择应用语言"
-        case .selectLanguageDescription: return "此语言将使应用程序用户界面、标题、描述、按钮、名称和所有内容变为所选语言"
-        
-        // Login
-        case .username: return "用户名"
-        case .phoneNumber: return "电话号码"
-        case .guestLogin: return "访客登录"
-        case .guestLoginDescription: return "访客登录用于验证，将允许访客访问所有应用功能。验证后将删除。"
-        
-        // Professions
-        case .student: return "学生"
-        case .softwareEngineer: return "软件工程师"
-        case .teacher: return "教师"
-        case .doctor: return "医生"
-        case .artist: return "艺术家"
-        case .businessProfessional: return "商业专业人士"
-        case .salesOrMarketing: return "销售或营销"
-        case .traveler: return "旅行者"
-        case .homemaker: return "家庭主妇"
-        case .chef: return "厨师"
-        case .police: return "警察"
-        case .bankEmployee: return "银行员工"
-        case .nurse: return "护士"
-        case .designer: return "设计师"
-        case .engineerManager: return "工程师经理"
-        case .photographer: return "摄影师"
-        case .contentCreator: return "内容创作者"
-        case .other: return "其他"
-        
-        // Scene Places
-        case .lociansChoice: return "Locian的选择"
-        case .airport: return "机场"
-        case .cafe: return "咖啡厅"
-        case .gym: return "健身房"
-        case .library: return "图书馆"
-        case .office: return "办公室"
-        case .park: return "公园"
-        case .restaurant: return "餐厅"
-        case .shoppingMall: return "购物中心"
-        case .travelling: return "旅行"
-        case .university: return "大学"
-        case .addCustomPlace: return "添加自定义地点"
-        case .enterCustomPlaceName: return "输入自定义地点名称（最多30个字符）"
-        case .maximumCustomPlaces: return "最多10个自定义地点"
-        case .welcome: return "欢迎"
-        case .tapToCaptureContext: return "点击以捕获您的上下文并开始学习"
-        case .customSection: return "自定义"
-        case .examples: return "示例："
-        case .customPlacePlaceholder: return "例如：前往办公室"
-        case .exampleTravellingToOffice: return "前往办公室"
-        case .exampleTravellingToHome: return "回家"
-        case .exampleExploringParis: return "探索巴黎"
-        case .exampleVisitingMuseum: return "参观博物馆"
-        case .exampleCoffeeShop: return "咖啡店"
-        case .characterCount: return "字符"
-        
-        // Settings Modal Strings
-        case .nativeLanguage: return "母语:"
-        case .selectNativeLanguage: return "选择您的母语"
-        case .targetLanguage: return "目标语言:"
-        case .selectTargetLanguage: return "选择您想学习的语言"
-        case .nativeLanguageDescription: return "您的母语是您可以流利地阅读、写作和口语的语言。这是您最舒适的语言。"
-        case .targetLanguageDescription: return "您的目标语言是您想要学习和练习的语言。选择您希望提高技能的语言。"
-        case .addPair: return "添加配对"
-        case .adding: return "添加中..."
-        case .failedToAddLanguagePair: return "添加语言对失败。请重试。"
-        case .settingAsDefault: return "设置为默认..."
-        case .beginner: return "初级"
-        case .intermediate: return "中级"
-        case .advanced: return "高级"
-        case .currentlyLearning: return "正在学习"
-        case .otherLanguages: return "其他语言"
-        case .learnNewLanguage: return "学习新语言"
-        case .learn: return "学习"
-        case .tapToSelectNativeLanguage: return "点击选择您的母语"
-        case .neonGreen: return "霓虹綠"
-        
-        // Theme color names
-        case .cyanMist: return "青色薄雾"
-        case .violetHaze: return "紫罗兰薄雾"
-        case .softPink: return "柔和粉红"
-        case .pureWhite: return "纯白"
-        
-        // Quick Look
-        case .quickRecall: return "快速回忆"
-        case .startQuickPuzzle: return "开始快速拼图"
-        case .stopPuzzle: return "停止拼图"
-        
-        // Streak
-        case .streak: return "连续"
-        case .dayStreak: return "天连续"
-        case .daysStreak: return "天连续"
-        case .editYourStreaks: return "编辑您的连续记录"
-        case .editStreaks: return "编辑连续记录"
-        case .selectDatesToAddOrRemove: return "选择要添加或删除练习日的日期"
-        case .saving: return "保存中..."
+        case .module03: return onboarding.module03
+        case .notJustMemorization: return onboarding.notJustMemorization
+        case .philosophy: return onboarding.philosophy
+        case .locianTeaches: return onboarding.locianTeaches
+        case .think: return onboarding.think
+        case .inTargetLanguage: return onboarding.inTargetLanguage
+        case .patternBasedLearning: return onboarding.patternBasedLearning
+        case .patternBasedDesc: return onboarding.patternBasedDesc
+        case .situationalIntelligence: return onboarding.situationalIntelligence
+        case .situationalDesc: return onboarding.situationalDesc
+        case .adaptiveDrills: return onboarding.adaptiveDrills
+        case .adaptiveDesc: return onboarding.adaptiveDesc
+        case .systemReady: return onboarding.systemReady
+        case .quickSetup: return onboarding.quickSetup
+        case .levelB2: return onboarding.levelB2
+        case .authorized: return onboarding.authorized
+        case .notificationsPermission: return onboarding.notificationsPermission
+        case .notificationsDesc: return onboarding.notificationsDesc
+        case .microphonePermission: return onboarding.microphonePermission
+        case .microphoneDesc: return onboarding.microphoneDesc
+        case .geolocationPermission: return onboarding.geolocationPermission
+        case .geolocationDesc: return onboarding.geolocationDesc
+        case .granted: return onboarding.granted
+        case .allow: return onboarding.allow
+        case .skip: return onboarding.skip
+        case .letsStart: return onboarding.letsStart
+        case .continueText: return onboarding.continueText
+        case .fromWhereYouStand: return onboarding.fromWhereYouStand
+        case .toEveryWord: return onboarding.toEveryWord
+        case .everyWord: return onboarding.everyWord
+        case .youNeed: return onboarding.youNeed
+        case .lessonEngine: return onboarding.lessonEngine
+        case .nodesLive: return onboarding.nodesLive
+        case .locEngineVersion: return onboarding.locEngineVersion
+        case .holoGridActive: return onboarding.holoGridActive
+        case .adaCr02: return onboarding.adaCr02
+        case .your: return onboarding.your
+        case .places: return onboarding.places
+        case .lessons: return onboarding.lessons
+        case .yourPlaces: return onboarding.yourPlaces
+        case .yourLessons: return onboarding.yourLessons
+        case .nearbyCafes: return onboarding.nearbyCafes
+        case .unlockOrderFlow: return onboarding.unlockOrderFlow
+        case .modules: return onboarding.modules
+        case .activeHubs: return onboarding.activeHubs
+        case .synthesizeGym: return onboarding.synthesizeGym
+        case .vocabulary: return onboarding.vocabulary
+        case .locationOpportunity: return onboarding.locationOpportunity
+        // Advanced Stats
+        case .skillBalance: return progress.skillBalance
+        case .fluencyVelocity: return progress.fluencyVelocity
+        case .vocabVault: return progress.vocabVault
+        case .chronotype: return progress.chronotype
+        case .timeMastery: return progress.timeMastery
+        case .wordsMastered: return progress.wordsMastered
+        case .patternsMastered: return progress.patternsMastered
+        case .avgResponseTime: return progress.avgResponseTime
+        case .patternGalaxy: return progress.patternGalaxy
+        case .typeYourMoment: return ui.typeYourMoment
         }
     }
 }
-

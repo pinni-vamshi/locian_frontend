@@ -11,7 +11,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		EED184FD2EB03AE800E00976 /* Exceptions for "locian" folder in "locian" target */ = {
+		EEA9A3DD2ED2FF2E00D5BB5C /* Exceptions for "locian" folder in "locian" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -24,7 +24,7 @@
 		EEDDA61D2EAAAA5C00959DDB /* locian */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				EED184FD2EB03AE800E00976 /* Exceptions for "locian" folder in "locian" target */,
+				EEA9A3DD2ED2FF2E00D5BB5C /* Exceptions for "locian" folder in "locian" target */,
 			);
 			path = locian;
 			sourceTree = "<group>";
@@ -67,7 +67,7 @@
 			buildPhases = (
 				EEDDA6172EAAAA5C00959DDB /* Sources */,
 				EEDDA6182EAAAA5C00959DDB /* Frameworks */,
-				EEDDA6192EAAAA5C00959DDB /* Resources */,
+				EEA9A3DC2ED2FF2E00D5BB5C /* Resources */,
 			);
 			buildRules = (
 			);
@@ -90,8 +90,11 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
+				KnownAssetTags = (
+					New,
+				);
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2610;
 				TargetAttributes = {
 					EEDDA61A2EAAAA5C00959DDB = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -118,7 +121,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		EEDDA6192EAAAA5C00959DDB /* Resources */ = {
+		EEA9A3DC2ED2FF2E00D5BB5C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -197,6 +200,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -254,6 +258,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -264,12 +269,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = locian/locian.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VPGVF647K2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = locian/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Locian;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Locian needs camera access to take photos for language learning and translation features.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Locian needs photo library access to let you choose images for language learning and translation features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -281,7 +289,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = scenica.locian.locian;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -299,12 +307,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = locian/locian.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VPGVF647K2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = locian/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Locian;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Locian needs camera access to take photos for language learning and translation features.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Locian needs photo library access to let you choose images for language learning and translation features.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -316,7 +327,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = scenica.locian.locian;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

@@ -33,6 +33,60 @@ extension BaseAPIManagerProtocol {
         timeoutInterval: TimeInterval = 8.0,
         completion: @escaping (Result<T, Error>) -> Void
     ) {
+        performRawRequest(
+            endpoint: endpoint,
+            method: method,
+            body: body,
+            headers: headers,
+            timeoutInterval: timeoutInterval
+        ) { result in
+            switch result {
+            case .success(let data):
+                do {
+                    // Cache logic for quiz
+                    if endpoint.contains("quiz"), let jsonString = String(data: data, encoding: .utf8) {
+                        _ = FileStorageManager.shared.saveString(jsonString, forKey: "lastQuizResponseRawJSON")
+                    }
+
+                    let decoded = try JSONDecoder().decode(T.self, from: data)
+                    print("✅ [API-PARSING-SUCCESS] \(endpoint)")
+                    completion(.success(decoded))
+                } catch let decodingError as DecodingError {
+                    print("❌ [API-DECODING-FAILURE] \(endpoint):")
+                    switch decodingError {
+                    case .keyNotFound(let key, let context):
+                        print("   - Key not found: \(key.stringValue) at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .typeMismatch(let type, let context):
+                        print("   - Type mismatch: expected \(type) at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .valueNotFound(let type, let context):
+                        print("   - Value not found: expected \(type) at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    case .dataCorrupted(let context):
+                        print("   - Data corrupted at path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+                    @unknown default:
+                        print("   - Unknown decoding error")
+                    }
+                    ErrorHandler.log(decodingError, context: "Decoding response for \(endpoint)")
+                    completion(.failure(decodingError))
+                } catch {
+                    print("❌ [API-UNKNOWN-ERROR] \(endpoint): \(error.localizedDescription)")
+                    ErrorHandler.log(error, context: "Decoding response for \(endpoint)")
+                    completion(.failure(error))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+
+    /// Performs a standard API request and returns raw Data (Bypasses JSONDecoder)
+    func performRawRequest(
+        endpoint: String,
+        method: String = "POST",
+        body: Encodable? = nil,
+        headers: [String: String] = [:],
+        timeoutInterval: TimeInterval = 8.0,
+        completion: @escaping (Result<Data, Error>) -> Void
+    ) {
         guard let url = URL(string: "\(baseURL)\(endpoint)") else {
             completion(.failure(APIError.invalidURL))
             return
@@ -43,6 +97,11 @@ extension BaseAPIManagerProtocol {
         request.timeoutInterval = timeoutInterval
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
+        // FORCED DYNAMIC: Bypass any systemic URL caches for studied places
+        if endpoint.contains("studied-places") || endpoint.contains("generate-sentence") {
+            request.cachePolicy = .reloadIgnoringLocalCacheData
+        }
+        
         // Add custom headers
         for (key, value) in headers {
             request.setValue(value, forHTTPHeaderField: key)
@@ -51,17 +110,23 @@ extension BaseAPIManagerProtocol {
         // Encode body if provided
         if let body = body {
             do {
-                // JSONEncoder requires a concrete type, not a protocol type
-                // We use a helper function to encode any Encodable type
-                request.httpBody = try encodeEncodable(body)
+                let encoder = JSONEncoder()
+                let encodedData = try encoder.encode(AnyEncodable(body))
+                request.httpBody = encodedData
                 
-                // Request body encoding handled
-                
+                // 🚀 TRACE: Log Request Body
+                if let bodyString = String(data: encodedData, encoding: .utf8) {
+                    print("\n📤 [API-REQUEST] \(method) \(endpoint)")
+                    print("   Body: \(bodyString)")
+                }
             } catch {
+                print("❌ [API-ENCODING-ERROR] \(endpoint): \(error.localizedDescription)")
                 ErrorHandler.log(error, context: "Encoding request body for \(endpoint)")
                 completion(.failure(error))
                 return
             }
+        } else {
+            print("\n📤 [API-REQUEST] \(method) \(endpoint) (No Body)")
         }
         
         // Perform request
@@ -69,6 +134,7 @@ extension BaseAPIManagerProtocol {
             DispatchQueue.main.async {
                 // Handle network errors
                 if let error = error {
+                    print("❌ [API-NETWORK-ERROR] \(endpoint): \(error.localizedDescription)")
                     ErrorHandler.log(error, context: "Network request for \(endpoint)")
                     completion(.failure(error))
                     return
@@ -76,53 +142,41 @@ extension BaseAPIManagerProtocol {
                 
                 // Check HTTP response
                 guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ [API-RESPONSE-ERROR] \(endpoint): Invalid response type")
                     completion(.failure(APIError.networkError("Invalid response type")))
                     return
                 }
                 
-                // Handle special status codes (401/403 for auth endpoints)
-                // Note: AuthAPIManager needs special handling for 401/403, so we let it handle those
-                // For other endpoints, we fail on any non-200 status
+                print("📥 [API-RESPONSE] \(endpoint) [Status: \(httpResponse.statusCode)]")
                 
-                // Check for success status code (200 OK or 201 Created)
+                // Handle special status codes
+                if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+                    print("⚠️ [API-AUTH-ERROR] \(endpoint): Session expired (401/403)")
+                    NotificationCenter.default.post(name: NSNotification.Name("SessionExpired"), object: nil)
+                    completion(.failure(APIError.networkError("Session expired")))
+                    return
+                }
+                
                 guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
-                    ErrorHandler.log(APIError.networkError("HTTP \(httpResponse.statusCode)"), context: endpoint)
+                    print("❌ [API-HTTP-ERROR] \(endpoint): Status \(httpResponse.statusCode)")
                     completion(.failure(APIError.networkError("HTTP \(httpResponse.statusCode)")))
                     return
                 }
                 
-                // Check for data
                 guard let data = data else {
+                    print("❌ [API-DATA-ERROR] \(endpoint): No data received")
                     completion(.failure(APIError.noData))
                     return
                 }
-                
-                // Log HTTP response details
-                
-                // Response data available
-                
-                // Decode response
-                do {
-                    // IMPORTANT: Store raw JSON for quiz endpoint to preserve question order
-                    // Use file storage instead of UserDefaults for large JSON strings
-                    if endpoint.contains("quiz") {
-                        if let jsonString = String(data: data, encoding: .utf8) {
-                            // Store raw JSON string in file system (not UserDefaults) for order preservation
-                            // This allows AppStateManager to extract question IDs in exact JSON order
-                            _ = FileStorageManager.shared.saveString(jsonString, forKey: "lastQuizResponseRawJSON")
-                        }
-                    }
-                    
-                    let decoded = try JSONDecoder().decode(T.self, from: data)
-                    completion(.success(decoded))
-                } catch {
-                    // Log raw response for debugging decoding errors (only for image analysis)
-                    if endpoint.contains("image/analyze") {
-                        // Error logging handled
-                    }
-                    ErrorHandler.log(error, context: "Decoding response for \(endpoint)")
-                    completion(.failure(error))
+
+                // Log Raw Response
+                if let str = String(data: data, encoding: .utf8) {
+                    print("📦 [API-RAW-PAYLOAD] \(endpoint):")
+                    print(str)
+                    print("--------------------------------------------------")
                 }
+
+                completion(.success(data))
             }
         }.resume()
     }

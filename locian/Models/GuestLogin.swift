@@ -34,6 +34,8 @@ struct GuestLoginResponse: Codable {
     let data: GuestLoginData?
     let error: String?
     let status_code: Int?
+    let request_id: String?
+    let timestamp: String?
 }
 
 // MARK: - Guest Login Data
@@ -41,11 +43,8 @@ struct GuestLoginData: Codable {
     let action: String
     let user_id: String
     let session_token: String
-    let phone_number: String
     let username: String
     let profession: String?
     let is_guest: Bool
-    let language_pairs: [LanguagePair]?
-    let default_language_pair: LanguagePair?
 }
 

@@ -21,6 +21,8 @@
 	<string>Locian needs photo library access to let you choose images for language learning and translation features.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Locian needs microphone access to enable voice conversation practice for language learning.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Locian uses speech recognition to validate your pronunciation during speaking drills.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Locian needs location access to provide location-based language learning features and context.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
