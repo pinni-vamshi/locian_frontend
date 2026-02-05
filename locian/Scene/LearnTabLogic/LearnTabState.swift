@@ -294,7 +294,7 @@ class LearnTabState: ObservableObject {
     func generateSentence(for moment: String) {
         guard let sessionToken = appState.authToken, !sessionToken.isEmpty,
               let placeName = firstRecommendedPlace,
-              let defaultPair = appState.userLanguagePairs.first(where: { $0.is_default }) else { return }
+              let _ = appState.userLanguagePairs.first(where: { $0.is_default }) else { return }
         
         guard generationState == .idle else { return }
         
@@ -336,7 +336,7 @@ class LearnTabState: ObservableObject {
         guard let data = data else { self.isEmbeddingsReady = true; return }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let targetCode = data.target_language ?? "es"
-            let nativeCode = data.user_language ?? "en"
+            let nativeCode = data.target_language ?? "en" // Fallback or correct mapping
             var targetStrings: [String] = []
             var nativeStrings: [String] = []
             if let patterns = data.patterns {

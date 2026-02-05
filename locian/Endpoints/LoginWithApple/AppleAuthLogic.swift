@@ -174,7 +174,7 @@ class AppleAuthLogic {
         while remainingLength > 0 {
             let randoms: [UInt8] = (0..<16).map { _ in
                 var random: UInt8 = 0
-                SecRandomCopyBytes(kSecRandomDefault, 1, &random)
+                _ = SecRandomCopyBytes(kSecRandomDefault, 1, &random)
                 return random
             }
             randoms.forEach { random in

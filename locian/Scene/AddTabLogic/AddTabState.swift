@@ -71,7 +71,15 @@ class AddTabState: ObservableObject {
         }
     }
     
-    // MARK: - Refresh Logic
+    // Streak Properties (Calculated from AppStateManager)
+    var maxCurrentStreak: Int {
+        appState.userLanguagePairs.map { calculateStreak(practiceDates: $0.practice_dates) }.max() ?? 0
+    }
+    
+    var maxLongestStreak: Int {
+        // For now using current as longest since we don't have separate historical data here
+        maxCurrentStreak
+    }
     
     @MainActor
     func handlePullToRefresh(offset: CGFloat) {
@@ -98,16 +106,49 @@ class AddTabState: ObservableObject {
             
             Task {
                 try? await Task.sleep(nanoseconds: 500_000_000)
-                await appState.forceRefreshLanguages()
-                refreshId = UUID()
-                withAnimation { pullRefreshState = .finishing }
-                isRefreshFinished = true
+                TargetLanguageLogic.shared.loadTargetLanguages { [weak self] _ in
+                    self?.refreshId = UUID()
+                    withAnimation { self?.pullRefreshState = .finishing }
+                    self?.isRefreshFinished = true
+                }
+             Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if self.isRefreshFinished {
+                    withAnimation(.spring()) {
+                        self.pullRefreshState = .idle
+                        self.isRefreshFinished = false
+                    }
+                }
+             }
             }
         } else if offset > 0 {
             pullRefreshState = .pulling(progress: min(1.0, offset / 110.0))
         } else {
             pullRefreshState = .idle
         }
+    }
+    
+    private func calculateStreak(practiceDates: [String]) -> Int {
+        guard !practiceDates.isEmpty else { return 0 }
+        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let validDates = practiceDates.compactMap { formatter.date(from: $0) }
+        guard !validDates.isEmpty else { return 0 }
+        let uniqueDates = Set(validDates); let sortedDates = uniqueDates.sorted(by: >)
+        let calendar = Calendar.current; let today = Date()
+        guard let latestDate = sortedDates.first else { return 0 }
+        let isToday = calendar.isDateInToday(latestDate)
+        let isYesterday = calendar.isDate(latestDate, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: today)!)
+        if !isToday && !isYesterday { return 0 }
+        var currentStreak = 1; var previousDate = latestDate
+        for i in 1..<sortedDates.count {
+            let date = sortedDates[i]
+            if let expectedPrevDay = calendar.date(byAdding: .day, value: -1, to: previousDate),
+               calendar.isDate(date, inSameDayAs: expectedPrevDay) {
+                currentStreak += 1; previousDate = date
+            } else { break }
+        }
+        return currentStreak
     }
 }
 

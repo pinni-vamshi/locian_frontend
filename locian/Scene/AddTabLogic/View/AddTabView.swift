@@ -71,7 +71,7 @@ struct AddTabView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             AddProfileHeader(appState: appState)
-            if appState.maxLongestStreak > 3 {
+            if state.maxLongestStreak > 3 {
                 AddRoutineHeader(appState: appState, showingRoutineModal: $showingRoutineModal, selectedPlaces: $state.routineSelections) { state.startRoutine(); switchToLearnTab() }
             } else {
                 routineLockedChallenge
@@ -81,7 +81,7 @@ struct AddTabView: View {
     }
 
     private var timelineSection: some View {
-        Group { if appState.maxLongestStreak > 3 { AddTimelineHeader(selectedPlaces: $state.routineSelections) } }
+        Group { if state.maxLongestStreak > 3 { AddTimelineHeader(selectedPlaces: $state.routineSelections) } }
             .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
             .animation(.spring().delay(0.1), value: animateIn)
             .diagnosticBorder(.pink, width: 1)
@@ -128,7 +128,7 @@ struct AddTabView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("LOCKED FEATURE: ROUTINES").font(.system(size: 9, weight: .heavy)).foregroundColor(ThemeColors.secondaryAccent).tracking(1)
                     .diagnosticBorder(.orange, width: 0.5)
-                Text("BUILD ROUTINES WITH \(min(appState.maxCurrentStreak, 3))/3 DAY STREAK").font(.system(size: 11, weight: .black, design: .monospaced)).foregroundColor(.white.opacity(0.8))
+                Text("BUILD ROUTINES WITH \(min(state.maxCurrentStreak, 3))/3 DAY STREAK").font(.system(size: 11, weight: .black, design: .monospaced)).foregroundColor(.white.opacity(0.8))
                     .diagnosticBorder(.white.opacity(0.5), width: 0.5)
             }
             .diagnosticBorder(.gray.opacity(0.3), width: 1)

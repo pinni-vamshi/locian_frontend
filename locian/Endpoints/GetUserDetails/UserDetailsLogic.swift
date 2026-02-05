@@ -19,7 +19,7 @@ class UserDetailsLogic {
                 switch result {
                 case .success(let response):
                     guard response.success, let data = response.data else {
-                        completion(false, response.errorMessage ?? "Failed to fetch details.")
+                        completion(false, response.error ?? "Failed to fetch details.")
                         return
                     }
                     
