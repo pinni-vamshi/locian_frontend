@@ -230,11 +230,10 @@ struct LearnTabView: View {
         let targetCode = activePair?.target_language ?? "en"
         let lang = AppLanguage.fromCode(targetCode) ?? .english
         let langName = lang.englishName.uppercased()
-        let langNative = lang.nativeScript
         
         return VStack(alignment: .leading, spacing: 0) {
-            Text("SELECT A MOMENT TO TALK IN \(langName) (\(langNative))")
-                .font(.system(size: 25, weight: .heavy))
+            Text("SELECT A MOMENT TO TALK IN \(langName)")
+                .font(.system(size: 20, weight: .heavy))
                 .foregroundColor(Color(white: 0.3)) // Heavy grey
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
