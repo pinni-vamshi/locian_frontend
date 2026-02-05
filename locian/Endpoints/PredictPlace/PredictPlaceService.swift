@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 class PredictPlaceService {
     static let shared = PredictPlaceService()
