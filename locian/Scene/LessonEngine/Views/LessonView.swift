@@ -29,7 +29,7 @@ struct LessonView: View {
                     
                     Spacer()
                     
-                    Text(lessonData.moment_label?.uppercased() ?? "LOCIAN")
+                    Text(lessonData.micro_situation?.uppercased() ?? "LOCIAN")
                         .font(.system(size: 16, weight: .heavy))
                         .tracking(2)
                         .foregroundColor(.white)

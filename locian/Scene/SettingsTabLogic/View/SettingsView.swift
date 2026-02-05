@@ -104,7 +104,7 @@ struct SettingsView: View {
                         
                         Divider()
                         
-                        Button(action: { appState.showTargetLanguageModal() }) {
+                        Button(action: { appState.shouldShowTargetLanguageModal = true }) {
                             Label(languageManager.settings.addLanguagePair, systemImage: "plus")
                         }
                     } label: {
@@ -116,7 +116,7 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button(action: { appState.showTargetLanguageModal() }) {
+                    Button(action: { appState.shouldShowTargetLanguageModal = true }) {
                         Text(targetName)
                             .font(.system(size: 90, weight: .black))
                             .foregroundColor(.white)
@@ -212,7 +212,7 @@ struct SettingsView: View {
                             .foregroundColor(.gray)
                         Text("/").foregroundColor(.gray)
                         
-                        Button(action: { appState.showNativeLanguageModal() }) {
+                        Button(action: { appState.shouldShowNativeLanguageModal = true }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "pencil")
                                 Text(languageManager.ui.edit.uppercased())
@@ -421,7 +421,7 @@ struct SettingsView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text(languageManager.onboarding.notifications.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
+                    Text(languageManager.onboarding.notificationsPermission.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
                     Spacer()
                     Toggle("", isOn: Binding(
                         get: { NotificationManager.shared.isNotificationsEnabled },
