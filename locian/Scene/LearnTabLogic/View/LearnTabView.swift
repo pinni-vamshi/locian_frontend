@@ -150,26 +150,29 @@ struct LearnTabView: View {
 
     private var activeMomentsContent: some View {
         let isLoading = state.isAnalyzingImage || appState.isLoadingTimeline || state.isLoadingMoments
-        return VStack(spacing: 0) {
-            if isLoading { loadingHeader }
-            else if !state.uiCategories.isEmpty { 
-                categoryPicker
-                    .diagnosticBorder(.blue, width: 1, label: "CAT_PICKER")
+        return HStack(spacing: 0) {
+            if !isLoading && !state.uiCategories.isEmpty { 
+                sidebarTapGuide 
+                    .diagnosticBorder(.white, width: 0.5, label: "GUIDE")
             }
             
-            HStack(spacing: 0) {
-                if !isLoading && !state.uiCategories.isEmpty { 
-                    sidebarTapGuide 
-                        .diagnosticBorder(.white, width: 0.5, label: "GUIDE")
+            VStack(spacing: 0) {
+                if isLoading {
+                    loadingHeader
+                    loadingSpinner
+                } else if state.uiCategories.isEmpty {
+                    noMomentsView
+                } else {
+                    categoryPicker
+                        .diagnosticBorder(.blue, width: 1, label: "CAT_PICKER")
+                    
+                    ScrollView(.vertical, showsIndicators: false) {
+                        momentsList
+                    }
+                    .diagnosticBorder(.white.opacity(0.1), width: 1)
                 }
-                ScrollView(.vertical, showsIndicators: false) {
-                    if isLoading { loadingSpinner }
-                    else if state.uiCategories.isEmpty { noMomentsView }
-                    else { momentsList }
-                }
-                .diagnosticBorder(.white.opacity(0.1), width: 1)
             }
-            .diagnosticBorder(.green.opacity(0.2), width: 1)
+            .frame(maxWidth: .infinity)
         }
         .diagnosticBorder(.cyan.opacity(0.2), width: 1)
         .frame(maxHeight: .infinity)
@@ -206,7 +209,7 @@ struct LearnTabView: View {
                     // Spacer at the end to allow last categories to be scrolled to the leading edge
                     Color.clear.frame(width: UIScreen.main.bounds.width - 100)
                 }
-                .padding(.leading, 41)
+                .padding(.leading, 12)
                 .padding(.trailing, 16)
                     .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "P:L41,R16")
             }
@@ -261,7 +264,7 @@ struct LearnTabView: View {
             }
             Spacer().frame(height: 100)
         }
-        .padding(.leading, 5).padding(.trailing, 16)
+        .padding(.leading, 12).padding(.trailing, 16)
         .diagnosticBorder(.green.opacity(0.3), width: 1, label: "LIST_V_S:12,P:L5,R16")
     }
 
@@ -273,13 +276,23 @@ struct LearnTabView: View {
         VStack(spacing: 24) {
             Image(systemName: "hand.tap").font(.system(size: 16)).foregroundColor(.black)
                 .diagnosticBorder(.black, width: 0.5)
-            ZStack {
-                Text("TAP ON THE MOMENT TO LEARN").font(.system(size: 10, weight: .heavy)).foregroundColor(.black.opacity(0.3)).fixedSize().background(GeometryReader { geo in Color.clear.onAppear { sidebarTextHeight = geo.size.width } }).rotationEffect(.degrees(-90)).fixedSize()
-                    .diagnosticBorder(.gray, width: 0.5)
-            }.frame(width: 20, height: sidebarTextHeight)
-                .diagnosticBorder(.gray.opacity(0.5), width: 1)
+            
+            Text("TAP ON THE MOMENT TO LEARN")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundColor(.black.opacity(0.3))
+                .fixedSize()
+                .rotationEffect(.degrees(-90))
+                .fixedSize()
+                .frame(maxHeight: .infinity)
+                .diagnosticBorder(.gray, width: 0.5)
+            
             Spacer()
-        }.padding(.top, 16).frame(width: 36).frame(maxHeight: .infinity).background(Color.white).padding(.leading, 5)
+        }
+        .padding(.top, 16)
+        .frame(width: 36)
+        .frame(maxHeight: .infinity)
+        .background(Color.white)
+        .padding(.leading, 5)
     }
 
     private var loadingSpinner: some View {
