@@ -223,16 +223,17 @@ struct LearnTabView: View {
     private var verticalCategorySidebar: some View {
         VStack(spacing: 24) {
             // Up Arrow
-            Button(action: { 
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    state.selectPreviousCategory()
+            DoubleArrowButton(
+                direction: .up,
+                color: ThemeColors.secondaryAccent,
+                size: 16,
+                action: {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        state.selectPreviousCategory()
+                    }
                 }
-            }) {
-                Image(systemName: "chevron.up").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
-                    .frame(width: 36, height: 44)
-            }
-            .padding(.top, 8)
+            )
+            .padding(.top, 16)
 
             // Rotated Category Name
             Text(state.uiSelectedCategoryName?.uppercased() ?? "CATEGORY")
@@ -245,16 +246,17 @@ struct LearnTabView: View {
                 .diagnosticBorder(.gray, width: 0.5)
 
             // Down Arrow
-            Button(action: { 
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    state.selectNextCategory()
+            DoubleArrowButton(
+                direction: .down,
+                color: ThemeColors.secondaryAccent,
+                size: 16,
+                action: {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        state.selectNextCategory()
+                    }
                 }
-            }) {
-                Image(systemName: "chevron.down").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
-                    .frame(width: 36, height: 44)
-            }
-            .padding(.bottom, 16)
+            )
+            .padding(.bottom, 24)
         }
         .frame(width: 36)
         .frame(maxHeight: .infinity)
