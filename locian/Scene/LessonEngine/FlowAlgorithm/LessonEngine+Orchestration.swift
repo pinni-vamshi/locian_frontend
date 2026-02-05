@@ -17,7 +17,6 @@ extension LessonEngine {
             bricks: lessonData?.bricks,
             targetLanguage: lessonData?.target_language ?? "es"
         )
-        _ = MasteryFilterService.resolveBricks(ids: Set(brickMatches.map { $0.id }), from: lessonData?.bricks)
         
         // 2. High-Level Sequence Building
         // Stage 1: Intro (Intro Card + Individual Brick Drills)

@@ -13,8 +13,8 @@ extension AppStateManager {
         nativeLanguage = ""
         userLanguagePairs = []
         profileImageData = nil
-        // inferredPlaceCategory = nil // This property doesn't exist in AppStateManager
-        // shouldAttemptInferInterest = false // This property doesn't exist in AppStateManager
+        inferredPlaceCategory = nil
+        shouldAttemptInferInterest = false
         
         // Clear from UserDefaults
         UserDefaults.standard.removeObject(forKey: "username")

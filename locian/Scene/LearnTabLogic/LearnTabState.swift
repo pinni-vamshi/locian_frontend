@@ -294,7 +294,7 @@ class LearnTabState: ObservableObject {
     func generateSentence(for moment: String) {
         guard let sessionToken = appState.authToken, !sessionToken.isEmpty,
               let placeName = firstRecommendedPlace,
-              let _ = appState.userLanguagePairs.first(where: { $0.is_default }) else { return }
+              appState.userLanguagePairs.contains(where: { $0.is_default }) else { return }
         
         guard generationState == .idle else { return }
         
