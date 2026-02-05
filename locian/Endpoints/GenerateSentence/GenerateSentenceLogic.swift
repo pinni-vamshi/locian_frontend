@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 class GenerateSentenceLogic {
     static let shared = GenerateSentenceLogic()
     
@@ -16,7 +17,7 @@ class GenerateSentenceLogic {
     // MARK: - Response Parsing
     
     /// Parse raw JSON data into structured response
-    nonisolated func parseResponse(
+    func parseResponse(
         data: Data,
         completion: @escaping (Result<GenerateSentenceResponse, Error>) -> Void
     ) {
