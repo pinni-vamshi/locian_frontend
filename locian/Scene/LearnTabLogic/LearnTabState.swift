@@ -336,7 +336,7 @@ class LearnTabState: ObservableObject {
         guard let data = data else { self.isEmbeddingsReady = true; return }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let targetCode = data.target_language ?? "es"
-            let nativeCode = data.target_language ?? "en" // Fallback or correct mapping
+            let nativeCode = data.user_language ?? "en"
             var targetStrings: [String] = []
             var nativeStrings: [String] = []
             if let patterns = data.patterns {

@@ -29,6 +29,7 @@ struct GenerateSentenceResponse: Codable {
 
 struct GenerateSentenceData: Codable {
     let target_language: String?
+    let user_language: String?
     let place_name: String?
     let micro_situation: String?
     let sentences: [SentenceItem]?
