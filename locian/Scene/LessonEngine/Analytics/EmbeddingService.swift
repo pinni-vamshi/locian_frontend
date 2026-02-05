@@ -350,9 +350,9 @@ class EmbeddingService {
         let code = normalizeCode(languageCode)
         if #available(macOS 14.0, iOS 17.0, *) {
             // Check cache or capability
-            if let _ = loadedContextualWrappers[code] { return true }
+            if loadedContextualWrappers[code] != nil { return true }
             let lang = NLLanguage(rawValue: code)
-            if let _ = NLContextualEmbedding(language: lang) { return true }
+            if NLContextualEmbedding(language: lang) != nil { return true }
         }
         return false
     }

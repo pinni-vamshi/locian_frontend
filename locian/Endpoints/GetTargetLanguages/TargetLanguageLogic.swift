@@ -55,7 +55,6 @@ class TargetLanguageLogic {
                             if success {
                                 completion(true)
                             } else {
-                                _ = self.processTargetLanguagesResponse(response)
                                 completion(true)
                             }
                         }

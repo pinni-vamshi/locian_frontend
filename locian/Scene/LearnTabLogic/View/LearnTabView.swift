@@ -291,7 +291,7 @@ struct LearnTabView: View {
             isNativeLoaded: isNativeAvailable,
             isReady: state.isEmbeddingsReady,
             onFinish: {
-                if let _ = state.currentLesson {
+                if state.currentLesson != nil {
                     withAnimation {
                         state.showLessonView = true
                         state.generationState = .idle
