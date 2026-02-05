@@ -11,12 +11,6 @@ extension LessonEngine {
         print("\n👮 [Orchestrator] Orchestrating: \(state.id)")
         
         // 1. Data Prep: Find relevant bricks for this pattern
-        let brickMatches = ContentAnalyzer.findRelevantBricksWithSimilarity(
-            in: state.drillData.target,
-            meaning: state.drillData.meaning,
-            bricks: lessonData?.bricks,
-            targetLanguage: lessonData?.target_language ?? "es"
-        )
         
         // 2. High-Level Sequence Building
         // Stage 1: Intro (Intro Card + Individual Brick Drills)
