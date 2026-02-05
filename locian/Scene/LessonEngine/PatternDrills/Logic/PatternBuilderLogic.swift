@@ -207,13 +207,6 @@ class PatternBuilderLogic: ObservableObject {
         
         guard let token = appState?.authToken else { return }
         
-        _ = GetSimilarWordsRequest(
-            word: word,
-            target_language: session.lessonData?.target_language ?? "es",
-            user_language: session.lessonData?.user_language ?? "en",
-            situation: session.lessonData?.micro_situation,
-            sentence: state.drillData.target
-        )
         
         isSearching = true
         GetSimilarWordsService.shared.getSimilarWords(
