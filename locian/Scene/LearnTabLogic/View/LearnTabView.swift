@@ -33,6 +33,11 @@ struct LearnTabView: View {
                 .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                 .animation(.spring().delay(0.1), value: animateIn)
                 
+                
+                instructionalHeader
+                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                    .animation(.spring().delay(0.15), value: animateIn)
+
                 activeMomentsContent
                     .diagnosticBorder(.green, width: 1, label: "MOMENTS")
                     .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
@@ -218,6 +223,26 @@ struct LearnTabView: View {
             }
         }
         .diagnosticBorder(.white.opacity(0.3), width: 1)
+    }
+
+    private var instructionalHeader: some View {
+        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        let targetCode = activePair?.target_language ?? "en"
+        let lang = AppLanguage.fromCode(targetCode) ?? .english
+        let langName = lang.englishName.uppercased()
+        let langNative = lang.nativeScript
+        
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("SELECT A MOMENT TO TALK IN \(langName) (\(langNative))")
+                .font(.system(size: 25, weight: .heavy))
+                .foregroundColor(Color(white: 0.3)) // Heavy grey
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+        }
+        .background(Color.black)
+        .diagnosticBorder(.gray, width: 1, label: "INSTR_HDR")
     }
 
     private var momentsList: some View {
