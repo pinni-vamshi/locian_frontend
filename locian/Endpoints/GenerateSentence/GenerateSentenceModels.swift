@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Request Model
 
-struct GenerateSentenceRequest: Codable {
+struct GenerateSentenceRequest: Codable, Sendable {
     let target_language: String
     let place_name: String
     let user_language: String
@@ -20,14 +20,14 @@ struct GenerateSentenceRequest: Codable {
 
 // MARK: - Response Models
 
-struct GenerateSentenceResponse: Codable {
+struct GenerateSentenceResponse: Codable, Sendable {
     let success: Bool
     let message: String?
     let data: GenerateSentenceData?
     let error: String?
 }
 
-struct GenerateSentenceData: Codable {
+struct GenerateSentenceData: Codable, Sendable {
     let target_language: String?
     let user_language: String?
     let place_name: String?
@@ -38,7 +38,7 @@ struct GenerateSentenceData: Codable {
     let patterns: [PatternData]?
 }
 
-struct SentenceItem: Codable {
+struct SentenceItem: Codable, Sendable {
     let sentence: String
     let translation: String
     let difficulty: String?
@@ -47,7 +47,7 @@ struct SentenceItem: Codable {
 
 // MARK: - Lesson Engine Shared Models
 
-struct BrickItem: Codable, Identifiable {
+struct BrickItem: Codable, Identifiable, Sendable {
     let id: String?
     let word: String
     let meaning: String
@@ -57,13 +57,13 @@ struct BrickItem: Codable, Identifiable {
     var safeID: String { id ?? word }
 }
 
-struct BricksData: Codable {
+struct BricksData: Codable, Sendable {
     let constants: [BrickItem]?
     let variables: [BrickItem]?
     let structural: [BrickItem]?
 }
 
-struct PatternData: Codable, Identifiable {
+struct PatternData: Codable, Identifiable, Sendable {
     let pattern_id: String
     let target: String
     let meaning: String
@@ -72,7 +72,7 @@ struct PatternData: Codable, Identifiable {
     var id: String { pattern_id }
 }
 
-struct DrillItem: Codable {
+struct DrillItem: Codable, Sendable {
     let target: String
     let meaning: String
     let phonetic: String?

@@ -20,17 +20,13 @@ class GenerateSentenceLogic {
         data: Data,
         completion: @escaping (Result<GenerateSentenceResponse, Error>) -> Void
     ) {
-        Task.detached { @Sendable in
-            do {
-                // For GenerateSentence, the response follows standard JSON structure
-                // so we can use JSONDecoder directly
-                let decoder = JSONDecoder()
-                let response = try decoder.decode(GenerateSentenceResponse.self, from: data)
-                
-                await MainActor.run { completion(.success(response)) }
-            } catch {
-                await MainActor.run { completion(.failure(error)) }
-            }
+        do {
+            let decoder = JSONDecoder()
+            let response = try decoder.decode(GenerateSentenceResponse.self, from: data)
+            
+            DispatchQueue.main.async { completion(.success(response)) }
+        } catch {
+            DispatchQueue.main.async { completion(.failure(error)) }
         }
     }
 }
