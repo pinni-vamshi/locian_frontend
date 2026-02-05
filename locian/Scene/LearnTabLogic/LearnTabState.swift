@@ -214,6 +214,30 @@ class LearnTabState: ObservableObject {
         self.noPlacesFound = true
     }
 
+    func selectNextCategory() {
+        guard !uiCategories.isEmpty else { return }
+        guard let current = uiSelectedCategoryName,
+              let currentIndex = uiCategories.firstIndex(where: { $0.name == current }) else {
+            uiSelectedCategoryName = uiCategories.first?.name
+            return
+        }
+        
+        let nextIndex = (currentIndex + 1) % uiCategories.count
+        uiSelectedCategoryName = uiCategories[nextIndex].name
+    }
+    
+    func selectPreviousCategory() {
+        guard !uiCategories.isEmpty else { return }
+        guard let current = uiSelectedCategoryName,
+              let currentIndex = uiCategories.firstIndex(where: { $0.name == current }) else {
+            uiSelectedCategoryName = uiCategories.last?.name
+            return
+        }
+        
+        let prevIndex = (currentIndex - 1 + uiCategories.count) % uiCategories.count
+        uiSelectedCategoryName = uiCategories[prevIndex].name
+    }
+
     func forceRefreshHistory() async {
         return await withCheckedContinuation { continuation in
             guard let sessionToken = appState.authToken, !sessionToken.isEmpty else {

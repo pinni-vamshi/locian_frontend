@@ -152,8 +152,8 @@ struct LearnTabView: View {
         let isLoading = state.isAnalyzingImage || appState.isLoadingTimeline || state.isLoadingMoments
         return HStack(spacing: 0) {
             if !isLoading && !state.uiCategories.isEmpty { 
-                sidebarTapGuide 
-                    .diagnosticBorder(.white, width: 0.5, label: "GUIDE")
+                verticalCategorySidebar 
+                    .diagnosticBorder(.white, width: 0.5, label: "CAT_SIDEBAR")
             }
             
             VStack(spacing: 0) {
@@ -163,9 +163,6 @@ struct LearnTabView: View {
                 } else if state.uiCategories.isEmpty {
                     noMomentsView
                 } else {
-                    categoryPicker
-                        .diagnosticBorder(.blue, width: 1, label: "CAT_PICKER")
-                    
                     ScrollView(.vertical, showsIndicators: false) {
                         momentsList
                     }
@@ -178,55 +175,6 @@ struct LearnTabView: View {
         .frame(maxHeight: .infinity)
     }
 
-    private var categoryPicker: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(Array(state.uiCategories.enumerated()), id: \.element.name) { index, cat in
-                        Button(action: {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                state.uiSelectedCategoryName = cat.name
-                            }
-                        }) {
-                            Text(cat.name.uppercased())
-                                .font(.system(size: state.uiSelectedCategoryName == cat.name ? 24 : 14, weight: .black))
-                                .foregroundColor(state.uiSelectedCategoryName == cat.name ? .white : .white.opacity(0.4))
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 8) // TIGHTENED from 12
-                                .diagnosticBorder(.white.opacity(0.2), width: 0.5, label: "P:V8")
-                        }
-                        .id(cat.name)
-                        .diagnosticBorder(.purple.opacity(0.5), width: 1, label: "CAT_BTN")
-                        
-                        // Vertical Divider between items
-                        if index < state.uiCategories.count - 1 {
-                            Rectangle()
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: 1, height: 14)
-                                .padding(.vertical, 4)
-                        }
-                    }
-                    // Spacer at the end to allow last categories to be scrolled to the leading edge
-                    Color.clear.frame(width: UIScreen.main.bounds.width - 100)
-                }
-                .padding(.leading, 12)
-                .padding(.trailing, 16)
-                    .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "P:L41,R16")
-            }
-            .fixedSize(horizontal: false, vertical: true) // Fix oversized vertical gaps
-            .padding(.vertical, 16) // Increased breathing room
-            .padding(.bottom, 4) // TIGHTENED from 12
-            .diagnosticBorder(.white.opacity(0.2), width: 1, label: "CAT_P:V16,B4")
-            .onChange(of: state.uiSelectedCategoryName) { _, newName in
-                if let name = newName {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        proxy.scrollTo(name, anchor: .leading)
-                    }
-                }
-            }
-        }
-        .diagnosticBorder(.white.opacity(0.3), width: 1)
-    }
 
     private var instructionalHeader: some View {
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
@@ -272,23 +220,42 @@ struct LearnTabView: View {
         Text("DISCOVERING YOUR JOURNEY...").font(.system(size: 24, weight: .heavy)).foregroundColor(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var sidebarTapGuide: some View {
+    private var verticalCategorySidebar: some View {
         VStack(spacing: 24) {
-            Image(systemName: "hand.tap").font(.system(size: 16)).foregroundColor(.black)
-                .diagnosticBorder(.black, width: 0.5)
-            
-            Text("TAP ON THE MOMENT TO LEARN")
-                .font(.system(size: 10, weight: .heavy))
-                .foregroundColor(.black.opacity(0.3))
+            // Up Arrow
+            Button(action: { 
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    state.selectPreviousCategory()
+                }
+            }) {
+                Image(systemName: "chevron.up").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
+                    .frame(width: 36, height: 44)
+            }
+            .padding(.top, 8)
+
+            // Rotated Category Name
+            Text(state.uiSelectedCategoryName?.uppercased() ?? "CATEGORY")
+                .font(.system(size: 14, weight: .black))
+                .foregroundColor(.black)
                 .fixedSize()
                 .rotationEffect(.degrees(-90))
                 .fixedSize()
                 .frame(maxHeight: .infinity)
                 .diagnosticBorder(.gray, width: 0.5)
-            
-            Spacer()
+
+            // Down Arrow
+            Button(action: { 
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    state.selectNextCategory()
+                }
+            }) {
+                Image(systemName: "chevron.down").font(.system(size: 16, weight: .bold)).foregroundColor(.black)
+                    .frame(width: 36, height: 44)
+            }
+            .padding(.bottom, 16)
         }
-        .padding(.top, 16)
         .frame(width: 36)
         .frame(maxHeight: .infinity)
         .background(Color.white)
