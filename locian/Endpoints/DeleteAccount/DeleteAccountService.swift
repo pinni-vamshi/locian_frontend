@@ -10,7 +10,7 @@ class DeleteAccountService {
     private init() {}
     
     func deleteAccount(sessionToken: String, completion: @escaping (Result<DeleteAccountResponse, Error>) -> Void) {
-        let request = DeleteAccountRequest(session_token: sessionToken)
+        let request = DeleteAccountRequest(session_token: sessionToken, confirm_deletion: true)
         
         BaseAPIManager.shared.performRequest(
             endpoint: "/api/user/delete",
