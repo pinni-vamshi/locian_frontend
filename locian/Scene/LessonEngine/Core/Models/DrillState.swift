@@ -59,6 +59,21 @@ enum DrillType: String, Codable {
     case vocabIntro
 }
 
+struct DrillResultEntry: Codable {
+    let id: String
+    let patternId: String
+    let lastResult: DrillResult
+    let currentMode: DrillMode?
+}
+
+struct BrickAnalysisResult: Codable {
+    let brickId: String
+    let word: String
+    let isCorrect: Bool
+    let similarity: Double
+    let masteryChange: Double
+}
+
 // MARK: - DrillState (Purified Carrier)
 
 struct DrillState: Identifiable, Codable {
@@ -85,25 +100,4 @@ struct DrillState: Identifiable, Codable {
     var currentMode: DrillMode?
 }
 
-// MARK: - Global Helpers (Moved from LessonEnums)
 
-struct LanguageUtils {
-    static func getFullLanguageName(_ input: String?) -> String? {
-        guard let lang = input else { return nil }
-        let code = lang.split(separator: "-").first?.lowercased() ?? lang.lowercased()
-        switch code {
-        case "en": return "English"
-        case "es": return "Spanish"
-        case "fr": return "French"
-        case "ja": return "Japanese"
-        case "de": return "German"
-        case "it": return "Italian"
-        case "ko": return "Korean"
-        case "zh": return "Chinese"
-        case "hi": return "Hindi"
-        case "te": return "Telugu"
-        case "ta": return "Tamil"
-        default: return lang
-        }
-    }
-}

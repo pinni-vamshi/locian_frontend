@@ -20,27 +20,7 @@ struct LoginView: View {
     private let neonCyan = ThemeColors.primaryAccent
     private let neonRed = Color(red: 1.0, green: 0.2, blue: 0.2)
     
-    let professions = [
-        "student",
-        "software_engineer",
-        "teacher",
-        "doctor",
-        "artist",
-        "business_professional",
-        "sales_or_marketing",
-        "traveler",
-        "homemaker",
-        "chef",
-        "police",
-        "bank_employee",
-        "nurse",
-        "designer",
-        "engineer_manager",
-        "photographer",
-        "content_creator",
-        "entrepreneur",
-        "other"
-    ]
+    let professions = ProfessionMapping.allProfessions
     
     // Helper to localize professions
     private func getLocalizedProfession(_ profession: String) -> String {

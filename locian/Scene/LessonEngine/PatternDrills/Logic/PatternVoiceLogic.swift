@@ -17,7 +17,7 @@ class PatternVoiceLogic: ObservableObject {
         self.state = state
         self.session = session
         self.prompt = state.drillData.target
-        self.targetLanguage = LanguageUtils.getFullLanguageName(session.lessonData?.target_language) ?? "Unknown"
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
         
         // BRIDGE: Notify View when speech recognizer updates
         session.speechRecognizer.objectWillChange

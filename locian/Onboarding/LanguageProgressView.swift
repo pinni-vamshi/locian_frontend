@@ -20,7 +20,7 @@ struct LanguageProgressView: View {
     @State private var notificationsGranted = false
     @State private var microphoneGranted = false
     @State private var locationGranted = false
-    @StateObject private var locationManagerDelegate = LocationDelegate() // Use StateObject for ObservableObject
+    @StateObject private var locationManager = LocationManager.shared
     
     @ObservedObject private var localizationManager = LocalizationManager.shared
     
@@ -112,7 +112,7 @@ struct LanguageProgressView: View {
         .onChange(of: notificationsGranted) { _, _ in checkAllGranted() }
         .onChange(of: microphoneGranted) { _, _ in checkAllGranted() }
         .onChange(of: locationGranted) { _, _ in checkAllGranted() }
-        .onReceive(locationManagerDelegate.$authorizationStatus) { status in
+        .onReceive(locationManager.$authorizationStatus) { status in
             if status == .authorizedWhenInUse || status == .authorizedAlways {
                 locationGranted = true
             }
@@ -127,39 +127,30 @@ struct LanguageProgressView: View {
             }
         }
         
-        switch AVAudioApplication.shared.recordPermission {
-        case .granted: microphoneGranted = true
-        default: microphoneGranted = false
-        }
+        microphoneGranted = AVAudioApplication.shared.recordPermission == .granted
         
-        // Location check is handled by delegate init, but we default to false to force user interaction
-        // unless already authorized.
-        let status = locationManagerDelegate.manager.authorizationStatus
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
-            locationGranted = true
-        }
+        let status = LocationManager.shared.authorizationStatus
+        locationGranted = (status == .authorizedWhenInUse || status == .authorizedAlways)
         
         checkAllGranted()
     }
     
     private func requestNotifications() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            DispatchQueue.main.async {
-                self.notificationsGranted = granted
-            }
+        PermissionsService.ensureNotificationAccess { granted in
+            self.notificationsGranted = granted
         }
     }
     
     private func requestMicrophone() {
-        AVAudioApplication.requestRecordPermission { granted in
-            DispatchQueue.main.async {
-                self.microphoneGranted = granted
-            }
+        PermissionsService.ensureMicrophoneAccess { granted in
+            self.microphoneGranted = granted
         }
     }
     
     private func requestLocation() {
-        locationManagerDelegate.manager.requestWhenInUseAuthorization()
+        PermissionsService.ensureLocationAccess { granted in
+            self.locationGranted = granted
+        }
     }
     
     private func checkAllGranted() {
@@ -245,21 +236,6 @@ struct LanguageProgressView: View {
     }
 }
 
-// Simple wrapper for CLLocationManagerDelegate
-class LocationDelegate: NSObject, ObservableObject, CLLocationManagerDelegate {
-    let manager = CLLocationManager()
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    
-    override init() {
-        super.init()
-        manager.delegate = self
-        authorizationStatus = manager.authorizationStatus
-    }
-    
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        authorizationStatus = manager.authorizationStatus
-    }
-}
 
 #Preview {
     LanguageProgressView(isReady: .constant(false))

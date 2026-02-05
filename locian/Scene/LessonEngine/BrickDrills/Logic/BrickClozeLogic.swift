@@ -27,7 +27,7 @@ class BrickClozeLogic: ObservableObject {
             self.prompt = state.drillData.meaning // Fallback
         }
         
-        self.targetLanguage = LanguageUtils.getFullLanguageName(session.lessonData?.target_language) ?? "Unknown"
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
         
         // Restore State if session already has result (Fix for button resetting)
         if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {

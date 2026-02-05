@@ -17,7 +17,7 @@ class PatternMCQLogic: ObservableObject {
         self.state = state
         self.session = session
         self.prompt = state.drillData.target
-        self.targetLanguage = LanguageUtils.getFullLanguageName(session.lessonData?.target_language) ?? "Unknown"
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
         
         // SELF-HEALING: Generate options if missing
         if let existing = state.mcqOptions, !existing.isEmpty {

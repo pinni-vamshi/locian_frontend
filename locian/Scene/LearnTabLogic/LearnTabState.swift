@@ -18,6 +18,11 @@ enum SentenceGenerationState {
     case preparing      // New: Response received, preparing lesson
 }
 
+// MARK: - Timeline Data (App-level wrapper)
+struct TimelineData {
+    let places: [MicroSituationData]
+}
+
 // MARK: - Main State
 class LearnTabState: ObservableObject {
     @Published var firstRecommendedPlace: String? = nil
@@ -102,7 +107,7 @@ class LearnTabState: ObservableObject {
         let name = currentPlace?.place_name ?? "UNKNOWN"
         let categories = currentPlace?.micro_situations ?? []
         let streak = appState.userLanguagePairs.first(where: { $0.is_default }).map { 
-            "\(StreakCalculator.shared.calculateStreak(practiceDates: $0.practice_dates)) " + LocalizationManager.shared.string(.daysLabel)
+            "\(calculateCurrentStreak(practiceDates: $0.practice_dates)) " + LocalizationManager.shared.string(.daysLabel)
         } ?? ""
 
         print("🔄 [StateSync] Syncing UI for Hour: \(hourInt). Result: '\(name)' (\(categories.count) categories)")
@@ -159,7 +164,9 @@ class LearnTabState: ObservableObject {
         
         let authStatus = LocationManager.shared.authorizationStatus
         if authStatus == .notDetermined {
-             LocationManager.shared.requestPermission()
+             PermissionsService.ensureLocationAccess { _ in
+                 // Location status updated, proceed with load if status changed
+             }
         }
 
         self.recentHistory = []
@@ -301,16 +308,12 @@ class LearnTabState: ObservableObject {
             if self?.generationState == .callingAI { self?.generationState = .generating }
         }
         
-        let request = GenerateSentenceRequest(
-            target_language: defaultPair.target_language,
-            place_name: placeName,
-            user_language: appState.nativeLanguage,
-            micro_situation: moment,
-            profession: appState.profession,
-            time: nil
-        )
-        
-        TeachingAPIManager.shared.generateSentence(request: request, sessionToken: sessionToken) { [weak self] result in
+        // Use the new GenerateSentenceService (gathers data internally)
+        GenerateSentenceService.shared.generateSentence(
+            placeName: placeName,
+            microSituation: moment,
+            sessionToken: sessionToken
+        ) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
@@ -415,45 +418,35 @@ class LearnTabState: ObservableObject {
     
     // MARK: - Image Analysis
     func analyzeImageAndGenerateMoments(image: UIImage) {
-        self.isAnalyzingImage = true; self.activeMoments = nil
-        self.firstRecommendedPlace = "Understanding..."; self.firstRecommendedPlaceTimeGap = "Processing Image"
-        guard let sessionToken = appState.authToken else { self.isAnalyzingImage = false; return }
+        self.isAnalyzingImage = true
+        self.activeMoments = nil
+        self.firstRecommendedPlace = "Understanding..."
+        self.firstRecommendedPlaceTimeGap = "Processing Image"
         
-        // 1. Prepare Context
-        let level = appState.userLanguagePairs.first(where: { $0.is_default })?.user_level ?? "BEGINNER"
-        let targetLanguage = appState.userLanguagePairs.first(where: { $0.is_default })?.target_language
-        let nativeLanguage = appState.nativeLanguage
-        let timeString = self.getCurrentTimeString()
-        let base64 = image.jpegData(compressionQuality: 0.5)?.base64EncodedString() ?? ""
+        guard let sessionToken = appState.authToken else {
+            self.isAnalyzingImage = false
+            return
+        }
         
-        let context = self.getTimelineContext()
-        
-        let request = ImageAnalysisRequest(
-            session_token: sessionToken,
-            image_base64: base64,
-            level: level,
-            previous_places: context.previous.isEmpty ? nil : context.previous,
-            future_places: context.future.isEmpty ? nil : context.future,
-            user_language: nativeLanguage,
-            target_language: targetLanguage,
-            time: timeString,
-            latitude: nil,
-            longitude: nil
-        )
-        
-        ImageAPIManager.shared.analyzeImage(request: request) { [weak self] result in
+        // Use the new AnalyzeImageService
+        AnalyzeImageService.shared.analyzeImage(image: image, sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
+                
                 switch result {
                 case .success(let response):
                     if let data = response.data {
-                        self.isAnalyzingImage = false; self.setCustomActivePlace(name: data.place_name, situations: data.situations)
+                        self.isAnalyzingImage = false
+                        self.setCustomActivePlace(name: data.place_name, situations: data.micro_situations)
                     } else {
-                        self.isAnalyzingImage = false; self.firstRecommendedPlace = "Unknown"
+                        self.isAnalyzingImage = false
+                        self.firstRecommendedPlace = "Unknown"
                     }
                 case .failure:
-                    self.isAnalyzingImage = false; self.firstRecommendedPlace = "Unknown"
+                    self.isAnalyzingImage = false
+                    self.firstRecommendedPlace = "Unknown"
                 }
+                
                 self.appState.isAnalyzingImage = false
             }
         }
@@ -469,24 +462,8 @@ class LearnTabState: ObservableObject {
         self.firstRecommendedPlace = name
         self.firstRecommendedPlaceTimeGap = "Generating Context..."
         
-        let currentLevel = appState.userLanguagePairs.first(where: { $0.is_default })?.user_level ?? "BEGINNER"
-        let context = self.getTimelineContext()
-        
-        let request = GenerateMomentsRequest(
-            place_name: name,
-            place_detail: nil,
-            time: self.getCurrentTimeString(),
-            profession: appState.profession,
-            previous_places: context.previous.isEmpty ? nil : context.previous,
-            future_places: context.future.isEmpty ? nil : context.future,
-            weather: nil,
-            activity_duration: nil,
-            user_language: appState.nativeLanguage,
-            level: currentLevel,
-            remember: false
-        )
-        
-        LanguageAPIManager.shared.generateMoments(request: request, sessionToken: sessionToken) { [weak self] result in
+        // Use the new GenerateMomentsService
+        GenerateMomentsService.shared.generateMoments(placeName: name, sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.isAnalyzingImage = false
@@ -494,18 +471,49 @@ class LearnTabState: ObservableObject {
                 switch result {
                 case .success(let response):
                     if let data = response.data {
-                        // Use returned place name if available (might satisfy normalization), else use input
                         let finalName = data.place_name.isEmpty ? name : data.place_name
-                        self.setCustomActivePlace(name: finalName, situations: data.categories)
+                        self.setCustomActivePlace(name: finalName, situations: data.micro_situations)
                     } else {
-                        // Fallback: Set place without moments
                         self.setCustomActivePlace(name: name)
                     }
                 case .failure(let error):
                     print("⚠️ [GenerateMoments] Failed: \(error.localizedDescription)")
-                    // Fallback: Set place without moments so user can still proceed (or show error?)
-                    // For now, allow proceeding with empty state as per previous behavior
                     self.setCustomActivePlace(name: name)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Context-Based Place Prediction
+    
+    func predictPlaceFromList(places: [String]) {
+        guard !places.isEmpty else { return }
+        guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
+        
+        self.isAnalyzingImage = true // Re-use loading state
+        self.activeMoments = nil
+        self.firstRecommendedPlace = "Analyzing Context..."
+        self.firstRecommendedPlaceTimeGap = "Predicting Place..."
+        
+        // Use the new PredictPlaceService
+        PredictPlaceService.shared.predictPlace(
+            places: places,
+            sessionToken: sessionToken
+        ) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isAnalyzingImage = false
+                
+                switch result {
+                case .success(let response):
+                    if let data = response.data {
+                        self.setCustomActivePlace(name: data.place_name, situations: data.micro_situations ?? [])
+                    } else {
+                        self.setCustomActivePlace(name: places.first ?? "Unknown")
+                    }
+                case .failure(let error):
+                    print("⚠️ [PredictPlace] Failed: \(error.localizedDescription)")
+                    self.setCustomActivePlace(name: places.first ?? "Unknown")
                 }
             }
         }
@@ -569,19 +577,7 @@ class LearnTabState: ObservableObject {
 class LearnTabService {
     static let shared = LearnTabService(); private init() {}
     func fetchAndLoadContent(sessionToken: String, completion: @escaping (Result<(timeline: TimelineData, places: [MicroSituationData]), Error>) -> Void) {
-        let currentDate = Date()
-        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let timestamp = formatter.string(from: currentDate)
-        let userLocation = LocationManager.shared.currentLocation
-        
-        let request = GetStudiedPlacesRequest(
-            time: timestamp,
-            latitude: userLocation?.coordinate.latitude,
-            longitude: userLocation?.coordinate.longitude,
-            limit: 50
-        )
-        
-        StudiedPlacesAPIManager.shared.getStudiedPlaces(request: request, sessionToken: sessionToken) { result in
+        GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { result in
             switch result {
             case .success(let response):
                 if let data = response.data {
@@ -594,5 +590,30 @@ class LearnTabService {
                 completion(.failure(error))
             }
         }
+    }
+}
+
+extension LearnTabState {
+    private func calculateCurrentStreak(practiceDates: [String]) -> Int {
+        guard !practiceDates.isEmpty else { return 0 }
+        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let validDates = practiceDates.compactMap { formatter.date(from: $0) }
+        guard !validDates.isEmpty else { return 0 }
+        let uniqueDates = Set(validDates); let sortedDates = uniqueDates.sorted(by: >)
+        let calendar = Calendar.current; let today = Date()
+        guard let latestDate = sortedDates.first else { return 0 }
+        let isToday = calendar.isDateInToday(latestDate)
+        let isYesterday = calendar.isDate(latestDate, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: today)!)
+        if !isToday && !isYesterday { return 0 }
+        var currentStreak = 1; var previousDate = latestDate
+        for i in 1..<sortedDates.count {
+            let date = sortedDates[i]
+            if let expectedPrevDay = calendar.date(byAdding: .day, value: -1, to: previousDate),
+               calendar.isDate(date, inSameDayAs: expectedPrevDay) {
+                currentStreak += 1; previousDate = date
+            } else { break }
+        }
+        return currentStreak
     }
 }

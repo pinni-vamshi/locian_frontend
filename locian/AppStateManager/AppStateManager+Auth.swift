@@ -13,9 +13,6 @@ extension AppStateManager {
         nativeLanguage = ""
         userLanguagePairs = []
         profileImageData = nil
-        imageAnalysisResult = nil
-        // Clear image analysis detail
-        // imageAnalysisDetail = nil // This property doesn't exist in AppStateManager
         // inferredPlaceCategory = nil // This property doesn't exist in AppStateManager
         // shouldAttemptInferInterest = false // This property doesn't exist in AppStateManager
         
@@ -44,13 +41,9 @@ extension AppStateManager {
         self.profession = ""
         self.profileImageData = nil
         
-        // Reset notification settings to defaults (all true)
-        self.notificationsMorning = true
-        self.notificationsAfternoon = true
-        self.notificationsEvening = true
         
         // Cancel all scheduled notifications
-        NotificationService.shared.cancelAllNotifications()
+        NotificationManager.shared.cancelAllNotifications()
         
         // Clear language state
         self.nativeLanguage = ""
@@ -83,15 +76,8 @@ extension AppStateManager {
         }
         
         
-        // Clear image analysis
-        self.imageAnalysisResult = nil
         
         
-        // Clear file storage data (previous images, quiz state, word cache, location history, etc.)
-        FileStorageManager.shared.delete(forKey: "com.locian.previousImages")
-        FileStorageManager.shared.delete(forKey: "com.locian.wordCache")
-        FileStorageManager.shared.delete(forKey: "location_history_entries")
-        FileStorageManager.shared.delete(forKey: "lastQuizResponseRawJSON")
         
         // Clear all navigation states
         self.shouldShowSettingsView = false
@@ -123,76 +109,11 @@ extension AppStateManager {
     
     // MARK: - Logout (Requires backend confirmation)
     func logoutViaBackend(completion: @escaping (Bool, String?) -> Void) {
-        guard let token = authToken, !token.isEmpty else {
-            clearAllUserData()
-            completion(true, nil)
-            return
-        }
-        
-        let request = LogoutRequest(session_token: token)
-        
-        AuthAPIManager.shared.logout(request: request) { result in
-            switch result {
-            case .failure(let error):
-                completion(false, error.localizedDescription)
-            case .success(let response):
-                if response.success {
-                    self.clearAllUserData()
-                    completion(true, response.message)
-                } else {
-                    let message = response.error ?? response.message ?? "Logout failed. Please try again."
-                    completion(false, message)
-                }
-            }
-        }
+        LogoutLogic.shared.logoutViaBackend(completion: completion)
     }
     
     // MARK: - Delete Account
     func deleteAccount(completion: @escaping (Bool, String?) -> Void) {
-        guard let token = authToken else {
-            clearAllUserData()
-            completion(false, "No session token found")
-            return
-        }
-        
-        let request = DeleteAccountRequest(session_token: token, confirm_deletion: true)
-        
-        AuthAPIManager.shared.deleteAccount(request: request) { result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
-                    if response.success {
-                        // Clear all user data and caches on successful deletion
-                        self.clearAllUserData()
-                        // Ensure user is logged out and taken to login screen
-                        self.isLoggedIn = false
-                        self.isLoadingSession = false
-                        self.isOffline = false
-                        completion(true, nil)
-                    } else {
-                        self.isOffline = true
-                        self.isLoadingSession = true
-                        self.isLoggedIn = false
-                        completion(false, response.error ?? "Account deletion failed")
-                    }
-                case .failure(let error):
-                    self.isOffline = true
-                    self.isLoadingSession = true
-                    self.isLoggedIn = false
-                    completion(false, error.localizedDescription)
-                }
-            }
-        }
-    }
-    
-    func refreshNotificationSchedules() {
-        let customTimes: [String]
-        if let data = UserDefaults.standard.data(forKey: "customNotificationTimes"),
-           let saved = try? JSONDecoder().decode([String].self, from: data) {
-            customTimes = saved
-        } else {
-            customTimes = []
-        }
-        updateNotificationSchedulesWithCustomTimes(customTimes: customTimes)
+        DeleteAccountLogic.shared.deleteAccount(completion: completion)
     }
 }

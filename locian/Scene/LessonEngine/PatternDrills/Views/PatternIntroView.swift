@@ -15,7 +15,7 @@ struct PatternIntroView: View {
             LessonPromptHeader(
                 instruction: "PATTERN RECAP",
                 prompt: drill.drillData.meaning,
-                targetLanguage: LanguageUtils.getFullLanguageName(session.lessonData?.target_language),
+                targetLanguage: TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english,
                 hintText: "REVEAL TARGET",
                 meaningText: drill.drillData.target,
                 contextSentence: nil,

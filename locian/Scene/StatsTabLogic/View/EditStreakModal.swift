@@ -9,6 +9,7 @@ import Combine
 struct EditStreakModal: View {
     @ObservedObject var appState: AppStateManager
     let pair: LanguagePair
+    let streak: Int
     let onDismiss: () -> Void
     
     var body: some View {
@@ -27,7 +28,7 @@ struct EditStreakModal: View {
                     .font(.system(size: 80))
                     .foregroundColor(ThemeColors.primaryAccent)
                 
-                Text("\(appState.maxCurrentStreak)")
+                Text("\(streak)")
                     .font(.system(size: 60, weight: .black))
                     .foregroundColor(.white)
                 

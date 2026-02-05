@@ -7,14 +7,8 @@
 
 import Foundation
 
-/// Result of a granular brick analysis
-struct BrickAnalysisResult {
-    let brickId: String
-    let word: String
-    let isCorrect: Bool
-    let similarity: Double
-    let masteryChange: Double
-}
+// MARK: - Granular Analysis Result
+// Now using the centralized BrickAnalysisResult from DrillState.swift
 
 /// Shared utilities for all granular analyzers
 struct GranularAnalyzerCore {

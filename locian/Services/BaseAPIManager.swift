@@ -7,9 +7,22 @@
 
 import Foundation
 
+// MARK: - API Error
+enum APIError: Error {
+    case invalidURL
+    case networkError(String)
+    case noData
+}
+
 // MARK: - Base API Manager Protocol
 protocol BaseAPIManagerProtocol {
     var baseURL: String { get }
+}
+
+// MARK: - Base API Manager Implementation
+class BaseAPIManager: BaseAPIManagerProtocol {
+    static let shared = BaseAPIManager()
+    private init() {}
 }
 
 extension BaseAPIManagerProtocol {
@@ -43,10 +56,6 @@ extension BaseAPIManagerProtocol {
             switch result {
             case .success(let data):
                 do {
-                    // Cache logic for quiz
-                    if endpoint.contains("quiz"), let jsonString = String(data: data, encoding: .utf8) {
-                        _ = FileStorageManager.shared.saveString(jsonString, forKey: "lastQuizResponseRawJSON")
-                    }
 
                     let decoded = try JSONDecoder().decode(T.self, from: data)
                     print("✅ [API-PARSING-SUCCESS] \(endpoint)")

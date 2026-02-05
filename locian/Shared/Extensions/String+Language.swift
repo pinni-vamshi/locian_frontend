@@ -7,6 +7,6 @@ import Foundation
 
 extension String {
     func getLanguageDisplayName() -> String {
-        return LanguageMapping.shared.getDisplayNames(for: self).english
+        return TargetLanguageMapping.shared.getDisplayNames(for: self).english
     }
 }

@@ -33,7 +33,7 @@ class PatternBuilderLogic: ObservableObject {
         self.session = session
         self.appState = appState
         self.prompt = state.drillData.meaning
-        self.targetLanguage = LanguageUtils.getFullLanguageName(session.lessonData?.target_language) ?? "Unknown"
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
         
         setupTokens()
         computeValidBricks()
@@ -216,7 +216,14 @@ class PatternBuilderLogic: ObservableObject {
         )
         
         isSearching = true
-        LanguageAPIManager.shared.getSimilarWords(request: request, sessionToken: token) { [weak self] result in
+        GetSimilarWordsService.shared.getSimilarWords(
+            word: word,
+            targetLanguage: session.lessonData?.target_language ?? "es",
+            userLanguage: session.lessonData?.user_language ?? "en",
+            situation: session.lessonData?.micro_situation,
+            sentence: state.drillData.target,
+            sessionToken: token
+        ) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isSearching = false
                 switch result {

@@ -36,9 +36,15 @@ struct ContentView: View {
         .fullScreenCover(isPresented: $appState.showFirstLaunchLanguageModal) {
             FirstLaunchLanguageSelectionModal(appState: appState)
         }
-        // Global Language Modal Sheet - Available from anywhere (Half Modal)
-        .fullScreenCover(isPresented: $appState.showGlobalLanguageModal) {
-            LanguageSelectionModal(appState: appState, mode: appState.languageSelectionMode)
+        // Native Language Selection Modal
+        .fullScreenCover(isPresented: $appState.shouldShowNativeLanguageModal) {
+            NativeLanguageSelectionModal(appState: appState)
+                .interactiveDismissDisabled(appState.nativeLanguage.isEmpty)
+        }
+        
+        // Target Language Selection Modal
+        .fullScreenCover(isPresented: $appState.shouldShowTargetLanguageModal) {
+            TargetLanguageSelectionModal(appState: appState)
                 .interactiveDismissDisabled(!appState.hasValidLanguagePair())
         }
     }

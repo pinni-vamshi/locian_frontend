@@ -37,7 +37,7 @@ struct StatsTabView: View {
     @ViewBuilder
     private func mainContent(pair: LanguagePair, geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            StatsHeaderView(appState: appState, pair: pair, geometry: geometry, scrollOffset: state.scrollOffset)
+            StatsHeaderView(appState: appState, state: state, pair: pair, geometry: geometry, scrollOffset: state.scrollOffset)
                 .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10)
                 .diagnosticBorder(.orange, width: 1, label: "HEADER")
             
@@ -55,7 +55,7 @@ struct StatsTabView: View {
                             .animation(.spring().delay(0.1), value: animateIn)
                             .diagnosticBorder(.pink, width: 1, label: "CALENDAR")
                         
-                        StatsChronotypeSection(appState: appState, pair: pair, cachedChronotypeData: $state.chronotypeData, cachedStudiedHours: $state.studiedHours)
+                        StatsChronotypeSection(appState: appState, pair: pair, chronotype: state.chronotype, cachedStudiedHours: $state.studiedHours)
                             .padding(.top, 20)
                             .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                             .animation(.spring().delay(0.15), value: animateIn)
@@ -84,7 +84,7 @@ struct StatsTabView: View {
     private var streakModal: some View {
         Group {
             if let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first {
-                EditStreakModal(appState: appState, pair: pair, onDismiss: { showingStreakModal = false })
+                EditStreakModal(appState: appState, pair: pair, streak: state.currentStreak, onDismiss: { showingStreakModal = false })
             } else { Color.black }
         }
     }
@@ -96,7 +96,7 @@ struct StatsTabView: View {
 
 // MARK: - Subviews
 struct StatsHeaderView: View {
-    @ObservedObject var appState: AppStateManager; let pair: LanguagePair; let geometry: GeometryProxy; var scrollOffset: CGFloat
+    @ObservedObject var appState: AppStateManager; @ObservedObject var state: StatsTabState; let pair: LanguagePair; let geometry: GeometryProxy; var scrollOffset: CGFloat
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 1. Streak Status Badge
@@ -111,7 +111,7 @@ struct StatsHeaderView: View {
             .padding(.bottom, 12)
 
             // 2. Giant Language Name
-            let names = LanguageMapping.shared.getDisplayNames(for: pair.target_language)
+            let names = TargetLanguageMapping.shared.getDisplayNames(for: pair.target_language)
             Text(names.native.uppercased())
                 .font(.system(size: 80, weight: .black)) // Reduced from 90 to 80
                 .foregroundColor(.white)
@@ -144,12 +144,12 @@ struct StatsHeaderView: View {
                     .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
                     
                     ZStack {
-                        Text("\(appState.maxCurrentStreak)")
+                        Text("\(state.currentStreak)")
                             .font(.system(size: 120, weight: .black))
                             .foregroundColor(Color(red: 1.0, green: 0.1, blue: 0.4))
                             .offset(x: 4, y: 4)
                             .diagnosticBorder(.red.opacity(0.3), width: 0.5, label: "BG_SHADOW")
-                        Text("\(appState.maxCurrentStreak)")
+                        Text("\(state.currentStreak)")
                             .font(.system(size: 120, weight: .black))
                             .foregroundColor(.cyan)
                             .diagnosticBorder(.cyan.opacity(0.3), width: 0.5, label: "FG")
@@ -177,11 +177,11 @@ struct StatsHeaderView: View {
                         .diagnosticBorder(.gray.opacity(0.5), width: 0.5, label: "STR_V")
                     }
                     .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
-                    Text("\(appState.maxLongestStreak)")
+                    Text("\(state.longestStreak)")
                         .font(.system(size: 80, weight: .black))
                         .foregroundColor(.white)
                         // Removed .italic()
-                        .overlay(Rectangle().fill(Color.white).frame(height: 4).rotationEffect(.degrees(-45)).opacity(appState.maxLongestStreak == 0 ? 1 : 0))
+                        .overlay(Rectangle().fill(Color.white).frame(height: 4).rotationEffect(.degrees(-45)).opacity(state.longestStreak == 0 ? 1 : 0))
                         .diagnosticBorder(.white.opacity(0.5), width: 1, label: "LNG_NUM")
                 }
             }
@@ -322,7 +322,7 @@ struct StatsCalendarSection: View {
 }
 
 struct StatsChronotypeSection: View {
-    @ObservedObject var appState: AppStateManager; let pair: LanguagePair; @Binding var cachedChronotypeData: ChronotypeData?; @Binding var cachedStudiedHours: Set<Int>
+    @ObservedObject var appState: AppStateManager; let pair: LanguagePair; let chronotype: String; @Binding var cachedStudiedHours: Set<Int>
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             // Chronotype Header
@@ -348,7 +348,7 @@ struct StatsChronotypeSection: View {
                     .diagnosticBorder(.red.opacity(0.5), width: 1, label: "MOON_ICON")
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("NIGHT OWL")
+                    Text(chronotype)
                         .font(.system(size: 20, weight: .black, design: .monospaced))
                         .foregroundColor(.black)
                         .padding(.horizontal, 12)

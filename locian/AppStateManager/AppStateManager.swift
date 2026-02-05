@@ -75,26 +75,6 @@ class AppStateManager: ObservableObject {
     }
     
     // MARK: - Notifications State
-    @Published var notificationsMorning: Bool = true {
-        didSet {
-            UserDefaults.standard.set(notificationsMorning, forKey: "notificationsMorning")
-            updateNotificationSchedules()
-            }
-        }
-    
-    @Published var notificationsAfternoon: Bool = true {
-        didSet {
-            UserDefaults.standard.set(notificationsAfternoon, forKey: "notificationsAfternoon")
-            updateNotificationSchedules()
-        }
-    }
-    
-    @Published var notificationsEvening: Bool = true {
-        didSet {
-            UserDefaults.standard.set(notificationsEvening, forKey: "notificationsEvening")
-            updateNotificationSchedules()
-        }
-    }
     
     
     // MARK: - Quick Recall Toggle (for floating button)
@@ -112,11 +92,6 @@ class AppStateManager: ObservableObject {
     // Removed legacy nearby places/location cache
     
     // MARK: - App Persistence Toggles
-    @Published var isNotificationsEnabled: Bool = true {
-        didSet {
-            UserDefaults.standard.set(isNotificationsEnabled, forKey: "isNotificationsEnabled")
-        }
-    }
     
     @Published var isLocationTrackingEnabled: Bool = true {
         didSet {
@@ -135,14 +110,10 @@ class AppStateManager: ObservableObject {
     @Published var authError: String?
     @Published var showAuthError: Bool = false
     
-    // Internal Apple sign-in state
-    var appleAuthNonce: String?
-    var applePendingDetails: ApplePendingUserDetails?
-    
     // MARK: - Language State
-    @Published var showGlobalLanguageModal: Bool = false
+    @Published var shouldShowNativeLanguageModal: Bool = false
+    @Published var shouldShowTargetLanguageModal: Bool = false
     @Published var showFirstLaunchLanguageModal: Bool = false
-    @Published var languageSelectionMode: LanguageSelectionFlowMode = .onboarding
     @Published var nativeLanguage: String = "" {
         didSet {
             UserDefaults.standard.set(nativeLanguage, forKey: "userNativeLanguage")
@@ -187,17 +158,12 @@ class AppStateManager: ObservableObject {
     
     // MARK: - Image Analysis State
     @Published var isAnalyzingImage: Bool = false
-    @Published var imageAnalysisResult: String?  // Only place_name (for UI display)
-    @Published var imageAnalysisSituations: [UnifiedMomentSection]?  // Unified Structure
-    @Published var imageAnalysisDetail: String?  // Detail field (for vocabulary generation)
     
     // MARK: - Studied Places (New)
     // EPHEMERAL - DO NOT PERSIST (In-Memory Only)
     @Published var timeline: TimelineData? = nil
     @Published var isLoadingTimeline: Bool = false // Tracks if timeline request is in flight
     @Published var hasInitialHistoryLoaded: Bool = false // Tracks if we've fetched initial history this session
-    
-    @Published var studiedHours: Set<Int> = [] // Hours when practice occurred
     
     // MARK: - Infer Interest State
     @Published var isInferringInterest: Bool = false
@@ -294,12 +260,11 @@ class AppStateManager: ObservableObject {
         }
         
         // Load app persistence toggles
-        self.isNotificationsEnabled = (UserDefaults.standard.object(forKey: "isNotificationsEnabled") as? Bool) ?? true
         self.isLocationTrackingEnabled = (UserDefaults.standard.object(forKey: "isLocationTrackingEnabled") as? Bool) ?? true
         self.showDiagnosticBorders = UserDefaults.standard.bool(forKey: "showDiagnosticBorders")
         
         // Initialize Smart Location Notifications
-        SmartNotificationManager.shared.startMonitoring()
+        NotificationManager.shared.startMonitoring()
     }
     
     // MARK: - Load User Data (called after successful session validation)
@@ -321,17 +286,6 @@ class AppStateManager: ObservableObject {
         print("   - Profession: \(profession)")
         print("   - Native Lang: \(nativeLanguage)")
         
-        // Load notification settings (default to true if not set)
-        if UserDefaults.standard.object(forKey: "notificationsMorning") == nil {
-            print("   - Notifications: Initializing defaults (all true)")
-            self.notificationsMorning = true
-            self.notificationsAfternoon = true
-            self.notificationsEvening = true
-        } else {
-            self.notificationsMorning = UserDefaults.standard.bool(forKey: "notificationsMorning")
-            self.notificationsEvening = UserDefaults.standard.bool(forKey: "notificationsEvening")
-            print("   - Notifications: M-\(notificationsMorning) A-\(notificationsAfternoon) E-\(notificationsEvening)")
-        }
         
         // ---------------------------------------------------------------------
         // 🚨 PROACTIVE NEURAL DOWNLOADS
@@ -356,26 +310,8 @@ class AppStateManager: ObservableObject {
         }
         
         
-        // Update notification schedules with cached times (if available)
-        self.updateNotificationSchedules()
     }
     
-    // MARK: - Camera & Gallery Methods
-    func openCamera(completion: @escaping (Bool) -> Void) {
-        PermissionsService.requestCameraAccess { granted in
-            DispatchQueue.main.async {
-                completion(granted)
-            }
-        }
-    }
-    
-    func openPhotoLibrary(completion: @escaping (Bool) -> Void) {
-        PermissionsService.requestPhotoLibraryAccess { granted in
-            DispatchQueue.main.async {
-                completion(granted)
-            }
-        }
-    }
     
     // MARK: - Methods
     func completeOnboarding() {
@@ -411,15 +347,6 @@ class AppStateManager: ObservableObject {
         } else {
             print("⚠️ [AppStateManager] Could not find language pair for \(targetLanguage) to record practice")
         }
-    }
-    
-    // MARK: - Streak Logic
-    var maxLongestStreak: Int {
-        userLanguagePairs.map { $0.calculatedLongestStreak }.max() ?? 0
-    }
-    
-    var maxCurrentStreak: Int {
-        userLanguagePairs.map { $0.calculatedCurrentStreak }.max() ?? 0
     }
 }
 

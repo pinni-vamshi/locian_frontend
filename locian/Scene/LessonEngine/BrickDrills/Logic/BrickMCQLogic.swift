@@ -22,7 +22,7 @@ class BrickMCQLogic: ObservableObject {
         // This provides a clear "Discovery" flow:
         // "How do I say [English]?" -> Select [Spanish]
         self.prompt = state.drillData.meaning
-        self.targetLanguage = LanguageUtils.getFullLanguageName(targetLanguageCode) ?? "Unknown"
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: targetLanguageCode).english
         
         // 2. Generate Options
         if let existing = state.mcqOptions {

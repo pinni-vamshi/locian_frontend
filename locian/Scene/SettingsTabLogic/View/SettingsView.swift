@@ -11,11 +11,6 @@ struct SettingsView: View {
     @StateObject var state: SettingsTabState
     @Binding var selectedTab: MainTabView.TabItem
     
-    @State private var showingLanguageModal = false
-    @State private var showingTimePicker = false
-    @State private var showingLogoutAlert = false
-    @State private var showingDeleteAlert = false
-    
     init(appState: AppStateManager, selectedTab: Binding<MainTabView.TabItem>) {
         self.appState = appState
         self._selectedTab = selectedTab
@@ -42,13 +37,11 @@ struct SettingsView: View {
         .diagnosticBorder(.white, width: 2)
         .background(Color.black.ignoresSafeArea())
         .onAppear { state.animateIn = true }
-        .fullScreenCover(isPresented: $showingLanguageModal) { LanguageSelectionModal(appState: appState, mode: .addLearning) }
-        .sheet(isPresented: $showingTimePicker) { timePicker }
-        .alert(languageManager.settings.areYouSureLogout, isPresented: $showingLogoutAlert) {
+        .alert(languageManager.settings.areYouSureLogout, isPresented: $state.showingLogoutAlert) {
             Button(languageManager.ui.cancel, role: .cancel) { }
             Button(languageManager.settings.logout, role: .destructive) { state.performLogout() }
         }
-        .alert(languageManager.settings.areYouSureDeleteAccount, isPresented: $showingDeleteAlert) {
+        .alert(languageManager.settings.areYouSureDeleteAccount, isPresented: $state.showingDeleteAlert) {
             Button(languageManager.ui.cancel, role: .cancel) { }
             Button(languageManager.ui.delete, role: .destructive) { state.performDeleteAccount() }
         }
@@ -63,7 +56,7 @@ struct SettingsView: View {
                 Text(appState.username.isEmpty ? "USER" : appState.username.lowercased())
                     .font(.system(size: 20, weight: .bold, design: .monospaced))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 5) // Reduced from 16
+                    .padding(.horizontal, 5)
                     .padding(.vertical, 8)
                     .background(ThemeColors.secondaryAccent)
                     .diagnosticBorder(.white, width: 0.5, label: "P:H5")
@@ -71,7 +64,7 @@ struct SettingsView: View {
                 Text(appState.profession.isEmpty ? "LEARNING" : appState.profession.uppercased())
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundColor(ThemeColors.secondaryAccent)
-                    .padding(.horizontal, 5) // Reduced from 12
+                    .padding(.horizontal, 5)
                     .padding(.vertical, 4)
                     .background(Color.white)
                     .diagnosticBorder(.blue, width: 0.5, label: "P:H5")
@@ -88,19 +81,20 @@ struct SettingsView: View {
                 }
                 .foregroundColor(.gray)
                 
-                let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
-                let targetName = LanguageMapping.shared.getDisplayNames(for: pair?.target_language ?? "es").english.uppercased()
+                let pair = state.defaultPair
+                let targetName = state.defaultTargetLanguageName
                 
                 if appState.userLanguagePairs.count > 1 {
                     Menu {
                         ForEach(appState.userLanguagePairs) { pair in
                             Button(action: {
                                 withAnimation {
-                                    state.language.setDefault(pair: pair) { }
+                                    state.setDefault(pair: pair) { }
                                 }
                             }) {
                                 HStack {
-                                    Text(LanguageMapping.shared.getDisplayNames(for: pair.target_language).english.uppercased())
+                                    let names = TargetLanguageMapping.shared.getDisplayNames(for: pair.target_language).english.uppercased()
+                                    Text(names)
                                     if pair.is_default {
                                         Image(systemName: "checkmark")
                                     }
@@ -110,7 +104,7 @@ struct SettingsView: View {
                         
                         Divider()
                         
-                        Button(action: { showingLanguageModal = true }) {
+                        Button(action: { appState.showTargetLanguageModal() }) {
                             Label(languageManager.settings.addLanguagePair, systemImage: "plus")
                         }
                     } label: {
@@ -122,7 +116,7 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button(action: { showingLanguageModal = true }) {
+                    Button(action: { appState.showTargetLanguageModal() }) {
                         Text(targetName)
                             .font(.system(size: 90, weight: .black))
                             .foregroundColor(.white)
@@ -136,7 +130,7 @@ struct SettingsView: View {
                 if let pair = pair {
                     Menu {
                         ForEach(["BEGINNER", "INTERMEDIATE", "ADVANCED"], id: \.self) { level in
-                            Button(action: { state.language.updateLevel(pair: pair, to: level) }) {
+                            Button(action: { state.updateLevel(pair: pair, to: level) }) {
                                 HStack {
                                     Text(level)
                                     if pair.user_level.uppercased() == level {
@@ -171,15 +165,13 @@ struct SettingsView: View {
         .diagnosticBorder(.white, width: 1, label: "SETT_HDR_P:H5,B24")
     }
 
-
-
     private var scrollableContent: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 60) {
                 languageSection
                 neuralEngineSection
                 interfaceLanguageSection
-                notificationSection // RESTORED
+                notificationSection
                 locationSection
                 accountSection
                 Spacer(minLength: 100)
@@ -210,23 +202,17 @@ struct SettingsView: View {
                 .diagnosticBorder(.cyan, width: 0.5, label: "LBL_P:H4,V8")
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(appState.nativeLanguage.getLanguageDisplayName().uppercased())
+                    Text(NativeLanguageMapping.shared.getDisplayNames(for: appState.nativeLanguage).english.uppercased())
                         .font(.system(size: 50, weight: .black))
                         .foregroundColor(ThemeColors.secondaryAccent)
                     
                     HStack(spacing: 8) {
-                        Text("\(appState.nativeLanguage.getLanguageDisplayName())")
+                        Text("\(NativeLanguageMapping.shared.getDisplayNames(for: appState.nativeLanguage).english)")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.gray)
                         Text("/").foregroundColor(.gray)
                         
-                        Menu {
-                            ForEach(LanguageMapping.shared.availableLanguageCodes.filter { $0.lowercased() != "hi" }, id: \.self) { code in
-                                Button(LanguageMapping.shared.getDisplayNames(for: code).english) {
-                                    appState.nativeLanguage = code
-                                }
-                            }
-                        } label: {
+                        Button(action: { appState.showNativeLanguageModal() }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "pencil")
                                 Text(languageManager.ui.edit.uppercased())
@@ -239,7 +225,7 @@ struct SettingsView: View {
             }
             .diagnosticBorder(.blue.opacity(0.3), width: 1, label: "NAT_HS_S:20")
             .padding(.horizontal, 5)
-                .diagnosticBorder(.blue.opacity(0.5), width: 1, label: "NAT_P:H5")
+            .diagnosticBorder(.blue.opacity(0.5), width: 1, label: "NAT_P:H5")
         }
         .diagnosticBorder(.cyan, width: 1, label: "LANG_SEC_V_S:24")
     }
@@ -302,13 +288,12 @@ struct SettingsView: View {
         .padding(.horizontal, 5)
     }
 
-
     // MARK: - Neural Engine status
     
     private var neuralEngineSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
-                // 1. Vertical Heading Group (Now Stretches to Content Height)
+                // 1. Vertical Heading Group
                 HStack(alignment: .top, spacing: 0) {
                     VStack(alignment: .center, spacing: 0) {
                         Spacer()
@@ -319,21 +304,20 @@ struct SettingsView: View {
                         }
                         Spacer()
                     }
-                    .frame(width: 20) // Fixed width for vertical text area
+                    .frame(width: 20)
                     .background(Color.white)
                     .foregroundColor(.black)
                     .diagnosticBorder(.white, width: 0.5, label: "V:NEURAL")
                     
-                    // Cyan accent line (Nuclear Style) - Also Stretches
                     Rectangle()
                         .fill(Color.cyan)
                         .frame(width: 4)
                         .diagnosticBorder(.cyan, width: 0.5, label: "BAR")
                 }
-                .frame(maxHeight: .infinity) // STRETCH
+                .frame(maxHeight: .infinity)
                 .fixedSize(horizontal: true, vertical: false)
                 
-                // 2. Status Data (Beside Heading)
+                // 2. Status Data
                 VStack(alignment: .leading, spacing: 12) {
                     Text("\(languageManager.settings.neuralEngine.uppercased()) // COMPUTE_GRID")
                         .font(.system(size: 10, weight: .black, design: .monospaced))
@@ -341,45 +325,36 @@ struct SettingsView: View {
                         .padding(.bottom, 4)
                         .diagnosticBorder(.gray.opacity(0.3), width: 0.5, label: "SUB")
 
-                    let statuses = state.language.neuralStatuses
-                    let nativeCode = appState.nativeLanguage
-                    let targetPairs = appState.userLanguagePairs.filter { $0.target_language.lowercased() != nativeCode.lowercased() }
+                    let statuses = state.neuralStatuses
+                    let codes = state.neuralLanguageCodes
                     
-                    var allLanguages: [String] {
-                        var langs = [String]()
-                        if !nativeCode.isEmpty { langs.append(nativeCode) }
-                        langs.append(contentsOf: targetPairs.map { $0.target_language })
-                        return langs
-                    }
-                    
-                    FlowLayout(data: allLanguages, spacing: 10) { code in
+                    FlowLayout(data: codes, spacing: 10) { code in
                         diagRow(code: code, status: statuses[code])
                     }
                     .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "FLOW")
                 }
-                .padding(.leading, 20) // Aligned to Native Section (20pt)
+                .padding(.leading, 20)
                 .padding(.vertical, 10)
                 .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "DATA_P:L20,V10")
             }
-            .fixedSize(horizontal: false, vertical: true) // Determination of height
+            .fixedSize(horizontal: false, vertical: true)
             .diagnosticBorder(.white.opacity(0.1), width: 1, label: "NEURAL_HS")
         }
-        .padding(.horizontal, 5) // TIGHTENED to 5pt
-        .onAppear { state.language.checkNeuralStatus() }
+        .padding(.horizontal, 5)
+        .onAppear { state.checkNeuralStatus() }
         .diagnosticBorder(.white.opacity(0.3), width: 1, label: "NEURAL_SEC_P:H5")
     }
     
     @ViewBuilder
-    private func diagRow(code: String, status: LanguageLogic.NeuralStatus?) -> some View {
-        let fullName = LanguageMapping.shared.getDisplayNames(for: code).english.uppercased()
-        let color = statusColor(status?.state)
+    private func diagRow(code: String, status: SettingsTabState.NeuralStatus?) -> some View {
+        let fullName = TargetLanguageMapping.shared.getDisplayNames(for: code).english.uppercased()
+        let color = state.statusColor(status?.state)
         
         HStack(spacing: 8) {
-            // Status Indicator Dot (Square in Nuclear Style)
             Rectangle()
                 .fill(color)
-                .frame(width: 8, height: 8) // Slightly larger
-                .shadow(color: color.opacity(0.5), radius: 4) // Glow
+                .frame(width: 8, height: 8)
+                .shadow(color: color.opacity(0.5), radius: 4)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(fullName)
@@ -396,14 +371,6 @@ struct SettingsView: View {
         .padding(.vertical, 8)
         .background(Color.white.opacity(0.02))
         .diagnosticBorder(color.opacity(0.3), width: 1, label: code)
-    }
-    
-    private func modeColor(_ mode: String) -> Color {
-        switch mode {
-        case "CONTEXTUAL": return .cyan
-        case "STATIC": return Color(white: 0.6)
-        default: return .yellow
-        }
     }
 
     // MARK: - Location
@@ -440,7 +407,6 @@ struct SettingsView: View {
         .diagnosticBorder(.pink, width: 1)
     }
 
-
     // MARK: - Notifications
     
     private var notificationSection: some View {
@@ -455,11 +421,14 @@ struct SettingsView: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text(languageManager.ui.loading.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
+                    Text(languageManager.onboarding.notifications.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
                     Spacer()
-                    Toggle("", isOn: $appState.isNotificationsEnabled)
-                        .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
-                        .labelsHidden()
+                    Toggle("", isOn: Binding(
+                        get: { NotificationManager.shared.isNotificationsEnabled },
+                        set: { NotificationManager.shared.isNotificationsEnabled = $0 }
+                    ))
+                    .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
+                    .labelsHidden()
                 }
                 
                 Text(languageManager.onboarding.notificationsDesc)
@@ -472,13 +441,11 @@ struct SettingsView: View {
         .diagnosticBorder(.blue.opacity(0.3), width: 1)
     }
 
-
     // MARK: - Account
     
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 0) {
-                // Vertical Label Group (Now Stretches)
                 HStack(alignment: .top, spacing: 0) {
                     VStack(alignment: .center, spacing: 0) {
                         Spacer()
@@ -494,7 +461,6 @@ struct SettingsView: View {
                     .frame(width: 20)
                     .background(Color.white)
                     
-                    // Pink accent line
                     Rectangle()
                         .fill(ThemeColors.secondaryAccent)
                         .frame(width: 4)
@@ -502,17 +468,15 @@ struct SettingsView: View {
                 .frame(maxHeight: .infinity)
                 .fixedSize(horizontal: true, vertical: false)
 
-                // Action Buttons
                 HStack(spacing: 20) {
-                    accountBox(title: languageManager.settings.logout, icon: "arrow.right.square", color: .cyan) { showingLogoutAlert = true }
-                    accountBox(title: languageManager.ui.delete, icon: "trash", color: ThemeColors.secondaryAccent) { showingDeleteAlert = true }
+                    accountBox(title: languageManager.settings.logout, icon: "arrow.right.square", color: .cyan) { state.showingLogoutAlert = true }
+                    accountBox(title: languageManager.ui.delete, icon: "trash", color: ThemeColors.secondaryAccent) { state.showingDeleteAlert = true }
                 }
-                .padding(.leading, 20) // Aligned to Native Section (20pt)
+                .padding(.leading, 20)
                 .padding(.vertical, 10)
             }
             .fixedSize(horizontal: false, vertical: true)
             
-            // SYSTEM CONFIG (Debug Toggles)
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -541,7 +505,7 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 20)
         }
-        .padding(.horizontal, 5) // TIGHTENED to 5pt
+        .padding(.horizontal, 5)
         .diagnosticBorder(.green.opacity(0.3), width: 1, label: "ACC_SEC_P:H5")
         .diagnosticBorder(.white.opacity(0.1), width: 2)
     }
@@ -559,7 +523,6 @@ struct SettingsView: View {
                         .font(.system(size: 40))
                         .foregroundColor(color)
                     
-                    // Corner decoration
                     VStack {
                         HStack {
                             Text("..").font(.system(size: 8)).foregroundColor(.gray)
@@ -579,12 +542,4 @@ struct SettingsView: View {
             .diagnosticBorder(.white.opacity(0.1), width: 1)
         }
     }
-
-    // MARK: - Subviews & Helpers
-    
-    private func statusColor(_ status: String?) -> Color {
-        switch status { case "LOADED": return .green; case "FAILED": return .red; case "DOWN": return .blue; default: return .gray }
-    }
-
-    private var timePicker: some View { TimeSelectionModal { state.notifications.addTime($0); showingTimePicker = false } }
 }

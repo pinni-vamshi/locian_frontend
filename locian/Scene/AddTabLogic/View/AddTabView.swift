@@ -109,9 +109,9 @@ struct AddTabView: View {
              .diagnosticBorder(.black.opacity(0.5), width: 0.5)
              .frame(width: 20).background(ThemeColors.secondaryAccent)
              HStack(spacing: 16) {
-                actionButton(title: "CAMERA", icon: "camera.fill", color: .cyan) { appState.openCamera { if $0 { showingCamera = true } } }
+                actionButton(title: "CAMERA", icon: "camera.fill", color: .cyan) { PermissionsService.ensureCameraAccess { if $0 { showingCamera = true } } }
                     .diagnosticBorder(.cyan, width: 0.5)
-                actionButton(title: "GALLERY", icon: "square.grid.2x2.fill", color: .pink) { appState.openPhotoLibrary { if $0 { showingGallery = true } } }
+                actionButton(title: "GALLERY", icon: "square.grid.2x2.fill", color: .pink) { PermissionsService.ensurePhotoLibraryAccess { if $0 { showingGallery = true } } }
                     .diagnosticBorder(.pink, width: 0.5)
              }.padding(.horizontal, 8)
                 .diagnosticBorder(.white.opacity(0.1), width: 1, label: "ACT_HS_P:H8")

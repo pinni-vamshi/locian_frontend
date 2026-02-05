@@ -144,10 +144,3 @@ struct CooldownService {
     var recentPatterns: [String] = []
 }
 
-struct DrillResultEntry {
-    var id: String
-    var patternId: String
-    var lastResult: DrillResult
-    var currentMode: DrillMode?
-}
-
