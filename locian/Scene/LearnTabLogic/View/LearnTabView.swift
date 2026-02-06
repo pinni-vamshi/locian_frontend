@@ -404,6 +404,7 @@ struct LearnTabView: View {
     private func recommendedCardGenerator(place: MicroSituationData, category: String, moments: [UnifiedMoment]) -> some View {
         ForEach(Array(moments.enumerated()), id: \.1.text) { (mIndex: Int, moment: UnifiedMoment) in
             let time = place.time ?? "--:--"
+            let _ = print("🎨 [UI-RENDER] Card: \(moment.text) (Cat: \(category))")
             
             RecommendedCard(moment: moment.text, time: time, isGreen: false) {
                 state.generateSentence(for: moment.text)
