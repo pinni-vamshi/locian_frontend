@@ -42,7 +42,7 @@ class LearnTabState: ObservableObject {
     @Published var recommendedPlaces: [MicroSituationData] = []
     
     // Global Recommendations (Flat View Models)
-    struct RecommendedMomentViewModel: Identifiable {
+    struct RecommendedMomentViewModel: Identifiable, Equatable {
         let id: String
         let moment: String
         let time: String
@@ -50,8 +50,12 @@ class LearnTabState: ObservableObject {
         let placeName: String
     }
     
-    @Published var recommendedMostLikely: [RecommendedMomentViewModel] = [] // Top 5
-    @Published var recommendedLikely: [RecommendedMomentViewModel] = []     // Next 5
+    struct RecommendationSection: Identifiable {
+        let id = UUID()
+        let items: [RecommendedMomentViewModel]
+    }
+    
+    @Published var globalRecommendations: [RecommendationSection] = []
     @Published var selectedRecommendedCategory: String? = nil
     
     // Local Recommendations
@@ -149,9 +153,9 @@ class LearnTabState: ObservableObject {
                     if let bestMatch = localResult.mostLikely.first {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
-                        // 🚀 UPDATE UI WITH TRANSFORMED VIEW MODELS
-                        // State creates the "Good Format" for the View.
-                        // View does ZERO object traversal.
+                        // 🚀 UPDATE UI WITH GENERIC SECTIONS
+                        // State creates the structure (2 sections).
+                        // View iterates sections generically.
                         
                         let transformer: (MicroSituationData) -> RecommendedMomentViewModel? = { place in
                             guard let moment = place.micro_situations?.first?.moments.first,
@@ -166,11 +170,23 @@ class LearnTabState: ObservableObject {
                             )
                         }
                         
-                        self.recommendedMostLikely = localResult.mostLikely.compactMap { transformer($0.place) }
-                        self.recommendedLikely = localResult.likely.compactMap { transformer($0.place) }
+                        // 1. Most Likely Section
+                        let mostLikelyItems = localResult.mostLikely.compactMap { transformer($0.place) }
+                        var sections: [RecommendationSection] = []
                         
-                        // Legacy compatibility (optional, but keeping consistent)
-                        // Note: Legacy view handles raw data, but global view uses ViewModels now.
+                        if !mostLikelyItems.isEmpty {
+                            sections.append(RecommendationSection(items: mostLikelyItems))
+                        }
+                        
+                        // 2. Likely Section
+                        let likelyItems = localResult.likely.compactMap { transformer($0.place) }
+                        if !likelyItems.isEmpty {
+                            sections.append(RecommendationSection(items: likelyItems))
+                        }
+                        
+                        self.globalRecommendations = sections
+                        
+                        // Legacy compatibility (optional)
                         self.recommendedPlaces = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
                         
                         self.isShowingGlobalRecommendations = true

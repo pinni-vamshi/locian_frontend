@@ -379,20 +379,12 @@ struct LearnTabView: View {
     
     private var globalRecommendationsList: some View {
         VStack(spacing: 24) {
-             // Most Likely Section (Driven by Logic Layer)
-             VStack(alignment: .leading, spacing: 10) {
-                 // PURE RENDERING - NO LOGIC
-                 ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, vm in
-                     simpleGlobalRow(vm: vm)
-                 }
-             }
-             
-             // Likely Section (Driven by Logic Layer)
-             if !state.recommendedLikely.isEmpty {
+             // GENERIC RENDERING - VIEW DOES NOT KNOW OR CARE ABOUT SPLITS
+             // It just iterates whatever structure strategy the Logic Layer provides.
+             ForEach(state.globalRecommendations) { section in
                  VStack(alignment: .leading, spacing: 10) {
-                     // PURE RENDERING - NO LOGIC
-                     ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, vm in
-                          simpleGlobalRow(vm: vm)
+                     ForEach(Array(section.items.enumerated()), id: \.1.id) { index, vm in
+                         simpleGlobalRow(vm: vm)
                      }
                  }
              }
