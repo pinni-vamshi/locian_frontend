@@ -383,7 +383,7 @@ struct LearnTabView: View {
              VStack(alignment: .leading, spacing: 10) {
                  // PURE RENDERING - NO LOGIC
                  ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, place in
-                     recommendedMomentRow(place: place, placeIndex: index)
+                     simpleGlobalRow(place: place)
                  }
              }
              
@@ -392,11 +392,26 @@ struct LearnTabView: View {
                  VStack(alignment: .leading, spacing: 10) {
                      // PURE RENDERING - NO LOGIC
                      ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, place in
-                          recommendedMomentRow(place: place, placeIndex: index + 5)
+                          simpleGlobalRow(place: place)
                      }
                  }
              }
         }
+    }
+    
+    // A truly "dumb" renderer for global items - no loops, no filter checks.
+    // Logic Layer guarantees these places have exactly 1 moment.
+    private func simpleGlobalRow(place: MicroSituationData) -> some View {
+        if let moment = place.micro_situations?.first?.moments.first {
+            let category = place.micro_situations?.first?.category ?? "General"
+            // Debug print kept for verification
+            let _ = print("🎨 [UI-RENDER] Card: \(moment.text) (Cat: \(category))")
+            
+            return AnyView(RecommendedCard(moment: moment.text, time: place.time ?? "--:--", isGreen: false) {
+                state.generateSentence(for: moment.text)
+            })
+        }
+        return AnyView(EmptyView())
     }
 
     private var recommendedMomentCards: some View {
