@@ -132,6 +132,10 @@ class LearnTabState: ObservableObject {
             
             switch result {
             case .success(let data):
+                print("\n🟢 [LearnTabState] fetchAndLoadContent SUCCESS")
+                print("   - Places Fetched: \(data.places.count)")
+                print("   - Intent Present: \(data.intent != nil ? "YES" : "NO")")
+                
                 self.appState.timeline = data.timeline
                 self.allTimelinePlaces = data.places
                 self.hasAnyStudiedPlaces = !data.places.isEmpty
