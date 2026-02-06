@@ -381,12 +381,6 @@ struct LearnTabView: View {
         VStack(spacing: 24) {
              // Most Likely Section (Driven by Logic Layer)
              VStack(alignment: .leading, spacing: 10) {
-                 Text("MOST LIKELY")
-                     .font(.system(size: 12, weight: .black))
-                     .foregroundColor(.white)
-                     .padding(.leading, 4)
-                     .opacity(0.8)
-                 
                  // PURE RENDERING - NO LOGIC
                  ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, place in
                      recommendedMomentRow(place: place, placeIndex: index)
@@ -396,11 +390,6 @@ struct LearnTabView: View {
              // Likely Section (Driven by Logic Layer)
              if !state.recommendedLikely.isEmpty {
                  VStack(alignment: .leading, spacing: 10) {
-                     Text("LIKELY")
-                         .font(.system(size: 12, weight: .black))
-                         .foregroundColor(Color(white: 0.5))
-                         .padding(.leading, 4)
-                     
                      // PURE RENDERING - NO LOGIC
                      ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, place in
                           recommendedMomentRow(place: place, placeIndex: index + 5)
