@@ -66,7 +66,7 @@ struct NativeLanguageSelectionModal: View {
     }
     
     private func headingBadge() -> some View {
-        Text("NATIVE LANGUAGE")
+        Text(LocalizationManager.shared.string(.nativeLanguage).uppercased())
             .font(.system(size: 20, weight: .black, design: .monospaced))
             .foregroundColor(.white)
             .padding(.horizontal, 10)

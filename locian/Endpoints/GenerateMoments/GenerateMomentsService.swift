@@ -38,14 +38,34 @@ class GenerateMomentsService {
         let userLanguage = appState.nativeLanguage
         let profession = appState.profession
         
+        // Gather history context
+        let history = AppStateManager.shared.timeline?.places ?? []
+        let currentHour = Calendar.current.component(.hour, from: Date())
+        
+        let previous = history.filter { ($0.hour ?? -1) <= currentHour }
+            .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
+            .prefix(2)
+            .compactMap { h -> TimelinePlaceContext? in
+                guard let name = h.place_name, let time = h.time else { return nil }
+                return TimelinePlaceContext(place_name: name, time: time)
+            }
+        
+        let future = history.filter { ($0.hour ?? -1) > currentHour }
+            .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
+            .prefix(1)
+            .compactMap { h -> TimelinePlaceContext? in
+                guard let name = h.place_name, let time = h.time else { return nil }
+                return TimelinePlaceContext(place_name: name, time: time)
+            }
+        
         // Build request
         let request = GenerateMomentsRequest(
             place_name: placeName,
             place_detail: placeDetail,
             time: timeString,
             profession: profession,
-            previous_places: nil,
-            future_places: nil,
+            previous_places: Array(previous),
+            future_places: Array(future),
             weather: nil,
             activity_duration: nil,
             latitude: userLocation?.coordinate.latitude,

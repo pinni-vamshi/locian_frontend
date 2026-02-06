@@ -76,7 +76,10 @@ struct RussianStrings: AppStrings, LocalizedStrings {
             chooseContext: "Выберите контекст для начала обучения",
             typeHere: "ПЕЧАТАЙТЕ ЗДЕСЬ",
             nearbyLabel: "РЯДОМ",
-            noNearbyPlaces: "Поблизости не найдено мест")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "Добавить Рутину",
+            tapToSetup: "Нажмите для Настройки",
+            tapToStartLearning: "Нажмите, чтобы Начать Обучение")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct RussianStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

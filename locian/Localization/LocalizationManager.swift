@@ -451,6 +451,9 @@ enum StringKey: String {
     case typeHere = "typeHere"
     case nearbyLabel = "nearbyLabel"
     case noNearbyPlaces = "noNearbyPlaces"
+    case addRoutine = "addRoutine"
+    case tapToSetup = "tapToSetup"
+    case tapToStartLearning = "tapToStartLearning"
     
 
 }

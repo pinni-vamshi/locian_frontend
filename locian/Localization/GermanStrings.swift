@@ -76,7 +76,10 @@ struct GermanStrings: AppStrings, LocalizedStrings {
             chooseContext: "Wähle einen Kontext zum Lernen",
             typeHere: "HIER TIPPEN",
             nearbyLabel: "IN DER NÄHE",
-            noNearbyPlaces: "Keine Orte in der Nähe gefunden")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "Routine Hinzufügen",
+            tapToSetup: "Tippen zum Einrichten",
+            tapToStartLearning: "Tippen zum Lernen Starten")
     }
 
     var settings: SettingsStrings {
@@ -635,6 +638,9 @@ struct GermanStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

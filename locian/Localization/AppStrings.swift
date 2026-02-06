@@ -96,6 +96,11 @@ struct UIStrings {
     let typeHere: String
     let nearbyLabel: String
     let noNearbyPlaces: String
+    
+    // Routine
+    let addRoutine: String
+    let tapToSetup: String
+    let tapToStartLearning: String
     }
 
 struct SettingsStrings {

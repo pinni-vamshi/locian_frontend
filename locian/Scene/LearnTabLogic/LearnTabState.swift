@@ -115,21 +115,16 @@ class LearnTabState: ObservableObject {
                 self.allTimelinePlaces = data.places
                 self.hasAnyStudiedPlaces = !data.places.isEmpty
                 
-                // 🚀 Automatically predict context for the RECOMMENDED section
-                let placeNames = self.allTimelinePlaces.compactMap { $0.place_name }
-                if !placeNames.isEmpty {
-                    self.predictPlaceFromList(places: placeNames)
-                }
+                // 🚀 Automatically predict context using the autonomous Service
+                self.predictPlaceFromList()
                 
-                // 🚀 Sync UI immediately after processing
+                // 🚀 Sync UI
                 self.syncUIProperties()
-                
-                // 🚀 CRITICAL: Mark as loaded ONLY after processing all data
                 self.appState.hasInitialHistoryLoaded = true
             case .failure(let error):
                 print("⚠️ [Timeline] Service failed: \(error.localizedDescription)")
                 self.clearState()
-                self.appState.hasInitialHistoryLoaded = true // Still mark as loaded to dismiss loading screen
+                self.appState.hasInitialHistoryLoaded = true
             }
         }
     }
@@ -294,31 +289,23 @@ class LearnTabState: ObservableObject {
     
     // MARK: - Context-Based Place Prediction
     
-    func predictPlaceFromList(places: [String]) {
-        guard !places.isEmpty else { return }
+    func predictPlaceFromList(places: [String]? = nil) {
         guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
+        self.isAnalyzingImage = true
         
-        self.isAnalyzingImage = true // Re-use loading state
-        
-        // Use the new PredictPlaceService
-        PredictPlaceService.shared.predictPlace(
-            places: places,
-            sessionToken: sessionToken
-        ) { [weak self] result in
+        PredictPlaceService.shared.predictPlace(sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.isAnalyzingImage = false
-                
                 switch result {
                 case .success(let response):
                     if let data = response.data {
                         self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations ?? [])
                     } else {
-                        self.setCustomActivePlace(name: places.first ?? "Unknown")
+                        self.clearRecommendedPlaces()
                     }
-                case .failure(let error):
-                    print("⚠️ [PredictPlace] Failed: \(error.localizedDescription)")
-                    self.setCustomActivePlace(name: places.first ?? "Unknown")
+                case .failure:
+                    self.clearRecommendedPlaces()
                 }
             }
         }

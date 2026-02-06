@@ -66,7 +66,7 @@ struct TargetLanguageSelectionModal: View {
     }
     
     private func headingBadge() -> some View {
-        Text("TARGET LANGUAGES")
+        Text(LocalizationManager.shared.string(.targetLanguages).uppercased())
             .font(.system(size: 20, weight: .black, design: .monospaced))
             .foregroundColor(.white)
             .padding(.horizontal, 10)

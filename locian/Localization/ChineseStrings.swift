@@ -76,7 +76,10 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             chooseContext: "选择一个场景开始学习",
             typeHere: "在这里输入",
             nearbyLabel: "附近",
-            noNearbyPlaces: "未找到附近地点")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "添加例程",
+            tapToSetup: "点击设置",
+            tapToStartLearning: "点击开始学习")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

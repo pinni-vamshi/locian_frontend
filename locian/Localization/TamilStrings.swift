@@ -76,7 +76,10 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             chooseContext: "கற்றுக்கொள்ள ஒரு சூழலைத் தேர்ந்தெடுக்கவும்",
             typeHere: "இங்கே தட்டச்சு செய்யவும்",
             nearbyLabel: "அருகில்",
-            noNearbyPlaces: "அருகில் இடங்கள் எதுவும் கிடைக்கவில்லை")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "வழக்கத்தைச் சேர்க்கவும்",
+            tapToSetup: "அமைக்க தட்டவும்",
+            tapToStartLearning: "கற்றல் தொடங்க தட்டவும்")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

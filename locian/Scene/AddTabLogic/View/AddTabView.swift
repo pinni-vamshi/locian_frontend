@@ -31,15 +31,16 @@ struct AddTabView: View {
             
             Spacer().frame(height: 8) // TIGHTENED from 15
             
+            // Divider line before scrolling content - stays visible
+            Rectangle()
+                .fill(Color.white.opacity(0.3))
+                .frame(height: 1)
+                .zIndex(3)
+            
             ZStack(alignment: .top) {
                 if state.scrollOffset > 0 || state.pullRefreshState == .loading || state.pullRefreshState == .finishing {
                     CyberRefreshIndicator(state: state.pullRefreshState, height: max(60, state.scrollOffset), accentColor: ThemeColors.secondaryAccent).zIndex(0)
                 }
-                
-                // Divider line before scrolling content
-                Rectangle()
-                    .fill(Color.white.opacity(0.3))
-                    .frame(height: 1)
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 48) { // Increased from 24 to 48
@@ -210,7 +211,7 @@ struct AddRoutineHeader: View {
             if let p = selectedPlaces[hr] {
                 Button(action: onStart) {
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack { Image(systemName: "hand.tap.fill"); Text("Tap to Start Learning") }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
+                        HStack { Image(systemName: "hand.tap.fill"); Text(LocalizationManager.shared.string(.tapToStartLearning)) }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
                             .diagnosticBorder(.gray, width: 0.5)
                         LocianSmartHeader(text: p.uppercased(), fontSize: 35.5, maxLines: 3, textColor: .white, shadowColor: .gray, scale: 1.0)
                             .diagnosticBorder(.white, width: 1)
@@ -221,9 +222,9 @@ struct AddRoutineHeader: View {
             } else {
                 Button(action: { showingRoutineModal = true }) {
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack { Image(systemName: "hand.tap.fill"); Text("Tap to Setup") }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
+                        HStack { Image(systemName: "hand.tap.fill"); Text(LocalizationManager.shared.string(.tapToSetup)) }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
                             .diagnosticBorder(.gray, width: 0.5)
-                        LocianSmartHeader(text: "ADD ROUTINE", fontSize: 35.5, maxLines: 3, textColor: .white, shadowColor: .gray, scale: 1.0)
+                        LocianSmartHeader(text: LocalizationManager.shared.string(.addRoutine).uppercased(), fontSize: 35.5, maxLines: 3, textColor: .white, shadowColor: .gray, scale: 1.0)
                             .diagnosticBorder(.white, width: 1)
                     }
                     .diagnosticBorder(.orange, width: 1.5)
@@ -407,133 +408,7 @@ struct SuggestedPlacesView: View {
 }
 
 
-struct RoutineModalView: View {
-    @ObservedObject var appState: AppStateManager; @Binding var isPresented: Bool; @Binding var selectedPlaces: [Int: String]
-    @State private var localSelections: [Int: String] = [:]
-    
-    var canSave: Bool {
-        let maxStreak = appState.userLanguagePairs.map { calculateStreak(practiceDates: $0.practice_dates) }.max() ?? 0
-        return maxStreak > 3
-    }
-    
-    var body: some View {
-        ZStack(alignment: .top) {
-            Color.black.ignoresSafeArea(); CyberGridBackground().opacity(0.1).ignoresSafeArea()
-            VStack(spacing: 0) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: -5) {
-                        Text("YOUR").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
-                            .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                        Text("ROUTINE").font(.system(size: 36, weight: .heavy)).foregroundColor(.pink)
-                            .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
-                    }
-                    .diagnosticBorder(.white.opacity(0.2), width: 1)
-                    Spacer()
-                    LocianButton(action: { isPresented = false }, backgroundColor: .white, foregroundColor: .black, shadowColor: .gray, shadowOffset: 4) { Image(systemName: "xmark").font(.system(size: 16, weight: .bold)).frame(width: 32, height: 32) }
-                        .diagnosticBorder(.white, width: 1)
-                }
-                .diagnosticBorder(.pink.opacity(0.3), width: 1.5)
-                .padding().background(Color.black.opacity(0.9))
-                Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
-                ScrollView { 
-                    LazyVStack(alignment: .leading, spacing: 0) { 
-                        ForEach(0..<24, id: \.self) { hr in row(hr) } 
-                    }
-                    .diagnosticBorder(.cyan.opacity(0.2), width: 1, label: "CYBER_LIST")
-                    .padding(.vertical, 32).padding(.horizontal, 16) 
-                }
-                VStack { 
-                    Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
-                    LocianButton(
-                        action: { 
-                            if canSave {
-                                selectedPlaces = localSelections
-                                isPresented = false
-                            }
-                        }, 
-                        backgroundColor: canSave ? .pink : .gray, 
-                        foregroundColor: canSave ? .white : .white.opacity(0.5), 
-                        fullWidth: true
-                    ) { 
-                        Text(canSave ? "S A V E   R O U T I N E" : "STREAK > 3 REQUIRED")
-                            .font(.system(size: 16, weight: .black, design: .monospaced))
-                            .padding(.vertical, 8)
-                    }
-                    .disabled(!canSave)
-                    .diagnosticBorder(canSave ? .pink : .gray, width: 1)
-                }
-                .diagnosticBorder(.white.opacity(0.1), width: 1)
-                .padding(16)
-                .background(Color.black)
-            }
-            .diagnosticBorder(.white, width: 2)
-        }
-        .onAppear {
-            localSelections = selectedPlaces
-        }
-    }
-    
-    private func calculateStreak(practiceDates: [String]) -> Int {
-        guard !practiceDates.isEmpty else { return 0 }
-        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        let validDates = practiceDates.compactMap { formatter.date(from: $0) }
-        guard !validDates.isEmpty else { return 0 }
-        let uniqueDates = Set(validDates); let sortedDates = uniqueDates.sorted(by: >)
-        let calendar = Calendar.current; let today = Date()
-        guard let latestDate = sortedDates.first else { return 0 }
-        let isToday = calendar.isDateInToday(latestDate)
-        let isYesterday = calendar.isDate(latestDate, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: today)!)
-        if !isToday && !isYesterday { return 0 }
-        var currentStreak = 1; var previousDate = latestDate
-        for i in 1..<sortedDates.count {
-            let date = sortedDates[i]
-            if let expectedPrevDay = calendar.date(byAdding: .day, value: -1, to: previousDate),
-               calendar.isDate(date, inSameDayAs: expectedPrevDay) {
-                currentStreak += 1; previousDate = date
-            } else { break }
-        }
-        return currentStreak
-    }
-    private func row(_ hr: Int) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                HStack { 
-                    Text("+").diagnosticBorder(.pink.opacity(0.5), width: 0.5)
-                    Text(String(format: "%02d:00", hr)).diagnosticBorder(.pink.opacity(0.5), width: 0.5)
-                }
-                .diagnosticBorder(.pink, width: 1)
-                .font(.system(size: 15, weight: .bold, design: .monospaced)).foregroundColor(.pink).padding(.horizontal, 8).frame(height: 28).background(Color.white)
-                
-                if localSelections[hr] == nil { 
-                    Text("Add Routine")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.3))
-                        .diagnosticBorder(.white.opacity(0.1), width: 0.5)
-                }
-            }
-            .diagnosticBorder(.white.opacity(0.2), width: 1)
-            
-            HStack(alignment: .top, spacing: 20) {
-                Rectangle().fill(Color.white).frame(width: 2).frame(maxHeight: .infinity).frame(width: 80)
-                    .diagnosticBorder(.white, width: 0.5)
-                FlowLayout(data: UserRoutineManager.getPlaces(for: appState.profession, hour: hr), spacing: 8) { p in
-                    Button(action: { localSelections[hr] = (localSelections[hr] == p ? nil : p) }) {
-                        Text(p.uppercased()).font(.system(size: 10, weight: .bold)).foregroundColor(localSelections[hr] == p ? .black : .gray).padding(.horizontal, 12).padding(.vertical, 8).background(localSelections[hr] == p ? Color.pink : Color.black).overlay(Rectangle().stroke(localSelections[hr] == p ? Color.pink : Color.white.opacity(0.15)))
-                            .diagnosticBorder(localSelections[hr] == p ? .pink : .white.opacity(0.2), width: 0.5)
-                    }.buttonStyle(.plain)
-                }
-                .diagnosticBorder(.cyan.opacity(0.3), width: 1)
-                .padding(.top, 12).padding(.bottom, 24)
-            }
-            .diagnosticBorder(.white.opacity(0.1), width: 1)
-        }
-        .diagnosticBorder(.white.opacity(0.05), width: 1.5)
-    }
-}
+
 struct AddTabViewOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }

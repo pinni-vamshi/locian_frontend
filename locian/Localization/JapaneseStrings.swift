@@ -76,7 +76,10 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             chooseContext: "学習を開始するコンテキストを選択",
             typeHere: "ここに入力",
             nearbyLabel: "近く",
-            noNearbyPlaces: "近くの場所が見つかりません")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "ルーチンを追加",
+            tapToSetup: "タップして設定",
+            tapToStartLearning: "タップして学習を開始")
     }
 
     var settings: SettingsStrings {
@@ -635,6 +638,9 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

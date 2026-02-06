@@ -22,22 +22,12 @@ struct LearnTabView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 headerView
+                placeNameHeader
+                languagePromptHeader
                 
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        if !state.recommendedPlaces.isEmpty || state.isAnalyzingImage {
-                            recommendedSection
-                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                                .padding(.top, 10)
-                        }
-                        
-                        addNavigationButton
-                            .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                            .padding(.vertical, 8)
-                        
-
-                    }
-                }
+                recommendedSection
+                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                    .padding(.top, 10)
             }
             .background(Color.black.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
@@ -131,6 +121,77 @@ struct LearnTabView: View {
         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10).animation(.spring(), value: animateIn)
     }
 
+    private var placeNameHeader: some View {
+        let isAnalyzing = state.isAnalyzingImage
+        let name = isAnalyzing ? "GETTING YOUR PLACE..." : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE")
+        
+        return VStack(spacing: 0) {
+            Text(name.uppercased())
+                .font(.system(size: isAnalyzing ? 35 : 55.5, weight: .heavy))
+                .minimumScaleFactor(0.3)
+                .lineLimit(3)
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 180)
+            
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(Color.white.opacity(0.1))
+        }
+        .background(Color.black)
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 10)
+        .animation(.spring(), value: animateIn)
+    }
+
+    private var languagePromptHeader: some View {
+        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        let targetRaw = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
+        
+        // Resolve full English name if targetRaw is a code or rawValue
+        let languageName = AppLanguage(rawValue: targetRaw)?.englishName ?? AppLanguage.fromCode(targetRaw)?.englishName ?? targetRaw
+        
+        return VStack(spacing: 0) {
+            HStack {
+                HStack(spacing: 8) {
+                    Text("SELECT YOUR MOMENT TO TALK IN")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(Color(white: 0.5))
+                    
+                    Text(languageName.uppercased())
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundColor(ThemeColors.secondaryAccent)
+                }
+                .padding(.leading, 5)
+                
+                Spacer()
+                
+                Button(action: {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    state.fetchFirstRecommendedPlace()
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundColor(ThemeColors.secondaryAccent)
+                        .padding(8)
+                        .background(ThemeColors.secondaryAccent.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .padding(.trailing, 16)
+            }
+            .frame(height: 50)
+            .background(Color.black)
+            
+            Rectangle()
+                .frame(height: 1)
+                .foregroundColor(Color.white.opacity(0.1))
+        }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 10)
+        .animation(.spring(), value: animateIn)
+    }
+
 
 
     private var loadingOverlay: some View {
@@ -172,11 +233,10 @@ struct LearnTabView: View {
         if !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
             state.fetchFirstRecommendedPlace()
         }
-        // ONLY animate if NOT loading history or timeline
-        if state.generationState == .idle && !appState.isLoadingTimeline && !state.isLoadingHistory {
+        // Change: Animate in even if loading history/timeline, so inline states are visible
+        if state.generationState == .idle {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
         } else {
-            // Ensure hidden if loading
             animateIn = false
         }
     }
@@ -192,9 +252,9 @@ struct LearnTabView: View {
     private func handleLoadingHistoryChange(_ isLoading: Bool) {
         if !isLoading && state.generationState == .idle && !appState.isLoadingTimeline && !state.isLoadingHistory {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
-        } else if isLoading {
-            animateIn = false // Hide content if loading starts
         }
+        // No longer force animateIn = false when isLoading is true, 
+        // because we want to see the inline "GETTING YOUR PLACE..." states.
     }
     
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
@@ -204,81 +264,112 @@ struct LearnTabView: View {
     }
 
     private var recommendedSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        HStack(alignment: .top, spacing: 0) {
+            // 2. Vertical Category Sidebar (Fixed)
+            recommendedSidebar
+                .frame(width: 50)
+                .frame(maxHeight: .infinity)
             
-            // 1. Place Name (Large Header)
-            if let placeName = state.recommendedPlaces.first?.place_name {
-                 Text(placeName.uppercased())
-                    .font(.system(size: 40, weight: .heavy)) // 40pt Heavy
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 20)
-            }
-                
-            // 2. Theme Selector
-            recommendedThemeSelector
-            
-            // 3. Vertical Moments List
+            // 3. Vertical Moments List (Scrollable)
             recommendedMomentsScroll
         }
-        .padding(.bottom, 20)
     }
 
 
 
     @ViewBuilder
-    private var recommendedThemeSelector: some View {
-        if let place = state.recommendedPlaces.first, let situations = place.micro_situations, situations.count > 1 {
-            // Content Only: Theme Blocks
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(situations, id: \.category) { section in
-                        let isSelected = state.selectedRecommendedCategory == section.category
-                        Button(action: { state.selectedRecommendedCategory = section.category }) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(section.category.uppercased())
-                                    .font(.system(size: 13, weight: .black))
-                                
-                                if isSelected {
-                                    Text("THEME")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .opacity(0.8)
-                                }
-                            }
-                            .foregroundColor(isSelected ? .black : .white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .frame(minWidth: 140, minHeight: 60, alignment: .leading)
-                            .background(isSelected ? Color(white: 0.8) : Color(white: 0.1))
-                        }
+    private var recommendedSidebar: some View {
+        VStack(spacing: 0) {
+            // Top Arrow Box
+            Rectangle()
+                .fill(Color.white)
+                .frame(width: 50, height: 50)
+                .overlay(
+                    DoubleArrowButton(direction: .up, color: ThemeColors.secondaryAccent, size: 16) {
+                        cycleCategory(forward: false)
                     }
+                )
+            
+            Spacer()
+            
+            // Category Text (Auto-scaling & Fixed Area)
+            Group {
+                if let selectedCat = state.selectedRecommendedCategory {
+                    Text(selectedCat.uppercased())
+                        .foregroundColor(ThemeColors.secondaryAccent)
+                } else {
+                    Text("SELECT")
+                        .foregroundColor(.gray)
                 }
-                .padding(.horizontal, 16)
             }
-            .frame(height: 80)
-            .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
+            .font(.system(size: 13, weight: .black))
+            .rotationEffect(.degrees(-90))
+            .fixedSize()
+            .minimumScaleFactor(0.4)
+            .lineLimit(1)
+            .frame(width: 50)
+            .frame(maxHeight: .infinity) // Occupies space between boxes
+            .clipped()
+            
+            Spacer()
+            
+            // Bottom Arrow Box
+            Rectangle()
+                .fill(Color.white)
+                .frame(width: 50, height: 50)
+                .overlay(
+                    DoubleArrowButton(direction: .down, color: ThemeColors.secondaryAccent, size: 16) {
+                        cycleCategory(forward: true)
+                    }
+                )
+        }
+        .frame(width: 50)
+        .background(Color(white: 0.05))
+        .overlay(Rectangle().frame(width: 1).foregroundColor(Color.white.opacity(0.1)), alignment: .trailing)
+    }
+
+    private func cycleCategory(forward: Bool) {
+        let situations = state.recommendedPlaces.first?.micro_situations ?? []
+        guard !situations.isEmpty else { return }
+        
+        let categories = situations.map { $0.category }
+        let currentIndex = categories.firstIndex(of: state.selectedRecommendedCategory ?? "") ?? 0
+        
+        var nextIndex: Int
+        if forward {
+            nextIndex = (currentIndex + 1) % categories.count
+        } else {
+            nextIndex = (currentIndex - 1 + categories.count) % categories.count
+        }
+        
+        withAnimation(.spring()) {
+            state.selectedRecommendedCategory = categories[nextIndex]
         }
     }
 
     private var recommendedMomentsScroll: some View {
         ScrollView(.vertical, showsIndicators: false) {
              VStack(spacing: 16) {
-                 recommendedAnalysisPlaceholder
-                 recommendedMomentCards
+                 if state.isAnalyzingImage {
+                     RecommendedCard(moment: "GETTING YOUR MOMENTS...", time: "LIVE", isGreen: false) {
+                         // No action while loading
+                     }
+                 }
+                 
+                 if state.recommendedPlaces.isEmpty && !state.isAnalyzingImage {
+                     // Empty State Placeholder Card
+                     RecommendedCard(moment: "TAP + TO ADD YOUR OWN MOMENT", time: "--:--", isGreen: false) {
+                         showCustomInput = true
+                     }
+                     .opacity(0.5)
+                 } else {
+                     recommendedMomentCards
+                 }
+                 
                  addCustomMomentButton
              }
              .padding(.horizontal, 16)
              .padding(.bottom, 20)
-        }
-    }
-
-    @ViewBuilder
-    private var recommendedAnalysisPlaceholder: some View {
-        if state.recommendedPlaces.isEmpty && state.isAnalyzingImage {
-            Rectangle()
-                .fill(Color.white.opacity(0.1))
-                .frame(width: 220, height: 220)
-                .overlay(ProgressView().tint(.white))
         }
     }
 
@@ -292,25 +383,24 @@ struct LearnTabView: View {
         let situations = place.micro_situations ?? []
         return ForEach(Array(situations.enumerated()), id: \.1.category) { (sIndex: Int, section: UnifiedMomentSection) in
             if state.selectedRecommendedCategory == nil || section.category == state.selectedRecommendedCategory {
-                recommendedCardGenerator(category: section.category, moments: section.moments, placeIndex: placeIndex, sectionIndex: sIndex)
+                recommendedCardGenerator(place: place, category: section.category, moments: section.moments)
             }
         }
     }
 
-    private func recommendedCardGenerator(category: String, moments: [UnifiedMoment], placeIndex: Int, sectionIndex: Int) -> some View {
+    private func recommendedCardGenerator(place: MicroSituationData, category: String, moments: [UnifiedMoment]) -> some View {
         ForEach(Array(moments.enumerated()), id: \.1.text) { (mIndex: Int, moment: UnifiedMoment) in
-            let catId = 9021 + placeIndex + sectionIndex + mIndex
-            let time = placeIndex == 0 ? "08:45 AM" : "09:12 AM"
+            let time = place.time ?? "--:--"
             
-            RecommendedCard(moment: moment.text, catId: "\(catId)", time: time, isGreen: false) {
+            RecommendedCard(moment: moment.text, time: time, isGreen: false) {
                 state.generateSentence(for: moment.text)
             }
         }
     }
 
-    private func RecommendedCard(moment: String, catId: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
+    private func RecommendedCard(moment: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            recommendedCardHeader(catId: catId, time: time, isGreen: isGreen)
+            recommendedCardHeader(time: time, isGreen: isGreen)
             Spacer()
             recommendedCardContent(moment: moment, isGreen: isGreen)
             Spacer()
@@ -318,12 +408,11 @@ struct LearnTabView: View {
         }
         .frame(minHeight: 120)
         .frame(maxWidth: .infinity)
-        .background(isGreen ? Color.green : Color(white: 0.1))
+        .background(isGreen ? ThemeColors.neonGreen : Color(white: 0.1))
     }
 
-    private func recommendedCardHeader(catId: String, time: String, isGreen: Bool) -> some View {
+    private func recommendedCardHeader(time: String, isGreen: Bool) -> some View {
         HStack {
-            Text("CAT_ID: \(catId)")
             Spacer()
             Text(time)
         }
@@ -376,13 +465,13 @@ struct LearnTabView: View {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 16))
                 Text("ADD YOUR OWN MOMENT") 
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 14, weight: .black))
                 Spacer()
             }
-            .foregroundColor(.white)
+            .foregroundColor(.black)
             .padding()
             .frame(maxWidth: .infinity)
-            .background(Color(white: 0.15))
+            .background(ThemeColors.neonGreen)
         }
     }
 }

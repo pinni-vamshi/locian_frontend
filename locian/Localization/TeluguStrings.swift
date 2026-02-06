@@ -76,7 +76,10 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             chooseContext: "నేర్చుకోవడం ప్రారంభించడానికి సందర్భాన్ని ఎంచుకోండి",
             typeHere: "ఇక్కడ టైప్ చేయండి",
             nearbyLabel: "దగ్గరలో",
-            noNearbyPlaces: "దగ్గరలో స్థలాలు ఏవీ కనుగొనబడలేదు")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "రొటీన్ జోడించండి",
+            tapToSetup: "సెటప్ చేయడానికి ట్యాప్ చేయండి",
+            tapToStartLearning: "నేర్చుకోవడం ప్రారంభించడానికి ట్యాప్ చేయండి")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

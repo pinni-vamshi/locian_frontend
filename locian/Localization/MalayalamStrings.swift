@@ -76,7 +76,10 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             chooseContext: "പഠിക്കാൻ ഒരു സന്ദർഭം തിരഞ്ഞെടുക്കുക",
             typeHere: "ഇവിടെ ടൈപ്പ് ചെയ്യുക",
             nearbyLabel: "സമീപത്ത്",
-            noNearbyPlaces: "സമീപത്തുള്ള സ്ഥലങ്ങളൊന്നും കണ്ടെത്തിയില്ല")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "ദിനചര്യ ചേർക്കുക",
+            tapToSetup: "സജ്ജീകരിക്കാൻ ടാപ്പ് ചെയ്യുക",
+            tapToStartLearning: "പഠനം ആരംഭിക്കാൻ ടാപ്പ് ചെയ്യുക")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

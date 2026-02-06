@@ -11,6 +11,7 @@ struct SettingsView: View {
     @ObservedObject var localizationManager = LocalizationManager.shared
     @StateObject var state: SettingsTabState
     @Binding var selectedTab: MainTabView.TabItem
+    @State private var animateIn = false
     
     init(appState: AppStateManager, selectedTab: Binding<MainTabView.TabItem>) {
         self.appState = appState
@@ -37,7 +38,16 @@ struct SettingsView: View {
         }
         .diagnosticBorder(.white, width: 2)
         .background(Color.black.ignoresSafeArea())
-        .onAppear { state.animateIn = true }
+        .onAppear { withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true } }
+        .onDisappear { animateIn = false }
+        .onChange(of: selectedTab) { _, n in
+            if n == .settings {
+                animateIn = false
+                DispatchQueue.main.asyncAfter(deadline: .now()+0.05) {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+                }
+            }
+        }
         .alert(languageManager.settings.areYouSureLogout, isPresented: $state.showingLogoutAlert) {
             Button(languageManager.ui.cancel, role: .cancel) { }
             Button(languageManager.settings.logout, role: .destructive) { state.performLogout() }
@@ -163,6 +173,9 @@ struct SettingsView: View {
                 }
             }
         }.padding(.horizontal, 5).padding(.bottom, 24)
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 10)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: animateIn)
         .diagnosticBorder(.white, width: 1, label: "SETT_HDR_P:H5,B24")
     }
 
@@ -223,6 +236,9 @@ struct SettingsView: View {
             .padding(.horizontal, 5)
             .diagnosticBorder(.blue.opacity(0.5), width: 1, label: "NAT_P:H5")
         }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.1), value: animateIn)
         .diagnosticBorder(.cyan, width: 1, label: "LANG_SEC_V_S:24")
     }
 
@@ -281,6 +297,9 @@ struct SettingsView: View {
                 .overlay(TechFrameBorder(isSelected: false))
             }
         }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.2), value: animateIn)
         .padding(.horizontal, 5)
     }
 
@@ -332,6 +351,9 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 5)
         .onAppear { state.checkNeuralStatus() }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.15), value: animateIn)
         .diagnosticBorder(.white.opacity(0.3), width: 1, label: "NEURAL_SEC_P:H5")
     }
     
@@ -386,6 +408,9 @@ struct SettingsView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 5)
         }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.3), value: animateIn)
         .diagnosticBorder(.pink, width: 1)
     }
 
@@ -414,6 +439,9 @@ struct SettingsView: View {
                 .lineSpacing(4)
                 .padding(.horizontal, 5)
         }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.25), value: animateIn)
         .diagnosticBorder(.blue.opacity(0.3), width: 1)
     }
 
@@ -474,6 +502,9 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 20)
         }
+        .opacity(animateIn ? 1 : 0)
+        .offset(y: animateIn ? 0 : 20)
+        .animation(.spring().delay(0.35), value: animateIn)
         .padding(.horizontal, 5)
         .diagnosticBorder(.green.opacity(0.3), width: 1, label: "ACC_SEC_P:H5")
         .diagnosticBorder(.white.opacity(0.1), width: 2)

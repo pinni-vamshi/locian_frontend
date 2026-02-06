@@ -76,7 +76,10 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             chooseContext: "학습을 시작할 컨텍스트를 선택하세요",
             typeHere: "여기에 입력",
             nearbyLabel: "가까운",
-            noNearbyPlaces: "근처에 장소를 찾을 수 없습니다")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "루틴 추가",
+            tapToSetup: "탭하여 설정",
+            tapToStartLearning: "탭하여 학습 시작")
     }
 
     var settings: SettingsStrings {
@@ -635,6 +638,9 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }

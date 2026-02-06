@@ -13,6 +13,7 @@ struct ThemeColors {
     // Global Aesthetic Colors (Cyberpunk / Brand)
     static let primaryAccent = Color(red: 0.0, green: 1.0, blue: 1.0) // #00FFFF (Cyan)
     static let secondaryAccent = Color(red: 1.0, green: 0.1, blue: 0.4) // #FF1966 (Pink)
+    static let neonGreen = Color(hex: "#35F21C")
     
     static func getColor(for themeName: String) -> Color {
         switch themeName {

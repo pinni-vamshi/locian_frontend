@@ -76,7 +76,10 @@ struct HindiStrings: AppStrings, LocalizedStrings {
             chooseContext: "सीखना शुरू करने के लिए एक संदर्भ चुनें",
             typeHere: "यहाँ टाइप करें",
             nearbyLabel: "करीब",
-            noNearbyPlaces: "आसपास कोई जगह नहीं मिली")
+            noNearbyPlaces: "{noNearby}",
+            addRoutine: "रूटीन जोड़ें",
+            tapToSetup: "सेटअप करने के लिए टैप करें",
+            tapToStartLearning: "सीखना शुरू करने के लिए टैप करें")
     }
 
     var settings: SettingsStrings {
@@ -634,6 +637,9 @@ struct HindiStrings: AppStrings, LocalizedStrings {
         case .typeHere: return ui.typeHere
         case .nearbyLabel: return ui.nearbyLabel
         case .noNearbyPlaces: return ui.noNearbyPlaces
+        case .addRoutine: return ui.addRoutine
+        case .tapToSetup: return ui.tapToSetup
+        case .tapToStartLearning: return ui.tapToStartLearning
         }
     }
 }
