@@ -62,6 +62,14 @@ class ScoringEngine {
                                 )
                                 placeCopy.micro_situations = [filteredSection]
                                 
+                                // CRITICAL FIX: Ensure unique ID for SwiftUI
+                                // If multiple moments match from same place, they need unique IDs
+                                if let originalId = place.document_id {
+                                    placeCopy.document_id = "\(originalId)_\(moment.text.hashValue)"
+                                } else {
+                                    placeCopy.document_id = UUID().uuidString
+                                }
+                                
                                 let scoredPlace = ScoredPlace(
                                     place: placeCopy,
                                     score: boostedScore,
