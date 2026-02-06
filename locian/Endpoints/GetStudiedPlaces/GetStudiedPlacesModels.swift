@@ -57,7 +57,7 @@ struct MicroSituationData: Equatable, Identifiable, Codable {
     let type: String?
     let created_at: String?
     let context_description: String?
-    let micro_situations: [UnifiedMomentSection]?
+    var micro_situations: [UnifiedMomentSection]?
     let priority_score: Double?
     var distance_meters: Double?
     

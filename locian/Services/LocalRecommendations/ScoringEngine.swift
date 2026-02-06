@@ -22,18 +22,68 @@ class ScoringEngine {
         // 1. Semantic Similarity (Intent vs History)
         // We compare the intent vector against the place name + context description
         if let intentVector = intentVector {
-            let placeText = "\(place.place_name ?? "") \(place.context_description ?? "")"
-            if let placeVector = EmbeddingEngine.shared.generateEmbedding(for: placeText) {
-                let similarity = cosineSimilarity(intentVector, placeVector)
-                totalScore += similarity * 10.0 // Weight: 10
-                
-                print("🧠 [ScoringEngine] Comparing Intent vs '\(placeText)' -> Sim: \(similarity)")
-                
-                if similarity > 0.3 {
-                    matchReasons.append("Intent Match")
+            // Find the BEST matching moment text within this place
+            var bestMomentScore: Double = 0.0
+            var bestMomentText: String = ""
+            var bestMoment: UnifiedMoment? = nil
+            var bestCategory: String? = nil
+            
+            if let sections = place.micro_situations {
+                for section in sections {
+                    for moment in section.moments {
+                        if let momentVector = EmbeddingEngine.shared.generateEmbedding(for: moment.text) {
+                            let similarity = cosineSimilarity(intentVector, momentVector)
+                            
+                            print("🧠 [ScoringEngine] Intent vs Moment '\(moment.text)' -> Sim: \(similarity)")
+                            
+                            if similarity > bestMomentScore {
+                                bestMomentScore = similarity
+                                bestMomentText = moment.text
+                                bestMoment = moment
+                                bestCategory = section.category
+                            }
+                        }
+                    }
                 }
-            } else {
-                print("⚠️ [ScoringEngine] Failed to generate embedding for: \(placeText)")
+            }
+            
+            // Also check Context Description as a fallback/boost
+            let contextText = place.context_description ?? ""
+            if !contextText.isEmpty, let contextVector = EmbeddingEngine.shared.generateEmbedding(for: contextText) {
+                let contextSim = cosineSimilarity(intentVector, contextVector)
+                if contextSim > bestMomentScore {
+                    bestMomentScore = contextSim
+                    bestMomentText = "Context: \(contextText)"
+                }
+            }
+            
+            totalScore += bestMomentScore * 10.0
+            
+            if bestMomentScore > 0.3 {
+                matchReasons.append("Moment Match: '\(bestMomentText)'")
+                
+                // 🚀 CRITICAL: Filter the place to ONLY contain this best moment
+                if let bestMoment = bestMoment, let bestCategory = bestCategory {
+                    // Create a mutable copy (MicroSituationData is a value type, so var placeCopy = place works)
+                    var placeCopy = place
+                    
+                    // Construct a single section with the single best moment
+                    let filteredSection = UnifiedMomentSection(
+                        category: bestCategory,
+                        moments: [bestMoment]
+                    )
+                    
+                    // Replace the list with just this one section
+                    placeCopy.micro_situations = [filteredSection]
+                    
+                    // Use this modified place for the result
+                    return ScoredPlace(
+                        place: placeCopy,
+                        score: totalScore,
+                        matchReason: matchReasons.joined(separator: ", "),
+                        extractedName: extractPlaceName(from: placeCopy)
+                    )
+                }
             }
         } else {
             print("⚠️ [ScoringEngine] No intent vector provided")
