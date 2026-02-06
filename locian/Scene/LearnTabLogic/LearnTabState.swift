@@ -49,6 +49,14 @@ class LearnTabState: ObservableObject {
     // Unified Timeline Data
     @Published var allTimelinePlaces: [MicroSituationData] = []
     
+    // Recommended Context Data (Predicted/Analyzed)
+    @Published var recommendedPlaces: [MicroSituationData] = []
+    @Published var selectedRecommendedCategory: String? = nil
+    
+    // Discovery/Suggested Places (Non-studied contexts)
+    @Published var discoveryPlaces: [MicroSituationData] = []
+    @Published var selectedDiscoveryPlace: MicroSituationData? = nil
+    
     // UI-Ready Properties (Pure Data for Views)
     @Published var uiPlaceName: String = "UNKNOWN"
     @Published var uiCategories: [UnifiedMomentSection] = []
@@ -103,14 +111,17 @@ class LearnTabState: ObservableObject {
     
     private func syncUIProperties(hour: Int) {
         let hourInt = hour
-        let currentPlace = self.stickyPlaceForHour(hourInt)
+        
+        // Priority: Selected Discovery Place > Timeline Sticky Place
+        let currentPlace = selectedDiscoveryPlace ?? self.stickyPlaceForHour(hourInt)
+        
         let name = currentPlace?.place_name ?? "UNKNOWN"
         let categories = currentPlace?.micro_situations ?? []
         let streak = appState.userLanguagePairs.first(where: { $0.is_default }).map { 
             "\(calculateCurrentStreak(practiceDates: $0.practice_dates)) " + LocalizationManager.shared.string(.daysLabel)
         } ?? ""
 
-        print("🔄 [StateSync] Syncing UI for Hour: \(hourInt). Result: '\(name)' (\(categories.count) categories)")
+        print("🔄 [StateSync] Syncing UI. Source: \(selectedDiscoveryPlace != nil ? "Discovery" : "Timeline"). Hour: \(hourInt). Result: '\(name)' (\(categories.count) categories)")
 
         DispatchQueue.main.async {
             self.uiPlaceName = name
@@ -127,6 +138,11 @@ class LearnTabState: ObservableObject {
                 self.uiSelectedCategoryName = nil
             }
         }
+    }
+    
+    func resetSelectedDiscovery() {
+        self.selectedDiscoveryPlace = nil
+        self.syncUIProperties(hour: self.selectedTimelineHour)
     }
     
     private func syncUIMoments(categoryName: String?) {
@@ -184,6 +200,12 @@ class LearnTabState: ObservableObject {
                 self.appState.timeline = data.timeline
                 self.processTimeline(data.timeline)
                 self.hasAnyStudiedPlaces = !self.noPlacesFound
+                
+                // 🚀 Automatically predict context for the RECOMMENDED section
+                let placeNames = self.allTimelinePlaces.compactMap { $0.place_name }
+                if !placeNames.isEmpty {
+                    self.predictPlaceFromList(places: placeNames)
+                }
                 
                 // 🚀 Sync UI immediately after processing
                 self.syncUIProperties(hour: self.selectedTimelineHour)
@@ -270,8 +292,12 @@ class LearnTabState: ObservableObject {
     
     func processTimeline(_ timeline: TimelineData) {
         self.allTimelinePlaces = timeline.places
+        
+        // Filter discovery vs studied
+        self.discoveryPlaces = timeline.places.filter { $0.type == "image" || $0.type == "custom" }
+        self.noPlacesFound = timeline.places.isEmpty
+        
         self.currentSectionTimeSpan = self.allTimelinePlaces.first?.time_span ?? "Now"
-        self.noPlacesFound = self.allTimelinePlaces.isEmpty
         
         if let prioritized = self.findPrioritizedPlace(in: self.allTimelinePlaces) {
             self.firstRecommendedPlace = prioritized.place_name
@@ -416,6 +442,10 @@ class LearnTabState: ObservableObject {
         return allTimelinePlaces.contains { $0.hour == hour }
     }
 
+    func hasStudiedPlace(forHour hour: Int) -> Bool {
+        return allTimelinePlaces.contains { $0.hour == hour && $0.type != "image" && $0.type != "custom" }
+    }
+
     func convertStringsToMoments(from place: MicroSituationData) -> [MicroSituationData] {
         let allMoments = (place.micro_situations ?? []).flatMap { $0.moments.map { $0.text } }
         return allMoments.map { situationString in
@@ -461,7 +491,7 @@ class LearnTabState: ObservableObject {
                 case .success(let response):
                     if let data = response.data {
                         self.isAnalyzingImage = false
-                        self.setCustomActivePlace(name: data.place_name, situations: data.micro_situations)
+                        self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations)
                     } else {
                         self.isAnalyzingImage = false
                         self.firstRecommendedPlace = "Unknown"
@@ -496,7 +526,7 @@ class LearnTabState: ObservableObject {
                 case .success(let response):
                     if let data = response.data {
                         let finalName = data.place_name.isEmpty ? name : data.place_name
-                        self.setCustomActivePlace(name: finalName, situations: data.micro_situations)
+                        self.setRecommendedPlace(name: finalName, situations: data.micro_situations)
                     } else {
                         self.setCustomActivePlace(name: name)
                     }
@@ -531,7 +561,7 @@ class LearnTabState: ObservableObject {
                 switch result {
                 case .success(let response):
                     if let data = response.data {
-                        self.setCustomActivePlace(name: data.place_name, situations: data.micro_situations ?? [])
+                        self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations ?? [])
                     } else {
                         self.setCustomActivePlace(name: places.first ?? "Unknown")
                     }
@@ -639,5 +669,48 @@ extension LearnTabState {
             } else { break }
         }
         return currentStreak
+    }
+}
+
+extension LearnTabState {
+    func setRecommendedPlace(name: String, situations: [UnifiedMomentSection]? = nil) {
+        let timeString = self.getCurrentTimeString(); let hour = Calendar.current.component(.hour, from: Date())
+        let dateString = self.getCurrentDateString(); let loc = self.getCurrentLocation()
+        
+        let customPlace = MicroSituationData(
+            place_name: name,
+            latitude: loc.lat,
+            longitude: loc.long,
+            time: timeString,
+            hour: hour,
+            type: "custom",
+            created_at: dateString,
+            context_description: nil,
+            micro_situations: situations ?? [],
+            priority_score: 2.0,
+            distance_meters: 0,
+            time_span: timeString,
+            profession: appState.profession,
+            updated_at: dateString,
+            target_language: nil,
+            document_id: UUID().uuidString
+        )
+        
+        DispatchQueue.main.async {
+            self.recommendedPlaces = [customPlace]
+            // Also add to discovery if it's new
+            if !self.discoveryPlaces.contains(where: { $0.place_name == customPlace.place_name }) {
+                self.discoveryPlaces.insert(customPlace, at: 0)
+            }
+            if let firstCat = situations?.first?.category {
+                self.selectedRecommendedCategory = firstCat
+            }
+        }
+    }
+    
+    func clearRecommendedPlaces() {
+        DispatchQueue.main.async {
+            self.recommendedPlaces = []
+        }
     }
 }

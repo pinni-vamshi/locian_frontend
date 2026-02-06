@@ -52,7 +52,7 @@ struct DoubleArrowButton: View {
     // Initializer for simple single color use
     init(direction: Direction, color: Color, size: CGFloat = 24, spacing: CGFloat = -4, hasSquareBackground: Bool = false, hasMixedSquareBackground: Bool = false, action: @escaping () -> Void) {
         self.direction = direction
-        self.arrow1Color = .white
+        self.arrow1Color = color.opacity(0.5)
         self.arrow2Color = color
         self.size = size
         self.spacing = spacing

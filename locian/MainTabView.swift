@@ -59,7 +59,7 @@ struct MainTabView: View {
                 Group {
                     switch selectedTab {
                     case .learn:
-                        LearnTabView(appState: appState, state: learnTabState)
+                        LearnTabView(appState: appState, state: learnTabState, selectedTab: $selectedTab)
                     case .add:
                         AddTabView(appState: appState, state: addTabState, selectedTab: $selectedTab)
                     case .progress:

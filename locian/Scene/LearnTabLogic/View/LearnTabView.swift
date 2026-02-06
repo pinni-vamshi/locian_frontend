@@ -11,6 +11,7 @@ import NaturalLanguage
 struct LearnTabView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject var state: LearnTabState
+    @Binding var selectedTab: MainTabView.TabItem
     @Environment(\.scenePhase) var scenePhase 
     @State private var animateIn = false
     @State private var sidebarTextHeight: CGFloat = 180
@@ -21,27 +22,55 @@ struct LearnTabView: View {
                 headerView
                     .diagnosticBorder(.pink, width: 1, label: "HDR")
                 
-                HStack(spacing: 0) {
-                    timelineSidebar.frame(width: 70) 
-                        .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "SIDEBAR")
-                    heroPlaceDisplay
-                        .diagnosticBorder(.cyan.opacity(0.3), width: 1, label: "HERO")
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        if !state.recommendedPlaces.isEmpty || state.isAnalyzingImage {
+                            recommendedSection
+                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                .padding(.top, 10)
+                            
+                            addNavigationButton
+                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                .padding(.vertical, 8)
+                            
+                            if !state.discoveryPlaces.isEmpty {
+                                suggestedContextsSection
+                                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                            }
+                            
+                            activeMomentsContent
+                                .padding(.top, 10)
+                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                        }
+                        
+                VStack(spacing: 0) {
+                    let studiedPlaces = state.allTimelinePlaces.filter { $0.type != "image" && $0.type != "custom" }
+                    if !studiedPlaces.isEmpty {
+                        HStack(spacing: 0) {
+                            timelineSidebar.frame(width: 70) 
+                                .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "SIDEBAR")
+                            
+                            // Only show hero if the currently selected hour place is "studied"
+                            let currentPlace = state.stickyPlaceForHour(state.selectedTimelineHour)
+                            if currentPlace?.type != "image" && currentPlace?.type != "custom" {
+                                heroPlaceDisplay
+                                    .diagnosticBorder(.cyan.opacity(0.3), width: 1, label: "HERO")
+                            } else {
+                                Spacer()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.black.opacity(0.5))
+                                    .overlay(Text("NO STUDIED HISTORY FOR THIS HOUR").font(.system(size: 10, weight: .bold)).foregroundColor(.gray))
+                            }
+                        }
+                        .diagnosticBorder(.purple, width: 2, label: "HERO_HS_S:0")
+                        .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
+                        .frame(height: 180)
+                    }
                 }
-                .diagnosticBorder(.purple, width: 2, label: "HERO_HS_S:0")
-                .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom) // Updated to 0.2 opacity
-                .frame(height: 180)
-                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                .animation(.spring().delay(0.1), value: animateIn)
-                
-                
-                instructionalHeader
-                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                    .animation(.spring().delay(0.15), value: animateIn)
-
-                activeMomentsContent
-                    .diagnosticBorder(.green, width: 1, label: "MOMENTS")
-                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                    .animation(.spring().delay(0.2), value: animateIn)
+                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                        .animation(.spring().delay(0.1), value: animateIn)
+                    }
+                }
             }
             .diagnosticBorder(.white, width: 2, label: "LEARN_V_S:0")
             .background(Color.black.ignoresSafeArea())
@@ -62,20 +91,103 @@ struct LearnTabView: View {
             loadingOverlay
         }
     }
+    
+    // MARK: - Navigation Components
+    
+    private var addNavigationButton: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                selectedTab = .add
+            }
+        }) {
+            HStack {
+                Text("NOT SEEING WHAT YOU NEED?")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(Color(white: 0.5))
+                
+                Text("ADD A NEW MOMENT")
+                    .font(.system(size: 13, weight: .black))
+                    .foregroundColor(ThemeColors.secondaryAccent)
+                
+                Spacer()
+                
+                Image(systemName: "plus.square.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(ThemeColors.secondaryAccent)
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 60)
+            .background(Color(white: 0.05))
+            .overlay(
+                Rectangle()
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
+            .padding(.horizontal, 16)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var suggestedContextsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("SUGGESTED FOR YOU")
+                .font(.system(size: 11, weight: .black))
+                .foregroundColor(.gray)
+                .padding(.horizontal, 16)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(state.discoveryPlaces, id: \.id) { place in
+                        let isSelected = state.selectedDiscoveryPlace?.id == place.id
+                        Button(action: {
+                            withAnimation(.spring()) {
+                                if isSelected {
+                                    state.resetSelectedDiscovery()
+                                } else {
+                                    state.selectedDiscoveryPlace = place
+                                }
+                            }
+                        }) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(place.place_name?.uppercased() ?? "MOMENT")
+                                    .font(.system(size: 14, weight: .black))
+                                    .foregroundColor(isSelected ? .black : .white)
+                                
+                                Text("SELECT SECTION")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .opacity(0.7)
+                                    .foregroundColor(isSelected ? .black : .gray)
+                            }
+                            .padding(16)
+                            .frame(width: 160, height: 80, alignment: .leading)
+                            .background(isSelected ? ThemeColors.secondaryAccent : Color(white: 0.1))
+                            .overlay(
+                                Rectangle()
+                                    .stroke(isSelected ? .clear : Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+        }
+        .padding(.vertical, 10)
+    }
 
     // MARK: - Components
 
     private var headerView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(LocalizationManager.shared.string(.welcomeLabel)).font(.system(size: 14, weight: .black, design: .monospaced)).foregroundColor(.black).padding(.horizontal, 8).padding(.vertical, 6).background(Color.white)
-                        .diagnosticBorder(.gray, width: 0.5)
-                    Text(appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased()).font(.system(size: 20, weight: .black, design: .monospaced)).foregroundColor(.white).padding(.horizontal, 8).padding(.vertical, 6).background(ThemeColors.secondaryAccent)
-                        .diagnosticBorder(.white, width: 0.5, label: "NAME_P:H8,V6")
-                }
-                .diagnosticBorder(.blue, width: 1, label: "HDR_V_LEFT_S:4")
+            HStack(alignment: .center) {
+                Text(appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased())
+                    .font(.system(size: 20, weight: .black, design: .monospaced))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(ThemeColors.secondaryAccent)
+                    .diagnosticBorder(.white, width: 0.5, label: "NAME_P:H8,V6")
+                
                 Spacer()
+                
                 HStack(spacing: 4) {
                     Image(systemName: "flame.fill").font(.system(size: 12, weight: .bold)).foregroundColor(ThemeColors.primaryAccent)
                         .diagnosticBorder(.red, width: 0.5)
@@ -129,7 +241,7 @@ struct LearnTabView: View {
         GeometryReader { geo in
             let distance = abs(geo.frame(in: .global).midY - scrollMid)
             let factor = max(0, 1.0 - (distance / 80))
-            let hasPlace = state.hasPlace(forHour: hr)
+            let hasPlace = state.hasStudiedPlace(forHour: hr)
             return HStack(spacing: 6) {
                 Spacer()
                 VStack(spacing: 2) {
@@ -163,16 +275,12 @@ struct LearnTabView: View {
                 } else if state.uiCategories.isEmpty {
                     noMomentsView
                 } else {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        momentsList
-                    }
-                    .diagnosticBorder(.white.opacity(0.1), width: 1)
+                    momentsList
                 }
             }
             .frame(maxWidth: .infinity)
         }
         .diagnosticBorder(.cyan.opacity(0.2), width: 1)
-        .frame(maxHeight: .infinity)
     }
 
 
@@ -198,17 +306,37 @@ struct LearnTabView: View {
     private var momentsList: some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(state.uiMomentsInSelectedCategory, id: \.text) { moment in
-                Button(action: { state.generateSentence(for: moment.text) }) {
+                ChamferedCard(
+                    color: .black,
+                    borderColor: .white.opacity(0.1),
+                    borderWidth: 1,
+                    chamferSize: 12
+                ) {
                     HStack(spacing: 12) {
-                        Rectangle().fill(Color.green).frame(width: 4).frame(maxHeight: .infinity)
-                            .diagnosticBorder(.green, width: 0.5)
-                        Text(moment.text.uppercased()).font(.system(size: 15, weight: .bold)).foregroundColor(.white.opacity(0.8)).multilineTextAlignment(.leading)
-                            .diagnosticBorder(.white.opacity(0.5), width: 0.5)
+                        Text(moment.text.uppercased())
+                            .font(.system(size: 22, weight: .black))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.leading)
+                        
                         Spacer()
-                    }.padding(.vertical, 12).padding(.horizontal, 16)
-                        .diagnosticBorder(.cyan.opacity(0.3), width: 1)
+                        
+                        Button(action: { state.generateSentence(for: moment.text) }) {
+                            Image(systemName: "waveform")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(ThemeColors.secondaryAccent)
+                                .frame(width: 32, height: 32)
+                                .padding(8)
+                                .background(Color.gray.opacity(0.1))
+                                .cornerRadius(0)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 0)
+                                        .stroke(ThemeColors.secondaryAccent, lineWidth: 1)
+                                )
+                        }
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
                 }
-                .diagnosticBorder(.white.opacity(0.1), width: 1)
             }
             Spacer().frame(height: 100)
         }
@@ -343,5 +471,191 @@ struct LearnTabView: View {
         if newPhase == .active && !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
             state.fetchFirstRecommendedPlace()
         }
+    }
+
+    private var recommendedSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            recommendedPlaceHero
+            
+            HStack(spacing: 0) {
+                // Unified Sidebar: Place Name "Spine" (Rotated 90 deg)
+                VStack {
+                    Spacer()
+                    Text(state.recommendedPlaces.first?.place_name?.uppercased() ?? "MOMENT")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundColor(.white)
+                        .fixedSize()
+                        .rotationEffect(.degrees(-90))
+                        .fixedSize()
+                    Spacer()
+                }
+                .frame(width: 40)
+                .background(Color(white: 0.15))
+                
+                // Right Content Area
+                VStack(alignment: .leading, spacing: 0) {
+                    recommendedThemeSelector
+                    recommendedMomentsScroll
+                }
+                .background(Color.black)
+            }
+        }
+        .padding(.bottom, 20)
+    }
+
+    private var recommendedPlaceHero: some View {
+        // Content Only: Section Header "RECOMMENDED"
+        VStack(alignment: .leading) {
+            Text("RECOMMENDED")
+                .font(.system(size: 12, weight: .heavy))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 5)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 30)
+        .diagnosticBorder(.blue, width: 1, label: "REC_PLACE_STACK")
+    }
+
+    @ViewBuilder
+    private var recommendedThemeSelector: some View {
+        if let place = state.recommendedPlaces.first, let situations = place.micro_situations, situations.count > 1 {
+            // Content Only: Theme Blocks
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(situations, id: \.category) { section in
+                        let isSelected = state.selectedRecommendedCategory == section.category
+                        Button(action: { state.selectedRecommendedCategory = section.category }) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(section.category.uppercased())
+                                    .font(.system(size: 13, weight: .black))
+                                
+                                if isSelected {
+                                    Text("THEME")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .opacity(0.8)
+                                }
+                            }
+                            .foregroundColor(isSelected ? .black : .white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .frame(minWidth: 140, minHeight: 60, alignment: .leading)
+                            .background(isSelected ? Color(white: 0.8) : Color(white: 0.1))
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+            }
+            .frame(height: 80)
+            .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
+            .diagnosticBorder(.orange, width: 1, label: "REC_CAT_STACK")
+        }
+    }
+
+    private var recommendedMomentsScroll: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                recommendedAnalysisPlaceholder
+                recommendedMomentCards
+            }
+            .padding(.horizontal, 16)
+        }
+        .frame(height: 240)
+        .padding(.top, 10)
+        .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
+        .diagnosticBorder(.green, width: 1, label: "REC_MOMENTS_STACK")
+    }
+
+    @ViewBuilder
+    private var recommendedAnalysisPlaceholder: some View {
+        if state.recommendedPlaces.isEmpty && state.isAnalyzingImage {
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(width: 220, height: 220)
+                .overlay(ProgressView().tint(.white))
+        }
+    }
+
+    private var recommendedMomentCards: some View {
+        ForEach(Array(state.recommendedPlaces.enumerated()), id: \.1.id) { (index: Int, place: MicroSituationData) in
+            recommendedMomentRow(place: place, placeIndex: index)
+        }
+    }
+
+    private func recommendedMomentRow(place: MicroSituationData, placeIndex: Int) -> some View {
+        let situations = place.micro_situations ?? []
+        return ForEach(Array(situations.enumerated()), id: \.1.category) { (sIndex: Int, section: UnifiedMomentSection) in
+            if state.selectedRecommendedCategory == nil || section.category == state.selectedRecommendedCategory {
+                recommendedCardGenerator(category: section.category, moments: section.moments, placeIndex: placeIndex, sectionIndex: sIndex)
+            }
+        }
+    }
+
+    private func recommendedCardGenerator(category: String, moments: [UnifiedMoment], placeIndex: Int, sectionIndex: Int) -> some View {
+        ForEach(Array(moments.enumerated()), id: \.1.text) { (mIndex: Int, moment: UnifiedMoment) in
+            let catId = 9021 + placeIndex + sectionIndex + mIndex
+            let time = placeIndex == 0 ? "08:45 AM" : "09:12 AM"
+            
+            RecommendedCard(moment: moment.text, catId: "\(catId)", time: time, isGreen: false) {
+                state.generateSentence(for: moment.text)
+            }
+        }
+    }
+
+    private func RecommendedCard(moment: String, catId: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            recommendedCardHeader(catId: catId, time: time, isGreen: isGreen)
+            Spacer()
+            recommendedCardContent(moment: moment, isGreen: isGreen)
+            Spacer()
+            recommendedCardFooter(isGreen: isGreen, action: action)
+        }
+        .frame(width: 220, height: 220)
+        .background(isGreen ? Color.green : Color(white: 0.1))
+    }
+
+    private func recommendedCardHeader(catId: String, time: String, isGreen: Bool) -> some View {
+        HStack {
+            Text("CAT_ID: \(catId)")
+            Spacer()
+            Text(time)
+        }
+        .font(.system(size: 10, weight: .bold, design: .monospaced))
+        .foregroundColor(isGreen ? .black.opacity(0.6) : .gray)
+        .padding(.horizontal, 12)
+        .padding(.top, 12)
+    }
+
+    private func recommendedCardContent(moment: String, isGreen: Bool) -> some View {
+        Text(moment.uppercased())
+            .font(.system(size: 24, weight: .black))
+            .foregroundColor(isGreen ? .black : .white)
+            .multilineTextAlignment(.leading)
+            .lineLimit(3)
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, 12)
+    }
+
+    private func recommendedCardFooter(isGreen: Bool, action: @escaping () -> Void) -> some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("GENERATE")
+                Text("SENTENCE")
+            }
+            .font(.system(size: 10, weight: .black))
+            .foregroundColor(isGreen ? .black : .gray)
+            
+            Spacer()
+            
+            Button(action: action) {
+                Image(systemName: "waveform")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.black)
+                    .frame(width: 32, height: 32)
+                    .padding(8)
+                    .background(ThemeColors.secondaryAccent)
+            }
+        }
+        .padding(12)
     }
 }
