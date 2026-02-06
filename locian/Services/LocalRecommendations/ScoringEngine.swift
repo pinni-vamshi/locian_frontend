@@ -26,10 +26,17 @@ class ScoringEngine {
             if let placeVector = EmbeddingEngine.shared.generateEmbedding(for: placeText) {
                 let similarity = cosineSimilarity(intentVector, placeVector)
                 totalScore += similarity * 10.0 // Weight: 10
+                
+                print("🧠 [ScoringEngine] Comparing Intent vs '\(placeText)' -> Sim: \(similarity)")
+                
                 if similarity > 0.3 {
                     matchReasons.append("Intent Match")
                 }
+            } else {
+                print("⚠️ [ScoringEngine] Failed to generate embedding for: \(placeText)")
             }
+        } else {
+            print("⚠️ [ScoringEngine] No intent vector provided")
         }
         
         // 2. GPS Proximity Boost

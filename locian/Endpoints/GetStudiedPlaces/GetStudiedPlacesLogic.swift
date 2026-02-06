@@ -40,19 +40,35 @@ class GetStudiedPlacesLogic {
                     
                     // Parse User Intent if available
                     var userIntent: UserIntent? = nil
-                    if let intentDict = dataObj["user_intent"] as? [String: String] {
+                    if let intentDict = dataObj["user_intent"] as? [String: Any] {
+                        
+                        // Handle complex suggested_needs (Array -> String)
+                        var needsString: String? = nil
+                        if let needsArray = intentDict["suggested_needs"] as? [[String: String]] {
+                             needsString = needsArray.map { dict in
+                                 let n = dict["Need"] ?? ""
+                                 let r = dict["Reason"] ?? ""
+                                 return "\(n) because \(r)"
+                             }.joined(separator: ". ")
+                        } else {
+                            needsString = intentDict["suggested_needs"] as? String
+                        }
+                        
                         userIntent = UserIntent(
-                            movement: intentDict["movement"],
-                            waiting: intentDict["waiting"],
-                            consume_fast: intentDict["consume_fast"],
-                            consume_slow: intentDict["consume_slow"],
-                            errands: intentDict["errands"],
-                            browsing: intentDict["browsing"],
-                            rest: intentDict["rest"],
-                            social: intentDict["social"],
-                            emergency: intentDict["emergency"],
-                            suggested_needs: intentDict["suggested_needs"]
+                            movement: intentDict["movement"] as? String,
+                            waiting: intentDict["waiting"] as? String,
+                            consume_fast: intentDict["consume_fast"] as? String,
+                            consume_slow: intentDict["consume_slow"] as? String,
+                            errands: intentDict["errands"] as? String,
+                            browsing: intentDict["browsing"] as? String,
+                            rest: intentDict["rest"] as? String,
+                            social: intentDict["social"] as? String,
+                            emergency: intentDict["emergency"] as? String,
+                            suggested_needs: needsString
                         )
+                        print("🧠 [GetStudiedPlacesLogic] Successfully parsed User Intent")
+                    } else {
+                        print("⚠️ [GetStudiedPlacesLogic] No User Intent found in response")
                     }
                     
                     dataDict = GetStudiedPlacesData(

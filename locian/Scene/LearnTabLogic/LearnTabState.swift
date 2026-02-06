@@ -134,8 +134,10 @@ class LearnTabState: ObservableObject {
                     // For now, we still allow the remote prediction to run or override if needed.
                     if let bestMatch = localResult.mostLikely.first {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
-                        // Optional: Pre-fill recommendedPlaces with local best match?
-                        // self.setRecommendedPlace(name: bestMatch.extractedName, situations: bestMatch.place.micro_situations)
+                        
+                        // 🚀 UPDATE UI IMMEDIATELY
+                        // Populate the recommendedPlaces with the top 5 local matches
+                        self.recommendedPlaces = localResult.mostLikely.map { $0.place }
                     }
                 }
                 
