@@ -112,19 +112,19 @@ class ScoringEngine {
     }
     
     private func extractPlaceName(from place: MicroSituationData) -> String {
-        // Use NLTagger to find a cleaner name if possible, or fallback
-        // For now, we mainly rely on the stored name, but if we had raw text, we'd use NLTagger here.
-        // User requested NLTagger usage for place names.
-        // Let's try to tag the place_name itself to see if we can refine it (e.g. remove noise)
-        // OR act on the Context Description if name is "Unknown".
-        
+        // print("\n🟢 [ScoringEngine] extractPlaceName called for Place ID: \(place.id)")
         let rawName = place.place_name ?? "Unknown Place"
+        
         if rawName != "Unknown Place" && rawName != "Unknown" {
+            // print("   ✅ Using Raw Name: '\(rawName)'")
             return rawName
         }
         
+        print("   ⚠️ Raw Name is Unknown. Attempting NLTagger extraction...")
+        
         // Try to extract from context if name is unknown
         if let context = place.context_description {
+            print("   🔹 Context available: '\(context)'")
             let tagger = NLTagger(tagSchemes: [.nameType, .lexicalClass])
             tagger.string = context
             var foundName: String?
@@ -132,6 +132,7 @@ class ScoringEngine {
             tagger.enumerateTags(in: context.startIndex..<context.endIndex, unit: .word, scheme: .nameType, options: [.omitPunctuation, .omitWhitespace]) { tag, range in
                 if tag == .placeName || tag == .organizationName {
                     foundName = String(context[range])
+                    print("      ✅ NLTagger Found: '\(foundName ?? "")' (Tag: \(tag?.rawValue ?? "nil"))")
                     return false // Stop at first found
                 }
                 return true
@@ -139,7 +140,11 @@ class ScoringEngine {
             
             if let name = foundName {
                 return name.capitalized
+            } else {
+                print("      ❌ NLTagger found nothing valid.")
             }
+        } else {
+            print("      ❌ No Context Description available.")
         }
         
         return rawName
