@@ -32,22 +32,30 @@ class LocalRecommendationService {
         // 4. Sort by Score (High to Low)
         let sortedPlaces = scoredPlaces.sorted { $0.score > $1.score }
         
-        // 5. Categorize (Just Top 10 as requested - No split)
-        let topMatches = Array(sortedPlaces.prefix(10))
+        // 5. Categorize (Top 5 Most Likely, Next 5 Likely)
+        let mostLikely = Array(sortedPlaces.prefix(5))
+        let likely = Array(sortedPlaces.dropFirst(5).prefix(5))
         
         // Logging for Debug/Verification
         print("🔍 [LocalRec] Intent: \(intentText.prefix(30))...")
-        print("\n🏆 --- FINAL STAND (TOP 10 MOMENTS - NO ORDER) ---")
+        print("\n🏆 --- FINAL STAND (TOP 10 MOMENTS - SPLIT 5/5) ---")
         
-        for (i, item) in topMatches.enumerated() {
+        print("✅ [MOST LIKELY - TOP 5]")
+        for (i, item) in mostLikely.enumerated() {
+             guard let moment = item.place.micro_situations?.first?.moments.first?.text else { continue }
+             print("   \(i+1). [\(String(format: "%.2f", item.score))] \(moment) (\(item.place.place_name ?? ""))")
+        }
+        
+        print("☑️ [LIKELY - NEXT 5]")
+        for (i, item) in likely.enumerated() {
              guard let moment = item.place.micro_situations?.first?.moments.first?.text else { continue }
              print("   \(i+1). [\(String(format: "%.2f", item.score))] \(moment) (\(item.place.place_name ?? ""))")
         }
         print("----------------------------------------\n")
         
         return LocalRecommendationResult(
-            mostLikely: topMatches,
-            likely: [] // Empty as user requested no split
+            mostLikely: mostLikely,
+            likely: likely
         )
     }
     

@@ -379,9 +379,31 @@ struct LearnTabView: View {
     
     private var globalRecommendationsList: some View {
         VStack(spacing: 24) {
-             // Simple Top 10 List (No Headers)
-             ForEach(Array(state.recommendedPlaces.enumerated()), id: \.1.id) { index, place in
-                 recommendedMomentRow(place: place, placeIndex: index)
+             // Most Likely Section (First 5)
+             VStack(alignment: .leading, spacing: 10) {
+                 Text("MOST LIKELY")
+                     .font(.system(size: 12, weight: .black))
+                     .foregroundColor(.white)
+                     .padding(.leading, 4)
+                     .opacity(0.8)
+                 
+                 ForEach(Array(state.recommendedPlaces.prefix(5).enumerated()), id: \.1.id) { index, place in
+                     recommendedMomentRow(place: place, placeIndex: index)
+                 }
+             }
+             
+             // Likely Section (Next 5)
+             if state.recommendedPlaces.count > 5 {
+                 VStack(alignment: .leading, spacing: 10) {
+                     Text("LIKELY")
+                         .font(.system(size: 12, weight: .black))
+                         .foregroundColor(Color(white: 0.5))
+                         .padding(.leading, 4)
+                     
+                     ForEach(Array(state.recommendedPlaces.dropFirst(5).enumerated()), id: \.1.id) { index, place in
+                          recommendedMomentRow(place: place, placeIndex: index + 5)
+                     }
+                 }
              }
         }
     }
