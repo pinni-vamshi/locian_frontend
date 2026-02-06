@@ -156,7 +156,8 @@ class LearnTabState: ObservableObject {
                         // 🚀 UPDATE UI WITH GENERIC SECTIONS
                         // STRICT STATE: Just maps whatever the Service provided.
                         
-                        let transformer: (MicroSituationData) -> RecommendedMomentViewModel? = { place in
+                        let transformer: (ScoredPlace) -> RecommendedMomentViewModel? = { scoredPlace in
+                            let place = scoredPlace.place
                             guard let moment = place.micro_situations?.first?.moments.first,
                                   let category = place.micro_situations?.first?.category else { return nil }
                             
@@ -165,12 +166,12 @@ class LearnTabState: ObservableObject {
                                 moment: moment.text,
                                 time: place.time ?? "--:--",
                                 category: category,
-                                placeName: place.extractedName
+                                placeName: scoredPlace.extractedName // Now accessing wrapper property
                             )
                         }
                         
                         self.globalRecommendations = localResult.sections.compactMap { resultSection in
-                            let viewModels = resultSection.items.compactMap { transformer($0.place) }
+                            let viewModels = resultSection.items.compactMap { transformer($0) }
                             if viewModels.isEmpty { return nil }
                             return RecommendationSection(items: viewModels)
                         }
