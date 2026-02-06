@@ -40,6 +40,8 @@ class LearnTabState: ObservableObject {
     
     // Recommended Context Data (Predicted/Analyzed)
     @Published var recommendedPlaces: [MicroSituationData] = []
+    @Published var recommendedMostLikely: [MicroSituationData] = [] // Top 5
+    @Published var recommendedLikely: [MicroSituationData] = []     // Next 5
     @Published var selectedRecommendedCategory: String? = nil
     
     // Local Recommendations
@@ -137,11 +139,14 @@ class LearnTabState: ObservableObject {
                     if let bestMatch = localResult.mostLikely.first {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
-                        // 🚀 UPDATE UI IMMEDIATELY
-                        // Populate the recommendedPlaces with BOTH top lists (10 items max)
-                        // This allows the UI to iterate over them easily if needed, but we rely on split logic in View
-                        let allMatches = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
-                        self.recommendedPlaces = allMatches
+                        // 🚀 UPDATE UI WITH SEPARATED DATA
+                        // The Service has already done the logic (5 & 5). The State simply holds it.
+                        // The View will simply render these arrays without doing any prefix/drop logic.
+                        self.recommendedMostLikely = localResult.mostLikely.map { $0.place }
+                        self.recommendedLikely = localResult.likely.map { $0.place }
+                        
+                        // For compatibility with legacy view logic that might assume a single list (though we move away from it)
+                        self.recommendedPlaces = self.recommendedMostLikely + self.recommendedLikely
                         
                         self.isShowingGlobalRecommendations = true
                         self.selectedRecommendedCategory = nil // CRITICAL: Reset filter so all 10 show

@@ -379,7 +379,7 @@ struct LearnTabView: View {
     
     private var globalRecommendationsList: some View {
         VStack(spacing: 24) {
-             // Most Likely Section (First 5)
+             // Most Likely Section (Driven by Logic Layer)
              VStack(alignment: .leading, spacing: 10) {
                  Text("MOST LIKELY")
                      .font(.system(size: 12, weight: .black))
@@ -387,20 +387,22 @@ struct LearnTabView: View {
                      .padding(.leading, 4)
                      .opacity(0.8)
                  
-                 ForEach(Array(state.recommendedPlaces.prefix(5).enumerated()), id: \.1.id) { index, place in
+                 // PURE RENDERING - NO LOGIC
+                 ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, place in
                      recommendedMomentRow(place: place, placeIndex: index)
                  }
              }
              
-             // Likely Section (Next 5)
-             if state.recommendedPlaces.count > 5 {
+             // Likely Section (Driven by Logic Layer)
+             if !state.recommendedLikely.isEmpty {
                  VStack(alignment: .leading, spacing: 10) {
                      Text("LIKELY")
                          .font(.system(size: 12, weight: .black))
                          .foregroundColor(Color(white: 0.5))
                          .padding(.leading, 4)
                      
-                     ForEach(Array(state.recommendedPlaces.dropFirst(5).enumerated()), id: \.1.id) { index, place in
+                     // PURE RENDERING - NO LOGIC
+                     ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, place in
                           recommendedMomentRow(place: place, placeIndex: index + 5)
                      }
                  }
