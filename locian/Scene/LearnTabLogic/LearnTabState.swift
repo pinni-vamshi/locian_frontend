@@ -473,10 +473,17 @@ class LearnTabState: ObservableObject {
 
     
     func handleDeepLink(placeName: String, hour: Int) {
+        print("\n🟢 [LearnTabState] handleDeepLink called")
+        print("   - Place: '\(placeName)'")
+        print("   - Hour: \(hour)")
         self.setCustomActivePlace(name: placeName)
     }
 
     func setCustomActivePlace(name: String, situations: [UnifiedMomentSection]? = nil) {
+        print("\n🟢 [LearnTabState] setCustomActivePlace called")
+        print("   - Name: '\(name)'")
+        print("   - Situations Count: \(situations?.count ?? 0)")
+        
         let customPlace = MicroSituationData(
             place_name: name, 
             latitude: 0, 
@@ -497,12 +504,15 @@ class LearnTabState: ObservableObject {
         )
         
         // Update Timeline
+        print("   🔹 Updating Timeline (Removing old '\(name)', inserting new)...")
         allTimelinePlaces.removeAll { $0.place_name == name }
         allTimelinePlaces.insert(customPlace, at: 0)
         
         DispatchQueue.main.async {
+            print("   ✅ [LearnTabState] Updating UI Recommendations for Custom Place")
             self.recommendedPlaces = [customPlace]
             if let firstCat = situations?.first?.category {
+                print("      - Auto-selecting category: '\(firstCat)'")
                 self.selectedRecommendedCategory = firstCat
             }
             self.isShowingGlobalRecommendations = false
@@ -514,16 +524,21 @@ class LearnTabState: ObservableObject {
 class LearnTabService {
     static let shared = LearnTabService(); private init() {}
     func fetchAndLoadContent(sessionToken: String, completion: @escaping (Result<(timeline: TimelineData, places: [MicroSituationData], intent: UserIntent?), Error>) -> Void) {
+        print("\n🟢 [LearnTabService] fetchAndLoadContent called")
         GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { result in
             switch result {
             case .success(let response):
+                print("   ✅ [LearnTabService] fetch success")
                 if let data = response.data {
+                    print("      - Places: \(data.places.count)")
                     let timeline = TimelineData(places: data.places)
                     completion(.success((timeline, data.places, data.user_intent)))
                 } else {
+                    print("      ⚠️ [LearnTabService] Data is NIL")
                     completion(.failure(NSError(domain: "StudiedPlaces", code: -1, userInfo: [NSLocalizedDescriptionKey: response.message ?? "No data returned"])))
                 }
             case .failure(let error):
+                print("🔴 [LearnTabService] fetch failed: \(error.localizedDescription)")
                 completion(.failure(error))
             }
         }
@@ -557,6 +572,9 @@ extension LearnTabState {
 
 extension LearnTabState {
     func setRecommendedPlace(name: String, situations: [UnifiedMomentSection]? = nil) {
+        print("\n🟢 [LearnTabState] setRecommendedPlace called")
+        print("   - Name: '\(name)'")
+        print("   - Situations: \(situations?.count ?? 0)")
         
         let customPlace = MicroSituationData(
             place_name: name,
@@ -578,8 +596,10 @@ extension LearnTabState {
         )
         
         DispatchQueue.main.async {
+            print("   ✅ [LearnTabState] Updating UI for Recommended Place")
             self.recommendedPlaces = [customPlace]
             if let firstCat = situations?.first?.category {
+                print("      - Auto-selecting category: '\(firstCat)'")
                 self.selectedRecommendedCategory = firstCat
             }
             self.isShowingGlobalRecommendations = false
@@ -587,6 +607,7 @@ extension LearnTabState {
     }
     
     func clearRecommendedPlaces() {
+        print("🟡 [LearnTabState] clearRecommendedPlaces called")
         DispatchQueue.main.async {
             self.recommendedPlaces = []
         }
