@@ -241,6 +241,8 @@ enum StringKey: String {
     case loginOrRegister = "loginOrRegister"
     case pageIndicator = "pageIndicator"
     case selectLanguageDescription = "selectLanguageDescription"
+    case whichLanguageDoYouSpeakComfortably = "whichLanguageDoYouSpeakComfortably"
+    case chooseTheLanguageYouWantToMaster = "chooseTheLanguageYouWantToMaster"
     
     // Welcome View
     case fromWhereYouStand = "fromWhereYouStand"
@@ -440,6 +442,15 @@ enum StringKey: String {
     case avgResponseTime = "avgResponseTime"
     case patternGalaxy = "patternGalaxy"
     case typeYourMoment = "typeYourMoment"
+    
+    // Add Tab
+    case imagesLabel = "imagesLabel"
+    case routinesLabel = "routinesLabel"
+    case whatAreYouDoing = "whatAreYouDoing"
+    case chooseContext = "chooseContext"
+    case typeHere = "typeHere"
+    case nearbyLabel = "nearbyLabel"
+    case noNearbyPlaces = "noNearbyPlaces"
     
 
 }

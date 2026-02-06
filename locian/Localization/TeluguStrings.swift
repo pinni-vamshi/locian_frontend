@@ -69,7 +69,14 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             noNewPlace: "కొత్త స్థలాన్ని జోడించండి",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "ప్రారంభించు",
-            typeYourMoment: "మీ క్షణాన్ని టైప్ చేయండి...")
+            typeYourMoment: "మీ క్షణాన్ని టైప్ చేయండి...",
+            imagesLabel: "చిత్రాలు",
+            routinesLabel: "దినచర్యలు",
+            whatAreYouDoing: "మీరు ఇప్పుడు ఏం చేస్తున్నారు?",
+            chooseContext: "నేర్చుకోవడం ప్రారంభించడానికి సందర్భాన్ని ఎంచుకోండి",
+            typeHere: "ఇక్కడ టైప్ చేయండి",
+            nearbyLabel: "దగ్గరలో",
+            noNearbyPlaces: "దగ్గరలో స్థలాలు ఏవీ కనుగొనబడలేదు")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "లాగిన్ లేదా నోందణి",
             pageIndicator: "పేజీ",
             selectLanguageDescription: "మీ ఇష్టమైన భాషను ఎంచుకోండి",
+            whichLanguageDoYouSpeakComfortably: "మీరు ఏ భాష ను సుఖంగా మాట్లాడుతారు?",
+            chooseTheLanguageYouWantToMaster: "ఈ రోజు మీరు నేర్చుకోవాలనుకునే భాషను ఎంచుకోండి",
             fromWhereYouStand: "మీరు నిలబడిన\nచోటి నుండి",
             toEveryWord: "ప్రతి",
             everyWord: "పదానికి",
@@ -448,6 +457,8 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -616,6 +627,13 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

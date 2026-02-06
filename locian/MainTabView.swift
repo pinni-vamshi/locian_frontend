@@ -127,7 +127,7 @@ struct MainTabView: View {
         
         // Logic: If no place is found for current time span, go to Add tab
         // firstRecommendedPlace is nil if processTimeline finds no match for Current section
-        if let currentPlace = learnTabState.firstRecommendedPlace {
+        if let currentPlace = learnTabState.recommendedPlaces.first?.place_name {
             print("✅ [Routing] Optimal match found: '\(currentPlace)'. Navigating to LEARN tab.")
             selectedTab = .learn
         } else {

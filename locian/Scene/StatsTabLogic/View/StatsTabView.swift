@@ -102,7 +102,7 @@ struct StatsHeaderView: View {
             // 1. Streak Status Badge
             HStack(spacing: 6) {
                 Image(systemName: "flame.fill").font(.system(size: 10))
-                Text("STREAK STATUS").font(.system(size: 10, weight: .bold, design: .monospaced))
+                Text(LocalizationManager.shared.string(.streakStatus).uppercased()).font(.system(size: 15, weight: .bold, design: .monospaced))
             }
             .foregroundColor(.white)
             .padding(.horizontal, 10)
@@ -125,22 +125,24 @@ struct StatsHeaderView: View {
                 // Current Streak
                 HStack(alignment: .center, spacing: 10) {
                     // Two Parallel Vertical Lines
-                    HStack(alignment: .center, spacing: 3) {
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array("CURRENT"), id: \.self) { char in 
-                                Text(String(char)).font(.system(size: 9, weight: .black, design: .monospaced)).foregroundColor(.gray)
-                                    .diagnosticBorder(.gray.opacity(0.3), width: 0.5)
-                            }
-                        }
-                        .diagnosticBorder(.gray.opacity(0.5), width: 0.5, label: "CUR_V")
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array("STREAK"), id: \.self) { char in 
-                                Text(String(char)).font(.system(size: 9, weight: .black, design: .monospaced)).foregroundColor(.gray)
-                                    .diagnosticBorder(.gray.opacity(0.3), width: 0.5)
-                            }
-                        }
-                        .diagnosticBorder(.gray.opacity(0.5), width: 0.5, label: "STR_V")
+                    HStack(alignment: .center, spacing: 2) {
+                        Text(LocalizationManager.shared.string(.currentLabel))
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.gray)
+                            .fixedSize()
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 14)
+                        
+                        Text(LocalizationManager.shared.string(.streakLabel))
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.gray)
+                            .fixedSize()
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 14)
                     }
+                    .frame(height: 40) // Constrain height to prevent expansion
                     .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
                     
                     ZStack {
@@ -160,22 +162,24 @@ struct StatsHeaderView: View {
 
                 // Longest Streak
                 HStack(alignment: .center, spacing: 10) {
-                    HStack(alignment: .center, spacing: 3) {
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array("LONGEST"), id: \.self) { char in 
-                                Text(String(char)).font(.system(size: 9, weight: .black, design: .monospaced)).foregroundColor(.gray)
-                                    .diagnosticBorder(.gray.opacity(0.3), width: 0.5)
-                            }
-                        }
-                        .diagnosticBorder(.gray.opacity(0.5), width: 0.5, label: "LNG_V")
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array("STREAK"), id: \.self) { char in 
-                                Text(String(char)).font(.system(size: 9, weight: .black, design: .monospaced)).foregroundColor(.gray)
-                                    .diagnosticBorder(.gray.opacity(0.3), width: 0.5)
-                            }
-                        }
-                        .diagnosticBorder(.gray.opacity(0.5), width: 0.5, label: "STR_V")
+                    HStack(alignment: .center, spacing: 2) {
+                        Text(LocalizationManager.shared.string(.longestLabel))
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.gray)
+                            .fixedSize()
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 14)
+                        
+                        Text(LocalizationManager.shared.string(.streakLabel))
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(2)
+                            .foregroundColor(.gray)
+                            .fixedSize()
+                            .rotationEffect(.degrees(-90))
+                            .frame(width: 14)
                     }
+                    .frame(height: 40) // Constrain height
                     .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
                     Text("\(state.longestStreak)")
                         .font(.system(size: 80, weight: .black))
@@ -227,7 +231,7 @@ struct StatsCalendarSection: View {
             HStack {
                 if isFirst {
                     // HISTORY LOG Heading - Now Scrolls with First Month
-                    Text("HISTORY LOG")
+                    Text(LocalizationManager.shared.string(.historyLog).uppercased())
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                         .diagnosticBorder(.purple.opacity(0.3), width: 0.5, label: "SCROLL_HDR")
@@ -246,7 +250,15 @@ struct StatsCalendarSection: View {
             VStack(spacing: 4) {
                 // Days Header (M T W T F S S)
                 HStack(spacing: 0) {
-                    ForEach(["M", "T", "W", "T", "F", "S", "S"], id: \.self) { day in
+                    ForEach([
+                        LocalizationManager.shared.string(.monShort),
+                        LocalizationManager.shared.string(.tueShort),
+                        LocalizationManager.shared.string(.wedShort),
+                        LocalizationManager.shared.string(.thuShort),
+                        LocalizationManager.shared.string(.friShort),
+                        LocalizationManager.shared.string(.satShort),
+                        LocalizationManager.shared.string(.sunShort)
+                    ], id: \.self) { day in
                         Text(day)
                             .font(.system(size: 10, weight: .bold, design: .monospaced))
                             .foregroundColor(.gray.opacity(0.5))
@@ -301,7 +313,7 @@ struct StatsCalendarSection: View {
                 Text("\(day)").font(.system(size: 14, weight: .bold)).foregroundColor(.black)
             } else if hasPracticed {
                 ChamferedShape(chamferSize: 8, cornerRadius: 0)
-                    .fill(Color.cyan)
+                    .fill(ThemeColors.getColor(for: "Neon Green"))
                 Text("\(day)")
                     .font(.system(size: 18, weight: .black))
                     .foregroundColor(Color(red: 1.0, green: 0.1, blue: 0.4))
@@ -317,7 +329,7 @@ struct StatsCalendarSection: View {
             }
         }
         .frame(height: 40)
-        .diagnosticBorder(hasPracticed ? .cyan : .pink.opacity(0.1), width: 1)
+        .diagnosticBorder(hasPracticed ? ThemeColors.getColor(for: "Neon Green") : .pink.opacity(0.1), width: 1)
     }
 }
 
@@ -329,7 +341,7 @@ struct StatsChronotypeSection: View {
             HStack(spacing: 8) {
                 Rectangle().fill(Color.yellow).frame(width: 8, height: 8)
                     .diagnosticBorder(.yellow.opacity(0.5), width: 0.5, label: "SQ")
-                Text("CHRONOTYPE").font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
+                Text(LocalizationManager.shared.string(.chronotype)).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
                     .diagnosticBorder(.gray.opacity(0.3), width: 0.5, label: "HDR")
             }.padding(.horizontal, 20)
                 .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "TIT_HS")
@@ -348,7 +360,7 @@ struct StatsChronotypeSection: View {
                     .diagnosticBorder(.red.opacity(0.5), width: 1, label: "MOON_ICON")
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(chronotype)
+                    Text(LocalizationManager.shared.string(.nightOwl))
                         .font(.system(size: 20, weight: .black, design: .monospaced))
                         .foregroundColor(.black)
                         .padding(.horizontal, 12)
@@ -356,7 +368,7 @@ struct StatsChronotypeSection: View {
                         .background(Color.cyan)
                         .diagnosticBorder(.cyan.opacity(0.5), width: 0.5, label: "TITLE_P:H12,V8")
                     
-                    Text("Most active after dark")
+                    Text(LocalizationManager.shared.string(.nightOwlDesc))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.black)
                         .padding(.horizontal, 12)
@@ -370,7 +382,8 @@ struct StatsChronotypeSection: View {
 
             // Activity Distribution
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("ACTIVITY DISTRIBUTION (24H)").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundColor(.cyan).padding(.horizontal, 20)
+                    Text(LocalizationManager.shared.string(.activityDistribution))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundColor(.cyan).padding(.horizontal, 20)
                         .diagnosticBorder(.cyan.opacity(0.3), width: 0.5, label: "LBL")
                     
                     ZStack(alignment: .bottom) {

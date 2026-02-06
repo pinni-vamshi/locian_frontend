@@ -69,7 +69,14 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             noNewPlace: "പുതിയ സ്ഥലം ചേർക്കുക",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "തുടങ്ങുക",
-            typeYourMoment: "നിങ്ങളുടെ നിമിഷം ടൈപ്പ് ചെയ്യുക...")
+            typeYourMoment: "നിങ്ങളുടെ നിമിഷം ടൈപ്പ് ചെയ്യുക...",
+            imagesLabel: "ചിത്രങ്ങൾ",
+            routinesLabel: "ദിനചര്യകൾ",
+            whatAreYouDoing: "നിങ്ങളിപ്പോൾ എന്താണ് ചെയ്യുന്നത്?",
+            chooseContext: "പഠിക്കാൻ ഒരു സന്ദർഭം തിരഞ്ഞെടുക്കുക",
+            typeHere: "ഇവിടെ ടൈപ്പ് ചെയ്യുക",
+            nearbyLabel: "സമീപത്ത്",
+            noNearbyPlaces: "സമീപത്തുള്ള സ്ഥലങ്ങളൊന്നും കണ്ടെത്തിയില്ല")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "ലോഗിൻ അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക",
             pageIndicator: "പേജ്",
             selectLanguageDescription: "നിങ്ങൾ ഇഷ്ടപ്പെടുന്ന ഭാഷ തിരഞ്ഞെടുക്കുക",
+            whichLanguageDoYouSpeakComfortably: "നിങ്ങൾ ഏത് ഭാഷയാണ് സൗകര്യപ്രദം സംസാരിക്കുന്നത്?",
+            chooseTheLanguageYouWantToMaster: "ഇന്ന് നിങ്ങൾ പരിശീലിപ്പിക്കാൻ ആഗ്രഹിക്കുന്ന ഭാഷ തിരഞ്ഞെടുക്കുക",
             fromWhereYouStand: "നിങ്ങൾ നിൽക്കുന്ന\nഇടത്തുനിന്ന്",
             toEveryWord: "ഓരോ",
             everyWord: "വാക്കിലേക്കും",
@@ -448,6 +457,8 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -616,6 +627,13 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

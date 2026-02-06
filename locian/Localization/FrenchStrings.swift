@@ -69,7 +69,14 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
             noNewPlace: "Ajouter un lieu",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "Démarrer",
-            typeYourMoment: "Tapez votre moment...")
+            typeYourMoment: "Tapez votre moment...",
+            imagesLabel: "IMAGES",
+            routinesLabel: "ROUTINES",
+            whatAreYouDoing: "Que faites-vous maintenant ?",
+            chooseContext: "Choisissez un contexte pour commencer",
+            typeHere: "ÉCRIVEZ ICI",
+            nearbyLabel: "À PROXIMITÉ",
+            noNearbyPlaces: "Aucun lieu proche trouvé")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "Connexion ou Inscription",
             pageIndicator: "Page",
             selectLanguageDescription: "Sélectionnez votre langue préférée",
+            whichLanguageDoYouSpeakComfortably: "QUELLE LANGUE PARLEZ-VOUS CONFORTABLEMENT?",
+            chooseTheLanguageYouWantToMaster: "CHOISISSEZ LA LANGUE QUE VOUS VOULEZ MAÎTRISER AUJOURD'HUI",
 
             fromWhereYouStand: "D'OÙ VOUS\nÊTES",
             toEveryWord: "À",
@@ -449,6 +458,8 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -617,6 +628,13 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

@@ -87,6 +87,15 @@ struct UIStrings {
     let addNewPlaceInstruction: String
     let start: String
     let typeYourMoment: String
+    
+    // Add Tab
+    let imagesLabel: String
+    let routinesLabel: String
+    let whatAreYouDoing: String
+    let chooseContext: String
+    let typeHere: String
+    let nearbyLabel: String
+    let noNearbyPlaces: String
     }
 
 struct SettingsStrings {
@@ -203,6 +212,8 @@ struct OnboardingStrings {
     let loginOrRegister: String
     let pageIndicator: String
     let selectLanguageDescription: String
+    let whichLanguageDoYouSpeakComfortably: String
+    let chooseTheLanguageYouWantToMaster: String
     
     // Welcome View
     let fromWhereYouStand: String

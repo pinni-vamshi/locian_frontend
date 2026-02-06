@@ -8,6 +8,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject var languageManager = LanguageManager.shared
+    @ObservedObject var localizationManager = LocalizationManager.shared
     @StateObject var state: SettingsTabState
     @Binding var selectedTab: MainTabView.TabItem
     
@@ -61,7 +62,7 @@ struct SettingsView: View {
                     .background(ThemeColors.secondaryAccent)
                     .diagnosticBorder(.white, width: 0.5, label: "P:H5")
                 
-                Text(appState.profession.isEmpty ? "LEARNING" : appState.profession.uppercased())
+                Text(appState.profession.isEmpty ? "LEARNING" : localizationManager.getLocalizedProfession(appState.profession))
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundColor(ThemeColors.secondaryAccent)
                     .padding(.horizontal, 5)
@@ -187,19 +188,14 @@ struct SettingsView: View {
             // Native Language Display
             HStack(alignment: .top, spacing: 20) {
                 // Vertical Cyan Label
-                HStack(alignment: .top, spacing: 2) {
-                    VStack(alignment: .center, spacing: -1) {
-                        ForEach(Array(languageManager.settings.nativeLanguage.uppercased()), id: \.self) { char in 
-                            Text(String(char))
-                                .font(.system(size: 7, weight: .black, design: .monospaced))
-                                .foregroundColor(.black) 
-                        }
-                    }
-                }
-                .padding(.vertical, 8)
-                .padding(.horizontal, 4)
-                .background(Color.cyan)
-                .diagnosticBorder(.cyan, width: 0.5, label: "LBL_P:H4,V8")
+                VerticalHeading(
+                    text: languageManager.settings.nativeLanguage.uppercased(),
+                    textColor: .black,
+                    backgroundColor: .cyan,
+                    width: 24,
+                    height: 120
+                )
+                .diagnosticBorder(.cyan, width: 0.5, label: "LBL_ROT")
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(NativeLanguageMapping.shared.getDisplayNames(for: appState.nativeLanguage).english.uppercased())
@@ -295,27 +291,21 @@ struct SettingsView: View {
             HStack(alignment: .top, spacing: 0) {
                 // 1. Vertical Heading Group
                 HStack(alignment: .top, spacing: 0) {
-                    VStack(alignment: .center, spacing: 0) {
-                        Spacer()
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array(languageManager.settings.neuralEngine.uppercased()), id: \.self) { char in
-                                Text(String(char)).font(.system(size: 8, weight: .black, design: .monospaced))
-                            }
-                        }
-                        Spacer()
-                    }
-                    .frame(width: 20)
-                    .background(Color.white)
-                    .foregroundColor(.black)
+                    VerticalHeading(
+                        text: languageManager.settings.neuralEngine.uppercased(),
+                        textColor: .black,
+                        backgroundColor: .white,
+                        width: 24,
+                        height: 120
+                    )
                     .diagnosticBorder(.white, width: 0.5, label: "V:NEURAL")
                     
                     Rectangle()
                         .fill(Color.cyan)
-                        .frame(width: 4)
+                        .frame(width: 4, height: 120)
                         .diagnosticBorder(.cyan, width: 0.5, label: "BAR")
                 }
-                .frame(maxHeight: .infinity)
-                .fixedSize(horizontal: true, vertical: false)
+                .fixedSize()
                 
                 // 2. Status Data
                 VStack(alignment: .leading, spacing: 12) {
@@ -381,28 +371,20 @@ struct SettingsView: View {
                 Image(systemName: "location.fill")
                     .font(.system(size: 20))
                 Text(languageManager.settings.location.uppercased()).font(.system(size: 24, weight: .black))
+                Spacer()
+                Toggle("", isOn: $appState.isLocationTrackingEnabled)
+                    .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
+                    .labelsHidden()
+                    .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
             }
             .foregroundColor(.white.opacity(0.3))
             .padding(.horizontal, 5)
             
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(languageManager.ui.loading.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
-                        .diagnosticBorder(.gray.opacity(0.5), width: 0.5)
-                    Spacer()
-                    Toggle("", isOn: $appState.isLocationTrackingEnabled)
-                        .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
-                        .labelsHidden()
-                        .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
-                }
-                .diagnosticBorder(.white.opacity(0.1), width: 1)
-                
-                Text(languageManager.onboarding.geolocationDesc)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-                    .lineSpacing(4)
-            }
-            .padding(.horizontal, 5)
+            Text(languageManager.onboarding.geolocationDesc)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
+                .lineSpacing(4)
+                .padding(.horizontal, 5)
         }
         .diagnosticBorder(.pink, width: 1)
     }
@@ -415,28 +397,22 @@ struct SettingsView: View {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 20))
                 Text(languageManager.settings.notifications.uppercased()).font(.system(size: 24, weight: .black))
+                Spacer()
+                Toggle("", isOn: Binding(
+                    get: { NotificationManager.shared.isNotificationsEnabled },
+                    set: { NotificationManager.shared.isNotificationsEnabled = $0 }
+                ))
+                .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
+                .labelsHidden()
             }
             .foregroundColor(.white.opacity(0.3))
             .padding(.horizontal, 5)
             
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(languageManager.onboarding.notificationsPermission.uppercased()).font(.system(size: 12, weight: .bold, design: .monospaced)).foregroundColor(.gray)
-                    Spacer()
-                    Toggle("", isOn: Binding(
-                        get: { NotificationManager.shared.isNotificationsEnabled },
-                        set: { NotificationManager.shared.isNotificationsEnabled = $0 }
-                    ))
-                    .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
-                    .labelsHidden()
-                }
-                
-                Text(languageManager.onboarding.notificationsDesc)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
-                    .lineSpacing(4)
-            }
-            .padding(.horizontal, 5)
+            Text(languageManager.onboarding.notificationsDesc)
+                .font(.system(size: 14))
+                .foregroundColor(.gray)
+                .lineSpacing(4)
+                .padding(.horizontal, 5)
         }
         .diagnosticBorder(.blue.opacity(0.3), width: 1)
     }
@@ -447,33 +423,26 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 0) {
                 HStack(alignment: .top, spacing: 0) {
-                    VStack(alignment: .center, spacing: 0) {
-                        Spacer()
-                        VStack(alignment: .center, spacing: -1) {
-                            ForEach(Array(languageManager.settings.account.uppercased()), id: \.self) { char in 
-                                Text(String(char))
-                                    .font(.system(size: 8, weight: .black, design: .monospaced))
-                                    .foregroundColor(.black)
-                            }
-                        }
-                        Spacer()
-                    }
-                    .frame(width: 20)
-                    .background(Color.white)
+                    VerticalHeading(
+                        text: languageManager.settings.account.uppercased(),
+                        textColor: .black,
+                        backgroundColor: .white,
+                        width: 24,
+                        height: 132 // Increased to match content
+                    )
                     
                     Rectangle()
                         .fill(ThemeColors.secondaryAccent)
-                        .frame(width: 4)
+                        .frame(width: 4, height: 132) // Increased to match content
                 }
-                .frame(maxHeight: .infinity)
-                .fixedSize(horizontal: true, vertical: false)
+                .fixedSize()
 
                 HStack(spacing: 20) {
                     accountBox(title: languageManager.settings.logout, icon: "arrow.right.square", color: .cyan) { state.showingLogoutAlert = true }
                     accountBox(title: languageManager.ui.delete, icon: "trash", color: ThemeColors.secondaryAccent) { state.showingDeleteAlert = true }
                 }
                 .padding(.leading, 20)
-                .padding(.vertical, 10)
+                // Removed .padding(.vertical, 10) to align tops with VerticalHeading
             }
             .fixedSize(horizontal: false, vertical: true)
             
@@ -514,8 +483,8 @@ struct SettingsView: View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 20 , weight: .bold)) // 5% bigger (16->17)
+                    .foregroundColor(.white.opacity(0.5)) // Opacity 0.5
                 
                 ZStack {
                     Rectangle().fill(Color.white.opacity(0.05))
@@ -543,3 +512,5 @@ struct SettingsView: View {
         }
     }
 }
+
+

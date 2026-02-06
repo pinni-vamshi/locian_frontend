@@ -67,11 +67,11 @@ struct NativeLanguageSelectionModal: View {
     
     private func headingBadge() -> some View {
         Text("NATIVE LANGUAGE")
-            .font(.system(size: 14, weight: .black, design: .monospaced))
+            .font(.system(size: 20, weight: .black, design: .monospaced))
             .foregroundColor(.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color.cyan)
+            .background(Color.pink)
     }
     
     private func dismissButton() -> some View {
@@ -111,9 +111,9 @@ struct NativeLanguageSelectionModal: View {
     }
     
     private func instructionText() -> some View {
-        Text("WHICH LANGUAGE DO YOU SPEAK COMFORTABLY?")
+        Text(LocalizationManager.shared.string(.whichLanguageDoYouSpeakComfortably))
             .font(.system(size: 14, weight: .black, design: .monospaced))
-            .foregroundColor(Color.cyan)
+            .foregroundColor(.gray)
             .padding(.vertical, 5)
     }
 
@@ -136,7 +136,7 @@ struct NativeLanguageSelectionModal: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
-                .background(Color.cyan)
+                .background(Color.pink)
                 .padding(.vertical, 12)
         }
         .disabled(isLoading)

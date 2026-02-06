@@ -69,7 +69,14 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             noNewPlace: "新しい場所を追加",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "開始",
-            typeYourMoment: "瞬間を入力...")
+            typeYourMoment: "瞬間を入力...",
+            imagesLabel: "画像",
+            routinesLabel: "ルーチン",
+            whatAreYouDoing: "今、何をしていますか？",
+            chooseContext: "学習を開始するコンテキストを選択",
+            typeHere: "ここに入力",
+            nearbyLabel: "近く",
+            noNearbyPlaces: "近くの場所が見つかりません")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "ログインまたは登録",
             pageIndicator: "ページ",
             selectLanguageDescription: "優先言語を選択",
+            whichLanguageDoYouSpeakComfortably: "どの言語を快適に話しますか?",
+            chooseTheLanguageYouWantToMaster: "今日マスターしたい言語を選んでください",
 
             fromWhereYouStand: "自分の位置から",
             toEveryWord: "全ての",
@@ -449,6 +458,8 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -617,6 +628,13 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

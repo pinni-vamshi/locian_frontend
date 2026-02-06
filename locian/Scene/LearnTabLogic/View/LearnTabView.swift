@@ -14,13 +14,14 @@ struct LearnTabView: View {
     @Binding var selectedTab: MainTabView.TabItem
     @Environment(\.scenePhase) var scenePhase 
     @State private var animateIn = false
-    @State private var sidebarTextHeight: CGFloat = 180
-
+    
+    // Custom Moment Input
+    @State private var showCustomInput: Bool = false
+    @State private var customMomentText: String = ""
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 headerView
-                    .diagnosticBorder(.pink, width: 1, label: "HDR")
                 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
@@ -28,51 +29,16 @@ struct LearnTabView: View {
                             recommendedSection
                                 .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                                 .padding(.top, 10)
-                            
-                            addNavigationButton
-                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                                .padding(.vertical, 8)
-                            
-                            if !state.discoveryPlaces.isEmpty {
-                                suggestedContextsSection
-                                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                            }
-                            
-                            activeMomentsContent
-                                .padding(.top, 10)
-                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                         }
                         
-                VStack(spacing: 0) {
-                    let studiedPlaces = state.allTimelinePlaces.filter { $0.type != "image" && $0.type != "custom" }
-                    if !studiedPlaces.isEmpty {
-                        HStack(spacing: 0) {
-                            timelineSidebar.frame(width: 70) 
-                                .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "SIDEBAR")
-                            
-                            // Only show hero if the currently selected hour place is "studied"
-                            let currentPlace = state.stickyPlaceForHour(state.selectedTimelineHour)
-                            if currentPlace?.type != "image" && currentPlace?.type != "custom" {
-                                heroPlaceDisplay
-                                    .diagnosticBorder(.cyan.opacity(0.3), width: 1, label: "HERO")
-                            } else {
-                                Spacer()
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.black.opacity(0.5))
-                                    .overlay(Text("NO STUDIED HISTORY FOR THIS HOUR").font(.system(size: 10, weight: .bold)).foregroundColor(.gray))
-                            }
-                        }
-                        .diagnosticBorder(.purple, width: 2, label: "HERO_HS_S:0")
-                        .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
-                        .frame(height: 180)
-                    }
-                }
-                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                        .animation(.spring().delay(0.1), value: animateIn)
+                        addNavigationButton
+                            .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                            .padding(.vertical, 8)
+                        
+
                     }
                 }
             }
-            .diagnosticBorder(.white, width: 2, label: "LEARN_V_S:0")
             .background(Color.black.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(isPresented: $state.showLessonView) {
@@ -84,11 +50,23 @@ struct LearnTabView: View {
         .onAppear { handleOnAppear() }
         .onChange(of: state.generationState) { _, newState in handleGenerationStateChange(newState) }
         .onChange(of: state.isLoadingHistory) { _, newVal in handleLoadingHistoryChange(newVal) }
-        .onChange(of: appState.isLoadingTimeline) { _, newVal in handleLoadingHistoryChange(newVal) } // Added observer for timeline loading
+        .onChange(of: appState.isLoadingTimeline) { _, newVal in handleLoadingHistoryChange(newVal) } 
         .onChange(of: scenePhase) { _, newPhase in handleScenePhaseChange(newPhase) }
         .onChange(of: state.showLessonView) { _, newValue in if !newValue { state.currentLesson = nil } }
         .fullScreenCover(isPresented: Binding(get: { state.generationState != .idle }, set: { _ in })) {
             loadingOverlay
+        }
+        .alert("Add Custom Moment", isPresented: $showCustomInput) {
+            TextField("What do you want to say?", text: $customMomentText)
+            Button("Cancel", role: .cancel) { customMomentText = "" }
+            Button("Generate") {
+                if !customMomentText.isEmpty {
+                    state.generateSentence(for: customMomentText) // Use 'state' not 'learnTabState'
+                    customMomentText = ""
+                }
+            }
+        } message: {
+            Text("Enter a sentence or moment you want to practice.")
         }
     }
     
@@ -105,7 +83,7 @@ struct LearnTabView: View {
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(Color(white: 0.5))
                 
-                Text("ADD A NEW MOMENT")
+                Text("ADD A NEW PLACE")
                     .font(.system(size: 13, weight: .black))
                     .foregroundColor(ThemeColors.secondaryAccent)
                 
@@ -127,51 +105,7 @@ struct LearnTabView: View {
         .buttonStyle(.plain)
     }
 
-    private var suggestedContextsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("SUGGESTED FOR YOU")
-                .font(.system(size: 11, weight: .black))
-                .foregroundColor(.gray)
-                .padding(.horizontal, 16)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(state.discoveryPlaces, id: \.id) { place in
-                        let isSelected = state.selectedDiscoveryPlace?.id == place.id
-                        Button(action: {
-                            withAnimation(.spring()) {
-                                if isSelected {
-                                    state.resetSelectedDiscovery()
-                                } else {
-                                    state.selectedDiscoveryPlace = place
-                                }
-                            }
-                        }) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(place.place_name?.uppercased() ?? "MOMENT")
-                                    .font(.system(size: 14, weight: .black))
-                                    .foregroundColor(isSelected ? .black : .white)
-                                
-                                Text("SELECT SECTION")
-                                    .font(.system(size: 9, weight: .bold))
-                                    .opacity(0.7)
-                                    .foregroundColor(isSelected ? .black : .gray)
-                            }
-                            .padding(16)
-                            .frame(width: 160, height: 80, alignment: .leading)
-                            .background(isSelected ? ThemeColors.secondaryAccent : Color(white: 0.1))
-                            .overlay(
-                                Rectangle()
-                                    .stroke(isSelected ? .clear : Color.white.opacity(0.1), lineWidth: 1)
-                            )
-                        }
-                    }
-                }
-                .padding(.horizontal, 16)
-            }
-        }
-        .padding(.vertical, 10)
-    }
+
 
     // MARK: - Components
 
@@ -184,224 +118,20 @@ struct LearnTabView: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 6)
                     .background(ThemeColors.secondaryAccent)
-                    .diagnosticBorder(.white, width: 0.5, label: "NAME_P:H8,V6")
                 
                 Spacer()
                 
                 HStack(spacing: 4) {
                     Image(systemName: "flame.fill").font(.system(size: 12, weight: .bold)).foregroundColor(ThemeColors.primaryAccent)
-                        .diagnosticBorder(.red, width: 0.5)
                     Text(state.uiStreakText).font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundColor(ThemeColors.primaryAccent)
-                        .diagnosticBorder(.yellow, width: 0.5)
                 }
-                .diagnosticBorder(.orange, width: 1)
             }
-            .diagnosticBorder(.green, width: 1.5, label: "HDR_HS_P:H10,T16,B10")
             .padding(.horizontal, 10).padding(.top, 16).padding(.bottom, 10)
         }
-        .diagnosticBorder(.pink, width: 1.5, label: "HDR_V_S:12")
         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10).animation(.spring(), value: animateIn)
-        .diagnosticBorder(.white, width: 1)
-    }
-
-    private var heroPlaceDisplay: some View {
-        let isLoading = state.isAnalyzingImage || appState.isLoadingTimeline
-        return Text(isLoading ? "GETTING PLACE..." : state.uiPlaceName.uppercased())
-            .font(.system(size: 60, weight: .heavy)).foregroundColor(.white)
-            .multilineTextAlignment(.leading).lineLimit(2).minimumScaleFactor(0.4)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading).padding(.horizontal, 16)
-            .diagnosticBorder(.cyan, width: 1)
-    }
-
-    private var timelineSidebar: some View {
-        GeometryReader { geo in
-            let mid = geo.size.height / 2
-            let scrollMid = geo.frame(in: .global).midY
-            ZStack(alignment: .trailing) {
-                Rectangle().fill(Color.pink).frame(width: 20, height: 4).cornerRadius(2).position(x: 35, y: mid).zIndex(1)
-                ScrollViewReader { proxy in
-                    ScrollView(.vertical, showsIndicators: false) {
-                        VStack(spacing: 0) {
-                            Color.clear.frame(height: mid - 25)
-                            ForEach(0..<24) { hr in
-                                hourTick(hr, scrollMid: scrollMid).id(hr).frame(height: 50)
-                            }
-                            Color.clear.frame(height: mid - 25)
-                        }
-                        .diagnosticBorder(.blue.opacity(0.3), width: 1)
-                    }.onAppear { proxy.scrollTo(state.selectedTimelineHour, anchor: .center) }
-                }
-            }
-            .diagnosticBorder(.pink.opacity(0.5), width: 1)
-        }
-        .diagnosticBorder(.pink, width: 1)
-    }
-
-    private func hourTick(_ hr: Int, scrollMid: CGFloat) -> some View {
-        GeometryReader { geo in
-            let distance = abs(geo.frame(in: .global).midY - scrollMid)
-            let factor = max(0, 1.0 - (distance / 80))
-            let hasPlace = state.hasStudiedPlace(forHour: hr)
-            return HStack(spacing: 6) {
-                Spacer()
-                VStack(spacing: 2) {
-                    Text("\(hr % 12 == 0 ? 12 : hr % 12)").font(.system(size: 10, weight: .black, design: .monospaced))
-                        .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                    Text(hr < 12 ? "AM" : "PM").font(.system(size: 7, weight: .bold, design: .monospaced))
-                        .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                }.foregroundColor(hasPlace ? .pink : .white.opacity(0.3 + (0.7 * Double(factor)))).scaleEffect(0.8 + (0.2 * factor))
-                    .diagnosticBorder(.blue.opacity(0.5), width: 0.5)
-                Rectangle().fill(hasPlace ? .pink : .white.opacity(0.4 + (0.6 * Double(factor)))).frame(width: 8 * (1.0 + Double(factor) * 1.5), height: 1.5)
-                    .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
-            }
-            .frame(height: geo.size.height) // FIX: Center content vertically in 50pt slot
-            .padding(.trailing, 10)
-            .onChange(of: distance) { _, d in if d < 25 && state.selectedTimelineHour != hr { state.selectedTimelineHour = hr } }
-        }
-    }
-
-    private var activeMomentsContent: some View {
-        let isLoading = state.isAnalyzingImage || appState.isLoadingTimeline || state.isLoadingMoments
-        return HStack(spacing: 0) {
-            if !isLoading && !state.uiCategories.isEmpty { 
-                verticalCategorySidebar 
-                    .diagnosticBorder(.white, width: 0.5, label: "CAT_SIDEBAR")
-            }
-            
-            VStack(spacing: 0) {
-                if isLoading {
-                    loadingHeader
-                    loadingSpinner
-                } else if state.uiCategories.isEmpty {
-                    noMomentsView
-                } else {
-                    momentsList
-                }
-            }
-            .frame(maxWidth: .infinity)
-        }
-        .diagnosticBorder(.cyan.opacity(0.2), width: 1)
     }
 
 
-    private var instructionalHeader: some View {
-        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
-        let targetCode = activePair?.target_language ?? "en"
-        let lang = AppLanguage.fromCode(targetCode) ?? .english
-        let langName = lang.englishName.uppercased()
-        
-        return VStack(alignment: .leading, spacing: 0) {
-            Text("SELECT A MOMENT TO TALK IN \(langName)")
-                .font(.system(size: 20, weight: .heavy))
-                .foregroundColor(Color(white: 0.3)) // Heavy grey
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-        }
-        .background(Color.black)
-        .diagnosticBorder(.gray, width: 1, label: "INSTR_HDR")
-    }
-
-    private var momentsList: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(state.uiMomentsInSelectedCategory, id: \.text) { moment in
-                ChamferedCard(
-                    color: .black,
-                    borderColor: .white.opacity(0.1),
-                    borderWidth: 1,
-                    chamferSize: 12
-                ) {
-                    HStack(spacing: 12) {
-                        Text(moment.text.uppercased())
-                            .font(.system(size: 22, weight: .black))
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.leading)
-                        
-                        Spacer()
-                        
-                        Button(action: { state.generateSentence(for: moment.text) }) {
-                            Image(systemName: "waveform")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(ThemeColors.secondaryAccent)
-                                .frame(width: 32, height: 32)
-                                .padding(8)
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(0)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 0)
-                                        .stroke(ThemeColors.secondaryAccent, lineWidth: 1)
-                                )
-                        }
-                    }
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 16)
-                }
-            }
-            Spacer().frame(height: 100)
-        }
-        .padding(.leading, 12).padding(.trailing, 16)
-        .diagnosticBorder(.green.opacity(0.3), width: 1, label: "LIST_V_S:12,P:L5,R16")
-    }
-
-    private var loadingHeader: some View {
-        Text("DISCOVERING YOUR JOURNEY...").font(.system(size: 24, weight: .heavy)).foregroundColor(.white).padding(20).frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var verticalCategorySidebar: some View {
-        VStack(spacing: 24) {
-            // Up Arrow
-            DoubleArrowButton(
-                direction: .up,
-                color: ThemeColors.secondaryAccent,
-                size: 16,
-                action: {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        state.selectPreviousCategory()
-                    }
-                }
-            )
-            .padding(.top, 16)
-
-            // Rotated Category Name
-            Text(state.uiSelectedCategoryName?.uppercased() ?? "CATEGORY")
-                .font(.system(size: 14, weight: .black))
-                .foregroundColor(.black)
-                .fixedSize()
-                .rotationEffect(.degrees(-90))
-                .fixedSize()
-                .frame(maxHeight: .infinity)
-                .diagnosticBorder(.gray, width: 0.5)
-
-            // Down Arrow
-            DoubleArrowButton(
-                direction: .down,
-                color: ThemeColors.secondaryAccent,
-                size: 16,
-                action: {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        state.selectNextCategory()
-                    }
-                }
-            )
-            .padding(.bottom, 24)
-        }
-        .frame(width: 36)
-        .frame(maxHeight: .infinity)
-        .background(Color.white)
-        .padding(.leading, 5)
-    }
-
-    private var loadingSpinner: some View {
-        VStack { Spacer(); ProgressView().tint(ThemeColors.primaryAccent).scaleEffect(2.0); Text("DISCOVERING MOMENTS...").font(.system(size: 14, weight: .bold)).foregroundColor(.white.opacity(0.6)).padding(.top, 16); Spacer() }.frame(minHeight: 200)
-    }
-
-    private var noMomentsView: some View {
-        VStack(spacing: 20) {
-            Spacer(); Image(systemName: "sparkles").font(.system(size: 40)).foregroundColor(.white.opacity(0.3)); Text("NO MOMENTS PREPARED").foregroundColor(.white.opacity(0.4))
-            Spacer()
-        }.frame(minHeight: 200)
-    }
 
     private var loadingOverlay: some View {
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
@@ -417,13 +147,13 @@ struct LearnTabView: View {
         let isNativeAvailable = NLEmbedding.wordEmbedding(for: nativeLang) != nil
         
         return AILoadingModal(
-            placeName: state.firstRecommendedPlace ?? "Unknown",
+            placeName: state.recommendedPlaces.first?.place_name ?? "Unknown",
             moment: state.activeGeneratingMoment ?? "Analysis in Progress",
-            time: state.firstRecommendedPlaceTimeGap ?? "Live Now",
+            time: "Live Now",
             targetLangCode: targetCode.uppercased(),
             isTargetLoaded: isTargetAvailable,
             isNativeLoaded: isNativeAvailable,
-            isReady: state.isEmbeddingsReady,
+            isReady: true,
             onFinish: {
                 if state.currentLesson != nil {
                     withAnimation {
@@ -474,48 +204,27 @@ struct LearnTabView: View {
     }
 
     private var recommendedSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            recommendedPlaceHero
+        VStack(alignment: .leading, spacing: 10) {
             
-            HStack(spacing: 0) {
-                // Unified Sidebar: Place Name "Spine" (Rotated 90 deg)
-                VStack {
-                    Spacer()
-                    Text(state.recommendedPlaces.first?.place_name?.uppercased() ?? "MOMENT")
-                        .font(.system(size: 10, weight: .black))
-                        .foregroundColor(.white)
-                        .fixedSize()
-                        .rotationEffect(.degrees(-90))
-                        .fixedSize()
-                    Spacer()
-                }
-                .frame(width: 40)
-                .background(Color(white: 0.15))
-                
-                // Right Content Area
-                VStack(alignment: .leading, spacing: 0) {
-                    recommendedThemeSelector
-                    recommendedMomentsScroll
-                }
-                .background(Color.black)
+            // 1. Place Name (Large Header)
+            if let placeName = state.recommendedPlaces.first?.place_name {
+                 Text(placeName.uppercased())
+                    .font(.system(size: 40, weight: .heavy)) // 40pt Heavy
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
             }
+                
+            // 2. Theme Selector
+            recommendedThemeSelector
+            
+            // 3. Vertical Moments List
+            recommendedMomentsScroll
         }
         .padding(.bottom, 20)
     }
 
-    private var recommendedPlaceHero: some View {
-        // Content Only: Section Header "RECOMMENDED"
-        VStack(alignment: .leading) {
-            Text("RECOMMENDED")
-                .font(.system(size: 12, weight: .heavy))
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.leading)
-                .padding(.horizontal, 5)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 30)
-        .diagnosticBorder(.blue, width: 1, label: "REC_PLACE_STACK")
-    }
+
 
     @ViewBuilder
     private var recommendedThemeSelector: some View {
@@ -548,22 +257,19 @@ struct LearnTabView: View {
             }
             .frame(height: 80)
             .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
-            .diagnosticBorder(.orange, width: 1, label: "REC_CAT_STACK")
         }
     }
 
     private var recommendedMomentsScroll: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                recommendedAnalysisPlaceholder
-                recommendedMomentCards
-            }
-            .padding(.horizontal, 16)
+        ScrollView(.vertical, showsIndicators: false) {
+             VStack(spacing: 16) {
+                 recommendedAnalysisPlaceholder
+                 recommendedMomentCards
+                 addCustomMomentButton
+             }
+             .padding(.horizontal, 16)
+             .padding(.bottom, 20)
         }
-        .frame(height: 240)
-        .padding(.top, 10)
-        .overlay(Rectangle().frame(height: 1).foregroundColor(Color.white.opacity(0.2)), alignment: .bottom)
-        .diagnosticBorder(.green, width: 1, label: "REC_MOMENTS_STACK")
     }
 
     @ViewBuilder
@@ -610,7 +316,8 @@ struct LearnTabView: View {
             Spacer()
             recommendedCardFooter(isGreen: isGreen, action: action)
         }
-        .frame(width: 220, height: 220)
+        .frame(minHeight: 120)
+        .frame(maxWidth: .infinity)
         .background(isGreen ? Color.green : Color(white: 0.1))
     }
 
@@ -657,5 +364,25 @@ struct LearnTabView: View {
             }
         }
         .padding(12)
+    }
+    
+
+    
+    // MARK: - Custom Moment Input
+    
+    private var addCustomMomentButton: some View {
+        Button(action: { showCustomInput = true }) {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 16))
+                Text("ADD YOUR OWN MOMENT") 
+                    .font(.system(size: 14, weight: .bold))
+                Spacer()
+            }
+            .foregroundColor(.white)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color(white: 0.15))
+        }
     }
 }

@@ -69,7 +69,14 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             noNewPlace: "새 장소 추가",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "시작",
-            typeYourMoment: "당신의 순간을 입력하세요...")
+            typeYourMoment: "당신의 순간을 입력하세요...",
+            imagesLabel: "이미지",
+            routinesLabel: "루틴",
+            whatAreYouDoing: "지금 무엇을 하고 계신가요?",
+            chooseContext: "학습을 시작할 컨텍스트를 선택하세요",
+            typeHere: "여기에 입력",
+            nearbyLabel: "가까운",
+            noNearbyPlaces: "근처에 장소를 찾을 수 없습니다")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "로그인 또는 등록",
             pageIndicator: "페이지",
             selectLanguageDescription: "선호 언어를 선택하세요",
+            whichLanguageDoYouSpeakComfortably: "편안하게 말하는 언어는 무엇입니까?",
+            chooseTheLanguageYouWantToMaster: "오늘 마스터하고 싶은 언어를 선택하세요",
 
             fromWhereYouStand: "서 있는\n곳에서",
             toEveryWord: "모든",
@@ -449,6 +458,8 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -617,6 +628,13 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

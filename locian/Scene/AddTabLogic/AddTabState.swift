@@ -59,8 +59,15 @@ class AddTabState: ObservableObject {
     // MARK: - Persistence
     
     func saveRoutineSelections() {
+        // Backend validation: Only save if user has earned the routine feature
+        guard maxLongestStreak > 3 else {
+            print("⚠️ [ROUTINE] Cannot save routine. User needs streak > 3. Current: \(maxLongestStreak)")
+            return
+        }
+        
         if let encoded = try? JSONEncoder().encode(routineSelections) {
             routineSelectionsJSON = String(data: encoded, encoding: .utf8) ?? "{}"
+            print("✅ [ROUTINE] Routine selections saved successfully")
         }
     }
     

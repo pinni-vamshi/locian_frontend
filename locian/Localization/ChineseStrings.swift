@@ -69,7 +69,14 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             noNewPlace: "添加新地点",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "开始",
-            typeYourMoment: "在此输入您的瞬间...")
+            typeYourMoment: "在此输入您的瞬间...",
+            imagesLabel: "图片",
+            routinesLabel: "日常",
+            whatAreYouDoing: "你现在在做什么？",
+            chooseContext: "选择一个场景开始学习",
+            typeHere: "在这里输入",
+            nearbyLabel: "附近",
+            noNearbyPlaces: "未找到附近地点")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "登录或注册",
             pageIndicator: "页面",
             selectLanguageDescription: "选择您的首选语言",
+            whichLanguageDoYouSpeakComfortably: "您舒适地说哪种语言?",
+            chooseTheLanguageYouWantToMaster: "选择您今天想要掌握的语言",
             fromWhereYouStand: "从你站的\n地方",
             toEveryWord: "到",
             everyWord: "每一个词",
@@ -448,6 +457,8 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -616,6 +627,13 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

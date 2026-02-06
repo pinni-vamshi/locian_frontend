@@ -1,5 +1,5 @@
-//
-//  EnglishStrings.swift
+// Placeholder to ensure no action if I was wrong about file. But search needs to happen first.
+// I will use list_dir next.
 //  locian
 //
 
@@ -69,7 +69,14 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             noNewPlace: "Add New Place",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "Start",
-            typeYourMoment: "Type your moment...")
+            typeYourMoment: "Type your moment...",
+            imagesLabel: "IMAGES",
+            routinesLabel: "ROUTINES",
+            whatAreYouDoing: "What are you doing now?",
+            chooseContext: "Choose a context to start learning",
+            typeHere: "TYPE HERE",
+            nearbyLabel: "NEARBY",
+            noNearbyPlaces: "No nearby places found")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "Login or Register",
             pageIndicator: "Page",
             selectLanguageDescription: "Select your preferred language",
+            whichLanguageDoYouSpeakComfortably: "WHICH LANGUAGE DO YOU SPEAK COMFORTABLY?",
+            chooseTheLanguageYouWantToMaster: "CHOOSE THE LANGUAGE YOU WANT TO MASTER TODAY",
             fromWhereYouStand: "FROM WHERE YOU\nSTAND",
             toEveryWord: "T O",
             everyWord: "EVERY WORD",
@@ -451,6 +460,8 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -621,6 +632,13 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

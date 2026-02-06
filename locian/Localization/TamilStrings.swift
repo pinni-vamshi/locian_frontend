@@ -69,7 +69,14 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             noNewPlace: "புதிய இடத்தைச் சேர்க்கவும்",
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "தொடங்கு",
-            typeYourMoment: "உங்கள் தருணத்தை தட்டச்சு செய்க...")
+            typeYourMoment: "உங்கள் தருணத்தை தட்டச்சு செய்க...",
+            imagesLabel: "படங்கள்",
+            routinesLabel: "வழக்கங்கள்",
+            whatAreYouDoing: "நீங்கள் இப்போது என்ன செய்கிறீர்கள்?",
+            chooseContext: "கற்றுக்கொள்ள ஒரு சூழலைத் தேர்ந்தெடுக்கவும்",
+            typeHere: "இங்கே தட்டச்சு செய்யவும்",
+            nearbyLabel: "அருகில்",
+            noNearbyPlaces: "அருகில் இடங்கள் எதுவும் கிடைக்கவில்லை")
     }
 
     var settings: SettingsStrings {
@@ -184,6 +191,8 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             loginOrRegister: "உள்நுழைவு அல்லது பதிவு செய்க",
             pageIndicator: "பக்கம்",
             selectLanguageDescription: "உங்கள் விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும்",
+            whichLanguageDoYouSpeakComfortably: "நீங்கள் எந்த மொழியை வசதியாக பேசுகிறீர்கள்?",
+            chooseTheLanguageYouWantToMaster: "இன்று நீங்கள் கற்க விரும்பும் மொழியை தேர்ந்தெடுக்கவும்",
             fromWhereYouStand: "நீங்கள் நிற்கும்\nஇடத்திலிருந்து",
             toEveryWord: "ஒவ்வொரு",
             everyWord: "வார்த்தைக்கும்",
@@ -448,6 +457,8 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .loginOrRegister: return onboarding.loginOrRegister
         case .pageIndicator: return onboarding.pageIndicator
         case .selectLanguageDescription: return onboarding.selectLanguageDescription
+        case .whichLanguageDoYouSpeakComfortably: return onboarding.whichLanguageDoYouSpeakComfortably
+        case .chooseTheLanguageYouWantToMaster: return onboarding.chooseTheLanguageYouWantToMaster
         case .wordTenses: return onboarding.wordTenses
         case .similarWords: return onboarding.similarWords
         case .wordBreakdown: return onboarding.wordBreakdown
@@ -616,6 +627,13 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .avgResponseTime: return progress.avgResponseTime
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
+        case .imagesLabel: return ui.imagesLabel
+        case .routinesLabel: return ui.routinesLabel
+        case .whatAreYouDoing: return ui.whatAreYouDoing
+        case .chooseContext: return ui.chooseContext
+        case .typeHere: return ui.typeHere
+        case .nearbyLabel: return ui.nearbyLabel
+        case .noNearbyPlaces: return ui.noNearbyPlaces
         }
     }
 }

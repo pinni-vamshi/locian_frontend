@@ -67,11 +67,11 @@ struct TargetLanguageSelectionModal: View {
     
     private func headingBadge() -> some View {
         Text("TARGET LANGUAGES")
-            .font(.system(size: 14, weight: .black, design: .monospaced))
+            .font(.system(size: 20, weight: .black, design: .monospaced))
             .foregroundColor(.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(ThemeColors.primaryAccent)
+            .background(Color.pink)
     }
     
     private func dismissButton() -> some View {
@@ -111,9 +111,9 @@ struct TargetLanguageSelectionModal: View {
     }
     
     private func instructionText() -> some View {
-        Text("CHOOSE THE LANGUAGE YOU WANT TO MASTER TODAY")
+        Text(LocalizationManager.shared.string(.chooseTheLanguageYouWantToMaster))
             .font(.system(size: 14, weight: .black, design: .monospaced))
-            .foregroundColor(ThemeColors.primaryAccent)
+            .foregroundColor(.gray)
             .padding(.vertical, 5)
     }
 
@@ -136,7 +136,7 @@ struct TargetLanguageSelectionModal: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
-                .background(ThemeColors.primaryAccent)
+                .background(Color.pink)
                 .padding(.vertical, 12)
         }
         .disabled(isLoading)
