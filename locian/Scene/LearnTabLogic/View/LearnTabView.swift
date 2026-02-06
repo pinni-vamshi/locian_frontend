@@ -104,7 +104,8 @@ struct LearnTabView: View {
     // MARK: - Components
 
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let _ = print("🎨 [LearnTabView] headerView evaluating")
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
                 Text(appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased())
                     .font(.system(size: 20, weight: .black, design: .monospaced))
@@ -126,6 +127,7 @@ struct LearnTabView: View {
     }
 
     private var placeNameHeader: some View {
+        let _ = print("🎨 [LearnTabView] placeNameHeader evaluating")
         let isAnalyzing = state.isAnalyzingImage
         let name = isAnalyzing ? "GETTING YOUR PLACE..." : (state.isShowingGlobalRecommendations ? "SUGGESTED MOMENTS" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
         
@@ -150,6 +152,7 @@ struct LearnTabView: View {
     }
 
     private var languagePromptHeader: some View {
+        let _ = print("🎨 [LearnTabView] languagePromptHeader evaluating")
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
         let targetRaw = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
         
@@ -172,6 +175,7 @@ struct LearnTabView: View {
                 Spacer()
                 
                 Button(action: {
+                    print("👆 [UI-INTERACTION] Tapped Refresh")
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                     state.fetchFirstRecommendedPlace()
                 }) {
@@ -211,6 +215,8 @@ struct LearnTabView: View {
         let isTargetAvailable = NLEmbedding.sentenceEmbedding(for: targetLang) != nil
         let isNativeAvailable = NLEmbedding.wordEmbedding(for: nativeLang) != nil
         
+        print("🎨 [LearnTabView] loadingOverlay evaluating")
+        
         return AILoadingModal(
             placeName: state.recommendedPlaces.first?.place_name ?? "Unknown",
             moment: state.activeGeneratingMoment ?? "Analysis in Progress",
@@ -246,6 +252,7 @@ struct LearnTabView: View {
     }
     
     private func handleGenerationStateChange(_ newState: SentenceGenerationState) {
+        print("🎨 [LearnTabView] handleGenerationStateChange: \(newState)")
         if newState == .idle && !state.isLoadingHistory {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
@@ -254,6 +261,7 @@ struct LearnTabView: View {
     }
     
     private func handleLoadingHistoryChange(_ isLoading: Bool) {
+        print("🎨 [LearnTabView] handleLoadingHistoryChange: \(isLoading)")
         if !isLoading && state.generationState == .idle && !appState.isLoadingTimeline && !state.isLoadingHistory {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
         }
@@ -262,6 +270,7 @@ struct LearnTabView: View {
     }
     
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+        print("🎨 [LearnTabView] handleScenePhaseChange: \(newPhase)")
         if newPhase == .active && !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
             state.fetchFirstRecommendedPlace()
         }
@@ -284,6 +293,7 @@ struct LearnTabView: View {
 
     @ViewBuilder
     private var recommendedSidebar: some View {
+        let _ = print("🎨 [LearnTabView] recommendedSidebar evaluating")
         VStack(spacing: 0) {
             // Top Arrow Box
             Rectangle()
@@ -291,6 +301,7 @@ struct LearnTabView: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     DoubleArrowButton(direction: .up, color: ThemeColors.secondaryAccent, size: 16) {
+                        print("👆 [UI-INTERACTION] Cycle Category UP")
                         cycleCategory(forward: false)
                     }
                 )
@@ -324,6 +335,7 @@ struct LearnTabView: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     DoubleArrowButton(direction: .down, color: ThemeColors.secondaryAccent, size: 16) {
+                        print("👆 [UI-INTERACTION] Cycle Category DOWN")
                         cycleCategory(forward: true)
                     }
                 )
@@ -353,7 +365,8 @@ struct LearnTabView: View {
     }
 
     private var recommendedMomentsScroll: some View {
-        ScrollView(.vertical, showsIndicators: false) {
+        let _ = print("🎨 [LearnTabView] recommendedMomentsScroll evaluating")
+        return ScrollView(.vertical, showsIndicators: false) {
              VStack(spacing: 16) {
                  if state.isAnalyzingImage {
                      RecommendedCard(moment: "GETTING YOUR MOMENTS...", time: "LIVE", isGreen: false) {
@@ -506,7 +519,10 @@ struct LearnTabView: View {
     // MARK: - Custom Moment Input
     
     private var addCustomMomentButton: some View {
-        Button(action: { showCustomInput = true }) {
+        Button(action: { 
+            print("👆 [UI-INTERACTION] Tapped Add Custom Moment")
+            showCustomInput = true 
+        }) {
             HStack {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 16))
