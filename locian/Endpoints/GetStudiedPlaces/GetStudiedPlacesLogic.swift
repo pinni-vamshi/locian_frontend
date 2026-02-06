@@ -38,10 +38,28 @@ class GetStudiedPlacesLogic {
                     let places = placesArray.compactMap { self.parseMicroSituation($0) }
                     print("📦 [GetStudiedPlacesLogic] Successfully decoded \(places.count) / \(placesArray.count) places.")
                     
+                    // Parse User Intent if available
+                    var userIntent: UserIntent? = nil
+                    if let intentDict = dataObj["user_intent"] as? [String: String] {
+                        userIntent = UserIntent(
+                            movement: intentDict["movement"],
+                            waiting: intentDict["waiting"],
+                            consume_fast: intentDict["consume_fast"],
+                            consume_slow: intentDict["consume_slow"],
+                            errands: intentDict["errands"],
+                            browsing: intentDict["browsing"],
+                            rest: intentDict["rest"],
+                            social: intentDict["social"],
+                            emergency: intentDict["emergency"],
+                            suggested_needs: intentDict["suggested_needs"]
+                        )
+                    }
+                    
                     dataDict = GetStudiedPlacesData(
                         places: places,
                         input_time: dataObj["input_time"] as? String ?? "",
-                        count: dataObj["count"] as? Int ?? 0
+                        count: dataObj["count"] as? Int ?? 0,
+                        user_intent: userIntent
                     )
                 }
                 

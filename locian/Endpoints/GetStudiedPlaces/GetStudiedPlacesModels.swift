@@ -30,6 +30,20 @@ struct GetStudiedPlacesData: Codable {
     let places: [MicroSituationData]
     let input_time: String?
     let count: Int?
+    let user_intent: UserIntent?
+}
+
+struct UserIntent: Codable {
+    let movement: String?
+    let waiting: String?
+    let consume_fast: String?
+    let consume_slow: String?
+    let errands: String?
+    let browsing: String?
+    let rest: String?
+    let social: String?
+    let emergency: String?
+    let suggested_needs: String?
 }
 
 // MARK: - Domain Models

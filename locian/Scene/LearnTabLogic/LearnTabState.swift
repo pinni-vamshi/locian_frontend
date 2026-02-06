@@ -42,6 +42,10 @@ class LearnTabState: ObservableObject {
     @Published var recommendedPlaces: [MicroSituationData] = []
     @Published var selectedRecommendedCategory: String? = nil
     
+    // Local Recommendations
+    @Published var mostLikelyPlaces: [ScoredPlace] = []
+    @Published var likelyPlaces: [ScoredPlace] = []
+    
 
     
     // UI-Ready Properties (Pure Data for Views)
@@ -114,6 +118,26 @@ class LearnTabState: ObservableObject {
                 self.appState.timeline = data.timeline
                 self.allTimelinePlaces = data.places
                 self.hasAnyStudiedPlaces = !data.places.isEmpty
+                
+                // 🚀 Local Intent-Based Recommendations
+                if let intent = data.intent {
+                    let localResult = LocalRecommendationService.shared.recommend(
+                        intent: intent, 
+                        location: LocationManager.shared.currentLocation, 
+                        history: data.places
+                    )
+                    
+                    self.mostLikelyPlaces = localResult.mostLikely
+                    self.likelyPlaces = localResult.likely
+                    
+                    // If we have a strong local match (Most Likely), we could potentially use it immediately
+                    // For now, we still allow the remote prediction to run or override if needed.
+                    if let bestMatch = localResult.mostLikely.first {
+                        print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
+                        // Optional: Pre-fill recommendedPlaces with local best match?
+                        // self.setRecommendedPlace(name: bestMatch.extractedName, situations: bestMatch.place.micro_situations)
+                    }
+                }
                 
                 // 🚀 Automatically predict context using the autonomous Service
                 self.predictPlaceFromList()
@@ -354,13 +378,13 @@ class LearnTabState: ObservableObject {
 // MARK: - Service
 class LearnTabService {
     static let shared = LearnTabService(); private init() {}
-    func fetchAndLoadContent(sessionToken: String, completion: @escaping (Result<(timeline: TimelineData, places: [MicroSituationData]), Error>) -> Void) {
+    func fetchAndLoadContent(sessionToken: String, completion: @escaping (Result<(timeline: TimelineData, places: [MicroSituationData], intent: UserIntent?), Error>) -> Void) {
         GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { result in
             switch result {
             case .success(let response):
                 if let data = response.data {
                     let timeline = TimelineData(places: data.places)
-                    completion(.success((timeline, data.places)))
+                    completion(.success((timeline, data.places, data.user_intent)))
                 } else {
                     completion(.failure(NSError(domain: "StudiedPlaces", code: -1, userInfo: [NSLocalizedDescriptionKey: response.message ?? "No data returned"])))
                 }
