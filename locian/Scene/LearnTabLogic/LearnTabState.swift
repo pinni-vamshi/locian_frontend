@@ -138,55 +138,76 @@ class LearnTabState: ObservableObject {
                 
                 // 🚀 Local Intent-Based Recommendations
                 if let intent = data.intent {
+                    print("\n🟢 [LearnTabState] START: Processing Recommendations")
+                    print("   - Intent Received: '\(intent)'")
+                    print("   - History Context: \(data.places.count) places")
+                    
+                    print("   🔹 Calling LocalRecommendationService...")
                     let localResult = LocalRecommendationService.shared.recommend(
                         intent: intent, 
                         location: LocationManager.shared.currentLocation, 
                         history: data.places
                     )
                     
+                    print("   ✅ Service Returned Results")
+                    print("   - Sections: \(localResult.sections.count)")
+                    print("   - Most Likely Count: \(localResult.mostLikely.count)")
+                    print("   - Likely Count: \(localResult.likely.count)")
+                    
                     self.mostLikelyPlaces = localResult.mostLikely
                     self.likelyPlaces = localResult.likely
                     
                     // If we have a strong local match (Most Likely), we could potentially use it immediately
-                    // For now, we still allow the remote prediction to run or override if needed.
-                    // If we have a strong local match (Most Likely), we could potentially use it immediately
                     if let bestMatch = localResult.mostLikely.first {
-                        print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
+                        print("   🏆 Best Match Found: '\(bestMatch.extractedName)' (Score: \(bestMatch.score))")
                         
                         // 🚀 UPDATE UI WITH GENERIC SECTIONS
                         // STRICT STATE: Just maps whatever the Service provided.
                         
-                        print("\n📥 [LearnTabState] Received Sections from Service: \(localResult.sections.count)")
+                        print("\n   📥 [STEP: Mapping Service -> ViewModels]")
                         for (i, sec) in localResult.sections.enumerated() {
-                             print("   - Section \(i) ('\(sec.title)'): \(sec.items.count) items")
-                             if let first = sec.items.first {
-                                 print("     First Item: \(first.extractedName)")
-                             }
+                             print("      🔸 Section \(i) Input: '\(sec.title)' (\(sec.items.count) items)")
                         }
                         
                         let transformer: (ScoredPlace) -> RecommendedMomentViewModel? = { scoredPlace in
                             let place = scoredPlace.place
                             guard let moment = place.micro_situations?.first?.moments.first,
-                                  let category = place.micro_situations?.first?.category else { return nil }
+                                  let category = place.micro_situations?.first?.category else {
+                                print("         ⚠️ [SKIP] Missing data for place: \(place.id)")
+                                return nil
+                            }
+                            
+                            // Log transformation for first item of each batch to avoid spamming too much, 
+                            // but user asked for detail so maybe spam is okay? 
+                            // User said "1000 hundred more", so I will log everything.
+                            print("         transforming -> [RAW] '\(moment.text)' -> [VM] '\(moment.text)'")
                             
                             return RecommendedMomentViewModel(
                                 id: place.document_id ?? UUID().uuidString,
                                 moment: moment.text,
                                 time: place.time ?? "--:--",
                                 category: category,
-                                placeName: scoredPlace.extractedName // Now accessing wrapper property
+                                placeName: scoredPlace.extractedName
                             )
                         }
                         
                         self.globalRecommendations = localResult.sections.compactMap { resultSection in
+                            print("      ⚡️ Mapping Section: '\(resultSection.title)'")
                             let viewModels = resultSection.items.compactMap { transformer($0) }
-                            if viewModels.isEmpty { return nil }
+                            
+                            if viewModels.isEmpty {
+                                print("         ❌ Section Empty after mapping. Dropping.")
+                                return nil
+                            }
+                            
+                            print("         ✅ Section Mapped: \(viewModels.count) ViewModels created.")
                             return RecommendationSection(items: viewModels)
                         }
                         
-                        print("📤 [LearnTabState] Published Global Recommendations: \(self.globalRecommendations.count) Sections")
+                        print("\n   📤 [STEP: Final UI Publication]")
+                        print("   - Global Recommendations Array: \(self.globalRecommendations.count) Sections")
                         for (i, sec) in self.globalRecommendations.enumerated() {
-                            print("   - UI Section \(i): \(sec.items.count) items")
+                            print("      displaying -> Section \(i): \(sec.items.count) items")
                         }
                         print("--------------------------------------------------\n")
                         
