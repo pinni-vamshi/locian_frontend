@@ -48,8 +48,9 @@ class LearnTabState: ObservableObject {
     
 
     
+    @Published var isShowingGlobalRecommendations: Bool = false
+    
     // UI-Ready Properties (Pure Data for Views)
-
     @Published var uiStreakText: String = ""
     
     // Teaching Flow Properties
@@ -132,18 +133,17 @@ class LearnTabState: ObservableObject {
                     
                     // If we have a strong local match (Most Likely), we could potentially use it immediately
                     // For now, we still allow the remote prediction to run or override if needed.
+                    // If we have a strong local match (Most Likely), we could potentially use it immediately
                     if let bestMatch = localResult.mostLikely.first {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
                         // 🚀 UPDATE UI IMMEDIATELY
-                        // Populate the recommendedPlaces with the top 5 local matches
-                        self.recommendedPlaces = localResult.mostLikely.map { $0.place }
+                        // Populate the recommendedPlaces with BOTH top lists (10 items max)
+                        let allMatches = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
+                        self.recommendedPlaces = allMatches
+                        self.isShowingGlobalRecommendations = true
                     }
                 }
-                
-                // 🚀 Automatically predict context using the autonomous Service
-                self.predictPlaceFromList()
-                
                 // 🚀 Sync UI
                 self.syncUIProperties()
                 self.appState.hasInitialHistoryLoaded = true
@@ -373,6 +373,7 @@ class LearnTabState: ObservableObject {
             if let firstCat = situations?.first?.category {
                 self.selectedRecommendedCategory = firstCat
             }
+            self.isShowingGlobalRecommendations = false
         }
     }
 }
@@ -449,6 +450,7 @@ extension LearnTabState {
             if let firstCat = situations?.first?.category {
                 self.selectedRecommendedCategory = firstCat
             }
+            self.isShowingGlobalRecommendations = false
         }
     }
     
