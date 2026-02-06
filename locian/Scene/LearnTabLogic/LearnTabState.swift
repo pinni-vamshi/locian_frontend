@@ -141,6 +141,7 @@ class LearnTabState: ObservableObject {
                         // Populate recommendedPlaces with the top 10 flat list (returned in mostLikely)
                         self.recommendedPlaces = localResult.mostLikely.map { $0.place }
                         self.isShowingGlobalRecommendations = true
+                        self.selectedRecommendedCategory = nil // CRITICAL: Reset filter so all 10 show
                     }
                 }
                 // 🚀 Sync UI

@@ -395,7 +395,8 @@ struct LearnTabView: View {
     private func recommendedMomentRow(place: MicroSituationData, placeIndex: Int) -> some View {
         let situations = place.micro_situations ?? []
         return ForEach(Array(situations.enumerated()), id: \.1.category) { (sIndex: Int, section: UnifiedMomentSection) in
-            if state.selectedRecommendedCategory == nil || section.category == state.selectedRecommendedCategory {
+            // IGNORE CATEGORY FILTER IF GLOBAL RECOMMENDATIONS ARE ON
+            if state.isShowingGlobalRecommendations || state.selectedRecommendedCategory == nil || section.category == state.selectedRecommendedCategory {
                 recommendedCardGenerator(place: place, category: section.category, moments: section.moments)
             }
         }
