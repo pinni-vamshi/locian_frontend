@@ -156,6 +156,14 @@ class LearnTabState: ObservableObject {
                         // 🚀 UPDATE UI WITH GENERIC SECTIONS
                         // STRICT STATE: Just maps whatever the Service provided.
                         
+                        print("\n📥 [LearnTabState] Received Sections from Service: \(localResult.sections.count)")
+                        for (i, sec) in localResult.sections.enumerated() {
+                             print("   - Section \(i) ('\(sec.title)'): \(sec.items.count) items")
+                             if let first = sec.items.first {
+                                 print("     First Item: \(first.extractedName)")
+                             }
+                        }
+                        
                         let transformer: (ScoredPlace) -> RecommendedMomentViewModel? = { scoredPlace in
                             let place = scoredPlace.place
                             guard let moment = place.micro_situations?.first?.moments.first,
@@ -175,6 +183,12 @@ class LearnTabState: ObservableObject {
                             if viewModels.isEmpty { return nil }
                             return RecommendationSection(items: viewModels)
                         }
+                        
+                        print("📤 [LearnTabState] Published Global Recommendations: \(self.globalRecommendations.count) Sections")
+                        for (i, sec) in self.globalRecommendations.enumerated() {
+                            print("   - UI Section \(i): \(sec.items.count) items")
+                        }
+                        print("--------------------------------------------------\n")
                         
                         // Legacy compatibility (optional)
                         self.recommendedPlaces = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
