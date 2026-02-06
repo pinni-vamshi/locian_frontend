@@ -15,107 +15,70 @@ class ScoringEngine {
     
     // MARK: - Core Scoring
     
-    func score(place: MicroSituationData, intentVector: [Double]?, userLocation: CLLocation?) -> ScoredPlace {
-        var totalScore: Double = 0.0
-        var matchReasons: [String] = []
+    func score(place: MicroSituationData, intentVector: [Double]?, userLocation: CLLocation?) -> [ScoredPlace] {
+        var scoredMoments: [ScoredPlace] = []
         
         // 1. Semantic Similarity (Intent vs History)
-        // We compare the intent vector against the place name + context description
         if let intentVector = intentVector {
-            // Find the BEST matching moment text within this place
-            var bestMomentScore: Double = 0.0
-            var bestMomentText: String = ""
-            var bestMoment: UnifiedMoment? = nil
-            var bestCategory: String? = nil
-            
             if let sections = place.micro_situations {
                 for section in sections {
                     for moment in section.moments {
                         if let momentVector = EmbeddingEngine.shared.generateEmbedding(for: moment.text) {
                             let similarity = cosineSimilarity(intentVector, momentVector)
+                            let finalScore = similarity * 10.0
                             
                             print("🧠 [ScoringEngine] Intent vs Moment '\(moment.text)' -> Sim: \(similarity)")
                             
-                            if similarity > bestMomentScore {
-                                bestMomentScore = similarity
-                                bestMomentText = moment.text
-                                bestMoment = moment
-                                bestCategory = section.category
+                            // Only include relevant matches (threshold > 0.1 to allow "Likely" candidates)
+                            // User wants Top 10, so we should be generous here and filter later
+                            if similarity > 0.1 {
+                                var matchReasons: [String] = []
+                                matchReasons.append("Moment Match: '\(moment.text)'")
+                                
+                                // GPS Boost Check (Per Moment, though it's place-level data)
+                                var boostedScore = finalScore
+                                if let userLoc = userLocation,
+                                   let placeLat = place.latitude,
+                                   let placeLon = place.longitude,
+                                   placeLat != 0, placeLon != 0 {
+                                    
+                                    let placeLoc = CLLocation(latitude: placeLat, longitude: placeLon)
+                                    let distance = userLoc.distance(from: placeLoc)
+                                    
+                                    if distance < 100 {
+                                        boostedScore += 5.0
+                                        matchReasons.append("Nearby (<100m)")
+                                    } else if distance < 500 {
+                                        boostedScore += 2.0
+                                        matchReasons.append("Nearby (<500m)")
+                                    }
+                                }
+
+                                // Create specific place wrapper for this ONE moment
+                                var placeCopy = place
+                                let filteredSection = UnifiedMomentSection(
+                                    category: section.category,
+                                    moments: [moment]
+                                )
+                                placeCopy.micro_situations = [filteredSection]
+                                
+                                let scoredPlace = ScoredPlace(
+                                    place: placeCopy,
+                                    score: boostedScore,
+                                    matchReason: matchReasons.joined(separator: ", "),
+                                    extractedName: extractPlaceName(from: placeCopy)
+                                )
+                                scoredMoments.append(scoredPlace)
                             }
                         }
                     }
-                }
-            }
-            
-            // Also check Context Description as a fallback/boost
-            let contextText = place.context_description ?? ""
-            if !contextText.isEmpty, let contextVector = EmbeddingEngine.shared.generateEmbedding(for: contextText) {
-                let contextSim = cosineSimilarity(intentVector, contextVector)
-                if contextSim > bestMomentScore {
-                    bestMomentScore = contextSim
-                    bestMomentText = "Context: \(contextText)"
-                }
-            }
-            
-            totalScore += bestMomentScore * 10.0
-            
-            if bestMomentScore > 0.3 {
-                matchReasons.append("Moment Match: '\(bestMomentText)'")
-                
-                // 🚀 CRITICAL: Filter the place to ONLY contain this best moment
-                if let bestMoment = bestMoment, let bestCategory = bestCategory {
-                    // Create a mutable copy (MicroSituationData is a value type, so var placeCopy = place works)
-                    var placeCopy = place
-                    
-                    // Construct a single section with the single best moment
-                    let filteredSection = UnifiedMomentSection(
-                        category: bestCategory,
-                        moments: [bestMoment]
-                    )
-                    
-                    // Replace the list with just this one section
-                    placeCopy.micro_situations = [filteredSection]
-                    
-                    // Use this modified place for the result
-                    return ScoredPlace(
-                        place: placeCopy,
-                        score: totalScore,
-                        matchReason: matchReasons.joined(separator: ", "),
-                        extractedName: extractPlaceName(from: placeCopy)
-                    )
                 }
             }
         } else {
             print("⚠️ [ScoringEngine] No intent vector provided")
         }
         
-        // 2. GPS Proximity Boost
-        if let userLoc = userLocation,
-           let placeLat = place.latitude,
-           let placeLon = place.longitude,
-           placeLat != 0, placeLon != 0 {
-            
-            let placeLoc = CLLocation(latitude: placeLat, longitude: placeLon)
-            let distance = userLoc.distance(from: placeLoc)
-            
-            if distance < 100 { // Within 100m
-                totalScore += 5.0
-                matchReasons.append("Nearby (<100m)")
-            } else if distance < 500 { // Within 500m
-                totalScore += 2.0
-                matchReasons.append("Nearby (<500m)")
-            }
-        }
-        
-        // 3. Time Relevance (Optional, but good for context)
-        // (Could add logic here if needed, keeping it simple for now as requested)
-        
-        return ScoredPlace(
-            place: place,
-            score: totalScore,
-            matchReason: matchReasons.joined(separator: ", "),
-            extractedName: extractPlaceName(from: place)
-        )
+        return scoredMoments
     }
     
     // MARK: - Helpers

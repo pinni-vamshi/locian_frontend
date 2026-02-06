@@ -23,8 +23,9 @@ class LocalRecommendationService {
         // 2. Generate Embedding for Intent
         let intentVector = EmbeddingEngine.shared.generateEmbedding(for: intentText)
         
-        // 3. Score all historical places
-        let scoredPlaces = history.map { place in
+        // 3. Score all historical places (Returns list of Scored Moments per Place)
+        // flatMap ensures we get a single list of all matched moments across all history
+        let scoredPlaces = history.flatMap { place in
             ScoringEngine.shared.score(place: place, intentVector: intentVector, userLocation: location)
         }
         
