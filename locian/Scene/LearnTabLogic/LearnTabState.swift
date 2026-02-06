@@ -138,9 +138,8 @@ class LearnTabState: ObservableObject {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
                         // 🚀 UPDATE UI IMMEDIATELY
-                        // Populate the recommendedPlaces with BOTH top lists (10 items max)
-                        let allMatches = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
-                        self.recommendedPlaces = allMatches
+                        // Populate recommendedPlaces with the top 10 flat list (returned in mostLikely)
+                        self.recommendedPlaces = localResult.mostLikely.map { $0.place }
                         self.isShowingGlobalRecommendations = true
                     }
                 }
