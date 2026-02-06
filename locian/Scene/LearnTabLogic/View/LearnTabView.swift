@@ -383,6 +383,12 @@ struct LearnTabView: View {
              // It just iterates whatever structure strategy the Logic Layer provides.
              ForEach(state.globalRecommendations) { section in
                  VStack(alignment: .leading, spacing: 10) {
+                     // SECTION HEADER
+                     Text(section.title.uppercased())
+                         .font(.system(size: 14, weight: .black))
+                         .foregroundColor(ThemeColors.secondaryAccent)
+                         .padding(.bottom, 4)
+                         .padding(.top, 8)
                      ForEach(Array(section.items.enumerated()), id: \.1.id) { index, vm in
                          simpleGlobalRow(vm: vm)
                      }

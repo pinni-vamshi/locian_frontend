@@ -52,6 +52,7 @@ class LearnTabState: ObservableObject {
     
     struct RecommendationSection: Identifiable {
         let id = UUID()
+        let title: String // ADDED: To show "Most Likely" vs "Likely"
         let items: [RecommendedMomentViewModel]
     }
     
@@ -205,7 +206,7 @@ class LearnTabState: ObservableObject {
                             }
                             
                             print("         ✅ Section Mapped: \(viewModels.count) ViewModels created.")
-                            return RecommendationSection(items: viewModels)
+                            return RecommendationSection(title: resultSection.title, items: viewModels)
                         }
                         
                         print("\n   📤 [STEP: Final UI Publication]")
