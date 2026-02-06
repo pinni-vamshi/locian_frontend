@@ -19,6 +19,7 @@ struct LearnTabView: View {
     @State private var showCustomInput: Bool = false
     @State private var customMomentText: String = ""
     var body: some View {
+        let _ = print("🎨 [LearnTabView] BODY RE-EVALUATING")
         NavigationStack {
             VStack(spacing: 0) {
                 headerView
@@ -37,7 +38,10 @@ struct LearnTabView: View {
                 }
             }
         }
-        .onAppear { handleOnAppear() }
+        .onAppear { 
+            print("🎨 [LearnTabView] onAppear TRIGGERED")
+            handleOnAppear() 
+        }
         .onChange(of: state.generationState) { _, newState in handleGenerationStateChange(newState) }
         .onChange(of: state.isLoadingHistory) { _, newVal in handleLoadingHistoryChange(newVal) }
         .onChange(of: appState.isLoadingTimeline) { _, newVal in handleLoadingHistoryChange(newVal) } 
@@ -264,7 +268,8 @@ struct LearnTabView: View {
     }
 
     private var recommendedSection: some View {
-        HStack(alignment: .top, spacing: 0) {
+        let _ = print("🎨 [LearnTabView] recommendedSection evaluating")
+        return HStack(alignment: .top, spacing: 0) {
             // 2. Vertical Category Sidebar (Fixed)
             recommendedSidebar
                 .frame(width: 50)
@@ -399,11 +404,14 @@ struct LearnTabView: View {
     
     // A truly "dumb" renderer for global items - no loops, no filter checks.
     // Logic Layer guarantees these ViewModels are perfectly formatted.
+    // A truly "dumb" renderer for global items - no loops, no filter checks.
+    // Logic Layer guarantees these ViewModels are perfectly formatted.
     private func simpleGlobalRow(vm: LearnTabState.RecommendedMomentViewModel) -> some View {
         // Debug print
-        let _ = print("🎨 [UI-RENDER] Card: \(vm.moment) (Cat: \(vm.category))")
+        let _ = print("🎨 [UI-RENDER] simpleGlobalRow: \(vm.moment) (Cat: \(vm.category))")
         
         return AnyView(RecommendedCard(moment: vm.moment, time: vm.time, isGreen: false) {
+            print("👆 [UI-INTERACTION] Tapped: \(vm.moment)")
             state.generateSentence(for: vm.moment)
         })
     }
@@ -436,7 +444,8 @@ struct LearnTabView: View {
     }
 
     private func RecommendedCard(moment: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let _ = print("   🖼 [UI-Card] Building Card View for: \(moment)")
+        return VStack(alignment: .leading, spacing: 0) {
             recommendedCardHeader(time: time, isGreen: isGreen)
             Spacer()
             recommendedCardContent(moment: moment, isGreen: isGreen)
