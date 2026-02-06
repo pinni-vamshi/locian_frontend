@@ -247,12 +247,19 @@ class LearnTabState: ObservableObject {
 
 
     func forceRefreshHistory() async {
+        print("\n🟢 [LearnTabState] forceRefreshHistory called")
         return await withCheckedContinuation { continuation in
             guard let sessionToken = appState.authToken, !sessionToken.isEmpty else {
+                print("🔴 [LearnTabState] refresh ABORT: No Token")
                 continuation.resume()
                 return
             }
-            if isLoadingHistory { continuation.resume(); return }
+            if isLoadingHistory { 
+                print("⚠️ [LearnTabState] refresh SKIP: Already loading")
+                continuation.resume(); return 
+            }
+            
+            print("   🔹 Starting Refresh (API Call)...")
             isLoadingHistory = true
             
             LearnTabService.shared.fetchAndLoadContent(sessionToken: sessionToken) { [weak self] result in
@@ -262,10 +269,13 @@ class LearnTabState: ObservableObject {
                     self.appState.hasInitialHistoryLoaded = true
                     switch result {
                     case .success(let data):
+                        print("   ✅ [LearnTabState] Refresh Success")
+                        print("      - Places: \(data.places.count)")
                         self.appState.timeline = data.timeline
                         self.allTimelinePlaces = data.places
                         self.hasAnyStudiedPlaces = !data.places.isEmpty
-                    case .failure: 
+                    case .failure(let error):
+                        print("🔴 [LearnTabState] Refresh Failed: \(error.localizedDescription)")
                         self.clearState()
                     }
                     continuation.resume()
@@ -275,11 +285,13 @@ class LearnTabState: ObservableObject {
     }
 
     private func syncUIProperties() {
+        print("🟢 [LearnTabState] syncUIProperties called")
         let streak = appState.userLanguagePairs.first(where: { $0.is_default }).map { 
             "\(calculateCurrentStreak(practiceDates: $0.practice_dates)) " + LocalizationManager.shared.string(.daysLabel)
         } ?? ""
 
         DispatchQueue.main.async {
+            print("   - Streak Updated: '\(streak)'")
             self.uiStreakText = streak
         }
     }
