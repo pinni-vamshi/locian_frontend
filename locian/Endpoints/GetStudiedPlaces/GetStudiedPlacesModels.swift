@@ -65,7 +65,7 @@ struct MicroSituationData: Equatable, Identifiable, Codable {
     let profession: String?
     let updated_at: String?
     let target_language: String?
-    let document_id: String?
+    var document_id: String?
     
     var id: String { document_id ?? "\(place_name ?? "unknown")_\(created_at ?? "")" }
 }
