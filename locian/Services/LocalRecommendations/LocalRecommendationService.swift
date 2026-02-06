@@ -74,6 +74,12 @@ class LocalRecommendationService {
             resultSections.append(RecommendationResultSection(title: "LIKELY", items: likely))
         }
         
+        print("   ✅ [LocalRec] Final Result Constructed")
+        print("      - Sections: \(resultSections.count)")
+        for sec in resultSections {
+            print("      - Section '\(sec.title)': \(sec.items.count) items")
+        }
+        
         return LocalRecommendationResult(
             sections: resultSections
         )
@@ -95,6 +101,11 @@ class LocalRecommendationService {
             intent.emergency,
             intent.suggested_needs
         ]
-        return fields.compactMap { $0 }.joined(separator: " ")
+        
+        let validFields = fields.compactMap { $0 }
+        // print("   🔸 [IntentHelper] Intent Fields Found: \(validFields.count)")
+        // if !validFields.isEmpty { print("      - \(validFields.joined(separator: ", "))") }
+        
+        return validFields.joined(separator: " ")
     }
 }
