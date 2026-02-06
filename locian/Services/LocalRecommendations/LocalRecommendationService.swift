@@ -35,12 +35,18 @@ class LocalRecommendationService {
         print("   ✅ [LocalRec] Scoring Complete. Found \(scoredPlaces.count) potential matches.")
         
         // 4. Sort by Score (High to Low)
+        print("   🔹 [LocalRec] Sorting \(scoredPlaces.count) candidates by score...")
         let sortedPlaces = scoredPlaces.sorted { $0.score > $1.score }
         
         // 5. Categorize (Top 5 Most Likely, Next 5 Likely)
         // STRICT LOGIC: The Service defines the structure and headers.
         let mostLikely = Array(sortedPlaces.prefix(5))
         let likely = Array(sortedPlaces.dropFirst(5).prefix(5))
+        
+        print("   🔹 [LocalRec] Split Complete.")
+        print("      - Most Likely: \(mostLikely.count) items")
+        print("      - Likely: \(likely.count) items")
+        print("      - Dropped/Ignored: \(max(0, sortedPlaces.count - 10)) items")
         
         // Logging for Debug/Verification
         print("🔍 [LocalRec] Intent: \(intentText.prefix(30))...")

@@ -82,6 +82,9 @@ class ScoringEngine {
                                     extractedName: extractPlaceName(from: placeCopy)
                                 )
                                 scoredMoments.append(scoredPlace)
+                            } else {
+                                // Log failures if user really wants to see everything
+                                // print("      ❌ [Score] Rejected '\(moment.text)' (Sim: \(String(format: "%.3f", similarity))) < 0.1")
                             }
                         }
                     }
