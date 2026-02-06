@@ -17,17 +17,22 @@ class LocalRecommendationService {
     // MARK: - Main API
     
     func recommend(intent: UserIntent, location: CLLocation?, history: [MicroSituationData]) -> LocalRecommendationResult {
+        print("\n🟢 [LocalRecommendationService] recommend() called")
         // 1. Convert Intent to Text for Embedding
         let intentText = intentToText(intent)
+        print("   🔹 [LocalRec] Intent Text: '\(intentText)'")
         
         // 2. Generate Embedding for Intent
         let intentVector = EmbeddingEngine.shared.generateEmbedding(for: intentText)
         
+        print("   🔹 [LocalRec] Scoring History (\(history.count) places)...")
         // 3. Score all historical places (Returns list of Scored Moments per Place)
         // flatMap ensures we get a single list of all matched moments across all history
         let scoredPlaces = history.flatMap { place in
             ScoringEngine.shared.score(place: place, intentVector: intentVector, userLocation: location)
         }
+        
+        print("   ✅ [LocalRec] Scoring Complete. Found \(scoredPlaces.count) potential matches.")
         
         // 4. Sort by Score (High to Low)
         let sortedPlaces = scoredPlaces.sorted { $0.score > $1.score }

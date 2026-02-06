@@ -16,6 +16,7 @@ class ScoringEngine {
     // MARK: - Core Scoring
     
     func score(place: MicroSituationData, intentVector: [Double]?, userLocation: CLLocation?) -> [ScoredPlace] {
+        // print("\n🟢 [ScoringEngine] score() called for Place: '\(place.place_name ?? "Unknown")'") // Too spammy if 100s of places
         var scoredMoments: [ScoredPlace] = []
         
         // 1. Semantic Similarity (Intent vs History)
@@ -27,7 +28,9 @@ class ScoringEngine {
                             let similarity = cosineSimilarity(intentVector, momentVector)
                             let finalScore = similarity * 10.0
                             
-                            print("🧠 [ScoringEngine] Intent vs Moment '\(moment.text)' -> Sim: \(similarity)")
+                            if similarity > 0.05 { // Lower threshold for logging check
+                                 print("      🧠 [Score] '\(moment.text)' -> Sim: \(String(format: "%.3f", similarity))")
+                            }
                             
                             // Only include relevant matches (threshold > 0.1 to allow "Likely" candidates)
                             // User wants Top 10, so we should be generous here and filter later
@@ -48,9 +51,11 @@ class ScoringEngine {
                                     if distance < 100 {
                                         boostedScore += 5.0
                                         matchReasons.append("Nearby (<100m)")
+                                        print("         📍 GPS Boost (+5.0) Applied")
                                     } else if distance < 500 {
                                         boostedScore += 2.0
                                         matchReasons.append("Nearby (<500m)")
+                                        print("         📍 GPS Boost (+2.0) Applied")
                                     }
                                 }
 
