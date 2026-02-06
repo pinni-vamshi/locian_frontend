@@ -283,13 +283,23 @@ class LearnTabState: ObservableObject {
     // MARK: - Teaching Flow
     
     func generateSentence(for moment: String) {
+        print("\n🟢 [LearnTabState] generateSentence called")
+        print("   - Moment: '\(moment)'")
+        
         guard let sessionToken = appState.authToken, !sessionToken.isEmpty,
-              appState.userLanguagePairs.contains(where: { $0.is_default }) else { return }
+              appState.userLanguagePairs.contains(where: { $0.is_default }) else {
+            print("🔴 [LearnTabState] generateSentence ABORT: Missing Token or Language Pair")
+            return
+        }
         
         // Fallback to recommended place if available
         let placeName = recommendedPlaces.first?.place_name ?? "Unknown"
+        print("   - Context Place: '\(placeName)'")
         
-        guard generationState == .idle else { return }
+        guard generationState == .idle else {
+            print("⚠️ [LearnTabState] generateSentence SKIP: State is not idle (\(generationState))")
+            return
+        }
         
         self.activeGeneratingMoment = moment
         generationState = .callingAI
@@ -300,6 +310,7 @@ class LearnTabState: ObservableObject {
             if self?.generationState == .callingAI { self?.generationState = .generating }
         }
         
+        print("   🔹 Calling GenerateSentenceService...")
         // Use the new GenerateSentenceService (gathers data internally)
         GenerateSentenceService.shared.generateSentence(
             placeName: placeName,
@@ -309,12 +320,16 @@ class LearnTabState: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
+                    print("   ✅ [LearnTabState] generateSentence Success")
                     self?.generationState = .preparing
                     if let data = try? JSONEncoder().encode(response), let str = String(data: data, encoding: .utf8) {
+                        print("      Raw JSON Size: \(str.count) bytes")
                         self?.rawLessonResponse = str
                     }
                     self?.currentLesson = response.data
-                case .failure:
+                    print("      Lesson Data Set. Ready to Show.")
+                case .failure(let error):
+                    print("🔴 [LearnTabState] generateSentence Failed: \(error.localizedDescription)")
                     self?.generationState = .idle
                 }
             }
@@ -329,13 +344,16 @@ class LearnTabState: ObservableObject {
     
     // MARK: - Image Analysis
     func analyzeImageAndGenerateMoments(image: UIImage) {
+        print("\n🟢 [LearnTabState] analyzeImageAndGenerateMoments called")
         self.isAnalyzingImage = true
 
         guard let sessionToken = appState.authToken else {
+            print("🔴 [LearnTabState] analyzeImage ABORT: No Token")
             self.isAnalyzingImage = false
             return
         }
         
+        print("   🔹 Calling AnalyzeImageService...")
         // Use the new AnalyzeImageService
         AnalyzeImageService.shared.analyzeImage(image: image, sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
@@ -343,13 +361,18 @@ class LearnTabState: ObservableObject {
                 
                 switch result {
                 case .success(let response):
+                    print("   ✅ [LearnTabState] Analyze Success")
                     if let data = response.data {
+                        print("      Place: '\(data.place_name)'")
+                        print("      Situations: \(data.micro_situations.count) categories found")
                         self.isAnalyzingImage = false
                         self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations)
                     } else {
+                        print("      ⚠️ [LearnTabState] Analyze Success but Data is nil")
                         self.isAnalyzingImage = false
                     }
-                case .failure:
+                case .failure(let error):
+                    print("🔴 [LearnTabState] Analyze Failed: \(error.localizedDescription)")
                     self.isAnalyzingImage = false
                 }
                 
@@ -360,11 +383,14 @@ class LearnTabState: ObservableObject {
     
     // MARK: - Text Analysis (Unified Flow)
     func generateMomentsForPlace(name: String) {
+        print("\n🟢 [LearnTabState] generateMomentsForPlace called")
+        print("   - Name: '\(name)'")
         guard !name.isEmpty else { return }
         guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
         
         self.isAnalyzingImage = true // Re-use loading state for UI consistency
         
+        print("   🔹 Calling GenerateMomentsService...")
         // Use the new GenerateMomentsService
         GenerateMomentsService.shared.generateMoments(placeName: name, sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
@@ -373,14 +399,19 @@ class LearnTabState: ObservableObject {
                 
                 switch result {
                 case .success(let response):
+                    print("   ✅ [LearnTabState] generateMoments Success")
                     if let data = response.data {
                         let finalName = data.place_name.isEmpty ? name : data.place_name
+                        print("      Final Name: '\(finalName)'")
+                        print("      Situations: \(data.micro_situations.count) categories")
                         self.setRecommendedPlace(name: finalName, situations: data.micro_situations)
                     } else {
+                        print("      ⚠️ Missing Data. Setting Custom Active Place.")
                         self.setCustomActivePlace(name: name)
                     }
                 case .failure(let error):
-                    print("⚠️ [GenerateMoments] Failed: \(error.localizedDescription)")
+                    print("🔴 [GenerateMoments] Failed: \(error.localizedDescription)")
+                    print("   Fallback: Setting Custom Active Place.")
                     self.setCustomActivePlace(name: name)
                 }
             }
@@ -390,21 +421,32 @@ class LearnTabState: ObservableObject {
     // MARK: - Context-Based Place Prediction
     
     func predictPlaceFromList(places: [String]? = nil) {
-        guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
+        print("\n🟢 [LearnTabState] predictPlaceFromList called")
+        if let p = places { print("   - Custom Places List provided: \(p)") }
+        
+        guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { 
+            print("🔴 [LearnTabState] predictPlace ABORT: No Token")
+            return 
+        }
         self.isAnalyzingImage = true
         
+        print("   🔹 Calling PredictPlaceService...")
         PredictPlaceService.shared.predictPlace(sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 self.isAnalyzingImage = false
                 switch result {
                 case .success(let response):
+                    print("   ✅ [LearnTabState] Predict Place Success")
                     if let data = response.data {
+                        print("      Predicted: '\(data.place_name)'")
                         self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations ?? [])
                     } else {
+                        print("      ⚠️ [LearnTabState] Predict Success but Data/PlaceName is nil")
                         self.clearRecommendedPlaces()
                     }
-                case .failure:
+                case .failure(let error):
+                    print("🔴 [LearnTabState] Predict Failed: \(error.localizedDescription)")
                     self.clearRecommendedPlaces()
                 }
             }
