@@ -154,8 +154,7 @@ class LearnTabState: ObservableObject {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
                         // 🚀 UPDATE UI WITH GENERIC SECTIONS
-                        // State creates the structure (2 sections).
-                        // View iterates sections generically.
+                        // STRICT STATE: Just maps whatever the Service provided.
                         
                         let transformer: (MicroSituationData) -> RecommendedMomentViewModel? = { place in
                             guard let moment = place.micro_situations?.first?.moments.first,
@@ -170,21 +169,11 @@ class LearnTabState: ObservableObject {
                             )
                         }
                         
-                        // 1. Most Likely Section
-                        let mostLikelyItems = localResult.mostLikely.compactMap { transformer($0.place) }
-                        var sections: [RecommendationSection] = []
-                        
-                        if !mostLikelyItems.isEmpty {
-                            sections.append(RecommendationSection(items: mostLikelyItems))
+                        self.globalRecommendations = localResult.sections.compactMap { resultSection in
+                            let viewModels = resultSection.items.compactMap { transformer($0.place) }
+                            if viewModels.isEmpty { return nil }
+                            return RecommendationSection(items: viewModels)
                         }
-                        
-                        // 2. Likely Section
-                        let likelyItems = localResult.likely.compactMap { transformer($0.place) }
-                        if !likelyItems.isEmpty {
-                            sections.append(RecommendationSection(items: likelyItems))
-                        }
-                        
-                        self.globalRecommendations = sections
                         
                         // Legacy compatibility (optional)
                         self.recommendedPlaces = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }

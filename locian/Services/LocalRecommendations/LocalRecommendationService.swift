@@ -33,6 +33,7 @@ class LocalRecommendationService {
         let sortedPlaces = scoredPlaces.sorted { $0.score > $1.score }
         
         // 5. Categorize (Top 5 Most Likely, Next 5 Likely)
+        // STRICT LOGIC: The Service defines the structure and headers.
         let mostLikely = Array(sortedPlaces.prefix(5))
         let likely = Array(sortedPlaces.dropFirst(5).prefix(5))
         
@@ -53,9 +54,17 @@ class LocalRecommendationService {
         }
         print("----------------------------------------\n")
         
+        // Construct Sections
+        var resultSections: [RecommendationResultSection] = []
+        if !mostLikely.isEmpty {
+            resultSections.append(RecommendationResultSection(title: "MOST LIKELY", items: mostLikely))
+        }
+        if !likely.isEmpty {
+            resultSections.append(RecommendationResultSection(title: "LIKELY", items: likely))
+        }
+        
         return LocalRecommendationResult(
-            mostLikely: mostLikely,
-            likely: likely
+            sections: resultSections
         )
     }
     

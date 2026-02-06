@@ -11,8 +11,15 @@ import CoreLocation
 // MARK: - Result Models
 
 struct LocalRecommendationResult {
-    let mostLikely: [ScoredPlace]
-    let likely: [ScoredPlace]
+    let sections: [RecommendationResultSection]
+    // Legacy support (computed from sections)
+    var mostLikely: [ScoredPlace] { sections.first?.items ?? [] }
+    var likely: [ScoredPlace] { sections.count > 1 ? sections[1].items : [] }
+}
+
+struct RecommendationResultSection {
+    let title: String // "Most Likely", "Likely"
+    let items: [ScoredPlace]
 }
 
 struct ScoredPlace: Identifiable {
