@@ -40,8 +40,18 @@ class LearnTabState: ObservableObject {
     
     // Recommended Context Data (Predicted/Analyzed)
     @Published var recommendedPlaces: [MicroSituationData] = []
-    @Published var recommendedMostLikely: [MicroSituationData] = [] // Top 5
-    @Published var recommendedLikely: [MicroSituationData] = []     // Next 5
+    
+    // Global Recommendations (Flat View Models)
+    struct RecommendedMomentViewModel: Identifiable {
+        let id: String
+        let moment: String
+        let time: String
+        let category: String
+        let placeName: String
+    }
+    
+    @Published var recommendedMostLikely: [RecommendedMomentViewModel] = [] // Top 5
+    @Published var recommendedLikely: [RecommendedMomentViewModel] = []     // Next 5
     @Published var selectedRecommendedCategory: String? = nil
     
     // Local Recommendations
@@ -139,17 +149,32 @@ class LearnTabState: ObservableObject {
                     if let bestMatch = localResult.mostLikely.first {
                         print("✅ [LearnTab] Local Best Match: \(bestMatch.extractedName)")
                         
-                        // 🚀 UPDATE UI WITH SEPARATED DATA
-                        // The Service has already done the logic (5 & 5). The State simply holds it.
-                        // The View will simply render these arrays without doing any prefix/drop logic.
-                        self.recommendedMostLikely = localResult.mostLikely.map { $0.place }
-                        self.recommendedLikely = localResult.likely.map { $0.place }
+                        // 🚀 UPDATE UI WITH TRANSFORMED VIEW MODELS
+                        // State creates the "Good Format" for the View.
+                        // View does ZERO object traversal.
                         
-                        // For compatibility with legacy view logic that might assume a single list (though we move away from it)
-                        self.recommendedPlaces = self.recommendedMostLikely + self.recommendedLikely
+                        let transformer: (MicroSituationData) -> RecommendedMomentViewModel? = { place in
+                            guard let moment = place.micro_situations?.first?.moments.first,
+                                  let category = place.micro_situations?.first?.category else { return nil }
+                            
+                            return RecommendedMomentViewModel(
+                                id: place.document_id ?? UUID().uuidString,
+                                moment: moment.text,
+                                time: place.time ?? "--:--",
+                                category: category,
+                                placeName: place.extractedName
+                            )
+                        }
+                        
+                        self.recommendedMostLikely = localResult.mostLikely.compactMap { transformer($0.place) }
+                        self.recommendedLikely = localResult.likely.compactMap { transformer($0.place) }
+                        
+                        // Legacy compatibility (optional, but keeping consistent)
+                        // Note: Legacy view handles raw data, but global view uses ViewModels now.
+                        self.recommendedPlaces = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
                         
                         self.isShowingGlobalRecommendations = true
-                        self.selectedRecommendedCategory = nil // CRITICAL: Reset filter so all 10 show
+                        self.selectedRecommendedCategory = nil // Reset filter
                     }
                 }
                 // 🚀 Sync UI

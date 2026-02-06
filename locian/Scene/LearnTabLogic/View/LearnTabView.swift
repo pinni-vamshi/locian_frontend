@@ -382,8 +382,8 @@ struct LearnTabView: View {
              // Most Likely Section (Driven by Logic Layer)
              VStack(alignment: .leading, spacing: 10) {
                  // PURE RENDERING - NO LOGIC
-                 ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, place in
-                     simpleGlobalRow(place: place)
+                 ForEach(Array(state.recommendedMostLikely.enumerated()), id: \.1.id) { index, vm in
+                     simpleGlobalRow(vm: vm)
                  }
              }
              
@@ -391,8 +391,8 @@ struct LearnTabView: View {
              if !state.recommendedLikely.isEmpty {
                  VStack(alignment: .leading, spacing: 10) {
                      // PURE RENDERING - NO LOGIC
-                     ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, place in
-                          simpleGlobalRow(place: place)
+                     ForEach(Array(state.recommendedLikely.enumerated()), id: \.1.id) { index, vm in
+                          simpleGlobalRow(vm: vm)
                      }
                  }
              }
@@ -400,18 +400,14 @@ struct LearnTabView: View {
     }
     
     // A truly "dumb" renderer for global items - no loops, no filter checks.
-    // Logic Layer guarantees these places have exactly 1 moment.
-    private func simpleGlobalRow(place: MicroSituationData) -> some View {
-        if let moment = place.micro_situations?.first?.moments.first {
-            let category = place.micro_situations?.first?.category ?? "General"
-            // Debug print kept for verification
-            let _ = print("🎨 [UI-RENDER] Card: \(moment.text) (Cat: \(category))")
-            
-            return AnyView(RecommendedCard(moment: moment.text, time: place.time ?? "--:--", isGreen: false) {
-                state.generateSentence(for: moment.text)
-            })
-        }
-        return AnyView(EmptyView())
+    // Logic Layer guarantees these ViewModels are perfectly formatted.
+    private func simpleGlobalRow(vm: LearnTabState.RecommendedMomentViewModel) -> some View {
+        // Debug print
+        let _ = print("🎨 [UI-RENDER] Card: \(vm.moment) (Cat: \(vm.category))")
+        
+        return AnyView(RecommendedCard(moment: vm.moment, time: vm.time, isGreen: false) {
+            state.generateSentence(for: vm.moment)
+        })
     }
 
     private var recommendedMomentCards: some View {
