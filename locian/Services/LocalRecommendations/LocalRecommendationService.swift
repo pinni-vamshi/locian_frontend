@@ -81,7 +81,8 @@ class LocalRecommendationService {
         }
         
         return LocalRecommendationResult(
-            sections: resultSections
+            sections: resultSections,
+            suggestedPlaceName: "SUGGESTED MOMENTS"
         )
     }
     

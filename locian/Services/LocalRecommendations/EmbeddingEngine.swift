@@ -23,7 +23,7 @@ class EmbeddingEngine {
         }
         
         let vector = embedding.vector(for: text)
-        if let v = vector {
+        if vector != nil {
             // print("   ✅ [EmbeddingEngine] Vector Generated (Dim: \(v.count))")
         } else {
             print("⚠️ [EmbeddingEngine] Failed to generate vector for: '\(text)'")

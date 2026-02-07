@@ -240,7 +240,7 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             geolocationPermission: "GEOLOCATION",
             geolocationDesc: "Identify nearby \"Lesson Zones\" like coffee shops or libraries for immersive practice.",
             granted: "GRANTED",
-            allow: "ALLOW",
+            allow: "PROCEED",
             skip: "SKIP",
             letsStart: "LET'S START",
             continueText: "CONTINUE",

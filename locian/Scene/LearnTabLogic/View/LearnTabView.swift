@@ -67,12 +67,20 @@ struct LearnTabView: View {
     // MARK: - Navigation Components
     
     private var addNavigationButton: some View {
-        Button(action: {
+        let _ = print("🔘 [NAV-BTN] evaluating addNavigationButton body")
+        return Button(action: {
+            print("🌊 [NAV-BTN] 'Add a New Place' clicked")
+            print("   -> Current Tab: \(selectedTab)")
+            print("   -> triggering animation info selectedTab = .add")
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                print("   -> [ANIMATION] Inside withAnimation block")
                 selectedTab = .add
+                print("   -> [ANIMATION] selectedTab set to .add")
             }
+            print("   -> Animation block dispatched")
         }) {
             HStack {
+                let _ = print("   -> Rendering Label HStack")
                 Text("NOT SEEING WHAT YOU NEED?")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundColor(Color(white: 0.5))
@@ -104,10 +112,15 @@ struct LearnTabView: View {
     // MARK: - Components
 
     private var headerView: some View {
-        let _ = print("🎨 [LearnTabView] headerView evaluating")
+        let _ = print("🎩 [HEADER] Rendering headerView")
+        let username = appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased()
+        let _ = print("   -> Username to display: \(username)")
+        let _ = print("   -> Streak text: \(state.uiStreakText)")
+        let _ = print("   -> animateIn state: \(animateIn)")
+        
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .center) {
-                Text(appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased())
+                Text(username)
                     .font(.system(size: 20, weight: .black, design: .monospaced))
                     .foregroundColor(.white)
                     .padding(.horizontal, 8)
@@ -127,13 +140,20 @@ struct LearnTabView: View {
     }
 
     private var placeNameHeader: some View {
-        let _ = print("🎨 [LearnTabView] placeNameHeader evaluating")
         let isAnalyzing = state.isAnalyzingImage
-        let name = isAnalyzing ? "GETTING YOUR PLACE..." : (state.isShowingGlobalRecommendations ? "SUGGESTED MOMENTS" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
+        let _ = print("🏷 [PLACE-HEADER] Evaluating placeNameHeader")
+        let _ = print("   -> isAnalyzing: \(isAnalyzing)")
+        let _ = print("   -> isShowingGlobalRecommendations: \(state.isShowingGlobalRecommendations)")
+        let _ = print("   -> Recommended Place Count: \(state.recommendedPlaces.count)")
+        let _ = print("   -> First Place Name: \(state.recommendedPlaces.first?.place_name ?? "nil")")
+        
+        let name = isAnalyzing ? "GETTING YOUR PLACE..." : (state.showingNoDataError ? "NO DATA AVAILABLE" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
+        let _ = print("   -> Final Resolved Name: \(name)")
         
         return VStack(spacing: 0) {
+            let _ = print("   -> Rendering Text View for Name")
             Text(name.uppercased())
-                .font(.system(size: isAnalyzing ? 35 : 55.5, weight: .heavy))
+                .font(.system(size: (isAnalyzing || state.showingNoDataError) ? 35 : 55.5, weight: .heavy))
                 .minimumScaleFactor(0.3)
                 .lineLimit(3)
                 .foregroundColor(.white)
@@ -152,12 +172,16 @@ struct LearnTabView: View {
     }
 
     private var languagePromptHeader: some View {
-        let _ = print("🎨 [LearnTabView] languagePromptHeader evaluating")
+        let _ = print("🗣 [LANG-HEADER] Evaluating languagePromptHeader")
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        let _ = print("   -> Active Pair: \(String(describing: activePair))")
+        
         let targetRaw = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
+        let _ = print("   -> Target Raw: \(targetRaw)")
         
         // Resolve full English name if targetRaw is a code or rawValue
         let languageName = AppLanguage(rawValue: targetRaw)?.englishName ?? AppLanguage.fromCode(targetRaw)?.englishName ?? targetRaw
+        let _ = print("   -> Display Language Name: \(languageName)")
         
         return VStack(spacing: 0) {
             HStack {
@@ -175,9 +199,11 @@ struct LearnTabView: View {
                 Spacer()
                 
                 Button(action: {
-                    print("👆 [UI-INTERACTION] Tapped Refresh")
+                    print("🔄 [LANG-HEADER] Refresh button tapped - TRIGGERING CONTEXT REFRESH")
+                    print("   -> Calling state.refreshTokenContext()")
                     UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    state.fetchFirstRecommendedPlace()
+                    state.refreshTokenContext()
+                    print("   -> Context Refresh dispatched")
                 }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 14, weight: .black))
@@ -203,82 +229,156 @@ struct LearnTabView: View {
 
 
     private var loadingOverlay: some View {
+        let _ = print("🕐 [OVERLAY] Evaluating loadingOverlay body...")
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        let _ = print("   -> Active Pair found: \(activePair != nil)")
+        if let pair = activePair {
+            print("   -> Pair Details: \(pair.native_language) -> \(pair.target_language)")
+        }
+        
         let targetName = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
+        let _ = print("   -> Target Name: \(targetName)")
+        
         let nativeName = activePair?.native_language ?? "English"
+        let _ = print("   -> Native Name: \(nativeName)")
         
         let targetCode = AppLanguage(rawValue: targetName.capitalized)?.code ?? "en"
+        let _ = print("   -> Target Code: \(targetCode)")
+        
         let nativeCode = AppLanguage(rawValue: nativeName.capitalized)?.code ?? "en"
+        let _ = print("   -> Native Code: \(nativeCode)")
         
         let targetLang = NLLanguage(rawValue: targetCode)
         let nativeLang = NLLanguage(rawValue: nativeCode)
-        let isTargetAvailable = NLEmbedding.sentenceEmbedding(for: targetLang) != nil
-        let isNativeAvailable = NLEmbedding.wordEmbedding(for: nativeLang) != nil
         
-        print("🎨 [LearnTabView] loadingOverlay evaluating")
+        let isTargetAvailable = NLEmbedding.sentenceEmbedding(for: targetLang) != nil
+        let _ = print("   -> Embedding available for Target (\(targetCode)): \(isTargetAvailable)")
+        
+        let isNativeAvailable = NLEmbedding.wordEmbedding(for: nativeLang) != nil
+        let _ = print("   -> Embedding available for Native (\(nativeCode)): \(isNativeAvailable)")
+        
+        let placeName = state.recommendedPlaces.first?.place_name ?? "Unknown"
+        let _ = print("   -> Place Name for Overlay: \(placeName)")
+        
+        let momentText = state.activeGeneratingMoment ?? "Analysis in Progress"
+        let _ = print("   -> Moment Text for Overlay: \(momentText)")
         
         return AILoadingModal(
-            placeName: state.recommendedPlaces.first?.place_name ?? "Unknown",
-            moment: state.activeGeneratingMoment ?? "Analysis in Progress",
+            placeName: placeName,
+            moment: momentText,
             time: "Live Now",
             targetLangCode: targetCode.uppercased(),
             isTargetLoaded: isTargetAvailable,
             isNativeLoaded: isNativeAvailable,
             isReady: true,
             onFinish: {
+                print("🏁 [OVERLAY] onFinish callback triggered!")
+                print("   -> Current Lesson: \(String(describing: state.currentLesson))")
                 if state.currentLesson != nil {
+                    print("   -> Lesson exists, dismissing overlay...")
                     withAnimation {
+                        print("   -> [ANIMATION] Setting showLessonView = true")
                         state.showLessonView = true
+                        print("   -> [ANIMATION] Setting generationState = .idle")
                         state.generationState = .idle
+                        print("   -> [ANIMATION] Clearing activeGeneratingMoment")
                         state.activeGeneratingMoment = nil
                     }
+                } else {
+                    print("   ⚠️ [OVERLAY] Current lesson is NIL. Overlay will not dismiss automatically.")
                 }
             }
-        ).onAppear { NeuralValidator.runDiagnostics(for: targetCode) }
+        ).onAppear { 
+            print("👁 [OVERLAY] onAppear triggered")
+            print("   -> Running NeuralValidator diagnostics for: \(targetCode)")
+            NeuralValidator.runDiagnostics(for: targetCode) 
+            print("   -> Diagnostics request sent.")
+        }
     }
 
     // MARK: - Lifecycle Handlers
 
+    // MARK: - Lifecycle Handlers
+
     private func handleOnAppear() {
+        print("⚡️ [LIFECYCLE] handleOnAppear() triggered")
+        print("   -> hasInitialHistoryLoaded: \(appState.hasInitialHistoryLoaded)")
+        print("   -> isLoadingTimeline: \(appState.isLoadingTimeline)")
+        print("   -> generationState: \(state.generationState)")
+        
         if !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
+            print("   -> Conditions met for fetching first recommended place.")
             state.fetchFirstRecommendedPlace()
+            print("   -> fetchFirstRecommendedPlace called.")
+        } else {
+            print("   -> Skipping fetchFirstRecommendedPlace (History loaded or loading timeline)")
         }
+        
         // Change: Animate in even if loading history/timeline, so inline states are visible
         if state.generationState == .idle {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+            print("   -> Generation State is IDLE. Triggering animateIn = true")
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { 
+                animateIn = true 
+            }
         } else {
+            print("   -> Generation State is NOT IDLE (\(state.generationState)). Setting animateIn = false")
             animateIn = false
         }
+        print("⚡️ [LIFECYCLE] handleOnAppear complete.")
     }
     
     private func handleGenerationStateChange(_ newState: SentenceGenerationState) {
-        print("🎨 [LearnTabView] handleGenerationStateChange: \(newState)")
+        print("🔄 [STATE] Generation State Changed to: \(newState)")
+        print("   -> isLoadingHistory: \(state.isLoadingHistory)")
+        
         if newState == .idle && !state.isLoadingHistory {
+            print("   -> State is IDLE and NOT loading history. Scheduling animateIn...")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                print("      -> [ASYNC] Executing animateIn = true animation block")
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
             }
-        } else if newState != .idle { animateIn = false }
+        } else if newState != .idle { 
+            print("   -> State is BUSY. Setting animateIn = false immediately.")
+            animateIn = false 
+        } else {
+            print("   -> No action taken for state change.")
+        }
     }
     
     private func handleLoadingHistoryChange(_ isLoading: Bool) {
-        print("🎨 [LearnTabView] handleLoadingHistoryChange: \(isLoading)")
+        print("⏳ [HISTORY] Loading History Changed. isLoading: \(isLoading)")
+        print("   -> generationState: \(state.generationState)")
+        print("   -> isLoadingTimeline: \(appState.isLoadingTimeline)")
+        print("   -> isLoadingHistory (state): \(state.isLoadingHistory)")
+        
         if !isLoading && state.generationState == .idle && !appState.isLoadingTimeline && !state.isLoadingHistory {
+            print("   -> Conditions met: Loading FINISHED, Idle, Timeline Loaded. Animating In!")
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+        } else {
+            print("   -> Conditions NOT met for implicit animateIn.")
         }
         // No longer force animateIn = false when isLoading is true, 
         // because we want to see the inline "GETTING YOUR PLACE..." states.
     }
     
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-        print("🎨 [LearnTabView] handleScenePhaseChange: \(newPhase)")
+        print("🎭 [SCENE] Scene Phase Changed: \(newPhase)")
+        print("   -> hasInitialHistoryLoaded: \(appState.hasInitialHistoryLoaded)")
+        print("   -> isLoadingTimeline: \(appState.isLoadingTimeline)")
+        
         if newPhase == .active && !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
+            print("   -> App became ACTIVE and data needs loading. Fetching recommended place...")
             state.fetchFirstRecommendedPlace()
+        } else {
+            print("   -> handleScenePhaseChange ignoring change.")
         }
     }
 
     private var recommendedSection: some View {
         let _ = print("🎨 [LearnTabView] recommendedSection evaluating")
+        let _ = print("   -> Checking dependencies...")
         return HStack(alignment: .top, spacing: 0) {
+            let _ = print("   -> Laying out HStack...")
             // 2. Vertical Category Sidebar (Fixed)
             recommendedSidebar
                 .frame(width: 50)
@@ -286,6 +386,7 @@ struct LearnTabView: View {
             
             // 3. Vertical Moments List (Scrollable)
             recommendedMomentsScroll
+            let _ = print("   -> Layout complete.")
         }
     }
 
@@ -293,24 +394,33 @@ struct LearnTabView: View {
 
     @ViewBuilder
     private var recommendedSidebar: some View {
-        let _ = print("🎨 [LearnTabView] recommendedSidebar evaluating")
+        let _ = print("📊 [SIDEBAR] Rendering recommended sidebar...")
         VStack(spacing: 0) {
+            let _ = print("   -> Rendering Top Arrow Box")
             // Top Arrow Box
             Rectangle()
                 .fill(Color.white)
                 .frame(width: 50, height: 50)
                 .overlay(
-                    DoubleArrowButton(direction: .up, color: ThemeColors.secondaryAccent, size: 16) {
-                        print("👆 [UI-INTERACTION] Cycle Category UP")
-                        cycleCategory(forward: false)
+                    DoubleArrowButton(direction: .up, color: state.isAnalyzingImage ? .gray : ThemeColors.secondaryAccent, size: 16) {
+                        if !state.isAnalyzingImage {
+                            print("🔼 [SIDEBAR] Up arrow clicked - Cycling category BACKWARD")
+                            cycleCategory(forward: false)
+                        }
                     }
                 )
             
             Spacer()
             
-            // Category Text (Auto-scaling & Fixed Area)
+             // Category Text (Auto-scaling & Fixed Area)
             Group {
-                if let selectedCat = state.selectedRecommendedCategory {
+                if state.isAnalyzingImage {
+                     Text("LOADING...")
+                        .foregroundColor(ThemeColors.secondaryAccent)
+                } else if state.showingNoDataError {
+                     Text("NO DATA")
+                        .foregroundColor(.gray)
+                } else if let selectedCat = state.selectedRecommendedCategory {
                     Text(selectedCat.uppercased())
                         .foregroundColor(ThemeColors.secondaryAccent)
                 } else {
@@ -334,9 +444,11 @@ struct LearnTabView: View {
                 .fill(Color.white)
                 .frame(width: 50, height: 50)
                 .overlay(
-                    DoubleArrowButton(direction: .down, color: ThemeColors.secondaryAccent, size: 16) {
-                        print("👆 [UI-INTERACTION] Cycle Category DOWN")
-                        cycleCategory(forward: true)
+                    DoubleArrowButton(direction: .down, color: state.isAnalyzingImage ? .gray : ThemeColors.secondaryAccent, size: 16) {
+                        if !state.isAnalyzingImage {
+                            print("🔽 [SIDEBAR] Down arrow clicked - Cycling category FORWARD")
+                            cycleCategory(forward: true)
+                        }
                     }
                 )
         }
@@ -346,49 +458,78 @@ struct LearnTabView: View {
     }
 
     private func cycleCategory(forward: Bool) {
+        // ... (existing implementation)
+        print("🔄 [CYCLE] Request received. Forward: \(forward)")
         let situations = state.recommendedPlaces.first?.micro_situations ?? []
-        guard !situations.isEmpty else { return }
+        print("   -> Found \(situations.count) situations in first recommended place")
+        guard !situations.isEmpty else { 
+            print("   -> ⚠️ No situations found! Aborting cycle.")
+            return 
+        }
         
         let categories = situations.map { $0.category }
+        print("   -> Available categories: \(categories)")
         let currentIndex = categories.firstIndex(of: state.selectedRecommendedCategory ?? "") ?? 0
+        print("   -> Current Index: \(currentIndex) (Category: \(state.selectedRecommendedCategory ?? "nil"))")
         
         var nextIndex: Int
         if forward {
             nextIndex = (currentIndex + 1) % categories.count
+            print("   -> Moving Forward to index: \(nextIndex)")
         } else {
             nextIndex = (currentIndex - 1 + categories.count) % categories.count
+            print("   -> Moving Backward to index: \(nextIndex)")
         }
         
+        let nextCategory = categories[nextIndex]
+        print("   -> Next Category Selected: \(nextCategory)")
+        
         withAnimation(.spring()) {
-            state.selectedRecommendedCategory = categories[nextIndex]
+            print("   ✨ [ANIMATION] Updating selectedRecommendedCategory state...")
+            state.selectedRecommendedCategory = nextCategory
         }
+        print("🔄 [CYCLE] Update complete.")
     }
 
     private var recommendedMomentsScroll: some View {
-        let _ = print("🎨 [LearnTabView] recommendedMomentsScroll evaluating")
-        return ScrollView(.vertical, showsIndicators: false) {
+        ScrollView(.vertical, showsIndicators: false) {
              VStack(spacing: 16) {
+                 let _ = print("📜 [SCROLL] Rendering scroll content...")
+                 
+                 // EXCLUSIVE STATES
                  if state.isAnalyzingImage {
+                     let _ = print("   -> State is Analyzing. Showing LOADING card ONLY.")
                      RecommendedCard(moment: "GETTING YOUR MOMENTS...", time: "LIVE", isGreen: false) {
                          // No action while loading
                      }
-                 }
-                 
-                 if state.recommendedPlaces.isEmpty && !state.isAnalyzingImage {
+                 } else if state.showingNoDataError {
+                     let _ = print("   -> State is NO DATA ERROR.")
+                     RecommendedCard(moment: "NO DATA AVAILABLE", time: "--:--", isGreen: false) {
+                         // No action
+                     }
+                 } else if state.recommendedPlaces.isEmpty {
+                     let _ = print("   -> Recommended Places EMPTY. Showing placeholder.")
                      // Empty State Placeholder Card
                      RecommendedCard(moment: "TAP + TO ADD YOUR OWN MOMENT", time: "--:--", isGreen: false) {
+                         print("➕ [ACTION] Tapped placeholder 'Add Your Own Moment'")
                          showCustomInput = true
                      }
                      .opacity(0.5)
                  } else {
+                     let _ = print("   -> Rendering Content | Global: \(state.isShowingGlobalRecommendations)")
                      if state.isShowingGlobalRecommendations {
+                         let _ = print("      -> Rendering GLOBAL list")
                          globalRecommendationsList
                      } else {
+                         let _ = print("      -> Rendering LOCAL cards")
                          recommendedMomentCards
                      }
                  }
                  
-                 addCustomMomentButton
+                 // Hide add button during logic phases
+                 if !state.isAnalyzingImage && !state.showingNoDataError {
+                     addCustomMomentButton
+                 }
              }
              .padding(.horizontal, 16)
              .padding(.bottom, 20)
@@ -397,17 +538,20 @@ struct LearnTabView: View {
     
     private var globalRecommendationsList: some View {
         VStack(spacing: 24) {
+             let _ = print("🌍 [GLOBAL] Rendering Global List structure")
              // GENERIC RENDERING - VIEW DOES NOT KNOW OR CARE ABOUT SPLITS
              // It just iterates whatever structure strategy the Logic Layer provides.
              ForEach(state.globalRecommendations) { section in
                  VStack(alignment: .leading, spacing: 10) {
                      // SECTION HEADER
+                     let _ = print("   -> Rendering Section: \(section.title)")
                      Text(section.title.uppercased())
                          .font(.system(size: 14, weight: .black))
                          .foregroundColor(ThemeColors.secondaryAccent)
                          .padding(.bottom, 4)
                          .padding(.top, 8)
                      ForEach(Array(section.items.enumerated()), id: \.1.id) { index, vm in
+                         let _ = print("      -> Rendering Item [\(index)]: \(vm.moment)")
                          simpleGlobalRow(vm: vm)
                      }
                  }
@@ -446,23 +590,40 @@ struct LearnTabView: View {
     }
 
     private func recommendedCardGenerator(place: MicroSituationData, category: String, moments: [UnifiedMoment]) -> some View {
-        ForEach(Array(moments.enumerated()), id: \.1.text) { (mIndex: Int, moment: UnifiedMoment) in
+        let _ = print("🚀 [GENERATOR] START: processing place '\(place.place_name ?? "nil")'")
+        let _ = print("   -> Category: \(category)")
+        let _ = print("   -> Moment count: \(moments.count)")
+        
+        return ForEach(Array(moments.enumerated()), id: \.1.text) { (mIndex: Int, moment: UnifiedMoment) in
             let time = place.time ?? "--:--"
             let _ = print("🎨 [UI-RENDER] Card: \(moment.text) (Cat: \(category))")
+            let _ = print("   -> Index: \(mIndex)")
+            let _ = print("   -> Time: \(time)")
+            let _ = print("   -> Place ID: \(place.id)")
             
             RecommendedCard(moment: moment.text, time: time, isGreen: false) {
+                print("⚡️ [ACTION] Generating sentence for: \(moment.text)")
+                print("   -> From Category: \(category)")
+                print("   -> At Place: \(place.place_name ?? "unknown")")
                 state.generateSentence(for: moment.text)
+                print("   -> Action dispatched.")
             }
         }
     }
 
     private func RecommendedCard(moment: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
         let _ = print("   🖼 [UI-Card] Building Card View for: \(moment)")
+        let _ = print("      -> Time: \(time)")
+        let _ = print("      -> IsGreen: \(isGreen)")
+        
         return VStack(alignment: .leading, spacing: 0) {
+            let _ = print("      -> Stacking Header...")
             recommendedCardHeader(time: time, isGreen: isGreen)
             Spacer()
+            let _ = print("      -> Stacking Content...")
             recommendedCardContent(moment: moment, isGreen: isGreen)
             Spacer()
+            let _ = print("      -> Stacking Footer...")
             recommendedCardFooter(isGreen: isGreen, action: action)
         }
         .frame(minHeight: 120)
@@ -471,7 +632,8 @@ struct LearnTabView: View {
     }
 
     private func recommendedCardHeader(time: String, isGreen: Bool) -> some View {
-        HStack {
+        let _ = print("         🧢 [HEADER] Rendering header (Time: \(time))")
+        return HStack {
             Spacer()
             Text(time)
         }
@@ -482,7 +644,8 @@ struct LearnTabView: View {
     }
 
     private func recommendedCardContent(moment: String, isGreen: Bool) -> some View {
-        Text(moment.uppercased())
+        let _ = print("         📝 [CONTENT] Rendering content text: \(moment.prefix(10))...")
+        return Text(moment.uppercased())
             .font(.system(size: 24, weight: .black))
             .foregroundColor(isGreen ? .black : .white)
             .multilineTextAlignment(.leading)
@@ -492,8 +655,11 @@ struct LearnTabView: View {
     }
 
     private func recommendedCardFooter(isGreen: Bool, action: @escaping () -> Void) -> some View {
-        HStack(alignment: .bottom, spacing: 0) {
+        let _ = print("🤖 [UI] recommendedCardFooter rendering | isGreen: \(isGreen)")
+        return HStack(alignment: .bottom, spacing: 0) {
+            let _ = print("   -> Rendering Footer HStack")
             VStack(alignment: .leading, spacing: 0) {
+                let _ = print("     -> Rendering GENERATE SENTENCE text")
                 Text("GENERATE")
                 Text("SENTENCE")
             }
@@ -502,7 +668,13 @@ struct LearnTabView: View {
             
             Spacer()
             
-            Button(action: action) {
+            Button(action: {
+                print("🔘 [ACTION] 'Waveform' button tapped!")
+                print("   -> Invoking footer action closure...")
+                action() 
+                print("   -> Footer action closure completed.")
+            }) {
+                let _ = print("     -> Rendering Waveform Button Label")
                 Image(systemName: "waveform")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(.black)
@@ -519,11 +691,14 @@ struct LearnTabView: View {
     // MARK: - Custom Moment Input
     
     private var addCustomMomentButton: some View {
-        Button(action: { 
-            print("👆 [UI-INTERACTION] Tapped Add Custom Moment")
+        let _ = print("➕ [UI] addCustomMomentButton body evaluation")
+        return Button(action: { 
+            print("🟢 [ACTION] 'Add Your Own Moment' tapped")
+            print("   -> Setting showCustomInput = true")
             showCustomInput = true 
         }) {
             HStack {
+                let _ = print("   -> Rendering Add Button Content (Icon + Text)")
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 16))
                 Text("ADD YOUR OWN MOMENT") 

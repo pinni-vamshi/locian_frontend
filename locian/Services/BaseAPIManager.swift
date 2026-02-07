@@ -43,7 +43,7 @@ extension BaseAPIManagerProtocol {
         method: String = "POST",
         body: Encodable? = nil,
         headers: [String: String] = [:],
-        timeoutInterval: TimeInterval = 8.0,
+        timeoutInterval: TimeInterval = 30.0,
         completion: @escaping (Result<T, Error>) -> Void
     ) {
         performRawRequest(

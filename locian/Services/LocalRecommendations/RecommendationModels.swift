@@ -12,15 +12,19 @@ import CoreLocation
 
 struct LocalRecommendationResult {
     let sections: [RecommendationResultSection]
+    let suggestedPlaceName: String
+    
     // Legacy support (computed from sections)
     var mostLikely: [ScoredPlace] { sections.first?.items ?? [] }
     var likely: [ScoredPlace] { sections.count > 1 ? sections[1].items : [] }
     
-    init(sections: [RecommendationResultSection]) {
+    init(sections: [RecommendationResultSection], suggestedPlaceName: String = "SUGGESTED MOMENTS") {
         self.sections = sections
+        self.suggestedPlaceName = suggestedPlaceName
         print("\n🟢 [Model] LocalRecommendationResult initialized")
         print("   - Sections: \(sections.count)")
         print("   - Most Likely Items: \(sections.first?.items.count ?? 0)")
+        print("   - Suggested Name: \(suggestedPlaceName)")
     }
 }
 

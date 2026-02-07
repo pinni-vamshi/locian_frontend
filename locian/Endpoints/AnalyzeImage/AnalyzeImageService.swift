@@ -18,6 +18,7 @@ class AnalyzeImageService {
     // MARK: - Public API
     
     /// Analyze image with automatic data gathering
+    /// Analyze image with automatic data gathering
     func analyzeImage(
         image: UIImage,
         sessionToken: String,
@@ -36,56 +37,94 @@ class AnalyzeImageService {
             }
             let base64String = imageData.base64EncodedString()
             
-            // Gather current time
-            let currentDate = Date()
-            let formatter = DateFormatter()
-            formatter.dateFormat = "hh:mm a"
-            let timeString = formatter.string(from: currentDate)
+            // 1. Define continuation logic with Lock for Thread Safety
+            var didProceed = false
+            let lock = NSLock()
             
-            // Gather location
-            let userLocation = LocationManager.shared.currentLocation
-            
-            // Gather user profile data
-            let appState = AppStateManager.shared
-            let level = appState.userLanguagePairs.first(where: { $0.is_default })?.user_level ?? "BEGINNER"
-            let userLanguage = appState.nativeLanguage
-            let targetLanguage = appState.userLanguagePairs.first(where: { $0.is_default })?.target_language
-            
-            // Gather history context
-            let history = AppStateManager.shared.timeline?.places ?? []
-            let currentHour = Calendar.current.component(.hour, from: Date())
-            
-            let previous = history.filter { ($0.hour ?? -1) <= currentHour }
-                .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
-                .prefix(2)
-                .compactMap { h -> TimelinePlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return TimelinePlaceContext(place_name: name, time: time)
+            func proceed(location: CLLocation?) {
+                lock.lock()
+                guard !didProceed else {
+                    lock.unlock()
+                    return
                 }
-            
-            let future = history.filter { ($0.hour ?? -1) > currentHour }
-                .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
-                .prefix(1)
-                .compactMap { h -> TimelinePlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return TimelinePlaceContext(place_name: name, time: time)
+                didProceed = true
+                lock.unlock()
+                
+                // Gather current time
+                let currentDate = Date()
+                let formatter = DateFormatter()
+                formatter.dateFormat = "hh:mm a"
+                let timeString = formatter.string(from: currentDate)
+                
+                // Gather user profile data
+                let appState = AppStateManager.shared
+                let level = appState.userLanguagePairs.first(where: { $0.is_default })?.user_level ?? "BEGINNER"
+                let userLanguage = appState.nativeLanguage
+                let targetLanguage = appState.userLanguagePairs.first(where: { $0.is_default })?.target_language
+                
+                // Gather history context
+                let history = AppStateManager.shared.timeline?.places ?? []
+                let currentHour = Calendar.current.component(.hour, from: Date())
+                
+                let previous = history.filter { ($0.hour ?? -1) <= currentHour }
+                    .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
+                    .prefix(2)
+                    .compactMap { h -> TimelinePlaceContext? in
+                        guard let name = h.place_name, let time = h.time else { return nil }
+                        return TimelinePlaceContext(place_name: name, time: time)
+                    }
+                
+                let future = history.filter { ($0.hour ?? -1) > currentHour }
+                    .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
+                    .prefix(1)
+                    .compactMap { h -> TimelinePlaceContext? in
+                        guard let name = h.place_name, let time = h.time else { return nil }
+                        return TimelinePlaceContext(place_name: name, time: time)
+                    }
+                
+                // Build request
+                var lat: Double? = nil
+                var long: Double? = nil
+                
+                if let loc = location {
+                    lat = loc.coordinate.latitude
+                    long = loc.coordinate.longitude
                 }
+                
+                let request = AnalyzeImageRequest(
+                    image_base64: base64String,
+                    time: timeString,
+                    level: level,
+                    latitude: lat,
+                    longitude: long,
+                    user_language: userLanguage,
+                    target_language: targetLanguage,
+                    previous_places: Array(previous),
+                    future_places: Array(future)
+                )
+                
+                // Make API call
+                self.performRequest(request: request, sessionToken: sessionToken, completion: completion)
+            }
             
-            // Build request
-            let request = AnalyzeImageRequest(
-                image_base64: base64String,
-                time: timeString,
-                level: level,
-                latitude: userLocation?.coordinate.latitude,
-                longitude: userLocation?.coordinate.longitude,
-                user_language: userLanguage,
-                target_language: targetLanguage,
-                previous_places: Array(previous),
-                future_places: Array(future)
-            )
+            // 2. Start Timeout Timer (3.0s)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                print("⏳ [AnalyzeImageService] GPS Timeout (3s) reached. Proceeding without location.")
+                proceed(location: nil)
+            }
             
-            // Make API call
-            self.performRequest(request: request, sessionToken: sessionToken, completion: completion)
+            // 3. Request Location
+            print("📍 [AnalyzeImageService] Requesting current location...")
+            LocationManager.shared.getCurrentLocation { result in
+                switch result {
+                case .success(let location):
+                    print("📍 [AnalyzeImageService] Location fetched: \(location.coordinate)")
+                    proceed(location: location)
+                case .failure(let error):
+                    print("⚠️ [AnalyzeImageService] Location fetch failed: \(error.localizedDescription)")
+                    proceed(location: nil)
+                }
+            }
         }
     }
     

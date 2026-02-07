@@ -41,6 +41,9 @@ class LearnTabState: ObservableObject {
     // Recommended Context Data (Predicted/Analyzed)
     @Published var recommendedPlaces: [MicroSituationData] = []
     
+    // Error State
+    @Published var showingNoDataError: Bool = false
+    
     // Global Recommendations (Flat View Models)
     struct RecommendedMomentViewModel: Identifiable, Equatable {
         let id: String
@@ -129,7 +132,8 @@ class LearnTabState: ObservableObject {
         LearnTabService.shared.fetchAndLoadContent(sessionToken: sessionToken) { [weak self] result in
             guard let self = self else { return }
             self.isLoadingHistory = false
-            self.appState.isLoadingTimeline = false
+            // Keep appState.isLoadingTimeline = true until we set hasInitialHistoryLoaded
+            // to prevent the View from seeing a "gap" where !loading && !loaded -> triggering a re-fetch.
             
             switch result {
             case .success(let data):
@@ -141,10 +145,20 @@ class LearnTabState: ObservableObject {
                 self.allTimelinePlaces = data.places
                 self.hasAnyStudiedPlaces = !data.places.isEmpty
                 
+                // Mark as loaded BEFORE clearing the loading flag
+                self.appState.hasInitialHistoryLoaded = true
+                self.appState.isLoadingTimeline = false
+                
                 // 🚀 Local Intent-Based Recommendations
                 if let intent = data.intent {
                     print("\n🟢 [LearnTabState] START: Processing Recommendations")
                     print("   - Intent Received: '\(intent)'")
+                } else {
+                    print("\n🔴 [LearnTabState] STOP: No Intent received in data. Skipping Local Recommendations.")
+                }
+
+                if let intent = data.intent {
+                    print("   - History Context: \(data.places.count) places")
                     print("   - History Context: \(data.places.count) places")
                     
                     print("   🔹 Calling LocalRecommendationService...")
@@ -162,74 +176,99 @@ class LearnTabState: ObservableObject {
                     self.mostLikelyPlaces = localResult.mostLikely
                     self.likelyPlaces = localResult.likely
                     
+                    print("   📊 [STATE UPDATE] mostLikelyPlaces count: \(self.mostLikelyPlaces.count)")
+                    print("   📊 [STATE UPDATE] likelyPlaces count: \(self.likelyPlaces.count)")
+                    
+                    if localResult.mostLikely.isEmpty && localResult.likely.isEmpty {
+                        print("   ⚠️ [WARNING] Local Recommendation Service returned ZERO places.")
+                    }
+                    
                     // If we have a strong local match (Most Likely), we could potentially use it immediately
                     if let bestMatch = localResult.mostLikely.first {
                         print("   🏆 Best Match Found: '\(bestMatch.extractedName)' (Score: \(bestMatch.score))")
                         
-                        // 🚀 UPDATE UI WITH GENERIC SECTIONS
-                        // STRICT STATE: Just maps whatever the Service provided.
+                        // 🚀 UPDATE UI WITH SIDEBAR CATEGORIES ("Most Likely", "Likely")
+                        print("\n   📥 [STEP: Mapping Service -> UnifiedMomentSection]")
                         
-                        print("\n   📥 [STEP: Mapping Service -> ViewModels]")
-                        for (i, sec) in localResult.sections.enumerated() {
-                             print("      🔸 Section \(i) Input: '\(sec.title)' (\(sec.items.count) items)")
-                        }
+                        var unifiedSections: [UnifiedMomentSection] = []
                         
-                        let transformer: (ScoredPlace) -> RecommendedMomentViewModel? = { scoredPlace in
-                            let place = scoredPlace.place
-                            guard let moment = place.micro_situations?.first?.moments.first,
-                                  let category = place.micro_situations?.first?.category else {
-                                print("         ⚠️ [SKIP] Missing data for place: \(place.id)")
-                                return nil
-                            }
-                            
-                            // Log transformation for first item of each batch to avoid spamming too much, 
-                            // but user asked for detail so maybe spam is okay? 
-                            // User said "1000 hundred more", so I will log everything.
-                            print("         transforming -> [RAW] '\(moment.text)' -> [VM] '\(moment.text)'")
-                            
-                            return RecommendedMomentViewModel(
-                                id: place.document_id ?? UUID().uuidString,
-                                moment: moment.text,
-                                time: place.time ?? "--:--",
-                                category: category,
-                                placeName: scoredPlace.extractedName
-                            )
-                        }
-                        
-                        self.globalRecommendations = localResult.sections.compactMap { resultSection in
+                        for resultSection in localResult.sections {
                             print("      ⚡️ Mapping Section: '\(resultSection.title)'")
-                            let viewModels = resultSection.items.compactMap { transformer($0) }
                             
-                            if viewModels.isEmpty {
-                                print("         ❌ Section Empty after mapping. Dropping.")
-                                return nil
+                            // Convert RecommendedItems to UnifiedMoments
+                            // Note: We are taking the first moment from each recommended place to represent it
+                            let moments: [UnifiedMoment] = resultSection.items.compactMap { scoredPlace in
+                                guard let micro = scoredPlace.place.micro_situations?.first,
+                                      let firstMoment = micro.moments.first else { 
+                                    print("         ⚠️ [SKIP] Missing moment data for: \(scoredPlace.extractedName)")
+                                    return nil 
+                                }
+                                
+                                // Create UnifiedMoment
+                                // We preserve the original moment text.
+                                // NOTE: If we want to display the place name on the card too, we might need to append it?
+                                // For now, we stick to the moment text as requested ("just the moment").
+                                return UnifiedMoment(
+                                    text: firstMoment.text,
+                                    keywords: nil
+                                )
                             }
                             
-                            print("         ✅ Section Mapped: \(viewModels.count) ViewModels created.")
-                            return RecommendationSection(title: resultSection.title, items: viewModels)
+                            if !moments.isEmpty {
+                                let section = UnifiedMomentSection(
+                                    category: resultSection.title.uppercased(), // E.g., "MOST LIKELY"
+                                    moments: moments
+                                )
+                                unifiedSections.append(section)
+                                print("         ✅ Section Mapped: '\(section.category)' with \(moments.count) moments.")
+                            }
                         }
+                        
+                        // Create Synthetic Place to hold these sections
+                        // This trick allows the existing View logic (Sidebar, Cycling) to work without modification.
+                        let syntheticPlace = MicroSituationData(
+                            place_name: localResult.suggestedPlaceName,
+                            latitude: 0, longitude: 0,
+                            time: "LIVE", 
+                            hour: 0,
+                            type: "synthetic",
+                            created_at: "",
+                            context_description: nil,
+                            micro_situations: unifiedSections, // <--- The categories are here
+                            priority_score: 10.0,
+                            distance_meters: 0,
+                            time_span: "",
+                            profession: appState.profession,
+                            updated_at: "",
+                            target_language: nil,
+                            document_id: UUID().uuidString
+                        )
                         
                         print("\n   📤 [STEP: Final UI Publication]")
-                        print("   - Global Recommendations Array: \(self.globalRecommendations.count) Sections")
-                        for (i, sec) in self.globalRecommendations.enumerated() {
-                            print("      displaying -> Section \(i): \(sec.items.count) items")
+                        print("   - Created Synthetic Place with \(unifiedSections.count) categories.")
+                        
+                        // Update State
+                        print("   🔹 Dispatching UI Update...")
+                        self.recommendedPlaces = [syntheticPlace]
+                        self.isShowingGlobalRecommendations = false // CRITICAL: Enables Sidebar View
+                        
+                        if let firstCat = unifiedSections.first?.category {
+                            print("      - Auto-selecting category: '\(firstCat)'")
+                            self.selectedRecommendedCategory = firstCat
+                        } else {
+                            self.selectedRecommendedCategory = nil
                         }
-                        print("--------------------------------------------------\n")
-                        
-                        // Legacy compatibility (optional)
-                        self.recommendedPlaces = localResult.mostLikely.map { $0.place } + localResult.likely.map { $0.place }
-                        
-                        self.isShowingGlobalRecommendations = true
-                        self.selectedRecommendedCategory = nil // Reset filter
                     }
                 }
                 // 🚀 Sync UI
                 self.syncUIProperties()
                 self.appState.hasInitialHistoryLoaded = true
+                self.appState.isLoadingTimeline = false // Ensure we clear the flag
             case .failure(let error):
                 print("⚠️ [Timeline] Service failed: \(error.localizedDescription)")
                 self.clearState()
                 self.appState.hasInitialHistoryLoaded = true
+                self.appState.isLoadingTimeline = false // Ensure we clear the flag
             }
         }
     }
@@ -243,6 +282,44 @@ class LearnTabState: ObservableObject {
     func clearState() {
         self.hasAnyStudiedPlaces = false
         self.allTimelinePlaces = []
+    }
+
+    // MARK: - Context Refresh (Manual)
+    
+    func refreshTokenContext() {
+        print("\n🟢 [LearnTabState] refreshTokenContext called (Manual Refresh)")
+        
+        guard let sessionToken = appState.authToken, !sessionToken.isEmpty else {
+            print("🔴 [LearnTabState] Refresh Context ABORT: No Token")
+            return
+        }
+        
+        self.isAnalyzingImage = true // Show loading indicator
+        
+        print("   🔹 Calling PredictPlaceService (Context API)...")
+        PredictPlaceService.shared.predictPlace(sessionToken: sessionToken) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                self.isAnalyzingImage = false
+                
+                switch result {
+                case .success(let response):
+                    print("   ✅ [LearnTabState] Context Refresh Success")
+                    if let data = response.data {
+                        print("      Predicted Place: '\(data.place_name)'")
+                        
+                        // Use helper to update UI - eliminates duplication
+                        self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations)
+                        
+                    } else {
+                        print("      ⚠️ [LearnTabState] Success but Data is nil")
+                    }
+                case .failure(let error):
+                    print("🔴 [LearnTabState] Context Refresh Failed: \(error.localizedDescription)")
+                    self.handleNoDataFallback()
+                }
+            }
+        }
     }
 
 
@@ -390,7 +467,7 @@ class LearnTabState: ObservableObject {
                     }
                 case .failure(let error):
                     print("🔴 [LearnTabState] Analyze Failed: \(error.localizedDescription)")
-                    self.isAnalyzingImage = false
+                    self.handleNoDataFallback()
                 }
                 
                 self.appState.isAnalyzingImage = false
@@ -428,8 +505,7 @@ class LearnTabState: ObservableObject {
                     }
                 case .failure(let error):
                     print("🔴 [GenerateMoments] Failed: \(error.localizedDescription)")
-                    print("   Fallback: Setting Custom Active Place.")
-                    self.setCustomActivePlace(name: name)
+                    self.handleNoDataFallback()
                 }
             }
         }
@@ -464,7 +540,7 @@ class LearnTabState: ObservableObject {
                     }
                 case .failure(let error):
                     print("🔴 [LearnTabState] Predict Failed: \(error.localizedDescription)")
-                    self.clearRecommendedPlaces()
+                    self.handleNoDataFallback()
                 }
             }
         }
@@ -611,6 +687,23 @@ extension LearnTabState {
         print("🟡 [LearnTabState] clearRecommendedPlaces called")
         DispatchQueue.main.async {
             self.recommendedPlaces = []
+        }
+    }
+    
+    // MARK: - Centralized Error Handling
+    
+    private func handleNoDataFallback() {
+        print("⚠️ [LearnTabState] No Data / Error -> Triggering Fallback Flow")
+        DispatchQueue.main.async {
+            self.isAnalyzingImage = false
+            self.showingNoDataError = true
+            
+            // Wait 2 seconds, then revert and fetch fallback
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                print("   Time's up! Reverting to Suggested Places...")
+                self?.showingNoDataError = false
+                self?.fetchFirstRecommendedPlace()
+            }
         }
     }
 }

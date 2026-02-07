@@ -190,7 +190,7 @@ struct StatsHeaderView: View {
                 }
             }
             .diagnosticBorder(.blue.opacity(0.5), width: 1, label: "STREAK_HS_S:12") // Updated Label
-        }.padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 10) // Reduced top from 24 to 20
+        }.padding(.horizontal, 5).padding(.top, 20).padding(.bottom, 10) // Reduced top from 24 to 20
             .diagnosticBorder(.white.opacity(0.1), width: 1.5, label: "HDR_P:H20,T20,B10")
         .diagnosticBorder(.cyan, width: 1, label: "STATS_HDR")
     }
