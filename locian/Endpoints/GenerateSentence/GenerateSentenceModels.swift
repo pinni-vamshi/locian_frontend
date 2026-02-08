@@ -23,7 +23,7 @@ struct GenerateSentenceRequest: Codable, Sendable {
 struct GenerateSentenceResponse: Codable, Sendable {
     let success: Bool
     let message: String?
-    let data: GenerateSentenceData?
+    var data: GenerateSentenceData?
     let error: String?
 }
 
@@ -34,8 +34,8 @@ struct GenerateSentenceData: Codable, Sendable {
     let micro_situation: String?
     let sentences: [SentenceItem]?
     let conversation_context: String?
-    let bricks: BricksData?
-    let patterns: [PatternData]?
+    var bricks: BricksData?
+    var patterns: [PatternData]?
 }
 
 struct SentenceItem: Codable, Sendable {
@@ -55,12 +55,18 @@ struct BrickItem: Codable, Identifiable, Sendable {
     let type: String?
     
     var safeID: String { id ?? word }
+    
+    // Semantic Vector (Filled by Logic Layer)
+    var vector: [Double]?
+    
+    // Mastery Score (Filled by Logic Layer, Read by Engine)
+    var mastery: Double?
 }
 
 struct BricksData: Codable, Sendable {
-    let constants: [BrickItem]?
-    let variables: [BrickItem]?
-    let structural: [BrickItem]?
+    var constants: [BrickItem]?
+    var variables: [BrickItem]?
+    var structural: [BrickItem]?
 }
 
 struct PatternData: Codable, Identifiable, Sendable {
@@ -70,6 +76,12 @@ struct PatternData: Codable, Identifiable, Sendable {
     let phonetic: String?
     
     var id: String { pattern_id }
+    
+    // Semantic Vector (Filled by Logic Layer)
+    var vector: [Double]?
+    
+    // Mastery Score (Filled by Logic Layer)
+    var mastery: Double?
 }
 
 struct DrillItem: Codable, Sendable {

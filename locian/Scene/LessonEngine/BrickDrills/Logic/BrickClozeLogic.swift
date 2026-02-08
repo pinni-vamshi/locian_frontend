@@ -23,8 +23,12 @@ class BrickClozeLogic: ObservableObject {
             // Case-insensitive replacement
             let masked = context.replacingOccurrences(of: target, with: "_______", options: .caseInsensitive)
             self.prompt = masked
+            print("   🧩 [BrickCloze] Mode: Context Masking")
+            print("      - Original: '\(context)'")
+            print("      - Masked:   '\(masked)'")
         } else {
             self.prompt = state.drillData.meaning // Fallback
+            print("   🧩 [BrickCloze] Mode: Meaning Fallback (No Context Available)")
         }
         
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english

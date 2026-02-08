@@ -51,7 +51,14 @@ struct MasteryFilterService {
         let dynamic = base - (mastery * 0.08)
         let final = min(0.85, max(0.45, dynamic))
         
-        print("   ⚖️ [LessonFlow] [Threshold] \(isContextual ? "CONTEXTUAL" : "STATIC") | Text: '\(text.prefix(15))...' | Mastery: \(String(format: "%.2f", mastery)) | Threshold: \(String(format: "%.2f", final))")
+        if LOG_FILTERING {
+            print("   ⚖️ [LessonFlow] [Threshold] Logic:")
+            print("      - Model: \(isContextual ? "CONTEXTUAL" : "STATIC")")
+            print("      - Text: '\(text.prefix(30))...'")
+            print("      - Base: \(String(format: "%.2f", base)) (WordCount: \(Int(wordCount)))")
+            print("      - Mastery Adj: -\(String(format: "%.2f", mastery * 0.08)) (\(String(format: "%.0f%%", mastery * 100)) mastery)")
+            print("      - Result: \(String(format: "%.2f", final))")
+        }
         
         return final
     }

@@ -27,8 +27,9 @@ class BrickMCQLogic: ObservableObject {
         // 2. Generate Options
         if let existing = state.mcqOptions {
             self.options = existing
+            print("   🧱 [BrickMCQ] Loaded \(existing.count) options from State Cache.")
         } else {
-            print("   🧱 [BrickMCQLogic] Mode: L1->L2 | Generating options...")
+            print("   🧱 [BrickMCQ] Mode: L1->L2 | Generating options...")
             
             let allBricks = (session.lessonData?.bricks?.constants ?? []) + 
                            (session.lessonData?.bricks?.variables ?? []) + 
@@ -42,6 +43,7 @@ class BrickMCQLogic: ObservableObject {
                 targetLanguage: targetLanguageCode,
                 validator: session.neuralValidator
             )
+            print("   🧱 [BrickMCQ] Generated \(self.options.count) options (Target: \(state.drillData.target)).")
         }
         
         // 3. Pre-Validation Check

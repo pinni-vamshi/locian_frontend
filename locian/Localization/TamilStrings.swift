@@ -156,7 +156,13 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             location: "இருப்பிடம்",
             diagnosticBorders: "கண்டறியும் எல்லைகள்",
             areYouSureLogout: "நீங்கள் நிச்சயமாக வெளியேற விரும்புகிறீர்களா?",
-            areYouSureDeleteAccount: "உங்கள் கணக்கை நிரந்தரமாக நீக்க விரும்புகிறீர்களா? இந்த நடவடிக்கையை மாற்ற முடியாது?")
+            areYouSureDeleteAccount: "உங்கள் கணக்கை நிரந்தரமாக நீக்க விரும்புகிறீர்களா? இந்த நடவடிக்கையை மாற்ற முடியாது?",
+            
+            // Personalization Refresh
+            refreshHeading: "புதுப்பி",
+            refreshSubheading: "பயனர் சூழல் // பரிணாமம்",
+            refreshDescription: "உங்கள் பயிற்சியின் அடிப்படையில் உங்கள் தருணங்கள் காலப்போக்கில் மிகவும் தனிப்பயனாக்கப்படும்.",
+            refreshButton: "தனிப்பயனாக்கத்தை புதுப்பிக்கவும்")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

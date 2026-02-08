@@ -7,7 +7,7 @@ class TargetLanguageMapping {
     private init() {}
     
     // Full learning catalog
-    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "hi", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
+    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
     
     private let names: [String: (english: String, native: String)] = [
         "en": ("English", "English"),
@@ -20,7 +20,6 @@ class TargetLanguageMapping {
         "zh": ("Chinese", "中文"),
         "ja": ("Japanese", "日本語"),
         "ko": ("Korean", "한국어"),
-        "hi": ("Hindi", "हिन्दी"),
         "ar": ("Arabic", "العربية"),
         "tr": ("Turkish", "Türkçe"),
         "pl": ("Polish", "Polski"),

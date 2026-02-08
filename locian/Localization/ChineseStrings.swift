@@ -156,7 +156,13 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             location: "位置",
             diagnosticBorders: "诊断边界",
             areYouSureLogout: "您确定要退出吗？",
-            areYouSureDeleteAccount: "您确定要永久删除您的帐户吗？此操作无法撤消。")
+            areYouSureDeleteAccount: "您确定要永久删除您的帐户吗？此操作无法撤消。",
+            
+            // Personalization Refresh
+            refreshHeading: "刷新",
+            refreshSubheading: "用户上下文 // 进化",
+            refreshDescription: "您的时刻将根据您的练习随着时间的推移变得更加个性化。",
+            refreshButton: "更新个性化")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

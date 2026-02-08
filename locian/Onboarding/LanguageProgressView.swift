@@ -136,19 +136,19 @@ struct LanguageProgressView: View {
     }
     
     private func requestNotifications() {
-        PermissionsService.ensureNotificationAccess { granted in
+        PermissionsService.shared.ensureNotificationAccess { granted in
             self.notificationsGranted = granted
         }
     }
     
     private func requestMicrophone() {
-        PermissionsService.ensureMicrophoneAccess { granted in
+        PermissionsService.shared.ensureMicrophoneAccess { granted in
             self.microphoneGranted = granted
         }
     }
     
     private func requestLocation() {
-        PermissionsService.ensureLocationAccess { granted in
+        PermissionsService.shared.ensureLocationAccess { granted in
             self.locationGranted = granted
         }
     }

@@ -62,6 +62,10 @@ class SettingsTabState: ObservableObject {
     @Published var isDeletingAccount = false
     @Published var logoutErrorMessage: String? = nil
     
+    // MARK: - Personalization Refresh UI State
+    @Published var isRefreshingPersonalization = false
+    @Published var showRefreshSuccess = false
+    
     private var cancellables = Set<AnyCancellable>()
     
     init(appState: AppStateManager) {
@@ -181,6 +185,45 @@ class SettingsTabState: ObservableObject {
         isDeletingAccount = true
         appState.deleteAccount { [weak self] _, _ in
             DispatchQueue.main.async { self?.isDeletingAccount = false }
+        }
+    }
+    
+    // MARK: - Context Personalization
+    
+    func refreshPersonalization(completion: @escaping (Bool) -> Void) {
+        guard !isRefreshingPersonalization else { return }
+        
+        isRefreshingPersonalization = true
+        showRefreshSuccess = false
+        
+        // Use dedicated service
+        RefreshContextService.refreshContext { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isRefreshingPersonalization = false
+                
+                switch result {
+                case .success(let response):
+                    if response.success {
+                        print("✅ [SettingsTabState] Context refresh successful")
+                        self?.showRefreshSuccess = true
+                        
+                        // Hide success checkmark after 3 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            withAnimation {
+                                self?.showRefreshSuccess = false
+                            }
+                        }
+                        
+                        completion(true)
+                    } else {
+                        print("⚠️ [SettingsTabState] Context refresh returned failure: \(response.message ?? "Unknown")")
+                        completion(false)
+                    }
+                case .failure(let error):
+                    print("❌ [SettingsTabState] Context refresh failed: \(error.localizedDescription)")
+                    completion(false)
+                }
+            }
         }
     }
     

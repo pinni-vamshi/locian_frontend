@@ -18,6 +18,24 @@ class AppStateManager: ObservableObject {
         }
     }
     
+    // MARK: - Progress State
+    /// Calculated study points based on practice streak and diversity of locations.
+    /// (Practice Days * 10) + (Unique Study Hours * 5)
+    var totalStudyPoints: Int {
+        let practiceDaysCount = userLanguagePairs.first(where: { $0.is_default })?.practice_dates.count ?? 0
+        
+        var uniqueHours = Set<Int>()
+        if let places = timeline?.places {
+            for place in places {
+                if let hour = place.hour {
+                    uniqueHours.insert(hour)
+                }
+            }
+        }
+        
+        return (practiceDaysCount * 10) + (uniqueHours.count * 5)
+    }
+    
     // MARK: - Universal Color (Computed from selectedTheme)
     // Uses centralized ThemeColors helper - single source of truth
     var selectedColor: Color {
@@ -144,7 +162,6 @@ class AppStateManager: ObservableObject {
     static let availableAppLanguages: [String] = [
         "English",
         "Japanese",
-        "Hindi",
         "Telugu",
         "Tamil",
         "French",

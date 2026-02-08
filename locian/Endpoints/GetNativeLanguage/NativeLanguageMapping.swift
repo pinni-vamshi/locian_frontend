@@ -7,11 +7,10 @@ class NativeLanguageMapping {
     private init() {}
     
     // Supported native language codes
-    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "hi", "te", "ta", "ml", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
+    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "te", "ta", "ml", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
     
     private let names: [String: (english: String, native: String)] = [
         "en": ("English", "English"),
-        "hi": ("Hindi", "हिन्दी"),
         "te": ("Telugu", "తెలుగు"),
         "ta": ("Tamil", "தமிழ்"),
         "ml": ("Malayalam", "മലയാളം"),
@@ -44,5 +43,20 @@ class NativeLanguageMapping {
     func normalizeAndValidate(_ input: String) -> String? {
         let code = input.lowercased()
         return availableCodes.contains(code) ? code : nil
+    }
+    
+    /// Helper: Reverse lookup to find code from name (e.g., "Spanish" -> "es")
+    func getCode(for name: String) -> String? {
+        let cleanName = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        // Check if input is already a valid code
+        if availableCodes.contains(cleanName) { return cleanName }
+        
+        // Reverse search
+        for (code, (englishName, nativeName)) in names {
+            if englishName.lowercased() == cleanName || nativeName.lowercased() == cleanName {
+                return code
+            }
+        }
+        return nil // Default fallback should be handled by caller
     }
 }

@@ -156,7 +156,13 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             location: "위치",
             diagnosticBorders: "진단 경계",
             areYouSureLogout: "로그아웃하시겠습니까?",
-            areYouSureDeleteAccount: "계정을 영구히 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.")
+            areYouSureDeleteAccount: "계정을 영구히 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+            
+            // Personalization Refresh
+            refreshHeading: "새로 고침",
+            refreshSubheading: "사용자 컨텍스트 // 진화",
+            refreshDescription: "당신의 순간은 연습에 따라 시간이 지남에 따라 더욱 개인화됩니다.",
+            refreshButton: "개인화 업데이트")
     }
 
     var login: LoginStrings {
@@ -632,6 +638,12 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

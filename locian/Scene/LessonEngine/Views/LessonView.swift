@@ -95,9 +95,11 @@ struct LessonView: View {
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
+            print("\n🎬 [LessonView] View Mounted")
             appState.isLessonActive = true
         }
         .onDisappear {
+            print("🛑 [LessonView] View Unmounted")
             appState.isLessonActive = false
         }
     }

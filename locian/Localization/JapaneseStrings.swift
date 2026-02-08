@@ -156,7 +156,13 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             location: "位置情報",
             diagnosticBorders: "診断境界",
             areYouSureLogout: "ログアウトしてもよろしいですか？",
-            areYouSureDeleteAccount: "アカウントを完全に削除してもよろしいですか？この操作は取り消せません。")
+            areYouSureDeleteAccount: "アカウントを完全に削除してもよろしいですか？この操作は取り消せません。",
+            
+            // Personalization Refresh
+            refreshHeading: "更新",
+            refreshSubheading: "ユーザーコンテキスト // 進化",
+            refreshDescription: "あなたの瞬間は、練習に基づいて時間の経過とともによりパーソナライズされます。",
+            refreshButton: "パーソナライゼーションを更新")
     }
 
     var login: LoginStrings {
@@ -632,6 +638,12 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

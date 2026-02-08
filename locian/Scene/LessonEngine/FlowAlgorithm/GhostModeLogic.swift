@@ -32,7 +32,15 @@ class GhostModeLogic: ObservableObject {
             let mastery = session.engine.getBlendedMastery(for: "\(id)-d0")
             
             // Score = Similarity (weighted) + (1 - Mastery)
-            let score = (sim * 0.7) + ((1.0 - mastery) * 0.3)
+            let simWeight = sim * 0.7
+            let masteryWeight = (1.0 - mastery) * 0.3
+            let score = simWeight + masteryWeight
+            
+            print("      👻 [Ghost: Candidate] [\(id)]")
+            print("         ↳ Target Similarity (70%): \(String(format: "%.3f", simWeight))")
+            print("         ↳ Mastery Gap (30%): \(String(format: "%.3f", masteryWeight)) (\(String(format: "%.1f%%", mastery*100)) mastered)")
+            print("         ↳ TOTAL WEIGHT: \(String(format: "%.3f", score))")
+            
             return (id, score)
         }
         

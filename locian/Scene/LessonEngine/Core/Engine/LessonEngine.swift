@@ -75,9 +75,45 @@ class LessonEngine: ObservableObject {
         // Initialize Decay Tracker: Everyone starts at step 0
         self.lastRecallStep = [:]
         data.patterns?.forEach { self.lastRecallStep["\($0.pattern_id)-d0"] = 0 }
-        data.bricks?.constants?.forEach { self.lastRecallStep[$0.safeID] = 0 }
-        data.bricks?.variables?.forEach { self.lastRecallStep[$0.safeID] = 0 }
-        data.bricks?.structural?.forEach { self.lastRecallStep[$0.safeID] = 0 }
+        
+        // PERSISTENCE: 2. Load Stored Mastery Scores (Now Pre-filled by Logic Layer)
+        print("   💾 [Engine] Loading Persistent Mastery Scores...")
+        
+        // A. Load Brick Mastery
+        let allBricks: [BrickItem] = (data.bricks?.constants ?? []) + 
+                                     (data.bricks?.variables ?? []) + 
+                                     (data.bricks?.structural ?? [])
+                                     
+        for brick in allBricks {
+            let text = brick.word
+            // Direct Read: Logic Layer already populated this from DB
+            if let score = brick.mastery {
+                componentMastery[brick.safeID] = score
+                if score > 0.1 {
+                     print("      ✅ [Engine] Restored Mastery for Brick '\(text)': \(String(format: "%.2f", score))")
+                }
+            } else {
+                componentMastery[brick.safeID] = 0.0
+            }
+            self.lastRecallStep[brick.safeID] = 0
+        }
+        
+        // B. Load Pattern Mastery (NEW: Fixes Pattern Mode Selection)
+        if let patterns = data.patterns {
+            for pattern in patterns {
+                let id = pattern.pattern_id
+                // Direct Read: Logic Layer already populated this
+                if let score = pattern.mastery {
+                    componentMastery[id] = score
+                    if score > 0.1 {
+                        print("      ✅ [Engine] Restored Mastery for Pattern '\(id)': \(String(format: "%.2f", score))")
+                    }
+                } else {
+                    componentMastery[id] = 0.0
+                }
+                // Patterns have multiple drill types (-d0, -d1 etc), but base mastery is per Pattern ID
+            }
+        }
     }
     
     func calculateOverallProgress() -> Double {
@@ -103,7 +139,10 @@ class LessonEngine: ObservableObject {
         let effectiveMastery = max(0.0, rawMastery - decay)
         
         if decay > 0 {
-             print("      📉 [Decay] [\(id)] Raw: \(String(format: "%.2f", rawMastery)) - Decay: \(String(format: "%.2f", decay)) (\(stepsSince) steps) = \(String(format: "%.2f", effectiveMastery))")
+             print("      📉 [Memory Decay] [\(id)]")
+             print("         ↳ Steps Since Recall: \(stepsSince) steps (At Step: \(currentStep))")
+             print("         ↳ Formula: \(String(format: "%.2f", rawMastery)) - (\(stepsSince) * \(String(format: "%.3f", AdaptiveConfig.w_sessionDecay)))")
+             print("         ↳ Effective Mastery: \(String(format: "%.2f", effectiveMastery))")
         }
         
         return effectiveMastery
@@ -122,13 +161,54 @@ class LessonEngine: ObservableObject {
         // RECALL REFRESH: If score improved or stayed high, reset the decay timer
         if delta >= 0 {
             lastRecallStep[id] = currentStep
-            print("      ✨ [Recall] [\(id)] Step timer reset to \(currentStep)")
+            print("      ✨ [Memory: Recall] [\(id)] Reset timer to step \(currentStep)")
         }
         
         let direction = delta > 0 ? "📈" : (delta < 0 ? "📉" : "⚪️")
-        // Simple heuristic: If it has long dashes/UUID it's likely a pattern, or based on the reason tag
         let icon = reason.contains("Brick") || reason.contains("Ripple") ? "🧱" : "🧬"
-        print("      \(direction) \(icon) [LessonFlow] Mastery: [\(id)] \(String(format: "%.2f", current)) -> \(String(format: "%.2f", newValue))   Reason: \(reason)")
+        
+        print("      \(direction) \(icon) [Mastery Update] [\(id)]")
+        print("         ↳ Current: \(String(format: "%.2f", current)) -> New: \(String(format: "%.2f", newValue)) (Δ \(String(format: "%.3f", delta)))")
+        print("         ↳ Reason: \(reason)")
+        
+        // PERSISTENCE: 3. Save to Disk (Via Logic Layer)
+        // We need to resolve the ID to a Brick OR Pattern to get its text/vector
+        if let brick = resolveBrick(id: id) {
+            let text = brick.word
+            // Optimization: Vector should be available on the model
+            let vector = brick.vector ?? validator?.getVector(for: text)
+            
+            GenerateSentenceLogic.shared.updateMastery(
+                text: text,
+                vector: vector,
+                mode: "practice",
+                isCorrect: delta > 0
+            )
+        } else if let pattern = resolvePattern(id: id) {
+            let text = pattern.meaning // Track patterns by Meaning
+            let vector = pattern.vector // Should be on model
+            
+            GenerateSentenceLogic.shared.updateMastery(
+                text: text,
+                vector: vector,
+                mode: "practice",
+                isCorrect: delta > 0
+            ) 
+        }
+    }
+    
+    private func resolveBrick(id: String) -> BrickItem? {
+        let all = (lessonData?.bricks?.constants ?? []) + 
+                  (lessonData?.bricks?.variables ?? []) + 
+                  (lessonData?.bricks?.structural ?? [])
+        // ID often matches one of these
+        // IDs are "INT-xxx" stripped usually before calling updateMastery?
+        // updateMastery(id: "apple") usually.
+        return all.first { ($0.id ?? $0.word) == id }
+    }
+    
+    private func resolvePattern(id: String) -> PatternData? {
+        return rawPatterns.first { $0.pattern_id == id }
     }
 }
 

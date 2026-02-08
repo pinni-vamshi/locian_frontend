@@ -58,6 +58,9 @@ class MCQOptionGenerator {
                  // Use similarity directly (1.0 = identical, 0.0 = unrelated)
                  let sim = SemanticMatcher.calculatePairSimilarity(target: targetText, candidate: c, validator: validator)
                  similarityMap[c] = sim
+                 
+                 // EXTENSIVE LOG:
+                 print("      - Candidate: '\(c.prefix(15))...' -> Score: \(String(format: "%.4f", sim))")
              }
         } else {
             // Fallback: Use Levenshtein (Spelling Distance)

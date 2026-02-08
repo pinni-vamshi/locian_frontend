@@ -45,7 +45,14 @@ class PatternIntroLogic: ObservableObject {
         }
         
         self.brickDrills = drills
-        print("   🧑‍🏫 [PatternIntroLogic] Initialized for loop with \(brickDrills.count) unique bricks.")
+        print("\n🧑‍🏫 [PatternIntro] Initializing Sequence for Pattern: \(state.patternId)")
+        print("   - Raw Bricks: \(rawBricks.count)")
+        print("   - Unique Bricks: \(brickDrills.count)")
+        print("   - Dropped Duplicates: \(rawBricks.count - brickDrills.count)")
+        
+        for (i, drill) in brickDrills.enumerated() {
+            print("   brick[\(i)]: '\(drill.drillData.target)' (ID: \(drill.id))")
+        }
         
         if brickDrills.isEmpty {
             // Orchestrator should have skipped this, but safety fallback
@@ -125,7 +132,7 @@ class PatternDrillLogic: ObservableObject {
         self.session = session
         
         // Resolve mode JIT, once per visit
-        self.resolvedMode = state.currentMode ?? session.resolveMode(for: state)
+        self.resolvedMode = state.currentMode ?? PatternModeSelector.resolveMode(for: state, session: session)
         print("   🎯 [PatternDrillLogic] Final Practice Mode Resolved JIT: \(resolvedMode.rawValue)")
     }
 }

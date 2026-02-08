@@ -156,7 +156,13 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             location: "స్థానం",
             diagnosticBorders: "డయాగ్నోస్టిక్ బోర్డర్స్",
             areYouSureLogout: "మీరు ఖచ్చితంగా లాగ్ అవుట్ అవ్వాలనుకుంటున్నారా?",
-            areYouSureDeleteAccount: "మీరు మీ ఖాతాను శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను తిరిగి పొందలేము.")
+            areYouSureDeleteAccount: "మీరు మీ ఖాతాను శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను తిరిగి పొందలేము.",
+            
+            // Personalization Refresh
+            refreshHeading: "రిఫ్రెష్",
+            refreshSubheading: "వినియోగదారు సందర్భం // పరిణామం",
+            refreshDescription: "మీ ఆచరణ ఆధారంగా మీ క్షణాలు కాలక్రమేణా మరింత వ్యక్తిగతీకరించబడతాయి.",
+            refreshButton: "వ్యక్తిగతీకరణను నవీకరించండి")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

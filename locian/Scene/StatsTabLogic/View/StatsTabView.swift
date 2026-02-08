@@ -28,9 +28,16 @@ struct StatsTabView: View {
             }
             .diagnosticBorder(.white, width: 2, label: "ROOT_ZSTACK")
         }
-        .onAppear { state.onAppear(); withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true } }
-        .onDisappear { animateIn = false }
-        .onChange(of: selectedTab) { _, n in if n == .progress { animateIn = false; DispatchQueue.main.asyncAfter(deadline: .now()+0.05) { withAnimation(.spring()) { animateIn = true } } } }
+        .onAppear { 
+            animateIn = false
+            state.onAppear()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+            }
+        }
+        .onDisappear { 
+            withAnimation(.none) { animateIn = false }
+        }
         .fullScreenCover(isPresented: $showingStreakModal) { streakModal }
     }
 
@@ -346,37 +353,35 @@ struct StatsChronotypeSection: View {
             }.padding(.horizontal, 20)
                 .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "TIT_HS")
 
-            // Night Owl Card
+            // Dynamic Chronotype Card
+            let typeInfo = getChronotypeInfo(chronotype)
             HStack(spacing: 20) {
-                // Moon Icon Box
+                // Icon Box
                 Rectangle()
-                    .fill(Color(red: 1.0, green: 0.1, blue: 0.4))
+                    .fill(typeInfo.color)
                     .frame(width: 100, height: 100)
                     .overlay(
-                        Image(systemName: "moon.stars.fill")
+                        Image(systemName: typeInfo.icon)
                             .font(.system(size: 40))
                             .foregroundColor(.white)
                     )
-                    .diagnosticBorder(.red.opacity(0.5), width: 1, label: "MOON_ICON")
+                    .diagnosticBorder(.white.opacity(0.3), width: 1, label: "ICON")
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(LocalizationManager.shared.string(.nightOwl))
+                    Text(typeInfo.title)
                         .font(.system(size: 20, weight: .black, design: .monospaced))
                         .foregroundColor(.black)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(Color.cyan)
-                        .diagnosticBorder(.cyan.opacity(0.5), width: 0.5, label: "TITLE_P:H12,V8")
                     
-                    Text(LocalizationManager.shared.string(.nightOwlDesc))
+                    Text(typeInfo.description)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.black)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Color.white)
-                        .diagnosticBorder(.white, width: 0.5, label: "P:H12,V6")
                 }
-            .diagnosticBorder(.gray.opacity(0.3), width: 1, label: "DESC_V_S:8")
             }.padding(.horizontal, 20)
                 .diagnosticBorder(.blue.opacity(0.3), width: 1, label: "CHRONO_HS_S:20")
 
@@ -429,6 +434,26 @@ struct StatsChronotypeSection: View {
         }.padding(.top, 20)
             .diagnosticBorder(.pink.opacity(0.1), width: 1.5, label: "CHRONO_P:T20")
         .diagnosticBorder(.pink, width: 1, label: "CHRONO_SEC")
+    }
+    
+    private func getChronotypeInfo(_ type: String) -> (icon: String, title: String, description: String, color: Color) {
+        switch type {
+        case "EARLY BIRD":
+            return ("sun.max.fill", 
+                    LocalizationManager.shared.string(.earlyBird), 
+                    LocalizationManager.shared.string(.earlyBirdDesc), 
+                    ThemeColors.secondaryAccent)
+        case "DAY WALKER":
+            return ("sun.horizon.fill", 
+                    LocalizationManager.shared.string(.dayWalker), 
+                    LocalizationManager.shared.string(.dayWalkerDesc), 
+                    ThemeColors.secondaryAccent)
+        default: // NIGHT OWL
+            return ("moon.stars.fill", 
+                    LocalizationManager.shared.string(.nightOwl), 
+                    LocalizationManager.shared.string(.nightOwlDesc), 
+                    ThemeColors.secondaryAccent)
+        }
     }
 }
 

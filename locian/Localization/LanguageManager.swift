@@ -12,7 +12,6 @@ enum AppLanguage: String, CaseIterable, Codable {
     case system = "System"
     case english = "English"
     case japanese = "Japanese"
-    case hindi = "Hindi"
     case telugu = "Telugu"
     case tamil = "Tamil"
     case french = "French"
@@ -28,7 +27,6 @@ enum AppLanguage: String, CaseIterable, Codable {
         case .system: return "system"
         case .english: return "en"
         case .japanese: return "ja"
-        case .hindi: return "hi"
         case .telugu: return "te"
         case .tamil: return "ta"
         case .french: return "fr"
@@ -46,7 +44,6 @@ enum AppLanguage: String, CaseIterable, Codable {
         case .system: return "🌐 System"
         case .english: return "English"
         case .japanese: return "日本語"
-        case .hindi: return "हिन्दी"
         case .telugu: return "తెలుగు"
         case .tamil: return "தமிழ்"
         case .french: return "Français"
@@ -64,7 +61,6 @@ enum AppLanguage: String, CaseIterable, Codable {
         case .system: return "System Language"
         case .english: return "English"
         case .japanese: return "Japanese"
-        case .hindi: return "Hindi"
         case .telugu: return "Telugu"
         case .tamil: return "Tamil"
         case .french: return "French"
@@ -90,7 +86,6 @@ enum AppLanguage: String, CaseIterable, Codable {
         case "system": return .system
         case "en": return .english
         case "ja": return .japanese
-        case "hi": return .hindi
         case "te": return .telugu
         case "ta": return .tamil
         case "fr": return .french
@@ -117,7 +112,6 @@ enum AppLanguage: String, CaseIterable, Codable {
             switch languageCode {
             case "en": return .english
             case "ja": return .japanese
-            case "hi": return .hindi
             case "te": return .telugu
             case "ta": return .tamil
             case "fr": return .french
@@ -183,8 +177,6 @@ class LanguageManager: ObservableObject {
             strings = EnglishStrings()
         case .japanese:
             strings = JapaneseStrings()
-        case .hindi:
-            strings = HindiStrings()
         case .telugu:
             strings = TeluguStrings()
         case .tamil:

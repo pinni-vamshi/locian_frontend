@@ -66,8 +66,13 @@ struct SemanticFilterService {
             maxScore = max(maxScore, meaningScore)
             
             scoredBricks.append((brickId: candidateId, score: maxScore))
-            // Granular log for each brick
-            // print("      🧪 [LessonFlow] [Semantic] \(brick.word): \(String(format: "%.3f", maxScore)) (T:\(String(format: "%.3f", targetScore)), M:\(String(format: "%.3f", meaningScore)))")
+            
+            if LOG_FILTERING {
+                let statusEmoji = maxScore >= threshold ? "✅" : "⚠️"
+                print("      \(statusEmoji) [Semantic] '\(brick.word)': \(String(format: "%.3f", maxScore))")
+                print("         ↳ Target (L2) Similarity: \(String(format: "%.3f", targetScore))")
+                print("         ↳ Meaning (L1) Similarity: \(String(format: "%.3f", meaningScore))")
+            }
         }
 
         

@@ -156,7 +156,13 @@ struct GermanStrings: AppStrings, LocalizedStrings {
             location: "Standort",
             diagnosticBorders: "Diagnose-Ränder",
             areYouSureLogout: "Sind Sie sicher, dass Sie sich abmelden möchten?",
-            areYouSureDeleteAccount: "Sind Sie sicher, dass Sie Ihr Konto dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden?")
+            areYouSureDeleteAccount: "Sind Sie sicher, dass Sie Ihr Konto dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden?",
+            
+            // Personalization Refresh
+            refreshHeading: "AKTUALISIEREN",
+            refreshSubheading: "BENUTZERKONTEXT // ENTWICKELN",
+            refreshDescription: "Ihre Momente werden mit der Zeit basierend auf Ihrer Übung persönlicher.",
+            refreshButton: "PERSONALISIERUNG AKTUALISIEREN")
     }
 
     var login: LoginStrings {
@@ -632,6 +638,12 @@ struct GermanStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

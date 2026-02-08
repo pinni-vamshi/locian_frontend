@@ -156,7 +156,13 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             location: "Location",
             diagnosticBorders: "Diagnostic Borders",
             areYouSureLogout: "Are you sure you want to logout?",
-            areYouSureDeleteAccount: "Are you sure you want to delete your account?")
+            areYouSureDeleteAccount: "Are you sure you want to delete your account?",
+            
+            // Personalization Refresh
+            refreshHeading: "REFRESH",
+            refreshSubheading: "USER CONTEXT // EVOLVE",
+            refreshDescription: "Your moments become more personalized over time based on your practice.",
+            refreshButton: "UPDATE PERSONALIZATION")
     }
 
     var login: LoginStrings {
@@ -434,6 +440,13 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
         case .addTime: return settings.addTime
         case .areYouSureLogout: return settings.areYouSureLogout
         case .areYouSureDeleteAccount: return settings.areYouSureDeleteAccount
+        
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
+        
         case .nativeLanguage: return settings.nativeLanguage
         case .selectNativeLanguage: return settings.selectNativeLanguage
         case .targetLanguage: return settings.targetLanguage

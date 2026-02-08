@@ -26,6 +26,18 @@ class NotificationManager: NSObject, ObservableObject {
     private var lastTriggeredLocation: String?
     private var lastTriggeredTime: Date?
     
+    // Notification History
+    struct NotificationLogEntry: Codable {
+        let placeName: String
+        let points: Int
+        let latitude: Double
+        let longitude: Double
+        let timestamp: Date
+    }
+    
+    private let logLimit = 50
+    private let logKey = "notification_log_history"
+    
     // Configuration
     private let cooldownInterval: TimeInterval = 6 * 3600 // 6 hours
     private let proximityThreshold: CLLocationDistance = 100 // 100 meters
@@ -37,12 +49,6 @@ class NotificationManager: NSObject, ObservableObject {
     }
     
     // MARK: - Permissions
-    
-    func requestPermission(completion: @escaping (Bool) -> Void) {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            DispatchQueue.main.async { completion(granted) }
-        }
-    }
     
     func checkPermission(completion: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
@@ -141,12 +147,18 @@ class NotificationManager: NSObject, ObservableObject {
             return
         }
         
+        let points = AppStateManager.shared.totalStudyPoints
         let content = UNMutableNotificationContent()
         let username = AppStateManager.shared.username.isEmpty ? "Learner" : AppStateManager.shared.username
+        
         content.title = "\(getGreeting()), \(username)! 👋"
-        content.body = "Ready for a quick session at \(placeName)? Practice makes perfect!"
+        content.body = generateDynamicBody(for: placeName, points: points)
         content.sound = .default
         content.userInfo = ["place_name": placeName]
+        
+        // Save the log entry
+        let location = LocationManager.shared.currentLocation
+        saveLogEntry(placeName: placeName, points: points, location: location)
         
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
         let request = UNNotificationRequest(identifier: "smart_\(UUID().uuidString)", content: content, trigger: trigger)
@@ -173,5 +185,57 @@ class NotificationManager: NSObject, ObservableObject {
         let json = UserDefaults.standard.string(forKey: "routine_selections_json") ?? "{}"
         guard let data = json.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode([Int: String].self, from: data)
+    }
+    
+    // MARK: - Dynamic Messaging & Logging
+    
+    private func generateDynamicBody(for place: String, points: Int) -> String {
+        let greetings = [
+            "Ready to boost your \(points) points at \(place)?",
+            "Perfect time for a session at \(place). Stack up those points!",
+            "Back at \(place)? Let's get closer to your next milestone!",
+            "Practice makes perfect! Ready for a quick \(place) session?",
+            "You've already earned \(points) points! Let's add more at \(place)."
+        ]
+        
+        // Milestone specific messages
+        if points > 500 {
+            return "A Pro Learner like you belongs at \(place). Ready to crush it?"
+        } else if points > 200 {
+            return "Your streak is legendary! Let's keep the momentum going at \(place)."
+        } else if points < 50 {
+            return "Ready for a quick session at \(place)? Every point counts!"
+        }
+        
+        return greetings.randomElement() ?? "Ready for a session at \(place)?"
+    }
+    
+    private func saveLogEntry(placeName: String, points: Int, location: CLLocation?) {
+        var logs = getLogs()
+        let newEntry = NotificationLogEntry(
+            placeName: placeName,
+            points: points,
+            latitude: location?.coordinate.latitude ?? 0,
+            longitude: location?.coordinate.longitude ?? 0,
+            timestamp: Date()
+        )
+        
+        logs.insert(newEntry, at: 0)
+        if logs.count > logLimit {
+            logs = Array(logs.prefix(logLimit))
+        }
+        
+        if let encoded = try? JSONEncoder().encode(logs) {
+            UserDefaults.standard.set(encoded, forKey: logKey)
+            print("🛰️ [NotificationManager] Logged notification: \(placeName) | Points: \(points)")
+        }
+    }
+    
+    func getLogs() -> [NotificationLogEntry] {
+        guard let data = UserDefaults.standard.data(forKey: logKey),
+              let logs = try? JSONDecoder().decode([NotificationLogEntry].self, from: data) else {
+            return []
+        }
+        return logs
     }
 }

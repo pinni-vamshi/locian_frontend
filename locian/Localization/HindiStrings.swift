@@ -156,7 +156,13 @@ struct HindiStrings: AppStrings, LocalizedStrings {
             location: "स्थान",
             diagnosticBorders: "डायग्नोस्टिक बॉर्डर्स",
             areYouSureLogout: "क्या आप वाकई लॉग आउट करना चाहते?",
-            areYouSureDeleteAccount: "क्या आप वाकई अपना खाता स्थायी रूप से हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।")
+            areYouSureDeleteAccount: "क्या आप वाकई अपना खाता स्थायी रूप से हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।",
+            
+            // Personalization Refresh
+            refreshHeading: "रिफ्रेश",
+            refreshSubheading: "उपयोगकर्ता संदर्भ // विकास",
+            refreshDescription: "आपके पल आपके अभ्यास के आधार पर समय के साथ अधिक व्यक्तिगत हो जाते हैं।",
+            refreshButton: "निजीकरण अपडेट करें")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct HindiStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

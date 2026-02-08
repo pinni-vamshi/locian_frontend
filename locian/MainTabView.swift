@@ -124,16 +124,8 @@ struct MainTabView: View {
     
     private func performInitialRouting() {
         print("🧠 [Routing] Starting initial routing decision...")
-        
-        // Logic: If no place is found for current time span, go to Add tab
-        // firstRecommendedPlace is nil if processTimeline finds no match for Current section
-        if let currentPlace = learnTabState.recommendedPlaces.first?.place_name {
-            print("✅ [Routing] Optimal match found: '\(currentPlace)'. Navigating to LEARN tab.")
-            selectedTab = .learn
-        } else {
-            print("⚠️ [Routing] No optimal match for current time. Navigating to ADD tab.")
-            selectedTab = .add
-        }
+        print("✅ [Routing] Navigating to LEARN tab.")
+        selectedTab = .learn
         
         withAnimation(.easeOut(duration: 0.5)) {
             print("🎬 [Routing] Initializing overlay dismissed.")

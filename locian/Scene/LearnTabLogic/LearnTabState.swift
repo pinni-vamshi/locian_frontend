@@ -84,6 +84,11 @@ class LearnTabState: ObservableObject {
         return generationState != .idle
     }
     
+    // UNIFIED LOADING STATE: Aggregates all data fetch activities
+    var isFetchingData: Bool {
+        return isLoadingHistory || isAnalyzingImage || appState.isLoadingTimeline
+    }
+    
     let appState: AppStateManager
     var cancellables = Set<AnyCancellable>()
     
@@ -178,6 +183,41 @@ class LearnTabState: ObservableObject {
                     
                     print("   📊 [STATE UPDATE] mostLikelyPlaces count: \(self.mostLikelyPlaces.count)")
                     print("   📊 [STATE UPDATE] likelyPlaces count: \(self.likelyPlaces.count)")
+                    
+                    // 🚨 QUALITY THRESHOLD CHECK: Fallback to Context Endpoint if needed
+                    if !localResult.hasHighQualityMatches {
+                        print("\n   ⚠️ [FALLBACK] No high-quality matches found (similarity < 0.6)")
+                        print("   🔄 [FALLBACK] Calling Context Endpoint to generate new moments...")
+                        
+                        // TRIGGER LOADING STATE
+                        DispatchQueue.main.async { self.isAnalyzingImage = true }
+                        
+                        // Call the context endpoint to get fresh recommendations
+                        PredictPlaceService.shared.predictPlace(sessionToken: sessionToken) { [weak self] result in
+                            DispatchQueue.main.async {
+                                guard let self = self else { return }
+                                self.isAnalyzingImage = false // STOP LOADING
+                                
+                                switch result {
+                                case .success(let response):
+                                    print("   ✅ [FALLBACK] Context Endpoint Success")
+                                    if let data = response.data {
+                                        print("      Predicted Place: '\(data.place_name)'")
+                                        self.setRecommendedPlace(name: data.place_name, situations: data.micro_situations ?? [])
+                                    } else {
+                                        print("      ⚠️ [FALLBACK] Context returned no data")
+                                        self.handleNoDataFallback()
+                                    }
+                                case .failure(let error):
+                                    print("🔴 [FALLBACK] Context Endpoint Failed: \(error.localizedDescription)")
+                                    self.handleNoDataFallback()
+                                }
+                            }
+                        }
+                        
+                        // Early return - we're waiting for the context endpoint
+                        return
+                    }
                     
                     if localResult.mostLikely.isEmpty && localResult.likely.isEmpty {
                         print("   ⚠️ [WARNING] Local Recommendation Service returned ZERO places.")

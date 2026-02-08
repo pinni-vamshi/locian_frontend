@@ -99,23 +99,30 @@ class NeuralValidator: ObservableObject {
 
     // MARK: - Asset Management
     /// Proactively download assets for a language with retries
+    // MARK: - Asset Management
+    /// Proactively download assets for a language with retries
     static func downloadAssets(for languageCode: String, retryCount: Int = 3) {
         let nlLanguage = NLLanguage(rawValue: languageCode)
-        print("   ⬇️ [LessonFlow] [Neural] Requesting assets for \(languageCode) (Retries left: \(retryCount))...")
+        print("   ⬇️ [Neural] Requesting assets for \(languageCode) (Retries left: \(retryCount))...")
         
         NLTagger.requestAssets(for: nlLanguage, tagScheme: .lemma) { result, error in
             if let error = error {
-                print("   ❌ [LessonFlow] [Neural] Asset Request Failed: \(error.localizedDescription)")
+                print("   ❌ [Neural] Asset Download FAILED for '\(languageCode)'")
+                print("      - Error: \(error.localizedDescription)")
+                print("      - Domain: \(error as NSError).domain")
+                print("      - Code: \((error as NSError).code)")
+                
                 if retryCount > 0 {
-                    print("   🔄 [LessonFlow] [Neural] Retrying download for \(languageCode) in 2 seconds...")
+                    print("   🔄 [Neural] Retrying download for \(languageCode) in 2 seconds...")
                     DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
                         downloadAssets(for: languageCode, retryCount: retryCount - 1)
                     }
                 } else {
-                    print("   ⛔️ [LessonFlow] [Neural] Asset Download GAVE UP for \(languageCode).")
+                    print("   ⛔️ [Neural] Asset Download GAVE UP for \(languageCode) after all retries.")
                 }
             } else {
-                print("   ✅ [LessonFlow] [Neural] Assets Downloaded/Available for \(languageCode).")
+                print("   ✅ [Neural] Assets Downloaded/Available for \(languageCode).")
+                print("      - Result Status: \(result.rawValue)")
             }
         }
     }

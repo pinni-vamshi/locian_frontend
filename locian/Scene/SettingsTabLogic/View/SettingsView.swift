@@ -38,15 +38,14 @@ struct SettingsView: View {
         }
         .diagnosticBorder(.white, width: 2)
         .background(Color.black.ignoresSafeArea())
-        .onAppear { withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true } }
-        .onDisappear { animateIn = false }
-        .onChange(of: selectedTab) { _, n in
-            if n == .settings {
-                animateIn = false
-                DispatchQueue.main.asyncAfter(deadline: .now()+0.05) {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
-                }
+        .onAppear { 
+            animateIn = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
             }
+        }
+        .onDisappear { 
+            withAnimation(.none) { animateIn = false }
         }
         .alert(languageManager.settings.areYouSureLogout, isPresented: $state.showingLogoutAlert) {
             Button(languageManager.ui.cancel, role: .cancel) { }
@@ -80,6 +79,7 @@ struct SettingsView: View {
                     .background(Color.white)
                     .diagnosticBorder(.blue, width: 0.5, label: "P:H5")
             }
+            .animation(.spring(), value: localizationManager.getLocalizedProfession(appState.profession))
             .diagnosticBorder(.gray.opacity(0.3), width: 1)
 
             // 2. Giant Language Display
@@ -89,6 +89,15 @@ struct SettingsView: View {
                         .font(.system(size: 10))
                     Text(languageManager.settings.selectTargetLanguage.uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    
+                    // Target Neural Status
+                    if let code = state.defaultPair?.target_language {
+                        let status = state.neuralStatuses[code]?.state ?? "WAITING"
+                        let color = state.statusColor(status)
+                        Text("[NEURAL ENGINE: \(status)]")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(color)
+                    }
                 }
                 .foregroundColor(.gray)
                 
@@ -183,7 +192,7 @@ struct SettingsView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 60) {
                 languageSection
-                neuralEngineSection
+                personalizationSection
                 interfaceLanguageSection
                 notificationSection
                 locationSection
@@ -230,6 +239,16 @@ struct SettingsView: View {
                             .foregroundColor(.white)
                         }
                     }
+                    
+                    // Native Neural Status
+                    let nativeCode = appState.nativeLanguage
+                    let status = state.neuralStatuses[nativeCode]?.state ?? "WAITING"
+                    let color = state.statusColor(status)
+                    
+                    Text("NEURAL ENGINE: \(status)")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(color)
+                        .padding(.top, 4)
                 }
             }
             .diagnosticBorder(.blue.opacity(0.3), width: 1, label: "NAT_HS_S:20")
@@ -305,85 +324,89 @@ struct SettingsView: View {
 
     // MARK: - Neural Engine status
     
-    private var neuralEngineSection: some View {
+    // MARK: - Neural Engine status (Integrated into Headers)
+    // Legacy section removed.
+
+    
+    // MARK: - Personalization Refresh
+    
+    private var personalizationSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
-                // 1. Vertical Heading Group
+                // 1. Vertical Heading
                 HStack(alignment: .top, spacing: 0) {
                     VerticalHeading(
-                        text: languageManager.settings.neuralEngine.uppercased(),
+                        text: languageManager.settings.refreshHeading.uppercased(),
                         textColor: .black,
                         backgroundColor: .white,
                         width: 24,
-                        height: 120
+                        height: 140
                     )
-                    .diagnosticBorder(.white, width: 0.5, label: "V:NEURAL")
                     
                     Rectangle()
-                        .fill(Color.cyan)
-                        .frame(width: 4, height: 120)
-                        .diagnosticBorder(.cyan, width: 0.5, label: "BAR")
+                        .fill(ThemeColors.secondaryAccent)
+                        .frame(width: 4, height: 140)
                 }
                 .fixedSize()
                 
-                // 2. Status Data
+                // 2. Content
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("\(languageManager.settings.neuralEngine.uppercased()) // COMPUTE_GRID")
+                    Text(languageManager.settings.refreshSubheading.uppercased())
                         .font(.system(size: 10, weight: .black, design: .monospaced))
                         .foregroundColor(.gray)
                         .padding(.bottom, 4)
-                        .diagnosticBorder(.gray.opacity(0.3), width: 0.5, label: "SUB")
 
-                    let statuses = state.neuralStatuses
-                    let codes = state.neuralLanguageCodes
+                    Text(languageManager.settings.refreshDescription)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineSpacing(4)
                     
-                    FlowLayout(data: codes, spacing: 10) { code in
-                        diagRow(code: code, status: statuses[code])
+                    Button(action: {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        state.refreshPersonalization { success in
+                            let generator = UINotificationFeedbackGenerator()
+                            generator.notificationOccurred(success ? .success : .error)
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            if state.isRefreshingPersonalization {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.black)
+                            } else {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                            }
+                            
+                            Text(languageManager.settings.refreshButton.uppercased())
+                            
+                            if state.showRefreshSuccess {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.white)
+                        .cornerRadius(0)
                     }
-                    .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "FLOW")
+                    .padding(.top, 4)
                 }
                 .padding(.leading, 20)
                 .padding(.vertical, 10)
-                .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "DATA_P:L20,V10")
             }
             .fixedSize(horizontal: false, vertical: true)
-            .diagnosticBorder(.white.opacity(0.1), width: 1, label: "NEURAL_HS")
         }
         .padding(.horizontal, 5)
-        .onAppear { state.checkNeuralStatus() }
         .opacity(animateIn ? 1 : 0)
         .offset(y: animateIn ? 0 : 20)
-        .animation(.spring().delay(0.15), value: animateIn)
-        .diagnosticBorder(.white.opacity(0.3), width: 1, label: "NEURAL_SEC_P:H5")
+        .animation(.spring().delay(0.18), value: animateIn)
+        .diagnosticBorder(.white.opacity(0.3), width: 1, label: "PERS_SEC")
     }
     
-    @ViewBuilder
-    private func diagRow(code: String, status: SettingsTabState.NeuralStatus?) -> some View {
-        let fullName = TargetLanguageMapping.shared.getDisplayNames(for: code).english.uppercased()
-        let color = state.statusColor(status?.state)
-        
-        HStack(spacing: 8) {
-            Rectangle()
-                .fill(color)
-                .frame(width: 8, height: 8)
-                .shadow(color: color.opacity(0.5), radius: 4)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(fullName)
-                    .font(.system(size: 14, weight: .black, design: .monospaced))
-                    .foregroundColor(.white)
-                
-                Text(status?.state ?? "WAITING")
-                    .font(.system(size: 8, weight: .bold, design: .monospaced))
-                    .foregroundColor(color)
-            }
-            .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "INFO")
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.02))
-        .diagnosticBorder(color.opacity(0.3), width: 1, label: code)
-    }
+
 
     // MARK: - Location
     
@@ -394,7 +417,20 @@ struct SettingsView: View {
                     .font(.system(size: 20))
                 Text(languageManager.settings.location.uppercased()).font(.system(size: 24, weight: .black))
                 Spacer()
-                Toggle("", isOn: $appState.isLocationTrackingEnabled)
+                Toggle("", isOn: Binding(
+                    get: { appState.isLocationTrackingEnabled },
+                    set: { newValue in
+                        if newValue {
+                            PermissionsService.shared.ensureLocationAccess { granted in
+                                DispatchQueue.main.async {
+                                    appState.isLocationTrackingEnabled = granted
+                                }
+                            }
+                        } else {
+                            appState.isLocationTrackingEnabled = false
+                        }
+                    }
+                ))
                     .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
                     .labelsHidden()
                     .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
@@ -425,7 +461,17 @@ struct SettingsView: View {
                 Spacer()
                 Toggle("", isOn: Binding(
                     get: { NotificationManager.shared.isNotificationsEnabled },
-                    set: { NotificationManager.shared.isNotificationsEnabled = $0 }
+                    set: { newValue in
+                        if newValue {
+                            PermissionsService.shared.ensureNotificationAccess { granted in
+                                DispatchQueue.main.async {
+                                    NotificationManager.shared.isNotificationsEnabled = granted
+                                }
+                            }
+                        } else {
+                            NotificationManager.shared.isNotificationsEnabled = false
+                        }
+                    }
                 ))
                 .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
                 .labelsHidden()

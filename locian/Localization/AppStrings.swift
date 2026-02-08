@@ -182,6 +182,12 @@ struct SettingsStrings {
     let diagnosticBorders: String
     let areYouSureLogout: String
     let areYouSureDeleteAccount: String
+    
+    // Personalization Refresh
+    let refreshHeading: String
+    let refreshSubheading: String
+    let refreshDescription: String
+    let refreshButton: String
 }
 
 

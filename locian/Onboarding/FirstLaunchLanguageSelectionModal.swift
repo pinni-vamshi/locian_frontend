@@ -67,7 +67,7 @@ struct FirstLaunchLanguageSelectionModal: View {
                     GridItem(.flexible(), spacing: 12),
                     GridItem(.flexible(), spacing: 12)
                 ]) {
-                    ForEach(AppLanguage.allCases.filter { $0 != .hindi }, id: \.self) { language in
+                    ForEach(AppLanguage.allCases, id: \.self) { language in
                         appLanguageButton(
                             language: language,
                             accentColor: accentColor,

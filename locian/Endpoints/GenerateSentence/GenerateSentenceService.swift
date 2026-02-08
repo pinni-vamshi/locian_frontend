@@ -21,10 +21,17 @@ class GenerateSentenceService {
     ) {
         // Gather user profile data from AppState
         let appState = AppStateManager.shared
-        let defaultPair = appState.userLanguagePairs.first(where: { $0.is_default })
-        let targetLanguage = defaultPair?.target_language ?? "es"
-        let userLanguage = appState.nativeLanguage
+        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        
+        let targetLanguage = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
+        let userLanguage = activePair?.native_language ?? (!appState.nativeLanguage.isEmpty ? appState.nativeLanguage : appState.appLanguage)
         let profession = appState.profession
+        
+        // Gather current time
+        let currentDate = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "hh:mm a"
+        let timeString = formatter.string(from: currentDate)
         
         let request = GenerateSentenceRequest(
             target_language: targetLanguage,
@@ -32,7 +39,7 @@ class GenerateSentenceService {
             user_language: userLanguage,
             micro_situation: microSituation,
             profession: profession,
-            time: nil
+            time: timeString
         )
         
         let headers = ["Authorization": "Bearer \(sessionToken)"]

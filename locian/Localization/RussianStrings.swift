@@ -156,7 +156,13 @@ struct RussianStrings: AppStrings, LocalizedStrings {
             location: "Местоположение",
             diagnosticBorders: "Рамки Диагностики",
             areYouSureLogout: "Вы уверены, что хотите выйти?",
-            areYouSureDeleteAccount: "Вы уверены, что хотите безвозвратно удалить свой аккаунт? Это действие нельзя отменить.")
+            areYouSureDeleteAccount: "Вы уверены, что хотите безвозвратно удалить свой аккаунт? Это действие нельзя отменить.",
+            
+            // Personalization Refresh
+            refreshHeading: "ОБНОВИТЬ",
+            refreshSubheading: "КОНТЕКСТ ПОЛЬЗОВАТЕЛЯ // ЭВОЛЮЦИЯ",
+            refreshDescription: "Ваши моменты со временем становятся более персонализированными в зависимости от вашей практики.",
+            refreshButton: "ОБНОВИТЬ ПЕРСОНАЛИЗАЦИЮ")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct RussianStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

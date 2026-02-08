@@ -70,9 +70,15 @@ struct AddTabView: View {
         .fullScreenCover(isPresented: $showingCamera) { cameraPicker }
         .fullScreenCover(isPresented: $showingGallery) { galleryPicker }
         .fullScreenCover(isPresented: $showingRoutineModal) { routineModal }
-        .onAppear { withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true } }
-        .onDisappear { animateIn = false }
-        .onChange(of: selectedTab) { _, n in if n == .add { animateIn = false; DispatchQueue.main.asyncAfter(deadline: .now()+0.05) { withAnimation(.spring()) { animateIn = true } } } }
+        .onAppear { 
+            animateIn = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+            }
+        }
+        .onDisappear { 
+            withAnimation(.none) { animateIn = false }
+        }
     }
 
     // MARK: - Sections

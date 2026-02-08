@@ -22,7 +22,10 @@ class BrickTypingLogic: ObservableObject {
         if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {
              self.isCorrect = result
              self.userInput = session.activeInput
+             print("   ⌨️ [BrickTyping] Restored State: '\(userInput)' (Correct: \(result))")
         }
+        
+        print("   ⌨️ [BrickTyping] Init (Prompt: '\(prompt)', Target: '\(state.drillData.target)')")
     }
     
     var hasInput: Bool {

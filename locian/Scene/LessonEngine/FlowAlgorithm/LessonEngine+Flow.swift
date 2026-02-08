@@ -121,6 +121,11 @@ extension LessonEngine {
             // C. Combined Score
             let finalScore = (totalSemanticSim * 0.7) + (overlapScore * 0.3)
             
+            print("      🧪 [Flow: Candidate] '\(pattern.target.prefix(25))...'")
+            print("         ↳ Semantic Sim (70%): \(String(format: "%.3f", totalSemanticSim))")
+            print("         ↳ Word Overlap (30%): \(String(format: "%.3f", overlapScore))")
+            print("         ↳ FINAL SCORE: \(String(format: "%.3f", finalScore))")
+            
             if finalScore > highestScore {
                 highestScore = finalScore
                 bestPattern = pattern

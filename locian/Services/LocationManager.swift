@@ -13,7 +13,7 @@ import MapKit
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = LocationManager()
     
-    private let locationManager = CLLocationManager()
+    let locationManager = CLLocationManager()
     
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
@@ -31,22 +31,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Initialize with actual status from the manager instance
         // This prevents race conditions where checking status immediately after init returns .notDetermined
         authorizationStatus = locationManager.authorizationStatus
-    }
-    
-    // MARK: - Request Permission
-    func requestPermission() {
-        let status = locationManager.authorizationStatus
-        
-        switch status {
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-        case .denied, .restricted:
-            break
-        case .authorizedWhenInUse, .authorizedAlways:
-            break
-        @unknown default:
-            break
-        }
     }
     
     // MARK: - Get Current Location

@@ -156,7 +156,13 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             location: "സ്ഥാനം",
             diagnosticBorders: "ഡയഗ്നോസ്റ്റിക് ബോർഡറുകൾ",
             areYouSureLogout: "നിങ്ങൾക്ക് ലോഗ് ഔട്ട് ചെയ്യണമെന്ന് ഉറപ്പാണോ?",
-            areYouSureDeleteAccount: "നിങ്ങളുടെ അക്കൗണ്ട് ശാശ്വതമായി ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ? ഈ നടപടി പിൻവലിക്കാൻ കഴിയില്ല.")
+            areYouSureDeleteAccount: "നിങ്ങളുടെ അക്കൗണ്ട് ശാശ്വതമായി ഇല്ലാതാക്കണമെന്ന് ഉറപ്പാണോ? ഈ നടപടി പിൻവലിക്കാൻ കഴിയില്ല.",
+            
+            // Personalization Refresh
+            refreshHeading: "പുതുക്കുക",
+            refreshSubheading: "ഉപയോക്തൃ സന്ദർഭം // വികസിക്കുക",
+            refreshDescription: "നിങ്ങളുടെ പരിശീലനത്തെ അടിസ്ഥാനമാക്കി നിങ്ങളുടെ നിമിഷങ്ങൾ കാലക്രമേണ കൂടുതൽ വ്യക്തിഗതമാകും.",
+            refreshButton: "വ്യക്തിഗതമാക്കൽ അപ്‌ഡേറ്റ് ചെയ്യുക")
     }
 
     var login: LoginStrings {
@@ -631,6 +637,12 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

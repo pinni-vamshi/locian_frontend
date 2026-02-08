@@ -47,6 +47,7 @@ class StatsTabState: ObservableObject {
             updatePracticeDatesCache(practiceDates: pair.practice_dates)
         }
         updateStudiedHours()
+        updateChronotype()
     }
     
     private func updateStudiedHours() {
@@ -56,15 +57,8 @@ class StatsTabState: ObservableObject {
         }
         
         var hoursSet = Set<Int>()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "h:mm a"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        
         for place in places {
-            if let h = place.hour {
-                hoursSet.insert(h)
-            } else if let tStr = place.time, let date = formatter.date(from: tStr) {
-                let h = Calendar.current.component(.hour, from: date)
+            if let h = extractHour(from: place) {
                 hoursSet.insert(h)
             }
         }
@@ -73,7 +67,26 @@ class StatsTabState: ObservableObject {
         
         DispatchQueue.main.async {
             self.studiedHours = hoursSet
+            self.updateChronotype()
         }
+    }
+    
+    private func extractHour(from place: MicroSituationData) -> Int? {
+        if let h = place.hour { return h }
+        guard let tStr = place.time else { return nil }
+        
+        let cleaned = tStr.replacingOccurrences(of: "\u{00A0}", with: " ").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        let formats = ["h:mm a", "h:mma", "HH:mm", "h:mm"]
+        for format in formats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: cleaned) {
+                return Calendar.current.component(.hour, from: date)
+            }
+        }
+        return nil
     }
     
     func onAppear() {
@@ -191,15 +204,17 @@ class StatsTabState: ObservableObject {
         return calculateLongestStreak(practiceDates: pair.practice_dates)
     }
     
-    /// Chronotype - calculated from practice dates and timeline
-    var chronotype: String {
-        guard let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first else {
-            return "NIGHT OWL"
-        }
-        return determineChronotype(practiceDates: pair.practice_dates)
-    }
+    @Published var chronotype: String = "NIGHT OWL"
     
     // MARK: - Private Calculation Methods
+    
+    private func updateChronotype() {
+        guard let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first else {
+            self.chronotype = "NIGHT OWL"
+            return
+        }
+        self.chronotype = determineChronotype(practiceDates: pair.practice_dates)
+    }
     
     private func calculateCurrentStreak(practiceDates: [String]) -> Int {
         guard !practiceDates.isEmpty else { return 0 }
@@ -283,15 +298,10 @@ class StatsTabState: ObservableObject {
     private func determineChronotype(practiceDates: [String]) -> String {
         var hourCounts = [Int](repeating: 0, count: 24)
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        
-        // Count hours from practice dates (if they have time info)
-        // For now, use timeline data for hour distribution
+        // Count hours from timeline data
         if let places = appState.timeline?.places {
             for place in places {
-                if let h = place.hour {
+                if let h = extractHour(from: place) {
                     hourCounts[h] += 1
                 }
             }

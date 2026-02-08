@@ -108,7 +108,12 @@ class PatternBuilderLogic: ObservableObject {
             type: .typing, // Builder validates like typing
             context: context
         )
-        print("      🌊 [Ripple] Analyzed \(rippleResults.count) bricks in the pattern")
+        print("      🌊 [Ripple] Analyzing constituent bricks for Mastery Impact...")
+        for (i, res) in rippleResults.enumerated() {
+            let status = res.isCorrect ? "✅ MATCH" : "❌ MISS "
+            print("         [\(i)] Brick: '\(res.brickId.prefix(10))...' -> \(status) (Sim: \(String(format: "%.2f", res.similarity)))")
+        }
+        print("      🌊 [Ripple] Summary: \(rippleResults.filter(\.isCorrect).count)/\(rippleResults.count) Bricks Correct")
         
         // 3. Update Mastery Directly in Engine
         let delta = isCorrect ? 0.30 : -0.10

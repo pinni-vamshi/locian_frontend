@@ -60,8 +60,6 @@ class LocalizationManager: ObservableObject {
             currentStrings = EnglishStrings()
         case .japanese:
             currentStrings = JapaneseStrings()
-        case .hindi:
-            currentStrings = HindiStrings()
         case .telugu:
             currentStrings = TeluguStrings()
         case .tamil:
@@ -445,6 +443,14 @@ enum StringKey: String {
     
     // Add Tab
     case imagesLabel = "imagesLabel"
+    
+    // Personalization Refresh
+    case refreshHeading = "refreshHeading"
+    case refreshSubheading = "refreshSubheading"
+    case refreshDescription = "refreshDescription"
+    case refreshButton = "refreshButton"
+    
+    
     case routinesLabel = "routinesLabel"
     case whatAreYouDoing = "whatAreYouDoing"
     case chooseContext = "chooseContext"

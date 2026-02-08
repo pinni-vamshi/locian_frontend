@@ -16,15 +16,18 @@ class EmbeddingEngine {
     private init() {}
     
     func generateEmbedding(for text: String) -> [Double]? {
-        // print("\n🟢 [EmbeddingEngine] generateEmbedding called for: '\(text.prefix(20))...'") // Truncated for sanity
+        print("\n🟢 [EmbeddingEngine] generateEmbedding called for: '\(text)'")
+        print("   ⚠️ [EmbeddingEngine] USING HARDCODED STATIC ENGLISH MODEL (NLEmbedding.sentenceEmbedding(for: .english))")
+        
         guard let embedding = sentenceEmbedding else {
             print("🔴 [EmbeddingEngine] NLEmbedding is NIL. Cannot generate vector.")
             return nil
         }
         
         let vector = embedding.vector(for: text)
-        if vector != nil {
-            // print("   ✅ [EmbeddingEngine] Vector Generated (Dim: \(v.count))")
+        if let v = vector {
+            print("   ✅ [EmbeddingEngine] Vector Generated (Dim: \(v.count))")
+            print("   📊 [EmbeddingEngine] RAW VECTOR (First 5): \(v.prefix(5))")
         } else {
             print("⚠️ [EmbeddingEngine] Failed to generate vector for: '\(text)'")
         }

@@ -156,7 +156,13 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
             location: "Localisation",
             diagnosticBorders: "Bordures de Diagnostic",
             areYouSureLogout: "Êtes-vous sûr de vouloir vous déconnecter ?",
-            areYouSureDeleteAccount: "Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.")
+            areYouSureDeleteAccount: "Êtes-vous sûr de vouloir supprimer définitivement votre compte ? Cette action est irréversible.",
+            
+            // Personalization Refresh
+            refreshHeading: "ACTUALISER",
+            refreshSubheading: "CONTEXTE UTILISATEUR // ÉVOLUER",
+            refreshDescription: "Vos moments deviennent plus personnalisés avec le temps en fonction de votre pratique.",
+            refreshButton: "METTRE À JOUR LA PERSONALISATION")
     }
 
     var login: LoginStrings {
@@ -632,6 +638,12 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
         case .patternGalaxy: return progress.patternGalaxy
         case .typeYourMoment: return ui.typeYourMoment
         case .imagesLabel: return ui.imagesLabel
+
+        // Personalization Refresh
+        case .refreshHeading: return settings.refreshHeading
+        case .refreshSubheading: return settings.refreshSubheading
+        case .refreshDescription: return settings.refreshDescription
+        case .refreshButton: return settings.refreshButton
         case .routinesLabel: return ui.routinesLabel
         case .whatAreYouDoing: return ui.whatAreYouDoing
         case .chooseContext: return ui.chooseContext

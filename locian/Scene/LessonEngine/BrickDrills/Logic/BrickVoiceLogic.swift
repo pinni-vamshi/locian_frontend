@@ -40,11 +40,21 @@ class BrickVoiceLogic: ObservableObject {
     
     func triggerSpeechRecognition() {
         if session.speechRecognizer.isRecording {
-            print("   🎤 [BrickVoice] Stopping recording...")
+            print("   🎤 [BrickVoice] STOPPING recording. Finalizing transcript...")
             session.speechRecognizer.stopRecording()
         } else {
-            print("   🎤 [BrickVoice] Starting recording...")
-            try? session.speechRecognizer.startRecording()
+            print("   🎤 [BrickVoice] Requesting MIC access via Autonomous Service...")
+            PermissionsService.shared.ensureVoiceAccess { granted in
+                guard granted else { 
+                    print("   🚫 [BrickVoice] Access DENIED. Alert handled by Service.")
+                    return 
+                }
+                
+                print("   🎤 [BrickVoice] Access GRANTED. STARTING recording...")
+                print("      - Target: '\(self.state.drillData.target)'")
+                print("      - Locale: \(self.session.targetLocale.identifier)")
+                try? self.session.speechRecognizer.startRecording()
+            }
         }
     }
     

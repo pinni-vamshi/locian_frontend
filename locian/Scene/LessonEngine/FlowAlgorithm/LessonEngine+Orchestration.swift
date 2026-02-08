@@ -24,7 +24,9 @@ extension LessonEngine {
         selectionQueue.append("STAGE-GHOST-\(state.id)")
         selectionQueue.append("STAGE-DRILL-\(state.id)")
         
-        print("   👮 [Orchestrator] Sequence Loaded: INTRO -> GHOST -> DRILL")
+        print("   👮 [Orchestrator] Sequence Loaded: INTRO -> GHOST -> DRILL for [\(state.id)]")
+        print("      - Target: '\(state.drillData.target.prefix(20))...'")
+        print("      - Status: Queue size is now \(selectionQueue.count)")
         
         // 3. Pop and return the first state
         return popNextOrchestratedState() ?? state
@@ -35,11 +37,13 @@ extension LessonEngine {
     func popNextOrchestratedState() -> DrillState? {
         guard !selectionQueue.isEmpty else { return nil }
         let nextId = selectionQueue.removeFirst()
-        print("   👮 [Orchestrator] Popping from Queue: \(nextId)")
+        print("\n   👮 [Orchestrator] Popping next task: '\(nextId)'")
         
         // Handle STAGE-INTRO-
         if nextId.hasPrefix("STAGE-INTRO-") {
             let patternId = nextId.replacingOccurrences(of: "STAGE-INTRO-", with: "")
+            print("      🔍 [Orchestrator: Stage 1] Processing Intro for \(patternId)")
+            
             if let drill = allDrills.first(where: { $0.id == patternId }) {
                 let brickMatches = ContentAnalyzer.findRelevantBricksWithSimilarity(
                     in: drill.drillData.target,
@@ -51,10 +55,11 @@ extension LessonEngine {
                 
                 // SKIP: If no bricks to introduce, immediately pop the next stage
                 if resolvedBricks.isEmpty {
-                    print("   ⏭️ [Orchestrator] Skipping empty INTRO for \(patternId)")
+                    print("      ⏭️ [Orchestrator] SKIP: No unvisited bricks detected for Intro. Moving to Ghost.")
                     return popNextOrchestratedState()
                 }
                 
+                print("      ✅ [Orchestrator] INTRO Materialized: \(resolvedBricks.count) new bricks to show.")
                 return materializeStageState(id: "STAGE-INTRO-", targetPattern: drill, bricks: resolvedBricks)
             }
         }
@@ -62,16 +67,17 @@ extension LessonEngine {
         // Handle STAGE-GHOST-
         if nextId.hasPrefix("STAGE-GHOST-") {
             let drillId = nextId.replacingOccurrences(of: "STAGE-GHOST-", with: "")
+            print("      🔍 [Orchestrator: Stage 2] Processing Ghost for \(drillId)")
             
             if let drill = allDrills.first(where: { $0.id == drillId }) {
                 // SKIP: If no past patterns visited yet, immediately pop the next stage
-                // visitedPatternIds contains raw IDs like "p1", "p2"
                 let visited = visitedPatternIds.filter { $0 != drill.patternId }
                 if visited.isEmpty {
-                    print("   👻 [Orchestrator] No past patterns for Ghost Rehearsal. Skipping \(drillId).")
+                    print("      ⏭️ [Orchestrator] SKIP: No past patterns in memory for Ghost Rehearsal.")
                     return popNextOrchestratedState()
                 }
                 
+                print("      ✅ [Orchestrator] GHOST Materialized: Starting rehearsal sequence.")
                 return materializeStageState(id: "STAGE-GHOST-", targetPattern: drill, bricks: [])
             }
         }
@@ -79,9 +85,11 @@ extension LessonEngine {
         // Handle STAGE-DRILL- (Step 3: Pattern Drill)
         if nextId.hasPrefix("STAGE-DRILL-") {
             let patternId = nextId.replacingOccurrences(of: "STAGE-DRILL-", with: "")
+            print("      🔍 [Orchestrator: Stage 3] Processing Main Drill for \(patternId)")
+            
             if let drill = allDrills.first(where: { $0.id == patternId }) {
-                print("   🎯 [Orchestrator] Step 3: Serving Target Practice for \(drill.id)")
-                return drill // The pattern mode selector will handle this
+                print("      🎯 [Orchestrator] Serving Final Practice Card.")
+                return drill
             }
         }
         
