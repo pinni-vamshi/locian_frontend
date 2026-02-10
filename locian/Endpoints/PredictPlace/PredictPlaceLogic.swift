@@ -76,14 +76,15 @@ class PredictPlaceLogic {
         
         return PredictPlaceData(
             place_name: placeName,
-            document_id: dict["document_id"] as? String,
+            micro_situations: sections,
             latitude: dict["latitude"] as? Double,
             longitude: dict["longitude"] as? Double,
             time: dict["time"] as? String,
             hour: hour,
+            time_span: dict["time_span"] as? String,
             type: dict["type"] as? String,
             created_at: dict["created_at"] as? String,
-            micro_situations: sections,
+            document_id: dict["document_id"] as? String,
             total_count: dict["total_count"] as? Int
         )
     }

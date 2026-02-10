@@ -461,7 +461,8 @@ enum StringKey: String {
     case tapToSetup = "tapToSetup"
     case tapToStartLearning = "tapToStartLearning"
     
-
+    // Notifications
+    case smartNotificationExactPlace = "smartNotificationExactPlace"
 }
 
 // MARK: - Localized Strings Protocol (for LocalizationManager)

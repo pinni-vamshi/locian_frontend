@@ -652,6 +652,7 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "நீங்கள் %@ இல் இருந்தால், இந்த இடத்தைப் பற்றி படிக்கவும்!"
         }
     }
 }

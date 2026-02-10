@@ -92,8 +92,34 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    // MARK: - Notifications State
+    @Published var userIntent: UserIntent? {
+        didSet {
+            if let intent = userIntent, let encoded = try? JSONEncoder().encode(intent) {
+                UserDefaults.standard.set(encoded, forKey: "userIntent")
+            }
+        }
+    }
     
+    // MARK: - Notifications State
+    @Published var completedNotificationCount: Int = 0 {
+        didSet {
+            UserDefaults.standard.set(completedNotificationCount, forKey: "completedNotificationCount")
+        }
+    }
+    
+    @Published var lastNotificationRefreshDate: Date? {
+        didSet {
+            if let date = lastNotificationRefreshDate {
+                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastNotificationRefreshDate")
+            }
+        }
+    }
+    
+    @Published var notifiedMomentIDs: Set<String> = [] {
+        didSet {
+            UserDefaults.standard.set(Array(notifiedMomentIDs), forKey: "notifiedMomentIDs")
+        }
+    }
     
     // MARK: - Quick Recall Toggle (for floating button)
     
@@ -245,6 +271,9 @@ class AppStateManager: ObservableObject {
         // Confirm Ephemeral State
         print("ℹ️ [AppStateManager] Timeline is ephemeral. Starting clean (nil).")
         
+        // Load content for Learn Tab
+        print("⚡️ [AppStateManager] Session Valid -> Ready for initial fetch.")
+        
         // Load persisted inferred place category
         self.inferredPlaceCategory = UserDefaults.standard.string(forKey: "inferredPlaceCategory")
         
@@ -282,6 +311,21 @@ class AppStateManager: ObservableObject {
         
         // Initialize Smart Location Notifications
         NotificationManager.shared.startMonitoring()
+        
+        // Load persistable intent
+        if let data = UserDefaults.standard.data(forKey: "userIntent"),
+           let intent = try? JSONDecoder().decode(UserIntent.self, from: data) {
+            self.userIntent = intent
+        }
+        
+        self.completedNotificationCount = UserDefaults.standard.integer(forKey: "completedNotificationCount")
+        if let timeInterval = UserDefaults.standard.object(forKey: "lastNotificationRefreshDate") as? TimeInterval {
+            self.lastNotificationRefreshDate = Date(timeIntervalSince1970: timeInterval)
+        }
+        
+        if let momentIDs = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
+            self.notifiedMomentIDs = Set(momentIDs)
+        }
     }
     
     // MARK: - Load User Data (called after successful session validation)
@@ -310,12 +354,7 @@ class AppStateManager: ObservableObject {
         // ---------------------------------------------------------------------
         var proactiveCodes = Set([self.nativeLanguage])
         self.userLanguagePairs.forEach { proactiveCodes.insert($0.target_language) }
-        
-        for code in proactiveCodes where !code.isEmpty {
-            EmbeddingService.downloadModel(for: code) { success in
-                 print("🧠 [Proactive] Model asset download for '\(code)': \(success ? "SUCCESS" : "FAILED/NOT_NEEDED")")
-            }
-        }
+        EmbeddingService.prepareModels(for: proactiveCodes)
         
         // Profile image and language pairs are now loaded in init() or via loadUserData()
         // but loadUserData() still refreshes them to ensure consistency after login.
@@ -363,6 +402,61 @@ class AppStateManager: ObservableObject {
             }
         } else {
             print("⚠️ [AppStateManager] Could not find language pair for \(targetLanguage) to record practice")
+        }
+    }
+    
+    // MARK: - Initial Data Loading
+    
+    /// Fetch studied places and initialize recommendations during app launch
+    func loadInitialData() {
+        print("\n🚀 [AppStateManager] loadInitialData() starting...")
+        
+        guard let sessionToken = authToken, !sessionToken.isEmpty else {
+            print("⚠️ [AppStateManager] No auth token, skipping data load")
+            return
+        }
+        
+        guard !userLanguagePairs.isEmpty else {
+            print("⚠️ [AppStateManager] No language pairs configured, skipping data load")
+            return
+        }
+        
+        isLoadingTimeline = true
+        print("   📡 [AppStateManager] Calling GetStudiedPlacesService...")
+        
+        GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if let data = response.data {
+                        print("   ✅ [AppStateManager] Studied places loaded: \(data.places.count) places")
+                        
+                        // Store timeline
+                        self.timeline = TimelineData(places: data.places, inputTime: data.input_time)
+                        
+                        // Store intent
+                        self.userIntent = data.user_intent
+                        
+                        print("   🔄 [AppStateManager] Initializing LocalRecommendationService...")
+                        // Initialize local recommendations
+                        LocalRecommendationService.shared.initialize(
+                            timeline: self.timeline,
+                            intent: data.user_intent
+                        )
+                    } else {
+                        print("   ⚠️ [AppStateManager] No data in response")
+                    }
+                    
+                case .failure(let error):
+                    print("   ❌ [AppStateManager] Failed to load studied places: \(error.localizedDescription)")
+                }
+                
+                self.hasInitialHistoryLoaded = true
+                self.isLoadingTimeline = false
+                print("   ✅ [AppStateManager] loadInitialData() complete")
+            }
         }
     }
 }

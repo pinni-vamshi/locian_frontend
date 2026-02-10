@@ -42,8 +42,37 @@ struct GenerateMomentsData: Codable {
     let longitude: Double?
     let time: String?
     let hour: Int?
-    let type: String?
+    
+    // Heritage Hierarchy Fields
+    let time_span: String?      // Morning/Afternoon/Evening
+    let type: String?           // image_analysis/custom
+    
     let created_at: String?
     let micro_situations: [UnifiedMomentSection]
     let total_count: Int
+}
+
+// MARK: - Handover Extension
+extension GenerateMomentsData {
+    /// Converts generated moments data into the common MicroSituationData format for UI consumption.
+    func toMicroSituationData() -> MicroSituationData {
+        return MicroSituationData(
+            place_name: self.place_name,
+            latitude: self.latitude,
+            longitude: self.longitude,
+            time: self.time,
+            hour: self.hour,
+            created_at: self.created_at,
+            context_description: nil,
+            micro_situations: self.micro_situations,
+            priority_score: 1.2, // Boosted priority for user-requested generation
+            distance_meters: nil,
+            time_span: self.time_span,
+            type: self.type ?? "custom",
+            profession: nil,
+            updated_at: nil,
+            target_language: nil,
+            document_id: self.document_id
+        )
+    }
 }

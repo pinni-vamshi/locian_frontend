@@ -3,7 +3,7 @@ import Combine
 
 class PatternTypingLogic: ObservableObject {
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
     // Data only
     let prompt: String
@@ -12,17 +12,14 @@ class PatternTypingLogic: ObservableObject {
     @Published var userInput: String = ""
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, session: LessonSessionManager) {
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
+        self.engine = engine
         self.prompt = state.drillData.meaning
-        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
-        // Restore State if session already has result
-        if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {
-             self.isCorrect = result
-             self.userInput = session.activeInput
-        }
+        // Restore State logic removed
+        // if engine.activeState?.id == state.id ...
     }
     
     var hasInput: Bool {
@@ -34,29 +31,30 @@ class PatternTypingLogic: ObservableObject {
         print("      - Validating typing [Pattern Typing]...")
         
         // Save input to session for persistence
-        session.activeInput = userInput
+        // Save input to session for persistence
+        // engine.activeInput = userInput // Removed
         
         let context = ValidationContext(
             state: state,
-            locale: session.targetLocale,
-            session: session,
-            neuralEngine: session.neuralValidator
+            locale: TargetLanguageMapping.shared.getLocale(for: engine.lessonData?.target_language ?? "en"),
+            engine: engine,
+            neuralEngine: NeuralValidator()
         )
         
         // 1. Validate the FULL Pattern using Typing Validator
         let validator = TypingValidator()
         let result = validator.validate(input: userInput, target: state.drillData.target, context: context)
         let isCorrect = (result == .correct || result == .meaningCorrect)
-        let isMeaningCorrect = (result == .meaningCorrect)
+
         
         // 2. Perform Granular Analysis (The Ripple Effect)
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: session.lessonData?.bricks,
-            targetLanguage: session.lessonData?.target_language ?? "es"
+            bricks: engine.lessonData?.bricks,
+            targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: session.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: userInput,
@@ -68,24 +66,30 @@ class PatternTypingLogic: ObservableObject {
         
         // 3. Update Mastery Directly in Engine
         let delta = isCorrect ? 0.30 : -0.15
-        session.engine.updateMastery(id: state.id, delta: delta, reason: "[Pattern Typing]")
+        engine.updateMastery(id: state.id, delta: delta)
         
         // Ripple Effect on Bricks
         for res in rippleResults {
             let brickDelta = res.isCorrect ? 0.10 : -0.05
-            session.engine.updateMastery(id: res.brickId, delta: brickDelta, reason: "[Ripple: Typing]")
+            engine.updateMastery(id: res.brickId, delta: brickDelta)
         }
         
-        // 4. Trigger UI Side Effects in Session
-        session.handleValidationResult(isCorrect: isCorrect, targetContent: state.drillData.target, isMeaningCorrect: isMeaningCorrect)
+        // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
+        playAudio()
+    }
+    
+    func playAudio() {
+        let text = state.drillData.target
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: text, language: language)
     }
     
     func continueToNext() {
-        session.continueToNext()
+        engine.orchestrator?.finishPattern()
     }
     
-    static func view(for state: DrillState, mode: DrillMode, session: LessonSessionManager) -> some View {
-        return PatternTypingView(state: state, session: session)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+        return PatternTypingView(state: state, engine: engine)
     }
 }

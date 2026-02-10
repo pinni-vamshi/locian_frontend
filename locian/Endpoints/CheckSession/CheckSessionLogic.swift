@@ -32,13 +32,17 @@ class CheckSessionLogic {
         // 3. Load user data from cache (Profession, Native Lang, etc.)
         appState.loadUserData()
         print("📦 [App-Launch] User context loaded from local cache.")
+        
+        // 4. Load initial data (studied places + recommendations)
+        appState.loadInitialData()
+        print("📡 [App-Launch] Initial data loading triggered...")
 
-        // 4. Decision: Do we need to check languages via API?
+        // 5. Decision: Do we need to check languages via API?
         if appState.hasValidLanguagePair() {
             print("🚀 [App-Launch] Languages are valid in cache. BYPASSING language API calls.")
             
             // Just ensure notifications are ready
-            PermissionsService.ensureNotificationAccess { _ in
+            PermissionsService.shared.ensureNotificationAccess { _ in
                 UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
             }
             
@@ -49,7 +53,7 @@ class CheckSessionLogic {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 appState.checkLanguagePairsAndShowModalIfNeeded()
             }
-            PermissionsService.ensureNotificationAccess { _ in
+            PermissionsService.shared.ensureNotificationAccess { _ in
                 UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
             }
         }

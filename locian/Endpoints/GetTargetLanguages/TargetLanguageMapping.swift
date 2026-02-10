@@ -50,4 +50,9 @@ class TargetLanguageMapping {
         }
         return nil
     }
+    
+    // Helper to get Locale for speech/validation
+    func getLocale(for code: String) -> Locale {
+        return Locale(identifier: code)
+    }
 }

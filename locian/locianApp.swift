@@ -30,6 +30,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             DispatchQueue.main.async {
                 AppStateManager.shared.pendingDeepLinkPlace = placeName
                 AppStateManager.shared.pendingDeepLinkHour = hour
+                
+                // Track completion
+                AppStateManager.shared.completedNotificationCount += 1
+                NotificationManager.shared.refreshIfNecessary()
             }
         }
         

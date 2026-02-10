@@ -18,6 +18,9 @@ class SpeechRecognizer: ObservableObject {
     
     private let locale: Locale
     
+    // MARK: - Singleton
+    static let shared = SpeechRecognizer()
+    
     // MARK: - Initialization
     init(locale: Locale = Locale(identifier: "en-US")) {
         self.locale = locale

@@ -4,8 +4,8 @@ struct PatternBuilderView: View {
     @StateObject private var logic: PatternBuilderLogic
     @EnvironmentObject var appState: AppStateManager
     
-    init(state: DrillState, session: LessonSessionManager) {
-        _logic = StateObject(wrappedValue: PatternBuilderLogic(state: state, session: session, appState: nil))
+    init(state: DrillState, engine: LessonEngine) {
+        _logic = StateObject(wrappedValue: PatternBuilderLogic(state: state, engine: engine, appState: nil))
     }
     
     var body: some View {

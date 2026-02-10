@@ -5,51 +5,58 @@ class GhostModeLogic: ObservableObject {
     @Published var activeGhost: DrillState?
     
     let targetPattern: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
-    init(targetPattern: DrillState, session: LessonSessionManager) {
+    init(targetPattern: DrillState, engine: LessonEngine) {
         self.targetPattern = targetPattern
-        self.session = session
+        self.engine = engine
         
         print("   👻 [GhostModeLogic] Initializing ghost search for target: \(targetPattern.id)")
         findGhostToRehearse()
     }
     
     private func findGhostToRehearse() {
-        let visited = Array(session.engine.visitedPatternIds).filter { $0 != targetPattern.patternId }
+        // Use the recent history buffer as requested (Dual-Track Learning)
+        let visited = Array(engine.recentPatternHistory).filter { $0 != targetPattern.patternId }
         guard !visited.isEmpty else { 
-            print("   👻 [GhostModeLogic] No past patterns visited yet.")
+            print("   👻 [GhostModeLogic] No recent past patterns from history yet.")
             return 
         }
         
-        // Pick most similar or weak past pattern
         let targetText = targetPattern.drillData.target
-        let targetLang = session.engine.lessonData?.target_language ?? "es"
+        let targetLang = engine.lessonData?.target_language ?? "es"
         
-        let candidates = visited.compactMap { id -> (String, Double)? in
-            guard let raw = session.engine.rawPatterns.first(where: { $0.pattern_id == id }) else { return nil }
+        // 1. Calculate similarity for ALL visited patterns
+        var candidates: [(id: String, score: Double)] = []
+        
+        for id in visited {
+            guard let raw = engine.rawPatterns.first(where: { $0.id == id }) else { continue }
+            
             let sim = EmbeddingService.compare(textA: targetText, textB: raw.target, languageCode: targetLang)
-            let mastery = session.engine.getBlendedMastery(for: "\(id)-d0")
+            let mastery = engine.getBlendedMastery(for: "\(id)-d0")
             
             // Score = Similarity (weighted) + (1 - Mastery)
             let simWeight = sim * 0.7
             let masteryWeight = (1.0 - mastery) * 0.3
-            let score = simWeight + masteryWeight
+            let finalScore = simWeight + masteryWeight
             
             print("      👻 [Ghost: Candidate] [\(id)]")
             print("         ↳ Target Similarity (70%): \(String(format: "%.3f", simWeight))")
             print("         ↳ Mastery Gap (30%): \(String(format: "%.3f", masteryWeight)) (\(String(format: "%.1f%%", mastery*100)) mastered)")
-            print("         ↳ TOTAL WEIGHT: \(String(format: "%.3f", score))")
+            print("         ↳ TOTAL WEIGHT: \(String(format: "%.3f", finalScore))")
             
-            return (id, score)
+            candidates.append((id, finalScore))
         }
         
-        // Pick the best candidate above a certain threshold or if mastery is very low
-        if let winner = candidates.sorted(by: { $0.1 > $1.1 }).first {
+        // 2. Sort by score descending
+        let sortedCandidates = candidates.sorted { $0.score > $1.score }
+        
+        // 3. Pick the winner
+        if let winner = sortedCandidates.first {
             let (ghostId, score) = winner
-            print("   👻 [GhostModeLogic] Selected Ghost: [\(ghostId)] (Score: \(String(format: "%.2f", score)))")
+            print("   👻 [GhostModeLogic] WINNER: [\(ghostId)] (Score: \(String(format: "%.2f", score)))")
             
-            if let raw = session.engine.rawPatterns.first(where: { $0.pattern_id == ghostId }) {
+            if let raw = engine.rawPatterns.first(where: { $0.id == ghostId }) {
                 let drillItem = DrillItem(target: raw.target, meaning: raw.meaning, phonetic: raw.phonetic)
                 self.activeGhost = DrillState(
                     id: "\(ghostId)-d0",
@@ -59,6 +66,9 @@ class GhostModeLogic: ObservableObject {
                     isBrick: false
                 )
             }
+        } else {
+            print("   ⚠️ [GhostModeLogic] No suitable ghost candidate found.")
+            self.activeGhost = nil 
         }
     }
 }
@@ -66,20 +76,21 @@ class GhostModeLogic: ObservableObject {
 struct GhostModeManagerView: View {
     @StateObject var logic: GhostModeLogic
     
-    init(targetPattern: DrillState, session: LessonSessionManager) {
-        _logic = StateObject(wrappedValue: GhostModeLogic(targetPattern: targetPattern, session: session))
+    init(targetPattern: DrillState, engine: LessonEngine) {
+        _logic = StateObject(wrappedValue: GhostModeLogic(targetPattern: targetPattern, engine: engine))
     }
     
     var body: some View {
         ZStack {
             if let ghost = logic.activeGhost {
-                PatternModeSelector(drill: ghost, session: logic.session)
+                // If ghost is found, drill it
+                PatternModeSelector(drill: ghost, engine: logic.engine)
                     .id("ghost-practice-\(ghost.id)")
             } else {
-                // FALLBACK: If orchestrator failed to skip, and logic found no ghost
+                // FALLBACK: Logic found no ghost -> Skip Immediately
                 Color.clear.onAppear {
-                    print("   ⚠️ [GhostModeManager] Fallback: No ghost found, skipping to next.")
-                    logic.session.continueToNext()
+                    print("   ⏩ [GhostView] Auto-Skipping (0ms)...")
+                    logic.engine.orchestrator?.finishGhostMode()
                 }
             }
         }

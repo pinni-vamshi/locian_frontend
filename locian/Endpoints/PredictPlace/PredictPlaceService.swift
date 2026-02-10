@@ -6,10 +6,14 @@
 //
 
 import Foundation
+import Combine
 import CoreLocation
 
-class PredictPlaceService {
+class PredictPlaceService: ObservableObject {
     static let shared = PredictPlaceService()
+    
+    @Published var isLoading: Bool = false
+    
     private init() {}
     
     /// Autonomous prediction - gathers GPS, History, and Profile internally
@@ -17,6 +21,8 @@ class PredictPlaceService {
         sessionToken: String,
         completion: @escaping (Result<PredictPlaceResponse, Error>) -> Void
     ) {
+        isLoading = true
+        
         // 1. Gather GPS Nearby Places with 2.0s Timeout
         var didProceed = false
         let lock = NSLock()
@@ -33,31 +39,19 @@ class PredictPlaceService {
             
             print("🚀 [PredictPlaceService] 'proceed' executing with \(fetchedPlaces.count) places.")
 
-            // 2. Gather History from AppStateManager
-            let history = AppStateManager.shared.timeline?.places ?? []
+            // 2. Gather History Context from TimelineContextService
+            let timeline = AppStateManager.shared.timeline
+            let history = timeline?.places ?? []
             print("   -> History Count: \(history.count)")
             
-            let currentHour = Calendar.current.component(.hour, from: Date())
+            let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
             
-            // Previous: Last 2 before/matching current hour
-            let previous = history.filter { ($0.hour ?? -1) <= currentHour }
-                .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
-                .prefix(2)
-                .compactMap { h -> PlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return PlaceContext(place_name: name, time: time)
-                }
-            print("   -> Previous Places: \(previous.count)")
+            // Map to TimelinePlaceContext
+            let previous = context.pastPlaces.map { $0.toContext }
+            let future = context.futurePlaces.map { $0.toContext }
             
-            // Future: Next 1 after current hour
-            let future = history.filter { ($0.hour ?? -1) > currentHour }
-                .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
-                .prefix(1)
-                .compactMap { h -> PlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return PlaceContext(place_name: name, time: time)
-                }
-            print("   -> Future Places: \(future.count)")
+            print("   -> Past Context: \(previous.count) (Most Common: \(context.mostCommonPastPlace ?? "None"))")
+            print("   -> Future Context: \(future.count) (Most Common: \(context.mostCommonFuturePlace ?? "None"))")
             
             // 3. Perform the actual request
             print("   -> Calling performPredictRequest...")
@@ -87,8 +81,8 @@ class PredictPlaceService {
     /// Private implementation that performs the actual network request
     private func performPredictRequest(
         places: [String],
-        previousPlaces: [PlaceContext]? = nil,
-        futurePlaces: [PlaceContext]? = nil,
+        previousPlaces: [TimelinePlaceContext]? = nil,
+        futurePlaces: [TimelinePlaceContext]? = nil,
         sessionToken: String,
         completion: @escaping (Result<PredictPlaceResponse, Error>) -> Void
     ) {
@@ -97,7 +91,12 @@ class PredictPlaceService {
         let formatter = DateFormatter()
         formatter.dateFormat = "hh:mm a"
         let timeString = formatter.string(from: currentDate)
-        print("🕒 [PredictPlaceService] Current Time: \(timeString)")
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM d, yyyy"
+        let dateString = dateFormatter.string(from: currentDate)
+        
+        print("🕒 [PredictPlaceService] Current Time: \(timeString), Date: \(dateString)")
         
         // Gather location
         let userLocation = LocationManager.shared.currentLocation
@@ -122,7 +121,8 @@ class PredictPlaceService {
             target_language: targetLanguage,
             level: level,
             latitude: userLocation?.coordinate.latitude,
-            longitude: userLocation?.coordinate.longitude
+            longitude: userLocation?.coordinate.longitude,
+            date: dateString
         )
         
         print("📦 [PredictPlaceService] Request Body Prepared. Places Count: \(places.count)")
@@ -136,7 +136,9 @@ class PredictPlaceService {
             body: request,
             headers: headers,
             timeoutInterval: 300.0,
-            completion: { (result: Result<Data, Error>) in
+            completion: { [weak self] (result: Result<Data, Error>) in
+                defer { self?.isLoading = false }
+                
                 switch result {
                 case .success(let data):
                     print("✅ [PredictPlaceService] Raw Response Received: \(data.count) bytes")

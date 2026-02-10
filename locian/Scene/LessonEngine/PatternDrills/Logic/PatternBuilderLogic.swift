@@ -21,19 +21,19 @@ class PatternBuilderLogic: ObservableObject {
     @Published var isSearching: Bool = false
     
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     var appState: AppStateManager?
     
     // Data only
     let prompt: String
     let targetLanguage: String
     
-    init(state: DrillState, session: LessonSessionManager, appState: AppStateManager?) {
+    init(state: DrillState, engine: LessonEngine, appState: AppStateManager?) {
         self.state = state
-        self.session = session
+        self.engine = engine
         self.appState = appState
         self.prompt = state.drillData.meaning
-        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         setupTokens()
         computeValidBricks()
@@ -49,6 +49,12 @@ class PatternBuilderLogic: ObservableObject {
     func selectToken(at index: Int) {
         guard index < availableTokens.count else { return }
         var token = availableTokens[index]
+        
+        // Speak what the user JUST tapped
+        // Speak what the user JUST tapped
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: token.text, language: language)
+        
         token.isUsed = true
         availableTokens[index] = token
         selectedTokens.append(token)
@@ -82,9 +88,9 @@ class PatternBuilderLogic: ObservableObject {
         
         let context = ValidationContext(
             state: state,
-            locale: session.targetLocale,
-            session: session,
-            neuralEngine: session.neuralValidator
+            locale: TargetLanguageMapping.shared.getLocale(for: engine.lessonData?.target_language ?? "en"),
+            engine: engine,
+            neuralEngine: NeuralValidator()
         )
         
         // 1. Validate the FULL Pattern using Typing Validator
@@ -96,10 +102,10 @@ class PatternBuilderLogic: ObservableObject {
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: session.lessonData?.bricks,
-            targetLanguage: session.lessonData?.target_language ?? "es"
+            bricks: engine.lessonData?.bricks,
+            targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: session.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: userInput,
@@ -113,20 +119,20 @@ class PatternBuilderLogic: ObservableObject {
             let status = res.isCorrect ? "✅ MATCH" : "❌ MISS "
             print("         [\(i)] Brick: '\(res.brickId.prefix(10))...' -> \(status) (Sim: \(String(format: "%.2f", res.similarity)))")
         }
-        print("      🌊 [Ripple] Summary: \(rippleResults.filter(\.isCorrect).count)/\(rippleResults.count) Bricks Correct")
+        print("      🌊 [Ripple] Summary: \(rippleResults.filter { $0.isCorrect }.count)/\(rippleResults.count) Bricks Correct")
         
         // 3. Update Mastery Directly in Engine
         let delta = isCorrect ? 0.30 : -0.10
-        session.engine.updateMastery(id: state.id, delta: delta, reason: "[Pattern Builder]")
+        engine.updateMastery(id: state.id, delta: delta)
         
         // Ripple Effect on Bricks
         for res in rippleResults {
             let brickDelta = res.isCorrect ? 0.10 : -0.05
-            session.engine.updateMastery(id: res.brickId, delta: brickDelta, reason: "[Ripple: Builder]")
+            engine.updateMastery(id: res.brickId, delta: brickDelta)
         }
         
-        // 4. Trigger UI Side Effects in Session
-        session.handleValidationResult(isCorrect: isCorrect, targetContent: state.drillData.target)
+        // 4. Trigger UI Side Effects in Engine
+        // 4. Trigger UI Side Effects in Engine
         self._isCorrectResult = isCorrect
     }
     
@@ -136,7 +142,7 @@ class PatternBuilderLogic: ObservableObject {
     }
     
     func continueToNext() {
-        session.continueToNext()
+        engine.orchestrator?.finishPattern()
     }
     
     func getWordColor(_ word: String, index: Int) -> Color {
@@ -151,24 +157,24 @@ class PatternBuilderLogic: ObservableObject {
     }
     
     func computeValidBricks() {
-        let targetCode = session.lessonData?.target_language ?? "es"
-        let nativeCode = session.lessonData?.user_language ?? "en"
+        let targetCode = engine.lessonData?.target_language ?? "es"
+        let nativeCode = engine.lessonData?.user_language ?? "en"
 
         // Use SemanticFilterService to get actual scores for all candidate bricks
         // Use threshold 0.0 here because we want to see ALL matches to rank them
         let brickMatches = SemanticFilterService.getFilteredBricks(
             text: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: session.engine.lessonData?.bricks,
+            bricks: engine.lessonData?.bricks,
             targetLanguage: targetCode,
             nativeLanguage: nativeCode,
-            validator: session.neuralValidator,
+            validator: NeuralValidator(),
             threshold: 0.0
         )
         
         let brickIds = brickMatches.map { $0.brickId }
         
-        if let lessonData = session.engine.lessonData {
+        if let lessonData = engine.lessonData {
             let allBricks = (lessonData.bricks?.constants ?? []) + 
                            (lessonData.bricks?.variables ?? []) + 
                            (lessonData.bricks?.structural ?? [])
@@ -216,9 +222,9 @@ class PatternBuilderLogic: ObservableObject {
         isSearching = true
         GetSimilarWordsService.shared.getSimilarWords(
             word: word,
-            targetLanguage: session.lessonData?.target_language ?? "es",
-            userLanguage: session.lessonData?.user_language ?? "en",
-            situation: session.lessonData?.micro_situation,
+            targetLanguage: engine.lessonData?.target_language ?? "es",
+            userLanguage: engine.lessonData?.user_language ?? "en",
+            situation: engine.lessonData?.micro_situation,
             sentence: state.drillData.target,
             sessionToken: token
         ) { [weak self] result in
@@ -238,7 +244,7 @@ class PatternBuilderLogic: ObservableObject {
         }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, session: LessonSessionManager) -> some View {
-        return PatternBuilderView(state: state, session: session)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+        return PatternBuilderView(state: state, engine: engine)
     }
 }

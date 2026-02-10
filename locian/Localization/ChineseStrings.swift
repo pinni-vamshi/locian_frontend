@@ -652,6 +652,7 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "如果你在%@，了解一下这个地方！"
         }
     }
 }

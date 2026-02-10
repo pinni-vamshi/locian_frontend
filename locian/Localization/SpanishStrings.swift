@@ -652,6 +652,7 @@ struct SpanishStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "¡Si estás en %@, lee sobre este lugar!"
         }
     }
 }

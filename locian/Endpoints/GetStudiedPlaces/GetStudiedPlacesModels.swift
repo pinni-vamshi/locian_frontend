@@ -15,6 +15,7 @@ struct GetStudiedPlacesRequest: Codable {
     let latitude: Double?
     let longitude: Double?
     let limit: Int?
+    let date: String?
 }
 
 // MARK: - Response Models
@@ -27,10 +28,21 @@ struct GetStudiedPlacesResponse: Codable {
 }
 
 struct GetStudiedPlacesData: Codable {
-    let places: [MicroSituationData]
+    let dates: [DateGroup]?
+    let total_dates: Int?
+    let total_moments: Int?
     let input_time: String?
-    let count: Int?
     let user_intent: UserIntent?
+    
+    // For backwards compatibility, we expose a flat "places" array
+    var places: [MicroSituationData] {
+        return dates?.flatMap { $0.moments } ?? []
+    }
+}
+
+struct DateGroup: Codable {
+    let date: String
+    let moments: [MicroSituationData]
 }
 
 struct UserIntent: Codable {
@@ -54,14 +66,16 @@ struct MicroSituationData: Equatable, Identifiable, Codable {
     let longitude: Double?
     let time: String?
     let hour: Int?
-    let type: String?
     let created_at: String?
     let context_description: String?
     var micro_situations: [UnifiedMomentSection]?
     let priority_score: Double?
     var distance_meters: Double?
     
-    let time_span: String?
+    // Heritage Hierarchy Fields
+    let time_span: String?      // Bucket: Morning/Afternoon/Evening
+    let type: String?           // Source: image_analysis/custom
+    
     let profession: String?
     let updated_at: String?
     let target_language: String?
@@ -80,4 +94,5 @@ struct UnifiedMomentSection: Equatable, Hashable, Codable {
 struct UnifiedMoment: Equatable, Hashable, Codable {
     let text: String
     let keywords: [String]?
+    var embedding: [Double]?
 }

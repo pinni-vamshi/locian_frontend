@@ -35,9 +35,6 @@ struct PatternMCQView: View {
             footer
         }
         .background(Color.black.ignoresSafeArea())
-        .onAppear {
-            logic.session.playStateAudio(logic.state)
-        }
     }
     
     private var footer: some View {

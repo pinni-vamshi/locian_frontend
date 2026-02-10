@@ -8,9 +8,12 @@
 
 import Foundation
 import CoreLocation
+import Combine
 
-class GenerateMomentsService {
+class GenerateMomentsService: ObservableObject {
     static let shared = GenerateMomentsService()
+    
+    @Published var isLoading: Bool = false
     
     private init() {}
     
@@ -24,6 +27,8 @@ class GenerateMomentsService {
         sessionToken: String,
         completion: @escaping (Result<GenerateMomentsResponse, Error>) -> Void
     ) {
+        isLoading = true
+        
         // 1. Define continuation logic with Lock for Thread Safety
         var didProceed = false
         let lock = NSLock()
@@ -49,25 +54,13 @@ class GenerateMomentsService {
             let userLanguage = appState.nativeLanguage
             let profession = appState.profession
             
-            // Gather history context
-            let history = AppStateManager.shared.timeline?.places ?? []
-            let currentHour = Calendar.current.component(.hour, from: Date())
+            // Gather history context via TimelineContextService
+            let timeline = AppStateManager.shared.timeline
+            let history = timeline?.places ?? []
+            let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
             
-            let previous = history.filter { ($0.hour ?? -1) <= currentHour }
-                .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
-                .prefix(2)
-                .compactMap { h -> TimelinePlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return TimelinePlaceContext(place_name: name, time: time)
-                }
-            
-            let future = history.filter { ($0.hour ?? -1) > currentHour }
-                .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
-                .prefix(1)
-                .compactMap { h -> TimelinePlaceContext? in
-                    guard let name = h.place_name, let time = h.time else { return nil }
-                    return TimelinePlaceContext(place_name: name, time: time)
-                }
+            let previous = context.pastPlaces.map { $0.toContext }
+            let future = context.futurePlaces.map { $0.toContext }
             
             // Build request
             var lat: Double? = nil
@@ -142,7 +135,9 @@ class GenerateMomentsService {
             body: request,
             headers: headers,
             timeoutInterval: 300.0,
-            completion: { (result: Result<Data, Error>) in
+            completion: { [weak self] (result: Result<Data, Error>) in
+                defer { self?.isLoading = false }
+                
                 switch result {
                 case .success(let data):
                     GenerateMomentsLogic.shared.parseResponse(data: data, completion: completion)

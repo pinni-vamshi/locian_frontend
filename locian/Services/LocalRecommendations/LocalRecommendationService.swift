@@ -8,13 +8,96 @@
 
 import Foundation
 import CoreLocation
+import Combine
 
-class LocalRecommendationService {
+class LocalRecommendationService: ObservableObject {
     static let shared = LocalRecommendationService()
+    
+    // MARK: - Published States
+    @Published var isLoading: Bool = false
+    @Published var recommendations: [ScoredPlace] = []
+    @Published var mostLikely: [ScoredPlace] = []
+    @Published var likely: [ScoredPlace] = []
+    @Published var hasHighQualityMatches: Bool = false
+    @Published var contextPlace: MicroSituationData? = nil // Published result for context fallback
+    
+    // Store full result for UI mapping
+    var latestResult: LocalRecommendationResult?
     
     private init() {}
     
     // MARK: - Main API
+    
+    /// Called by AppStateManager during app launch to initialize recommendations
+    func initialize(timeline: TimelineData?, intent: UserIntent?) {
+        print("\n🚀 [LocalRecommendationService] initialize() called")
+        isLoading = true
+        
+        guard let places = timeline?.places, !places.isEmpty else {
+            print("   ⚠️ [LocalRec] Timeline is empty, fetching context recommendations...")
+            fetchContextRecommendations()
+            return
+        }
+        
+        guard let userIntent = intent else {
+            print("   ⚠️ [LocalRec] No user intent available, fetching context recommendations...")
+            fetchContextRecommendations()
+            return
+        }
+        
+        print("   📊 [LocalRec] Processing \(places.count) historical places...")
+        
+        // Process local recommendations
+        let result = recommend(intent: userIntent, location: LocationManager.shared.currentLocation, history: places)
+        
+        if result.hasHighQualityMatches {
+            print("   ✅ [LocalRec] High quality local matches found (\(result.sections.count) sections)")
+            // Store recommendations
+            DispatchQueue.main.async {
+                self.latestResult = result
+                self.recommendations = result.sections.flatMap { $0.items }
+                self.mostLikely = result.mostLikely
+                self.likely = result.likely
+                self.hasHighQualityMatches = true
+                self.isLoading = false
+            }
+        } else {
+            print("   ⚠️ [LocalRec] Local matches quality too low, fetching context...")
+            fetchContextRecommendations()
+        }
+    }
+    
+    /// Fetch context recommendations from PredictPlaceService
+    private func fetchContextRecommendations() {
+        guard let token = AppStateManager.shared.authToken else {
+            print("   ❌ [LocalRec] No auth token, cannot fetch context")
+            DispatchQueue.main.async {
+                self.isLoading = false
+            }
+            return
+        }
+        
+        print("   🔄 [LocalRec] Calling PredictPlaceService for context...")
+        PredictPlaceService.shared.predictPlace(sessionToken: token) { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if let data = response.data {
+                        print("   ✅ [LocalRec] Context data received: '\(data.place_name)'")
+                        // Convert to MicroSituationData and publish for State observation
+                        self.contextPlace = data.toMicroSituationData()
+                        self.hasHighQualityMatches = false // Triggers fallback logic in State
+                    }
+                case .failure(let error):
+                    print("   ❌ [LocalRec] Context fetch failed: \(error.localizedDescription)")
+                }
+                
+                self.isLoading = false
+            }
+        }
+    }
     
     func recommend(intent: UserIntent, location: CLLocation?, history: [MicroSituationData]) -> LocalRecommendationResult {
         print("\n🟢 [LocalRecommendationService] recommend() called")
@@ -38,28 +121,26 @@ class LocalRecommendationService {
         }
         
         // 2. Filter by Time Window (±1.5 Hours)
-        // Optimization: Discard irrelevant times before scoring
-        print("   ⏳ [LocalRec] Filtering history by time window (±1.5h)...")
+        print("   ⏳ [LocalRec] FILTER STEP: Time Window (±1.5h)")
         let totalHistory = history.count
         let filteredHistory = history.filter { isWithinTimeWindow(place: $0) }
-        print("      - Original: \(totalHistory)")
-        print("      - Kept:     \(filteredHistory.count)")
-        print("      - Dropped:  \(totalHistory - filteredHistory.count)")
+        print("      - Total History Items: \(totalHistory)")
+        print("      - Items in Time Window: \(filteredHistory.count)")
+        print("      - Discarded (Off-time): \(totalHistory - filteredHistory.count)")
         
         if filteredHistory.isEmpty {
-            print("   ⚠️ [LocalRec] No history matches current time window. Aborting.")
+            print("   ⚠️ [LocalRec] No history matches current time window. Aborting Recommendation.")
             return LocalRecommendationResult(sections: [], suggestedPlaceName: "Recommended", hasHighQualityMatches: false)
         }
         
-        print("   🔹 [LocalRec] Scoring \(filteredHistory.count) candidates against \(intentVectors.count) active intent fields...")
+        print("   🔹 [LocalRec] SCORING STEP: Processing \(filteredHistory.count) candidates against \(intentVectors.count) active intent fields...")
         
         // 3. Score all historical places (Returns list of Scored Moments per Place)
-        // flatMap ensures we get a single list of all matched moments across all history
         let scoredPlaces = filteredHistory.flatMap { place in
             ScoringEngine.shared.score(place: place, intentVectors: intentVectors, userLocation: location, languageCode: nativeCode)
         }
         
-        print("   ✅ [LocalRec] Scoring Complete. Found \(scoredPlaces.count) potential matches.")
+        print("   ✅ [LocalRec] Scoring Complete. Total potential matches: \(scoredPlaces.count)")
         
         // 🚨 QUALITY THRESHOLD CHECK: Only accept moments with similarity > 0.45
         // Scores are now Raw Cosine (0-1) + Boosts (0-0.4). So valid matches > 0.45
@@ -143,12 +224,13 @@ class LocalRecommendationService {
         // 1. Get Place Time (0-24 Scale)
         var placeTime: Double? = nil
         
-        if let h = place.hour {
+        // Prioritize precise string parsing over integer 'hour'
+        if let timeStr = place.time, let t = parseTimeStr(timeStr) {
+            placeTime = t
+        } else if let createdStr = place.created_at, let t = parseISOStr(createdStr) {
+            placeTime = t
+        } else if let h = place.hour {
             placeTime = Double(h)
-        } else if let timeStr = place.time {
-            placeTime = parseTimeStr(timeStr)
-        } else if let createdStr = place.created_at {
-            placeTime = parseISOStr(createdStr)
         }
         
         guard let pTime = placeTime else {

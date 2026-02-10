@@ -48,8 +48,8 @@ struct MasteryFilterService {
             base = 0.59 - (wordCount * 0.01)
         }
         
-        let dynamic = base - (mastery * 0.08)
-        let final = min(0.85, max(0.45, dynamic))
+        let dynamic = 0.85 - (mastery * 0.60)
+        let final = min(0.85, max(0.25, dynamic))
         
         if LOG_FILTERING {
             print("   ⚖️ [LessonFlow] [Threshold] Logic:")
@@ -70,7 +70,7 @@ struct MasteryFilterService {
         let adaptiveBoost = baseBoost * (1.0 - mastery)
         
         let boostedScore = score + adaptiveBoost
-        let accepted = boostedScore < threshold
+        let accepted = boostedScore >= threshold
         let brickType = isVariable ? "Variable" : (isConstant ? "Constant" : "Structural")
         
         let scoreStr = String(format: "%.3f", boostedScore)

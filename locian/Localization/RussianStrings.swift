@@ -652,6 +652,7 @@ struct RussianStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "Если вы находитесь в %@, прочитайте об этом месте!"
         }
     }
 }

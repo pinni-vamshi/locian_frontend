@@ -30,17 +30,7 @@ class ContentAnalyzer {
             .map { $0.trimmingCharacters(in: .punctuationCharacters) }
             .filter { !$0.isEmpty }
         
-        let meaningWords = meaning.lowercased()
-            .components(separatedBy: .whitespacesAndNewlines)
-            .map { $0.trimmingCharacters(in: .punctuationCharacters) }
-            .filter { !$0.isEmpty }
-            
-        if LOG_STAGE1_WORD_MATCHING {
-            print("      📝 [LessonFlow] Target Words: \(targetWords)")
-            print("      📝 [LessonFlow] Meaning Words: \(meaningWords)")
-        }
-        
-        // Find all bricks that match ANY word in the pattern
+        // Find all bricks that match ANY word in the target text
         var foundBricks: Set<String> = []
         
         func findMatchingBricks(list: [BrickItem]?) {
@@ -48,17 +38,14 @@ class ContentAnalyzer {
             for brick in list {
                 let id = brick.id ?? brick.word
                 let brickWord = brick.word.lowercased().trimmingCharacters(in: .punctuationCharacters)
-                let brickMeaning = brick.meaning.lowercased().trimmingCharacters(in: .punctuationCharacters)
                 
-                // Match by word or meaning
+                // Strict Match: Only check if the brick's word is in the target text
                 let targetMatch = targetWords.contains(brickWord)
-                let meaningMatch = meaningWords.contains(brickMeaning)
                 
-                if targetMatch || meaningMatch {
+                if targetMatch {
                     foundBricks.insert(id)
                     if LOG_STAGE1_WORD_MATCHING {
-                        let reason = targetMatch ? "Target Match ('\(brickWord)')" : "Meaning Match ('\(brickMeaning)')"
-                        print("      🎯 [ContentAnalyzer] Match Found: [\(id)] via \(reason)")
+                        print("      🎯 [ContentAnalyzer] Match Found: [\(id)] via Target Match ('\(brickWord)')")
                     }
                 }
             }

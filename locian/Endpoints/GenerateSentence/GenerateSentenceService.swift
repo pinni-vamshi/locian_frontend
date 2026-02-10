@@ -16,6 +16,9 @@ class GenerateSentenceService {
     func generateSentence(
         placeName: String,
         microSituation: String,
+        userIntent: String? = nil,
+        previousPlaces: [PlaceHistoryItem]? = nil,
+        futurePlaces: [PlaceHistoryItem]? = nil,
         sessionToken: String,
         completion: @escaping (Result<GenerateSentenceResponse, Error>) -> Void
     ) {
@@ -33,13 +36,21 @@ class GenerateSentenceService {
         formatter.dateFormat = "hh:mm a"
         let timeString = formatter.string(from: currentDate)
         
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMMM d, yyyy"
+        let dateString = dateFormatter.string(from: currentDate)
+        
         let request = GenerateSentenceRequest(
             target_language: targetLanguage,
             place_name: placeName,
             user_language: userLanguage,
             micro_situation: microSituation,
+            user_intent: userIntent,
+            previous_places: previousPlaces,
+            future_places: futurePlaces,
             profession: profession,
-            time: timeString
+            time: timeString,
+            date: dateString
         )
         
         let headers = ["Authorization": "Bearer \(sessionToken)"]

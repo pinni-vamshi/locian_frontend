@@ -4,7 +4,7 @@ import Photos
 import CoreLocation
 import Speech
 
-class PermissionsService: NSObject, ObservableObject {
+class PermissionsService: NSObject {
     static let shared = PermissionsService()
     
     private override init() {}
@@ -59,7 +59,7 @@ class PermissionsService: NSObject, ObservableObject {
     
     private func getTopViewController() -> UIViewController? {
         let keyWindow = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .active }
+            .filter { $0.activationState == .foregroundActive }
             .first(where: { $0 is UIWindowScene })
             .flatMap({ $0 as? UIWindowScene })?.windows
             .first(where: \.isKeyWindow)

@@ -161,7 +161,7 @@ struct LearnTabView: View {
     private var placeNameHeader: some View {
         let isFetching = state.isFetchingData
         let _ = print("🏷 [PLACE-HEADER] Evaluating placeNameHeader")
-        let _ = print("   -> isFetchingData: \(isFetching) (History: \(state.isLoadingHistory), Analysis: \(state.isAnalyzingImage), Timeline: \(appState.isLoadingTimeline))")
+        let _ = print("   -> isFetchingData: \(isFetching) (History: \(state.isLoadingHistory), Timeline: \(appState.isLoadingTimeline))")
         
         let name = isFetching ? "GETTING YOUR PLACE..." : (state.showingNoDataError ? "NO DATA AVAILABLE" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
         
@@ -245,8 +245,8 @@ struct LearnTabView: View {
 
     private func handleOnAppear() {
         print("⚡️ [LIFECYCLE] handleOnAppear() triggered")
-        if !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
-            state.fetchFirstRecommendedPlace()
+        if appState.hasInitialHistoryLoaded {
+            state.loadRecommendations()
         }
         if appState.hasInitialHistoryLoaded && state.generationState == .idle {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
@@ -272,8 +272,8 @@ struct LearnTabView: View {
     }
     
     private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-        if newPhase == .active && !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
-            state.fetchFirstRecommendedPlace()
+        if newPhase == .active && appState.hasInitialHistoryLoaded {
+            state.loadRecommendations()
         }
     }
 
@@ -322,47 +322,46 @@ struct LearnTabView: View {
     private var recommendedMomentsScroll: some View {
         ScrollView(.vertical, showsIndicators: false) {
              VStack(spacing: 16) {
+                 let _ = print("📜 [VIEW] Rendering recommendedMomentsScroll")
+                 let _ = print("   - recommendedPlaces count: \(state.recommendedPlaces.count)")
+                 
                  if state.isFetchingData {
-                     RecommendedCard(moment: "GETTING A MOMENT...", time: "LIVE", isGreen: false) {}
+                     let _ = print("   - state isFetchingData=true -> Loading Card")
+                     RecommendedCard(momentData: UnifiedMoment(text: "GETTING A MOMENT...", keywords: nil, embedding: nil), time: "LIVE", isGreen: false) {}
                  } else if state.showingNoDataError {
-                     RecommendedCard(moment: "NO DATA AVAILABLE", time: "--:--", isGreen: false) {}
+                     let _ = print("   - state showingNoDataError=true -> No Data Card")
+                     RecommendedCard(momentData: UnifiedMoment(text: "NO DATA AVAILABLE", keywords: nil, embedding: nil), time: "--:--", isGreen: false) {}
                  } else if state.recommendedPlaces.isEmpty {
-                     RecommendedCard(moment: "TAP + TO ADD YOUR OWN MOMENT", time: "--:--", isGreen: false) { showCustomInput = true }.opacity(0.5)
-                 } else {
-                     if state.isShowingGlobalRecommendations { globalRecommendationsList }
-                     else { recommendedMomentCards }
-                 }
+                     let _ = print("   - recommendedPlaces EMPTY -> Custom Input Card")
+                     RecommendedCard(momentData: UnifiedMoment(text: "TAP + TO ADD YOUR OWN MOMENT", keywords: nil, embedding: nil), time: "--:--", isGreen: false) { showCustomInput = true }.opacity(0.5)
+                  } else {
+                      let _ = print("   - Rendering unified recommended cards...")
+                      recommendedMomentCards
+                  }
                  if !state.isFetchingData && !state.showingNoDataError { addCustomMomentButton }
              }
              .padding(.horizontal, 16).padding(.bottom, 20)
         }
     }
     
-    private var globalRecommendationsList: some View {
-        VStack(spacing: 24) {
-             ForEach(state.globalRecommendations) { section in
-                 VStack(alignment: .leading, spacing: 10) {
-                     Text(section.title.uppercased()).font(.system(size: 14, weight: .black)).foregroundColor(ThemeColors.secondaryAccent).padding(.bottom, 4).padding(.top, 8)
-                     ForEach(Array(section.items.enumerated()), id: \.1.id) { _, vm in simpleGlobalRow(vm: vm) }
-                 }
-             }
-        }
-    }
-    
-    private func simpleGlobalRow(vm: LearnTabState.RecommendedMomentViewModel) -> some View {
-        RecommendedCard(moment: vm.moment, time: vm.time, isGreen: false) { state.generateSentence(for: vm.moment) }
-    }
 
     private var recommendedMomentCards: some View {
         ForEach(Array(state.recommendedPlaces.enumerated()), id: \.1.id) { (index: Int, place: MicroSituationData) in
+            let _ = print("   🗂 [VIEW] Processing Place [\(index)]: '\(place.place_name ?? "nil")'")
             recommendedMomentRow(place: place, placeIndex: index)
         }
     }
 
     private func recommendedMomentRow(place: MicroSituationData, placeIndex: Int) -> some View {
         let situations = place.micro_situations ?? []
+        let _ = print("      - Situations count for '\(place.place_name ?? "nil")': \(situations.count)")
+        
         return ForEach(Array(situations.enumerated()), id: \.1.category) { (_, section: UnifiedMomentSection) in
-            if state.isShowingGlobalRecommendations || state.selectedRecommendedCategory == nil || section.category == state.selectedRecommendedCategory {
+            let isSelected = section.category == state.selectedRecommendedCategory
+            let _ = print("      - Section category: '\(section.category)' (Selected: \(state.selectedRecommendedCategory ?? "nil") -> Matches: \(isSelected))")
+            
+            if state.selectedRecommendedCategory == nil || isSelected {
+                let _ = print("         -> Rendering \(section.moments.count) moments for category '\(section.category)'")
                 recommendedCardGenerator(place: place, category: section.category, moments: section.moments)
             }
         }
@@ -370,24 +369,34 @@ struct LearnTabView: View {
 
     private func recommendedCardGenerator(place: MicroSituationData, category: String, moments: [UnifiedMoment]) -> some View {
         ForEach(Array(moments.enumerated()), id: \.1.text) { (_, moment: UnifiedMoment) in
-            RecommendedCard(moment: moment.text, time: place.time ?? "--:--", isGreen: false) { state.generateSentence(for: moment.text) }
+            RecommendedCard(momentData: moment, time: place.time ?? "--:--", isGreen: false) { state.generateSentence(for: moment.text, fromPlace: place.place_name) }
         }
     }
 
-    private func RecommendedCard(moment: String, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
+    private func RecommendedCard(momentData: UnifiedMoment, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            recommendedCardHeader(time: time, isGreen: isGreen)
+            recommendedCardHeader(momentData: momentData, time: time, isGreen: isGreen)
             Spacer()
-            recommendedCardContent(moment: moment, isGreen: isGreen)
+            recommendedCardContent(moment: momentData.text, isGreen: isGreen)
             Spacer()
             recommendedCardFooter(isGreen: isGreen, action: action)
         }
         .frame(minHeight: 120).frame(maxWidth: .infinity).background(isGreen ? ThemeColors.neonGreen : Color(white: 0.1))
     }
 
-    private func recommendedCardHeader(time: String, isGreen: Bool) -> some View {
-        HStack { Spacer(); Text(time) }.font(.system(size: 10, weight: .bold, design: .monospaced))
-            .foregroundColor(isGreen ? .black.opacity(0.6) : .gray).padding(.horizontal, 12).padding(.top, 12)
+    private func recommendedCardHeader(momentData: UnifiedMoment, time: String, isGreen: Bool) -> some View {
+        HStack { 
+            if let mastery = getMomentMastery(momentData) {
+                Text("\(Int(mastery * 100))%")
+                    .foregroundColor(isGreen ? .black.opacity(0.8) : ThemeColors.secondaryAccent)
+            }
+            Spacer() 
+            Text(time) 
+        }
+        .font(.system(size: 10, weight: .bold, design: .monospaced))
+        .foregroundColor(isGreen ? .black.opacity(0.6) : .gray)
+        .padding(.horizontal, 12)
+        .padding(.top, 12)
     }
 
     private func recommendedCardContent(moment: String, isGreen: Bool) -> some View {
@@ -416,5 +425,24 @@ struct LearnTabView: View {
             }
             .foregroundColor(.black).padding().frame(maxWidth: .infinity).background(ThemeColors.neonGreen)
         }
+    }
+
+    // MARK: - Mastery Calculation
+    
+    private func getMomentMastery(_ momentData: UnifiedMoment) -> Double? {
+        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        let targetLangCode = activePair?.target_language ?? "en"
+        
+        // Use existing embedding if available (Fixes redundant on-the-fly generation)
+        let vector = momentData.embedding
+        
+        let score = SemanticMemoryService.shared.getEffectiveMastery(
+            text: momentData.text,
+            vector: vector, 
+            languageCode: targetLangCode,
+            currentStep: 0
+        )
+        
+        return score > 0.05 ? score : nil // Only show if there's meaningful progress
     }
 }

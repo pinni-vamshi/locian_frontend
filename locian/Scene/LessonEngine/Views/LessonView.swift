@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LessonView: View {
-    @StateObject private var session: LessonSessionManager
+    @StateObject private var engine: LessonEngine
     @EnvironmentObject var appState: AppStateManager
     @Environment(\.dismiss) var dismiss
     
@@ -9,7 +9,9 @@ struct LessonView: View {
     
     init(lessonData: GenerateSentenceData) {
         self.lessonData = lessonData
-        _session = StateObject(wrappedValue: LessonSessionManager())
+        // Initialize the Engine directly
+        let newEngine = LessonEngine()
+        _engine = StateObject(wrappedValue: newEngine)
     }
     
     var body: some View {
@@ -46,47 +48,42 @@ struct LessonView: View {
                 
                 // --- MAIN CONTENT ---
                 ZStack {
-                    if let state = session.activeState {
+                    if let state = engine.orchestrator?.activeState {
                          if state.isBrick {
-                             BrickModeSelector(drill: state, session: session)
+                             BrickModeSelector(drill: state, engine: engine)
                                  .id(state.id)
                                  .transition(.opacity)
                          } else {
                              switch state.currentMode {
+                             case .prerequisites:
+                                 PrerequisiteManagerView(state: state, engine: engine)
+                                     .id("prereq-\(state.id)")
                              case .vocabIntro:
-                                 PatternIntroManagerView(state: state, session: session)
+                                 PatternIntroManagerView(state: state, engine: engine)
                                      .id("intro-\(state.id)")
                              case .ghostManager:
-                                 GhostModeManagerView(targetPattern: state, session: session)
+                                 GhostModeManagerView(targetPattern: state, engine: engine)
                                      .id("ghost-\(state.id)")
                              default:
-                                 PatternDrillManagerView(state: state, session: session)
+                                 PatternDrillManagerView(state: state, engine: engine)
                                      .id("practice-\(state.id)")
                              }
                          }
-                    } else if session.isSessionComplete {
-                        VStack(spacing: 20) {
-                            Text("LESSON COMPLETE")
-                                .font(.largeTitle)
-                                .fontWeight(.black)
-                                .foregroundColor(CyberColors.neonPink)
-                            
-                            CyberProceedButton(
-                                action: { 
-                                    dismiss()
-                                },
-                                label: "FINISH",
-                                title: "RETURN HOME",
-                                color: CyberColors.neonCyan,
-                                systemImage: "house.fill",
-                                isEnabled: true
-                            )
-                        }
+                    } else if engine.isSessionComplete {
+LessonCompletionView(onFinish: {
+                            dismiss()
+                        })
                     } else {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: CyberColors.neonCyan))
                             .onAppear {
-                                session.startSession(with: lessonData)
+                                print("🚀 [LessonView] Booting Engine with Data...")
+                                engine.initialize(with: lessonData)
+                                
+                                // Kickstart the flow
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    engine.startLesson()
+                                }
                             }
                     }
                 }

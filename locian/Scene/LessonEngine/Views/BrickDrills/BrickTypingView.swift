@@ -43,7 +43,6 @@ struct BrickTypingView: View {
         .background(Color.black.ignoresSafeArea())
         .onAppear {
             isFocused = true
-            logic.session.playStateAudio(logic.state)
         }
     }
     

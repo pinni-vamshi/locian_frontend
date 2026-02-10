@@ -653,6 +653,7 @@ struct GermanStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "Wenn Sie bei %@ sind, lesen Sie über diesen Ort!"
         }
     }
 }

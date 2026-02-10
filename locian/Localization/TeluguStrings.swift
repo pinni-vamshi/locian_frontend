@@ -652,6 +652,7 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "మీరు %@ వద్ద ఉంటే, ఈ స్థలం గురించి చదవండి!"
         }
     }
 }

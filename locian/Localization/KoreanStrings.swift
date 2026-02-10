@@ -653,6 +653,7 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "%@에 있다면 이 장소에 대해 읽어보세요!"
         }
     }
 }

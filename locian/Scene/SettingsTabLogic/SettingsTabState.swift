@@ -99,42 +99,30 @@ class SettingsTabState: ObservableObject {
         
         // 1. Add Native Language
         let native = appState.nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !native.isEmpty {
-            codes.insert(native)
-        }
+        if !native.isEmpty { codes.insert(native) }
         
         // 2. Add all Target Languages from pairs
         appState.userLanguagePairs.forEach { pair in
             let target = pair.target_language.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !target.isEmpty {
-                codes.insert(target)
-            }
+            if !target.isEmpty { codes.insert(target) }
         }
         
         if codes.isEmpty { return }
         
-        // Building status map for recognized codes
+        // Use the centralized EmbeddingService for all checks
         for code in codes {
             let mode = EmbeddingService.getAvailableMode(for: code)
             let isAvailable = EmbeddingService.isModelAvailable(for: code)
             
-            // If already loaded, don't flicker back to loading
             if isAvailable {
-                if neuralStatuses[code]?.state != "LOADED" {
-                    neuralStatuses[code] = NeuralStatus(state: "LOADED", mode: mode)
-                }
+                neuralStatuses[code] = NeuralStatus(state: "LOADED", mode: mode)
             } else {
-                // Not available yet
-                if neuralStatuses[code] == nil || neuralStatuses[code]?.state == "FAILED" {
-                   neuralStatuses[code] = NeuralStatus(state: "DOWN", mode: mode)
-                   
-                   // Request download
-                   EmbeddingService.downloadModel(for: code) { success in
-                       DispatchQueue.main.async {
-                           let finalMode = EmbeddingService.getAvailableMode(for: code)
-                           self.neuralStatuses[code] = NeuralStatus(state: success ? "LOADED" : "FAILED", mode: finalMode)
-                       }
-                   }
+                // If not available, we trigger a background download if not already tracked
+                if neuralStatuses[code] == nil || neuralStatuses[code]?.state == "DOWN" {
+                    neuralStatuses[code] = NeuralStatus(state: "LOADING", mode: mode)
+                    EmbeddingService.downloadModel(for: code) { _ in
+                         // The periodic binding update will trigger another checkNeuralStatus() later
+                    }
                 }
             }
         }

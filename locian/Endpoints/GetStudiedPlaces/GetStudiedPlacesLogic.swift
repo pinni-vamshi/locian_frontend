@@ -20,23 +20,51 @@ class GetStudiedPlacesLogic {
         data: Data,
         completion: @escaping (Result<GetStudiedPlacesResponse, Error>) -> Void
     ) {
+        print("📦 [GetStudiedPlacesLogic] Raw Data Received (\(data.count) bytes). Parsing...")
         Task.detached { @Sendable in
             do {
                 guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    print("❌ [GetStudiedPlacesLogic] JSON Serialization failed.")
                     throw NSError(domain: "DecodingError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON format"])
                 }
                 
                 let success = jsonObject["success"] as? Bool ?? false
+                print("📦 [GetStudiedPlacesLogic] Success Flag: \(success)")
                 let message = jsonObject["message"] as? String
                 let error = jsonObject["error"] as? String
                 
                 var dataDict: GetStudiedPlacesData? = nil
                 if let dataObj = jsonObject["data"] as? [String: Any] {
-                    let placesArray = dataObj["places"] as? [[String: Any]] ?? []
-                    print("📦 [GetStudiedPlacesLogic] Starting decoding of \(placesArray.count) places...")
                     
-                    let places = placesArray.compactMap { self.parseMicroSituation($0) }
-                    print("📦 [GetStudiedPlacesLogic] Successfully decoded \(places.count) / \(placesArray.count) places.")
+                    // Parse the NEW hierarchical structure: dates → moments
+                    var dateGroups: [DateGroup] = []
+                    if let datesArray = dataObj["dates"] as? [[String: Any]] {
+                        print("📦 [GetStudiedPlacesLogic] Found \(datesArray.count) date groups")
+                        
+                        for dateDict in datesArray {
+                            guard let dateString = dateDict["date"] as? String else { continue }
+                            let momentsArray = dateDict["moments"] as? [[String: Any]] ?? []
+                            
+                            print("📦 [GetStudiedPlacesLogic] Date: '\(dateString)' - Parsing \(momentsArray.count) moments...")
+                            
+                            var moments: [MicroSituationData] = []
+                            for momentDict in momentsArray {
+                                if let moment = await self.parseMicroSituation(momentDict) {
+                                    moments.append(moment)
+                                }
+                            }
+                            
+                            print("📦 [GetStudiedPlacesLogic] Successfully decoded \(moments.count) / \(momentsArray.count) moments for \(dateString)")
+                            
+                            let dateGroup = DateGroup(date: dateString, moments: moments)
+                            dateGroups.append(dateGroup)
+                        }
+                    }
+                    
+                    // Calculate totals
+                    let totalDates = dateGroups.count
+                    let totalMoments = dateGroups.reduce(0) { $0 + $1.moments.count }
+                    print("📦 [GetStudiedPlacesLogic] Total: \(totalDates) dates, \(totalMoments) moments")
                     
                     // Parse User Intent if available
                     var userIntent: UserIntent? = nil
@@ -72,9 +100,10 @@ class GetStudiedPlacesLogic {
                     }
                     
                     dataDict = GetStudiedPlacesData(
-                        places: places,
+                        dates: dateGroups,
+                        total_dates: totalDates,
+                        total_moments: totalMoments,
                         input_time: dataObj["input_time"] as? String ?? "",
-                        count: dataObj["count"] as? Int ?? 0,
                         user_intent: userIntent
                     )
                 }
@@ -95,20 +124,25 @@ class GetStudiedPlacesLogic {
     
     // MARK: - Private Parsing Helpers
     
-    private nonisolated func parseMicroSituation(_ dict: [String: Any]) -> MicroSituationData? {
+    // Helper to parse individual MicroSituationData
+    private func parseMicroSituation(_ dict: [String: Any]) async -> MicroSituationData? {
         // Parse hour from time string if needed
         var hour = dict["hour"] as? Int
         if hour == nil, let timeStr = dict["time"] as? String {
             hour = self.parseHourFromTimeString(timeStr)
         }
         
-        // Parse micro_situations
+        // Parse micro_situations (Handle Sections)
         let sectionsArray = dict["micro_situations"] as? [[String: Any]] ?? []
-        let sections = sectionsArray.compactMap { sectionDict -> UnifiedMomentSection? in
+        var unifiedSections: [UnifiedMomentSection] = []
+        
+        for sectionDict in sectionsArray {
             let title = (sectionDict["category"] as? String) ?? (sectionDict["name"] as? String) ?? (sectionDict["section_title"] as? String)
             let momentsAny = sectionDict["moments"]
-            let moments = self.parseUnifiedMoments(momentsAny)
-            return UnifiedMomentSection(category: title ?? "Details", moments: moments)
+            let moments = await self.parseUnifiedMoments(momentsAny)
+            if !moments.isEmpty {
+                unifiedSections.append(UnifiedMomentSection(category: title ?? "Details", moments: moments))
+            }
         }
         
         if let name = dict["place_name"] as? String {
@@ -121,13 +155,13 @@ class GetStudiedPlacesLogic {
             longitude: dict["longitude"] as? Double,
             time: dict["time"] as? String,
             hour: hour,
-            type: dict["type"] as? String,
-            created_at: dict["created_at"] as? String ?? "",
+            created_at: dict["created_at"] as? String,
             context_description: dict["context_description"] as? String,
-            micro_situations: sections,
+            micro_situations: unifiedSections,
             priority_score: dict["priority_score"] as? Double,
             distance_meters: dict["distance_meters"] as? Double,
             time_span: dict["time_span"] as? String,
+            type: dict["type"] as? String,
             profession: dict["profession"] as? String,
             updated_at: dict["updated_at"] as? String,
             target_language: dict["target_language"] as? String,
@@ -135,15 +169,27 @@ class GetStudiedPlacesLogic {
         )
     }
     
-    private nonisolated func parseUnifiedMoments(_ momentsAny: Any?) -> [UnifiedMoment] {
+    private func parseUnifiedMoments(_ momentsAny: Any?) async -> [UnifiedMoment] {
         if let momentsObjects = momentsAny as? [[String: Any]] {
-            return momentsObjects.compactMap { momentDict -> UnifiedMoment? in
-                guard let text = momentDict["text"] as? String else { return nil }
+            var moments: [UnifiedMoment] = []
+            for momentDict in momentsObjects {
+                guard let text = momentDict["text"] as? String else { continue }
                 let keywords = momentDict["keywords"] as? [String]
-                return UnifiedMoment(text: text, keywords: keywords)
+                
+                // 🚀 CREATE EMBEDDING AT THE SOURCE (Using Global EmbeddingService)
+                // Using MainActor.run only because EmbeddingService.getVector assumes implicit isolation or strict concurrency checks
+                let embedding = await MainActor.run { EmbeddingService.getVector(for: text, languageCode: "en") }
+                
+                moments.append(UnifiedMoment(text: text, keywords: keywords, embedding: embedding))
             }
+            return moments
         } else if let momentsStrings = momentsAny as? [String] {
-            return momentsStrings.map { UnifiedMoment(text: $0, keywords: nil) }
+            var moments: [UnifiedMoment] = []
+            for text in momentsStrings {
+                let embedding = await MainActor.run { EmbeddingService.getVector(for: text, languageCode: "en") }
+                moments.append(UnifiedMoment(text: text, keywords: nil, embedding: embedding))
+            }
+            return moments
         }
         return []
     }

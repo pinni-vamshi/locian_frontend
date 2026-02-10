@@ -2,16 +2,16 @@ import SwiftUI
 
 struct BrickModeSelector: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     
-    static func needsDrill(brickId: String, session: LessonSessionManager) -> Bool {
-        let score = session.engine.getDecayedMastery(for: brickId)
+    static func needsDrill(brickId: String, engine: LessonEngine) -> Bool {
+        let score = engine.getDecayedMastery(for: brickId)
         let needs = score < 0.85
         print("   🧱 [BrickMode] Checking [\(brickId)]: Mastery \(String(format: "%.2f", score)) | Needs Drill: \(needs)")
         return needs // Bricks < 0.85 need intervention
     }
     
-    static func resolveMode(for drill: DrillState, session: LessonSessionManager) -> DrillMode {
+    static func resolveMode(for drill: DrillState, engine: LessonEngine) -> DrillMode {
         if let mode = drill.currentMode { return mode }
         
         let rawId = drill.id
@@ -21,7 +21,7 @@ struct BrickModeSelector: View {
         print("   🧱 [BrickLogic] Resolving Mode for Drill: '\(rawId)'")
         print("      - Clean ID: '\(brickId)'")
         
-        let score = session.engine.getDecayedMastery(for: brickId)
+        let score = engine.getDecayedMastery(for: brickId)
         print("      - Current Mastery: \(String(format: "%.3f", score))")
         
         let result: DrillMode
@@ -44,39 +44,38 @@ struct BrickModeSelector: View {
     }
 
     @ViewBuilder
-    static func interactionView(for drill: DrillState, session: LessonSessionManager, showPrompt: Bool = true) -> some View {
-        let mode = resolveMode(for: drill, session: session)
+    static func interactionView(for drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, onComplete: (() -> Void)? = nil) -> some View {
+        let mode = resolveMode(for: drill, engine: engine)
         
         switch mode {
         case .componentMcq:
-            BrickMCQInteraction(drill: drill, session: session, showPrompt: showPrompt)
+            BrickMCQInteraction(drill: drill, engine: engine, showPrompt: showPrompt, onComplete: onComplete)
         case .cloze:
-            BrickClozeInteraction(drill: drill, session: session, showPrompt: showPrompt)
+            BrickClozeInteraction(drill: drill, engine: engine, showPrompt: showPrompt, onComplete: onComplete)
         case .componentTyping:
-            BrickTypingInteraction(drill: drill, session: session, showPrompt: showPrompt)
+            BrickTypingInteraction(drill: drill, engine: engine, showPrompt: showPrompt, onComplete: onComplete)
         case .speaking:
-            BrickVoiceInteraction(drill: drill, session: session, showPrompt: showPrompt)
+            BrickVoiceInteraction(drill: drill, engine: engine, showPrompt: showPrompt, onComplete: onComplete)
         default:
-            BrickMCQInteraction(drill: drill, session: session, showPrompt: showPrompt)
+            BrickMCQInteraction(drill: drill, engine: engine, showPrompt: showPrompt, onComplete: onComplete)
         }
     }
     
-    @ViewBuilder
     var body: some View {
         // ...Existing body logic...
         let brickId = drill.id.replacingOccurrences(of: "INT-", with: "")
             .split(separator: "-").first.map(String.init) ?? drill.id
         
-        if !BrickModeSelector.needsDrill(brickId: brickId, session: session) {
+        if !BrickModeSelector.needsDrill(brickId: brickId, engine: engine) {
             EmptyView()
         } else {
-            let mode = drill.currentMode ?? BrickModeSelector.resolveMode(for: drill, session: session)
+            let mode = drill.currentMode ?? BrickModeSelector.resolveMode(for: drill, engine: engine)
             switch mode {
-            case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, session: session)
-            case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, session: session)
-            case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, session: session)
-            case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, session: session)
-            default:                BrickMCQLogic.view(for: drill, mode: mode, session: session)
+            case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, engine: engine)
+            case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, engine: engine)
+            case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, engine: engine)
+            case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, engine: engine)
+            default:                BrickMCQLogic.view(for: drill, mode: mode, engine: engine)
             }
         }
     }
@@ -86,15 +85,21 @@ struct BrickModeSelector: View {
 
 struct BrickMCQInteraction: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     let showPrompt: Bool
     @StateObject var logic: BrickMCQLogic
     
-    init(drill: DrillState, session: LessonSessionManager, showPrompt: Bool = true) {
+    let onComplete: (() -> Void)?
+    
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, onComplete: (() -> Void)? = nil) {
         self.drill = drill
-        self.session = session
+        self.engine = engine
         self.showPrompt = showPrompt
-        self._logic = StateObject(wrappedValue: BrickMCQLogic(state: drill, session: session))
+        self.onComplete = onComplete
+        
+        let logic = BrickMCQLogic(state: drill, engine: engine)
+        logic.onComplete = onComplete
+        self._logic = StateObject(wrappedValue: logic)
     }
     
     var body: some View {
@@ -114,24 +119,27 @@ struct BrickMCQInteraction: View {
                 onSelect: { option in logic.selectOption(option) }
             )
         }
-        .onAppear {
-            logic.session.playStateAudio(logic.state)
-        }
     }
 }
 
 struct BrickClozeInteraction: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     let showPrompt: Bool
     @StateObject var logic: BrickClozeLogic
     @FocusState private var isFocused: Bool
     
-    init(drill: DrillState, session: LessonSessionManager, showPrompt: Bool = true) {
+    let onComplete: (() -> Void)?
+    
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, onComplete: (() -> Void)? = nil) {
         self.drill = drill
-        self.session = session
+        self.engine = engine
         self.showPrompt = showPrompt
-        self._logic = StateObject(wrappedValue: BrickClozeLogic(state: drill, session: session))
+        self.onComplete = onComplete
+        
+        let logic = BrickClozeLogic(state: drill, engine: engine)
+        logic.onComplete = onComplete
+        self._logic = StateObject(wrappedValue: logic)
     }
     
     var body: some View {
@@ -163,23 +171,28 @@ struct BrickClozeInteraction: View {
         }
         .onAppear {
             isFocused = true
-            logic.session.playStateAudio(logic.state)
         }
     }
 }
 
 struct BrickTypingInteraction: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     let showPrompt: Bool
     @StateObject var logic: BrickTypingLogic
     @FocusState private var isFocused: Bool
     
-    init(drill: DrillState, session: LessonSessionManager, showPrompt: Bool = true) {
+    let onComplete: (() -> Void)?
+    
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, onComplete: (() -> Void)? = nil) {
         self.drill = drill
-        self.session = session
+        self.engine = engine
         self.showPrompt = showPrompt
-        self._logic = StateObject(wrappedValue: BrickTypingLogic(state: drill, session: session))
+        self.onComplete = onComplete
+        
+        let logic = BrickTypingLogic(state: drill, engine: engine)
+        logic.onComplete = onComplete
+        self._logic = StateObject(wrappedValue: logic)
     }
     
     var body: some View {
@@ -211,22 +224,27 @@ struct BrickTypingInteraction: View {
         }
         .onAppear {
             isFocused = true
-            logic.session.playStateAudio(logic.state)
         }
     }
 }
 
 struct BrickVoiceInteraction: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     let showPrompt: Bool
     @StateObject var logic: BrickVoiceLogic
     
-    init(drill: DrillState, session: LessonSessionManager, showPrompt: Bool = true) {
+    let onComplete: (() -> Void)?
+    
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, onComplete: (() -> Void)? = nil) {
         self.drill = drill
-        self.session = session
+        self.engine = engine
         self.showPrompt = showPrompt
-        self._logic = StateObject(wrappedValue: BrickVoiceLogic(state: drill, session: session))
+        self.onComplete = onComplete
+        
+        let logic = BrickVoiceLogic(state: drill, engine: engine)
+        logic.onComplete = onComplete
+        self._logic = StateObject(wrappedValue: logic)
     }
     
     var body: some View {
@@ -259,9 +277,6 @@ struct BrickVoiceInteraction: View {
                 CyberOption(text: "CHECK", index: 0, isSelected: false, action: { logic.checkAnswer() })
                     .padding(.horizontal)
             }
-        }
-        .onAppear {
-            logic.session.playStateAudio(logic.state)
         }
     }
 }

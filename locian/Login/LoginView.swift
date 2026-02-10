@@ -58,9 +58,7 @@ struct LoginView: View {
             
             
             VStack(spacing: 0) {
-                // Top spacing buffer
-                Spacer()
-                    .frame(height: 40)
+
                 
                 // MARK: Title Section
                 VStack(alignment: .leading, spacing: -15) {

@@ -7,11 +7,14 @@
 //
 
 import Foundation
+import Combine
 import UIKit
 import CoreLocation
 
 class AnalyzeImageService {
     static let shared = AnalyzeImageService()
+    
+    @Published var isLoading: Bool = false
     
     private init() {}
     
@@ -24,14 +27,20 @@ class AnalyzeImageService {
         sessionToken: String,
         completion: @escaping (Result<AnalyzeImageResponse, Error>) -> Void
     ) {
-        PermissionsService.ensureCameraAccess { granted in
+        isLoading = true
+        
+        PermissionsService.shared.ensureCameraAccess { [weak self] granted in
+            guard let self = self else { return }
+            
             guard granted else {
+                self.isLoading = false
                 completion(.failure(NSError(domain: "PermissionError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Camera permission denied"])))
                 return
             }
             
             // Convert image to base64
             guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+                self.isLoading = false
                 completion(.failure(NSError(domain: "ImageError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to data"])))
                 return
             }
@@ -56,31 +65,23 @@ class AnalyzeImageService {
                 formatter.dateFormat = "hh:mm a"
                 let timeString = formatter.string(from: currentDate)
                 
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MMMM d, yyyy"
+                let dateString = dateFormatter.string(from: currentDate)
+                
                 // Gather user profile data
                 let appState = AppStateManager.shared
                 let level = appState.userLanguagePairs.first(where: { $0.is_default })?.user_level ?? "BEGINNER"
                 let userLanguage = appState.nativeLanguage
                 let targetLanguage = appState.userLanguagePairs.first(where: { $0.is_default })?.target_language
                 
-                // Gather history context
-                let history = AppStateManager.shared.timeline?.places ?? []
-                let currentHour = Calendar.current.component(.hour, from: Date())
+                // Gather history context via TimelineContextService
+                let timeline = AppStateManager.shared.timeline
+                let history = timeline?.places ?? []
+                let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
                 
-                let previous = history.filter { ($0.hour ?? -1) <= currentHour }
-                    .sorted { ($0.hour ?? -1) > ($1.hour ?? -1) }
-                    .prefix(2)
-                    .compactMap { h -> TimelinePlaceContext? in
-                        guard let name = h.place_name, let time = h.time else { return nil }
-                        return TimelinePlaceContext(place_name: name, time: time)
-                    }
-                
-                let future = history.filter { ($0.hour ?? -1) > currentHour }
-                    .sorted { ($0.hour ?? -1) < ($1.hour ?? -1) }
-                    .prefix(1)
-                    .compactMap { h -> TimelinePlaceContext? in
-                        guard let name = h.place_name, let time = h.time else { return nil }
-                        return TimelinePlaceContext(place_name: name, time: time)
-                    }
+                let previous = context.pastPlaces.map { $0.toContext }
+                let future = context.futurePlaces.map { $0.toContext }
                 
                 // Build request
                 var lat: Double? = nil
@@ -100,7 +101,8 @@ class AnalyzeImageService {
                     user_language: userLanguage,
                     target_language: targetLanguage,
                     previous_places: Array(previous),
-                    future_places: Array(future)
+                    future_places: Array(future),
+                    date: dateString
                 )
                 
                 // Make API call
@@ -114,7 +116,7 @@ class AnalyzeImageService {
             }
             
             // 3. Request Location
-            print("📍 [AnalyzeImageService] Requesting current location...")
+            print("📍 [AnalyzeImageService] Requesting current location via LocationManager...")
             LocationManager.shared.getCurrentLocation { result in
                 switch result {
                 case .success(let location):
@@ -143,7 +145,9 @@ class AnalyzeImageService {
             body: request,
             headers: headers,
             timeoutInterval: 300.0,
-            completion: { (result: Result<Data, Error>) in
+            completion: { [weak self] (result: Result<Data, Error>) in
+                defer { self?.isLoading = false }
+                
                 switch result {
                 case .success(let data):
                     AnalyzeImageLogic.shared.parseResponse(data: data, completion: completion)

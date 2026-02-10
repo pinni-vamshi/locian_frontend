@@ -3,7 +3,7 @@ import Combine
 
 class BrickMCQLogic: ObservableObject {
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
     // Data only - no UI strings
     let options: [String]
@@ -13,10 +13,11 @@ class BrickMCQLogic: ObservableObject {
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, session: LessonSessionManager) {
+    var onComplete: (() -> Void)?
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
-        let targetLanguageCode = session.lessonData?.target_language ?? "es"
+        self.engine = engine
+        let targetLanguageCode = engine.lessonData?.target_language ?? "es"
         
         // BRICK MCQ: Meaning (L1) -> Word (L2)
         // This provides a clear "Discovery" flow:
@@ -31,26 +32,43 @@ class BrickMCQLogic: ObservableObject {
         } else {
             print("   🧱 [BrickMCQ] Mode: L1->L2 | Generating options...")
             
-            let allBricks = (session.lessonData?.bricks?.constants ?? []) + 
-                           (session.lessonData?.bricks?.variables ?? []) + 
-                           (session.lessonData?.bricks?.structural ?? [])
+            // Collect ALL bricks from ALL groups to ensure a rich distractor pool
+            var allBricks: [BrickItem] = []
+            
+            // 1. Check legacy top-level bricks
+            if let legacyBricks = engine.lessonData?.bricks {
+                allBricks += (legacyBricks.constants ?? [])
+                allBricks += (legacyBricks.variables ?? [])
+                allBricks += (legacyBricks.structural ?? [])
+            }
+            
+            // 2. Check all "LEGO" groups (The primary source)
+            // Includes structural (Ins/Instrumental) group bricks as requested
+            for group in engine.groups {
+                if let bricks = group.bricks {
+                    allBricks += (bricks.constants ?? [])
+                    allBricks += (bricks.variables ?? [])
+                    allBricks += (bricks.structural ?? [])
+                }
+            }
             
             // Meaning (L1) prompt -> Word (L2) options
             let candidates = Array(Set(allBricks.map { $0.word }))
+            print("   🧱 [BrickMCQ] Distractor pool gathered: \(candidates.count) distinct words (Includes Ins groups).")
+            
             self.options = MCQOptionGenerator.generateOptions(
                 target: state.drillData.target,
                 candidates: candidates,
                 targetLanguage: targetLanguageCode,
-                validator: session.neuralValidator
+                validator: NeuralValidator()
             )
             print("   🧱 [BrickMCQ] Generated \(self.options.count) options (Target: \(state.drillData.target)).")
         }
         
         // 3. Pre-Validation Check
-        if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {
-             self.isCorrect = result
-             self.selectedOption = state.drillData.target
-        }
+        // 3. Pre-Validation Check
+         // State restoration removed as engine no longer tracks activeState
+
     }
     
     var correctOption: String {
@@ -60,6 +78,12 @@ class BrickMCQLogic: ObservableObject {
     func selectOption(_ option: String) {
         guard isCorrect == nil else { return }
         print("   👉 [BrickMCQ] User selected: \(option)")
+        
+        // Speak what the user JUST tapped
+        // Speak what the user JUST tapped
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: option, language: language)
+        
         selectedOption = option
         validateSelection(option)
     }
@@ -71,9 +95,9 @@ class BrickMCQLogic: ObservableObject {
         
         let context = ValidationContext(
             state: state,
-            locale: session.targetLocale,
-            session: session,
-            neuralEngine: session.neuralValidator
+            locale: TargetLanguageMapping.shared.getLocale(for: engine.lessonData?.target_language ?? "en"),
+            engine: engine,
+            neuralEngine: NeuralValidator()
         )
         
         let validator = MCQValidator()
@@ -83,19 +107,31 @@ class BrickMCQLogic: ObservableObject {
         // Update Mastery (Only this brick)
         let brickId = state.id.replacingOccurrences(of: "INT-", with: "")
         let delta = isCorrect ? 0.20 : -0.10
-        session.engine.updateMastery(id: brickId, delta: delta, reason: "[Brick MCQ]")
+        engine.updateMastery(id: brickId, delta: delta)
         
         // UI Effects
-        session.handleValidationResult(isCorrect: isCorrect, targetContent: state.drillData.target)
-        self.isCorrect = isCorrect
+        // UI Effects - Handled by Engine state update
+        // UI Effects
+        // UI Effects - Handled by Engine state update
+    }
+    
+    func playAudio() {
+        let text = state.drillData.target
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: text, language: language)
     }
     
     func continueToNext() {
-        session.continueToNext()
+        if let onComplete = onComplete {
+            onComplete()
+        } else {
+            print("   ⚠️ [BrickMCQ] No completion callback provided. Flow stalled.")
+        }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, session: LessonSessionManager) -> some View {
-        let logic = BrickMCQLogic(state: state, session: session)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, onComplete: (() -> Void)? = nil) -> some View {
+        let logic = BrickMCQLogic(state: state, engine: engine)
+        logic.onComplete = onComplete
         return BrickMCQView(logic: logic)
     }
 }

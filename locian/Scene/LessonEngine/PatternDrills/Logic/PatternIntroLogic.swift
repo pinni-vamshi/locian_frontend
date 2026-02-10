@@ -6,60 +6,34 @@ class PatternIntroLogic: ObservableObject {
     @Published var shouldSkip: Bool = false
     
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
     // Skeleton DrillStates (Modes resolved JIT)
-    var brickDrills: [DrillState]
+    var brickDrills: [DrillState] // Renamed to drillStates in the instruction, but keeping original name for consistency with other parts of the class.
     
-    init(state: DrillState, session: LessonSessionManager) {
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
-        let rawBricks = state.batchBricks ?? []
+        self.engine = engine
         
-        // 1. Prepare skeleton states (Deduplicated)
-        var seenIds = Set<String>()
-        var drills: [DrillState] = []
+        // DIRECT PATTERN INTRO: No more brick discovery here.
+        // Stage 1 (Prerequisites) handled the bricks.
+        // Stage 2 (This file) only introduces the full sentence.
         
-        for brick in rawBricks {
-            let brickId = brick.id ?? brick.word
-            if seenIds.contains(brickId) { continue }
-            seenIds.insert(brickId)
-            
-            let drillId = "INT-\(brickId)"
-            let drillItem = DrillItem(
-                target: brick.word,
-                meaning: brick.meaning,
-                phonetic: brick.phonetic
-            )
-            
-            var brickState = DrillState(
-                id: drillId,
-                patternId: state.patternId,
-                drillIndex: -1,
-                drillData: drillItem,
-                isBrick: true
-            )
-            brickState.contextMeaning = state.drillData.meaning
-            brickState.contextSentence = state.drillData.target
-            drills.append(brickState)
-        }
+        let introState = DrillState(
+            id: "FULL-\(state.patternId)",
+            patternId: state.patternId,
+            drillIndex: state.drillIndex,
+            drillData: state.drillData,
+            isBrick: false,
+            currentMode: .vocabIntro
+        )
         
-        self.brickDrills = drills
-        print("\n🧑‍🏫 [PatternIntro] Initializing Sequence for Pattern: \(state.patternId)")
-        print("   - Raw Bricks: \(rawBricks.count)")
-        print("   - Unique Bricks: \(brickDrills.count)")
-        print("   - Dropped Duplicates: \(rawBricks.count - brickDrills.count)")
+        self.brickDrills = [introState] // Using brickDrills as per original class property name
+        self.currentBrickIndex = 0 // Renamed to currentBrickIndex as per original class property name
         
-        for (i, drill) in brickDrills.enumerated() {
-            print("   brick[\(i)]: '\(drill.drillData.target)' (ID: \(drill.id))")
-        }
-        
-        if brickDrills.isEmpty {
-            // Orchestrator should have skipped this, but safety fallback
-            print("   ⚠️ [PatternIntroLogic] No bricks found. Should have been skipped.")
-        } else {
-            // Resolve mode for the first brick immediately
-            resolveCurrentMode(at: 0)
+        // Resolve mode for the first brick immediately
+        if !brickDrills.isEmpty {
+           resolveCurrentMode(at: 0)
         }
     }
     
@@ -75,7 +49,7 @@ class PatternIntroLogic: ObservableObject {
         if brickDrills[index].currentMode != nil { return }
         
         // Resolve mode for THIS specific brick AT THIS MOMENT
-        let mode = BrickModeSelector.resolveMode(for: brickDrills[index], session: session)
+        let mode = BrickModeSelector.resolveMode(for: brickDrills[index], engine: engine)
         brickDrills[index].currentMode = mode
         
         print("   🧱 [IntroLoop-JIT] Resolved [\(brickDrills[index].id)] Mode: \(mode.rawValue)")
@@ -97,8 +71,8 @@ class PatternIntroLogic: ObservableObject {
             }
             print("   🧑‍🏫 [PatternIntroLogic] Advancing to brick \(currentBrickIndex + 1)/\(brickDrills.count)")
         } else {
-            print("   🧑‍🏫 [PatternIntroLogic] Loop complete. Navigating to next orchestrated stage...")
-            session.continueToNext()
+            print("   🧑‍🏫 [PatternIntroLogic] Loop complete. Notifying Orchestrator.")
+            engine.orchestrator?.finishVocabIntro()
         }
     }
 }
@@ -106,16 +80,25 @@ class PatternIntroLogic: ObservableObject {
 struct PatternIntroManagerView: View {
     @StateObject var logic: PatternIntroLogic
     
-    init(state: DrillState, session: LessonSessionManager) {
-        _logic = StateObject(wrappedValue: PatternIntroLogic(state: state, session: session))
+    init(state: DrillState, engine: LessonEngine) {
+        _logic = StateObject(wrappedValue: PatternIntroLogic(state: state, engine: engine))
     }
     
     var body: some View {
-        PatternIntroView(
-            drill: logic.state,
-            session: logic.session,
-            logic: logic
-        )
+        Group {
+            if logic.shouldSkip {
+                Color.clear.onAppear {
+                    print("   ⏩ [IntroView] Auto-Skipping (0ms)...")
+                    logic.engine.orchestrator?.finishVocabIntro()
+                }
+            } else {
+                PatternIntroView(
+                    drill: logic.state,
+                    engine: logic.engine,
+                    logic: logic
+                )
+            }
+        }
     }
 }
 
@@ -124,15 +107,15 @@ struct PatternIntroManagerView: View {
 
 class PatternDrillLogic: ObservableObject {
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     let resolvedMode: DrillMode
     
-    init(state: DrillState, session: LessonSessionManager) {
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
+        self.engine = engine
         
         // Resolve mode JIT, once per visit
-        self.resolvedMode = state.currentMode ?? PatternModeSelector.resolveMode(for: state, session: session)
+        self.resolvedMode = state.currentMode ?? PatternModeSelector.resolveMode(for: state, engine: engine)
         print("   🎯 [PatternDrillLogic] Final Practice Mode Resolved JIT: \(resolvedMode.rawValue)")
     }
 }
@@ -140,14 +123,14 @@ class PatternDrillLogic: ObservableObject {
 struct PatternDrillManagerView: View {
     @StateObject var logic: PatternDrillLogic
     
-    init(state: DrillState, session: LessonSessionManager) {
-        _logic = StateObject(wrappedValue: PatternDrillLogic(state: state, session: session))
+    init(state: DrillState, engine: LessonEngine) {
+        _logic = StateObject(wrappedValue: PatternDrillLogic(state: state, engine: engine))
     }
     
     var body: some View {
         PatternModeSelector(
             drill: logic.state,
-            session: logic.session,
+            engine: logic.engine,
             forcedMode: logic.resolvedMode
         )
     }

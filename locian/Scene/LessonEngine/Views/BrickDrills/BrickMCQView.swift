@@ -40,10 +40,6 @@ struct BrickMCQView: View {
             footer
         }
         .background(Color.black.ignoresSafeArea())
-        .onAppear {
-            // Read phonetic on view load
-            logic.session.playStateAudio(logic.state)
-        }
     }
     
     private var footer: some View {

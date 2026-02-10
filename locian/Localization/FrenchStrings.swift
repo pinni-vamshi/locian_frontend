@@ -653,6 +653,7 @@ struct FrenchStrings: AppStrings, LocalizedStrings {
         case .addRoutine: return ui.addRoutine
         case .tapToSetup: return ui.tapToSetup
         case .tapToStartLearning: return ui.tapToStartLearning
+        case .smartNotificationExactPlace: return "Si vous êtes à %@, lisez à propos de cet endroit !"
         }
     }
 }

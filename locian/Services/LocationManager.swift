@@ -33,6 +33,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         authorizationStatus = locationManager.authorizationStatus
     }
     
+    // MARK: - Permissions
+    func requestPermission() {
+        locationManager.requestWhenInUseAuthorization()
+    }
+    
     // MARK: - Get Current Location
     func getCurrentLocation(completion: @escaping (Result<CLLocation, Error>) -> Void) {
         // CRITICAL: Check if user has enabled location tracking in Settings

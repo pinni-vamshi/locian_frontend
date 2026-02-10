@@ -20,12 +20,10 @@ struct AnalyzeImageRequest: Codable {
     let target_language: String?
     let previous_places: [TimelinePlaceContext]?
     let future_places: [TimelinePlaceContext]?
+    let date: String?
 }
 
-struct TimelinePlaceContext: Codable {
-    let place_name: String
-    let time: String
-}
+
 
 // MARK: - Response Models
 
@@ -43,8 +41,34 @@ struct AnalyzeImageData: Codable {
     let longitude: Double?
     let time: String?
     let hour: Int?
+    let time_span: String?      // Hierarchy Bucket
     let type: String?
     let created_at: String?
     let micro_situations: [UnifiedMomentSection]
     let moments_count: Int
+}
+
+// MARK: - Handover Extension
+extension AnalyzeImageData {
+    /// Converts analyzed image data into the common MicroSituationData format for UI consumption.
+    func toMicroSituationData() -> MicroSituationData {
+        return MicroSituationData(
+            place_name: self.place_name,
+            latitude: self.latitude,
+            longitude: self.longitude,
+            time: self.time,
+            hour: self.hour,
+            created_at: self.created_at,
+            context_description: nil,
+            micro_situations: self.micro_situations,
+            priority_score: 1.5, // High priority for analyzed images
+            distance_meters: nil,
+            time_span: self.time_span,
+            type: self.type ?? "image_analysis",
+            profession: nil,
+            updated_at: nil,
+            target_language: nil,
+            document_id: self.document_id
+        )
+    }
 }

@@ -25,7 +25,7 @@ protocol DrillValidator {
 struct ValidationContext {
     let state: DrillState
     let locale: Locale
-    let session: LessonSessionManager
+    let engine: LessonEngine
     let neuralEngine: NeuralValidator?
 }
 

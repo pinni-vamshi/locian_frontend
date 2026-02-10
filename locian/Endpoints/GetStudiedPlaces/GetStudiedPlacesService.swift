@@ -21,7 +21,10 @@ class GetStudiedPlacesService {
         sessionToken: String,
         completion: @escaping (Result<GetStudiedPlacesResponse, Error>) -> Void
     ) {
-        PermissionsService.ensureLocationAccess { granted in
+        print("\n📡 [GetStudiedPlacesService] FETCH STARTING...")
+        PermissionsService.shared.ensureLocationAccess { granted in
+            print("📡 [GetStudiedPlacesService] Location Permission: \(granted ? "GRANTED" : "DENIED")")
+            
             // Proceed anyway as per 'self-ensuring' but gathered pattern
             
             // Gather current time
@@ -30,16 +33,24 @@ class GetStudiedPlacesService {
             formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
             let timestamp = formatter.string(from: currentDate)
             
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MMMM d, yyyy"
+            let dateString = dateFormatter.string(from: currentDate)
+            
             // Gather current location
             let userLocation = LocationManager.shared.currentLocation
+            print("📡 [GetStudiedPlacesService] Data Prepared -> Timestamp: \(timestamp), Date: \(dateString), Coords: \(String(describing: userLocation?.coordinate))")
             
             // Build request
             let request = GetStudiedPlacesRequest(
                 time: timestamp,
                 latitude: userLocation?.coordinate.latitude,
                 longitude: userLocation?.coordinate.longitude,
-                limit: 50
+                limit: 50,
+                date: dateString
             )
+            
+            print("📡 [GetStudiedPlacesService] Assembling Request -> /api/user/studied-places/get with status 200 expected.")
             
             // Make API call
             self.performRequest(request: request, sessionToken: sessionToken, completion: completion)

@@ -3,7 +3,7 @@ import Combine
 
 class PatternMCQLogic: ObservableObject {
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
     // Data only
     let prompt: String
@@ -13,22 +13,22 @@ class PatternMCQLogic: ObservableObject {
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, session: LessonSessionManager) {
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
+        self.engine = engine
         self.prompt = state.drillData.target
-        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         // SELF-HEALING: Generate options if missing
         if let existing = state.mcqOptions, !existing.isEmpty {
             self.options = existing
         } else {
             print("      - [PatternMCQLogic] Self-healing: Generating options...")
-            let candidates = session.engine.rawPatterns.map { $0.meaning }
+            let candidates = engine.rawPatterns.map { $0.meaning }
             self.options = MCQOptionGenerator.generateNativeOptions(
                 targetMeaning: state.drillData.meaning,
                 candidates: candidates,
-                validator: session.neuralValidator
+                validator: NeuralValidator()
             )
         }
         
@@ -37,12 +37,9 @@ class PatternMCQLogic: ObservableObject {
         print("      - Meaning: \(state.drillData.meaning)")
         print("      - Final Options: \(self.options)")
         
-        // 4. Pre-Validation Check (If session says we already answered this state)
-        if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {
-             print("      - Restoring previous answer state: \(result)")
-             self.isCorrect = result
-             self.selectedOption = state.drillData.target 
-        }
+        // 4. Pre-Validation Check
+         // State restoration removed
+
     }
     
     func selectOption(_ option: String) {
@@ -51,6 +48,10 @@ class PatternMCQLogic: ObservableObject {
             print("      - Ignoring select (Already answered)")
             return 
         }
+        
+        // Speak the option (English meaning)
+        AudioManager.shared.speak(text: option, language: "en-US")
+        
         selectedOption = option
         validateSelection(option)
     }
@@ -60,9 +61,9 @@ class PatternMCQLogic: ObservableObject {
         
         let context = ValidationContext(
             state: state,
-            locale: session.targetLocale,
-            session: session,
-            neuralEngine: session.neuralValidator
+            locale: TargetLanguageMapping.shared.getLocale(for: engine.lessonData?.target_language ?? "en"),
+            engine: engine,
+            neuralEngine: NeuralValidator()
         )
         
         // 1. Validate the FULL Pattern using the specific MCQ Validator
@@ -75,10 +76,10 @@ class PatternMCQLogic: ObservableObject {
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: session.lessonData?.bricks,
-            targetLanguage: session.lessonData?.target_language ?? "es"
+            bricks: engine.lessonData?.bricks,
+            targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: session.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: option,
@@ -90,25 +91,30 @@ class PatternMCQLogic: ObservableObject {
         
         // 3. Update Mastery Directly in Engine
         let delta = isCorrect ? 0.20 : -0.10
-        session.engine.updateMastery(id: state.id, delta: delta, reason: "[Pattern MCQ]")
+        engine.updateMastery(id: state.id, delta: delta)
         
         // Ripple Effect on Bricks
         for res in rippleResults {
             let brickDelta = res.isCorrect ? 0.10 : -0.05
-            session.engine.updateMastery(id: res.brickId, delta: brickDelta, reason: "[Ripple: MCQ]")
+            engine.updateMastery(id: res.brickId, delta: brickDelta)
         }
         
-        // 4. Trigger UI Side Effects in Session
-        session.handleValidationResult(isCorrect: isCorrect, targetContent: state.drillData.target)
+        // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
     }
     
-    func continueToNext() {
-        session.continueToNext()
+    func playAudio() {
+        let text = state.drillData.target
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: text, language: language)
     }
     
-    static func view(for state: DrillState, mode: DrillMode, session: LessonSessionManager) -> some View {
-        let logic = PatternMCQLogic(state: state, session: session)
+    func continueToNext() {
+        engine.orchestrator?.finishPattern()
+    }
+    
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+        let logic = PatternMCQLogic(state: state, engine: engine)
         return PatternMCQView(logic: logic)
     }
 }

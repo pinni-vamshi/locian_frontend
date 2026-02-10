@@ -88,10 +88,9 @@ struct MainTabView: View {
         }
         .diagnosticBorder(.cyan.opacity(0.2), width: 4)
         .onAppear {
-            // Trigger fetch if not already done
-            if !appState.hasInitialHistoryLoaded && !appState.isLoadingTimeline {
-                learnTabState.fetchFirstRecommendedPlace()
-            } else if appState.hasInitialHistoryLoaded {
+            // Load recommendations if data is already fetched during app launch
+            if appState.hasInitialHistoryLoaded {
+                learnTabState.loadRecommendations()
                 performInitialRouting()
             }
         }

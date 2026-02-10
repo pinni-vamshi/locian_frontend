@@ -122,9 +122,9 @@ struct AddTabView: View {
              )
              .diagnosticBorder(.black.opacity(0.5), width: 0.5)
              HStack(spacing: 16) {
-                actionButton(title: LocalizationManager.shared.string(.cameraLabel).uppercased(), icon: "camera.fill", color: .cyan) { PermissionsService.ensureCameraAccess { if $0 { showingCamera = true } } }
+                actionButton(title: LocalizationManager.shared.string(.cameraLabel).uppercased(), icon: "camera.fill", color: .cyan) { PermissionsService.shared.ensureCameraAccess { if $0 { showingCamera = true } } }
                     .diagnosticBorder(.cyan, width: 0.5)
-                actionButton(title: LocalizationManager.shared.string(.galleryLabel).uppercased(), icon: "square.grid.2x2.fill", color: .pink) { PermissionsService.ensurePhotoLibraryAccess { if $0 { showingGallery = true } } }
+                actionButton(title: LocalizationManager.shared.string(.galleryLabel).uppercased(), icon: "square.grid.2x2.fill", color: .pink) { PermissionsService.shared.ensurePhotoLibraryAccess { if $0 { showingGallery = true } } }
                     .diagnosticBorder(.pink, width: 0.5)
              }.padding(.horizontal, 8)
                 .diagnosticBorder(.white.opacity(0.1), width: 1, label: "ACT_HS_P:H8")

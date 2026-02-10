@@ -3,7 +3,7 @@ import Combine
 
 class BrickClozeLogic: ObservableObject {
     let state: DrillState
-    let session: LessonSessionManager
+    let engine: LessonEngine
     
     // Data only
     let prompt: String
@@ -12,9 +12,11 @@ class BrickClozeLogic: ObservableObject {
     @Published var userInput: String = ""
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, session: LessonSessionManager) {
+    var onComplete: (() -> Void)?
+    
+    init(state: DrillState, engine: LessonEngine) {
         self.state = state
-        self.session = session
+        self.engine = engine
         
         // Generate Cloze Prompt: "Es mi _______"
         // If context exists, mask the target word. Otherwise fallback to meaning (Typing style).
@@ -31,13 +33,11 @@ class BrickClozeLogic: ObservableObject {
             print("   🧩 [BrickCloze] Mode: Meaning Fallback (No Context Available)")
         }
         
-        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english
+        self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
-        // Restore State if session already has result (Fix for button resetting)
-        if session.activeState?.id == state.id, let result = session.lastAnswerCorrect {
-             self.isCorrect = result
-             self.userInput = session.activeInput
-        }
+        // Restore State if engine already has result (Fix for button resetting)
+        // Restore State logic removed as engine no longer tracks activeState history here
+         // This should be handled by the Orchestrator or a local state manager in the future if needed.
     }
     
     var hasInput: Bool {
@@ -50,37 +50,43 @@ class BrickClozeLogic: ObservableObject {
         print("      - Validating cloze [Brick Cloze]...")
         
         // Save input to session for persistence
-        session.activeInput = userInput
+        // Save input if needed (skipped for now as we removed session.activeInput)
         
         let context = ValidationContext(
             state: state,
-            locale: session.targetLocale,
-            session: session,
-            neuralEngine: session.neuralValidator
+            locale: TargetLanguageMapping.shared.getLocale(for: engine.lessonData?.target_language ?? "en"),
+            engine: engine,
+            neuralEngine: NeuralValidator()
         )
         
         // Bricks always match Foreign Word
         let validator = TypingValidator()
         let result = validator.validate(input: userInput, target: state.drillData.target, context: context)
         let isCorrect = (result == .correct || result == .meaningCorrect)
-        let isMeaningCorrect = (result == .meaningCorrect)
+
         
         // Update Mastery (Only this brick)
         let brickId = state.id.replacingOccurrences(of: "INT-", with: "")
         let delta = isCorrect ? 0.30 : -0.15
-        session.engine.updateMastery(id: brickId, delta: delta, reason: "[Brick Cloze]")
+        engine.updateMastery(id: brickId, delta: delta)
         
         // UI Effects
-        session.handleValidationResult(isCorrect: isCorrect, targetContent: state.drillData.target, isMeaningCorrect: isMeaningCorrect)
         self.isCorrect = isCorrect
+        playAudio()
+    }
+    
+    func playAudio() {
+        let text = state.drillData.target
+        let language = engine.lessonData?.target_language ?? "es-ES"
+        AudioManager.shared.speak(text: text, language: language)
     }
     
     func continueToNext() {
-        session.continueToNext()
+        onComplete?()
     }
     
-    static func view(for state: DrillState, mode: DrillMode, session: LessonSessionManager) -> some View {
-        let logic = BrickClozeLogic(state: state, session: session)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+        let logic = BrickClozeLogic(state: state, engine: engine)
         return BrickClozeView(logic: logic)
     }
 }

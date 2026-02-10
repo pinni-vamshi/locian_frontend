@@ -9,7 +9,7 @@ extension LessonEngine {
         let cleanId = id.replacingOccurrences(of: "INT-", with: "")
         
         // 1. Identify if this is a pattern
-        let pattern = self.rawPatterns.first(where: { "\($0.pattern_id)-d0" == cleanId })
+        let pattern = self.rawPatterns.first(where: { "\($0.id)-d0" == cleanId })
             ?? self.allDrills.first(where: { $0.id == id && !$0.isBrick })?.drillDataToPatternData()
         
         guard let p = pattern else {
@@ -45,7 +45,7 @@ extension LessonEngine {
 extension DrillState {
     func drillDataToPatternData() -> PatternData {
         return PatternData(
-            pattern_id: self.patternId,
+            id: self.patternId,
             target: self.drillData.target,
             meaning: self.drillData.meaning,
             phonetic: self.drillData.phonetic

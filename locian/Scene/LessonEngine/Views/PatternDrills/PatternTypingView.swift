@@ -4,8 +4,8 @@ struct PatternTypingView: View {
     @StateObject private var logic: PatternTypingLogic
     @FocusState private var isFocused: Bool
     
-    init(state: DrillState, session: LessonSessionManager) {
-        _logic = StateObject(wrappedValue: PatternTypingLogic(state: state, session: session))
+    init(state: DrillState, engine: LessonEngine) {
+        _logic = StateObject(wrappedValue: PatternTypingLogic(state: state, engine: engine))
     }
     
     var body: some View {

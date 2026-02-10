@@ -63,55 +63,189 @@ class NotificationManager: NSObject, ObservableObject {
     func startMonitoring() {
         print("🛰️ [NotificationManager] Starting smart monitoring...")
         
+        // Initial Refresh
+        refreshIfNecessary()
+        
+        // Monitor for significant location changes only (optional, but keep it light)
         LocationManager.shared.$currentLocation
             .compactMap { $0 }
-            .throttle(for: .seconds(30), scheduler: DispatchQueue.main, latest: true)
+            .throttle(for: .seconds(300), scheduler: DispatchQueue.main, latest: true) // 5 mins throttle
             .sink { [weak self] location in
                 guard let self = self, self.isNotificationsEnabled else { return }
-                self.performProximityCheck(at: location)
+                self.refreshIfNecessary()
             }
             .store(in: &cancellables)
     }
     
-    private func performProximityCheck(at location: CLLocation) {
-        // Only proceed if authorized
-        checkPermission { [weak self] authorized in
-            guard let self = self, authorized else { return }
+    func refreshIfNecessary() {
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            let smartRequests = requests.filter({ $0.identifier.hasPrefix("smart_") })
             
-            // Only proceed if timeline is hydrated
-            guard let timeline = AppStateManager.shared.timeline else {
-                self.fetchTimelineAndRetry(at: location)
-                return
+            // If we have 0 pending smart notifications, it means either:
+            // 1. We haven't scheduled any.
+            // 2. All 3 have been delivered.
+            if smartRequests.count == 0 {
+                print("🛰️ [NotificationManager] No pending smart notifications. Resetting count and scheduling new batch...")
+                DispatchQueue.main.async {
+                    AppStateManager.shared.completedNotificationCount = 0
+                    self.scheduleNextBatch()
+                }
+            } else {
+                print("🛰️ [NotificationManager] Batch still pending (\(smartRequests.count) items). Skipping refresh.")
             }
+        }
+    }
+    
+    func scheduleNextBatch() {
+        guard isNotificationsEnabled else { return }
+        
+        // Hierarchy 1: Location Check
+        let hasLocationAccess = LocationManager.shared.authorizationStatus == .authorizedAlways || LocationManager.shared.authorizationStatus == .authorizedWhenInUse
+        
+        // 1. Get History and Intent
+        guard let timeline = AppStateManager.shared.timeline,
+              let intent = AppStateManager.shared.userIntent else {
+            print("⚠️ [NotificationManager] Cannot schedule batch: Data missing.")
+            // Fallback to fetching data if missing
+            if let token = AppStateManager.shared.authToken, !token.isEmpty {
+                self.fetchTimelineAndRetry(at: LocationManager.shared.currentLocation ?? CLLocation(latitude: 0, longitude: 0))
+            }
+            return
+        }
+        
+        // 2. Prepare Intent Vectors
+        let nativeName = AppStateManager.shared.nativeLanguage
+        let nativeCode = NativeLanguageMapping.shared.getCode(for: nativeName) ?? "en"
+        let intentVectors = intentToVectors(intent, languageCode: nativeCode)
+        
+        if intentVectors.isEmpty {
+            print("⚠️ [NotificationManager] No intent vectors. Cannot refine smartly.")
+            return
+        }
+        
+        // 3. Pick 3 Time Slots
+        let slots = [10, 14, 18] // Typical study hours (10 AM, 2 PM, 6:30-ish PM)
+        var scheduledCount = 0
+        var batch: [(hour: Int, moment: UnifiedMoment, placeName: String)] = []
+        let notifiedIDs = AppStateManager.shared.notifiedMomentIDs
+        
+        // Search through history for best matches
+        // Prioritize Location-based matches if location is available
+        var allScoredMoments: [ScoredPlace] = []
+        for place in timeline.places {
+            // Using ScoringEngine which already incorporates GPS boost if location is passed
+            let currentLoc = hasLocationAccess ? LocationManager.shared.currentLocation : nil
+            let scored = ScoringEngine.shared.score(place: place, intentVectors: intentVectors, userLocation: currentLoc, languageCode: nativeCode)
+            allScoredMoments.append(contentsOf: scored)
+        }
+        
+        // Sort by score (which includes GPS boost if Hierarchy 1 is enabled)
+        allScoredMoments.sort { $0.score > $1.score }
+        
+        // Pick 3 unique high quality matches
+        for slotHour in slots {
+            if scheduledCount >= 3 { break }
             
-            let hour = Calendar.current.component(.hour, from: Date())
+            if let bestMatch = allScoredMoments.first(where: { !notifiedIDs.contains($0.place.id) }) {
+                if let moment = bestMatch.place.micro_situations?.first?.moments.first {
+                    batch.append((hour: slotHour, moment: moment, placeName: bestMatch.extractedName))
+                    AppStateManager.shared.notifiedMomentIDs.insert(bestMatch.place.id)
+                    
+                    // Remove from pool to avoid internal batch duplication
+                    allScoredMoments.removeAll(where: { $0.place.id == bestMatch.place.id })
+                    scheduledCount += 1
+                }
+            }
+        }
+        
+        // Fallback: If we couldn't find 3 smart moments, use Routine Defaults
+        if scheduledCount < 3 {
+            print("⚠️ [NotificationManager] Only found \(scheduledCount) smart moments. Using Routine fallbacks.")
             let profession = AppStateManager.shared.profession
-            
-            // 1. Check User-Defined Routines
-            if let routineSelections = self.loadRoutineSelections(), let placeName = routineSelections[hour] {
-                if let placeData = timeline.places.first(where: { $0.place_name?.lowercased() == placeName.lowercased() }) {
-                    let placeLoc = CLLocation(latitude: placeData.latitude ?? 0, longitude: placeData.longitude ?? 0)
-                    if location.distance(from: placeLoc) < self.proximityThreshold {
-                        self.triggerSmartNotification(for: placeName)
-                        return
-                    }
-                }
-            }
-            
-            // 2. Check Profession Defaults
-            let professionPlaces = UserRoutineManager.getPlaces(for: profession, hour: hour)
-            for place in timeline.places {
-                guard let name = place.place_name,
-                      let lat = place.latitude,
-                      let lon = place.longitude else { continue }
+            for slotHour in slots {
+                if batch.contains(where: { $0.hour == slotHour }) { continue }
+                if scheduledCount >= 3 { break }
                 
-                if location.distance(from: CLLocation(latitude: lat, longitude: lon)) < self.proximityThreshold {
-                    if professionPlaces.contains(name) {
-                        self.triggerSmartNotification(for: name)
-                        return
-                    }
+                let fallbacks = UserRoutineManager.getPlaces(for: profession, hour: slotHour)
+                if let firstFallback = fallbacks.first {
+                    let fallbackMoment = UnifiedMoment(text: "Ready for a session?", keywords: nil)
+                    batch.append((hour: slotHour, moment: fallbackMoment, placeName: firstFallback))
+                    scheduledCount += 1
                 }
             }
+        }
+        
+        // 4. Schedule the batch
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests() // Strict clear
+        for item in batch {
+            scheduleNotification(for: item.hour, moment: item.moment.text, placeName: item.placeName)
+        }
+        
+        AppStateManager.shared.lastNotificationRefreshDate = Date()
+        print("✅ [NotificationManager] Successfully scheduled batch of \(scheduledCount) notifications based on hierarchy (Location/Time).")
+    }
+    
+    private func scheduleNotification(for hour: Int, moment: String, placeName: String) {
+        let content = UNMutableNotificationContent()
+        let username = AppStateManager.shared.username.isEmpty ? "Learner" : AppStateManager.shared.username
+        
+        content.title = "\(getGreeting(for: hour)), \(username)! 👋"
+        
+        // Smart Body Logic: "If you are at [Place], read about this place!"
+        let localizedBody = LocalizationManager.shared.string(.smartNotificationExactPlace)
+        content.body = String(format: localizedBody, placeName) + "\n\"\(moment)\""
+        
+        content.sound = .default
+        content.userInfo = ["place_name": placeName, "hour": hour]
+        
+        var dateComponents = DateComponents()
+        dateComponents.hour = hour
+        dateComponents.minute = 0
+        
+        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+        let request = UNNotificationRequest(identifier: "smart_\(hour)_\(UUID().uuidString)", content: content, trigger: trigger)
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ [NotificationManager] Error scheduling: \(error)")
+            } else {
+                self.saveLogEntry(placeName: placeName, hour: hour, moment: moment)
+            }
+        }
+    }
+    
+    private func intentToVectors(_ intent: UserIntent, languageCode: String) -> [String: [Double]] {
+        var vectors: [String: [Double]] = [:]
+        
+        let fields: [(name: String, value: String?)] = [
+            ("Movement", intent.movement),
+            ("Waiting", intent.waiting),
+            ("Consume Fast", intent.consume_fast),
+            ("Consume Slow", intent.consume_slow),
+            ("Errands", intent.errands),
+            ("Browsing", intent.browsing),
+            ("Rest", intent.rest),
+            ("Social", intent.social),
+            ("Emergency", intent.emergency),
+            ("Suggested Needs", intent.suggested_needs)
+        ]
+        
+        for field in fields {
+            if let val = field.value, !val.isEmpty,
+               let vec = EmbeddingService.getVector(for: val, languageCode: languageCode) {
+                vectors[field.name] = vec
+            }
+        }
+        return vectors
+    }
+    
+    private func getGreeting(for hour: Int? = nil) -> String {
+        let h = hour ?? Calendar.current.component(.hour, from: Date())
+        switch h {
+        case 5..<12: return "Good Morning"
+        case 12..<17: return "Good Afternoon"
+        case 17..<22: return "Good Evening"
+        default: return "Hello"
         }
     }
     
@@ -119,17 +253,20 @@ class NotificationManager: NSObject, ObservableObject {
         guard !isFetchingTimeline, let token = AppStateManager.shared.authToken, !token.isEmpty else { return }
         
         isFetchingTimeline = true
-        print("🛰️ [NotificationManager] Timeline missing. Fetching silently...")
+        print("🛰️ [NotificationManager] Data missing. Fetching silently...")
         
         GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: token) { [weak self] result in
             DispatchQueue.main.async {
                 self?.isFetchingTimeline = false
                 if case .success(let response) = result {
                     if let data = response.data {
-                        AppStateManager.shared.timeline = TimelineData(places: data.places)
+                        AppStateManager.shared.timeline = TimelineData(places: data.places, inputTime: data.input_time)
+                        if let intent = data.user_intent {
+                            AppStateManager.shared.userIntent = intent
+                        }
                     }
                     AppStateManager.shared.hasInitialHistoryLoaded = true
-                    self?.performProximityCheck(at: location)
+                    self?.scheduleNextBatch()
                 }
             }
         }
@@ -140,83 +277,15 @@ class NotificationManager: NSObject, ObservableObject {
         DispatchQueue.main.async { completion?() }
     }
     
-    private func triggerSmartNotification(for placeName: String) {
-        // Cooldown
-        if let lastLoc = lastTriggeredLocation, lastLoc == placeName,
-           let lastTime = lastTriggeredTime, Date().timeIntervalSince(lastTime) < cooldownInterval {
-            return
-        }
-        
-        let points = AppStateManager.shared.totalStudyPoints
-        let content = UNMutableNotificationContent()
-        let username = AppStateManager.shared.username.isEmpty ? "Learner" : AppStateManager.shared.username
-        
-        content.title = "\(getGreeting()), \(username)! 👋"
-        content.body = generateDynamicBody(for: placeName, points: points)
-        content.sound = .default
-        content.userInfo = ["place_name": placeName]
-        
-        // Save the log entry
-        let location = LocationManager.shared.currentLocation
-        saveLogEntry(placeName: placeName, points: points, location: location)
-        
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: "smart_\(UUID().uuidString)", content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request)
-        
-        lastTriggeredLocation = placeName
-        lastTriggeredTime = Date()
-    }
+    // MARK: - Logging
     
-    // MARK: - Helpers
-    
-    private func getGreeting() -> String {
-        let h = Calendar.current.component(.hour, from: Date())
-        switch h {
-        case 5..<12: return "Good Morning"
-        case 12..<17: return "Good Afternoon"
-        case 17..<22: return "Good Evening"
-        default: return "Hello"
-        }
-    }
-    
-    private func loadRoutineSelections() -> [Int: String]? {
-        let json = UserDefaults.standard.string(forKey: "routine_selections_json") ?? "{}"
-        guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode([Int: String].self, from: data)
-    }
-    
-    // MARK: - Dynamic Messaging & Logging
-    
-    private func generateDynamicBody(for place: String, points: Int) -> String {
-        let greetings = [
-            "Ready to boost your \(points) points at \(place)?",
-            "Perfect time for a session at \(place). Stack up those points!",
-            "Back at \(place)? Let's get closer to your next milestone!",
-            "Practice makes perfect! Ready for a quick \(place) session?",
-            "You've already earned \(points) points! Let's add more at \(place)."
-        ]
-        
-        // Milestone specific messages
-        if points > 500 {
-            return "A Pro Learner like you belongs at \(place). Ready to crush it?"
-        } else if points > 200 {
-            return "Your streak is legendary! Let's keep the momentum going at \(place)."
-        } else if points < 50 {
-            return "Ready for a quick session at \(place)? Every point counts!"
-        }
-        
-        return greetings.randomElement() ?? "Ready for a session at \(place)?"
-    }
-    
-    private func saveLogEntry(placeName: String, points: Int, location: CLLocation?) {
+    private func saveLogEntry(placeName: String, hour: Int, moment: String) {
         var logs = getLogs()
         let newEntry = NotificationLogEntry(
             placeName: placeName,
-            points: points,
-            latitude: location?.coordinate.latitude ?? 0,
-            longitude: location?.coordinate.longitude ?? 0,
+            points: AppStateManager.shared.totalStudyPoints,
+            latitude: 0,
+            longitude: 0,
             timestamp: Date()
         )
         
@@ -227,7 +296,7 @@ class NotificationManager: NSObject, ObservableObject {
         
         if let encoded = try? JSONEncoder().encode(logs) {
             UserDefaults.standard.set(encoded, forKey: logKey)
-            print("🛰️ [NotificationManager] Logged notification: \(placeName) | Points: \(points)")
+            print("🛰️ [NotificationManager] Logged notification: \(placeName) at \(hour)")
         }
     }
     

@@ -106,11 +106,13 @@ class StatsTabState: ObservableObject {
     private func fetchTimelineIfNeeded() {
         if (appState.timeline == nil || !appState.hasInitialHistoryLoaded) && !appState.isLoadingTimeline, let token = appState.authToken {
             appState.isLoadingTimeline = true
-            LearnTabService.shared.fetchAndLoadContent(sessionToken: token) { [weak self] result in
+            GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: token) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
-                    case .success(let data):
-                        self?.appState.timeline = data.timeline
+                    case .success(let response):
+                        if let data = response.data {
+                            self?.appState.timeline = TimelineData(places: data.places, inputTime: data.input_time)
+                        }
                     case .failure(let error):
                         print("Failed to load stats history: \(error)")
                     }

@@ -51,6 +51,7 @@ class GenerateMomentsLogic {
                         longitude: dataObj["longitude"] as? Double,
                         time: dataObj["time"] as? String,
                         hour: hour,
+                        time_span: dataObj["time_span"] as? String,
                         type: dataObj["type"] as? String,
                         created_at: dataObj["created_at"] as? String,
                         micro_situations: sections,

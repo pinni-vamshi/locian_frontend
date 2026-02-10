@@ -4,7 +4,7 @@ import SwiftUI
 /// Used for the "Recap" phase of a pattern.
 struct PatternIntroView: View {
     let drill: DrillState
-    @ObservedObject var session: LessonSessionManager
+    @ObservedObject var engine: LessonEngine
     @ObservedObject var logic: PatternIntroLogic
     
     @State private var isHintExpanded: Bool = false
@@ -15,7 +15,7 @@ struct PatternIntroView: View {
             LessonPromptHeader(
                 instruction: "PATTERN RECAP",
                 prompt: drill.drillData.meaning,
-                targetLanguage: TargetLanguageMapping.shared.getDisplayNames(for: session.lessonData?.target_language ?? "en").english,
+                targetLanguage: TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english,
                 hintText: "REVEAL TARGET",
                 meaningText: drill.drillData.target,
                 contextSentence: nil,
@@ -66,10 +66,15 @@ struct PatternIntroView: View {
                     if let brickState = logic.currentDrill {
                         // Using the specialized interaction dispatcher
                         // This will show MCQ, Typing, or Voice based on the pre-resolved mode
-                        BrickModeSelector.interactionView(for: brickState, session: session, showPrompt: false)
-                            .id("brick-interaction-\(brickState.id)")
-                            .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
-                                                  removal: .move(edge: .leading).combined(with: .opacity)))
+                        BrickModeSelector.interactionView(
+                            for: brickState, 
+                            engine: engine, 
+                            showPrompt: false,
+                            onComplete: { logic.advance() }
+                        )
+                        .id("brick-interaction-\(brickState.id)")
+                        .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
+                                              removal: .move(edge: .leading).combined(with: .opacity)))
                     }
                 }
                 .padding(.bottom, 100)
@@ -79,15 +84,14 @@ struct PatternIntroView: View {
             footer
         }
         .background(Color.black.ignoresSafeArea())
-        .onChange(of: session.lastAnswerCorrect) { _, isCorrect in
-            // Manual progression only - we just wait for the button in the footer
-            // No auto-advance timer
-        }
+        // .onChange(of: engine.lastAnswerCorrect) { ... } Removed deprecated logic
     }
     
     private var footer: some View {
         VStack(spacing: 0) {
-            if let isCorrect = session.lastAnswerCorrect {
+            // TODO: Refactor Footer to not use deprecated engine.lastAnswerCorrect
+            /*
+            if let isCorrect = engine.lastAnswerCorrect {
                 Divider().background(Color.white.opacity(0.1))
                 
                 let color: Color = isCorrect ? CyberColors.neonPink : .red
@@ -96,7 +100,7 @@ struct PatternIntroView: View {
                 CyberProceedButton(
                     action: { 
                         logic.advance()
-                        session.lastAnswerCorrect = nil
+                        engine.lastAnswerCorrect = nil
                     },
                     label: "NEXT_COMPONENT",
                     title: title,
@@ -108,6 +112,7 @@ struct PatternIntroView: View {
                 .padding(.bottom, 8)
                 .background(Color.black)
             }
+            */
         }
     }
 }

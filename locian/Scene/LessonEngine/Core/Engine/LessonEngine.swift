@@ -2,225 +2,131 @@ import Foundation
 import Combine
 import NaturalLanguage
 
+// MARK: - THE LIBRARIAN (Data Store)
 class LessonEngine: ObservableObject {
     
-    // MARK: - Core State
-    @Published var allDrills: [DrillState] = []
-    @Published var currentStep: Int = 0
+    // MARK: - Core Data
+    @Published var recentPatternHistory: [String] = [] 
+    @Published var componentMastery: [String: Double] = [:]
+    @Published var isSessionComplete: Bool = false
     
-    /// The dispatch queue for special sequences (e.g. Intro -> Brick -> Main Pattern)
-    @Published var selectionQueue: [String] = [] 
+    // MARK:    // Dependencies (The Triangle)
+    var flow: LessonFlow?
+    var orchestrator: LessonOrchestrator?
     
-    /// Pure Mastery Scores provided by the API or current session
-    @Published var componentMastery: [String: Double] = [:] 
+    // MARK: - Extension Support (Temporary storage for algorithms)
+    var allDrills: [DrillState] = [] // Needed by BricksQueuing
+    var lastDrilledBricks: [BrickItem] = [] // Needed by BricksQueuing
     
-    // MARK: - Data Source
+    // MARK: - Localized Content (Groups)
     var lessonData: GenerateSentenceData?
-    @Published var isTransitionReady: Bool = false 
-    
-    // NEW: Raw patterns for JIT creation (like bricks)
-    var rawPatterns: [PatternData] = []
+    var groups: [LessonGroup] = []
+    @Published var currentGroupIndex: Int = 0
     @Published var visitedPatternIds: Set<String> = []
-    @Published var lastDrilledBricks: [BrickItem] = []
     
-    /// Tracks the 'Step' (card count) when a component was last successfully recalled.
-    @Published var lastRecallStep: [String: Int] = [:]
-    
-    // Session Guardrails
-    var sessionStartTime: Date?
-    static let MIN_SESSION_DURATION: TimeInterval = 60 * 2 // 2 minutes
-    static let MAX_SESSION_DURATION: TimeInterval = 60 * 10 // 10 minutes
-    
-    // External Services
-    var validator: NeuralValidator?
-    
-    // MARK: - Properties for UI/Debug (Stateless)
-    var isAmbulanceModeActive: Bool = false
-    var currentCognitiveLoad: Double = 0.0
-    
-    struct MinimalStats {
-        var correctAnswers: Int = 0
-        var totalQuestions: Int = 0
-        var accuracyRate: Double { totalQuestions > 0 ? Double(correctAnswers) / Double(totalQuestions) : 0.0 }
-        var lastSimilarityScore: Double?
+    var activeGroup: LessonGroup? {
+        guard currentGroupIndex < groups.count else { return nil }
+        return groups[currentGroupIndex]
     }
-    @Published var stats = MinimalStats()
     
-    // Cooldown and Orchestration helpers
-    var cooldownService = CooldownService() // Assuming it's stateless or managed elsewhere
-    var history: [DrillResultEntry] = [] // Minimal history for interleaving logic
+    var rawPatterns: [PatternData] {
+        return activeGroup?.patterns ?? []
+    }
     
     // MARK: - Initialization
     func initialize(with data: GenerateSentenceData) {
+        // Setup Triangle if missing
+        if self.flow == nil {
+            let newFlow = LessonFlow()
+            let newOrch = LessonOrchestrator()
+            newFlow.orchestrator = newOrch
+            newOrch.engine = self
+            self.flow = newFlow
+            self.orchestrator = newOrch
+        }
+        
         self.lessonData = data
-        self.allDrills = []
-        self.currentStep = 0
-        self.selectionQueue = []
+        self.recentPatternHistory = []
         self.visitedPatternIds = []
-        self.lastDrilledBricks = []
-        self.sessionStartTime = Date()
+        self.currentGroupIndex = 0
+        self.groups = data.groups ?? []
+        self.isSessionComplete = false
         
-        // JIT: Store raw patterns, don't create DrillStates upfront
-        self.rawPatterns = data.patterns ?? []
-        
-        let brickCount = (data.bricks?.constants?.count ?? 0) + 
-                         (data.bricks?.variables?.count ?? 0) + 
-                         (data.bricks?.structural?.count ?? 0)
-                         
-        print("\n🚀 [Engine: Init] Session Start")
-        print("   📦 Patterns: \(rawPatterns.count)")
-        print("   🧱 Bricks available: \(brickCount)")
-        print("   🌐 Target Language: \(data.target_language ?? "unknown")")
-        
-        // Initialize Decay Tracker: Everyone starts at step 0
-        self.lastRecallStep = [:]
-        data.patterns?.forEach { self.lastRecallStep["\($0.pattern_id)-d0"] = 0 }
-        
-        // PERSISTENCE: 2. Load Stored Mastery Scores (Now Pre-filled by Logic Layer)
-        print("   💾 [Engine] Loading Persistent Mastery Scores...")
-        
-        // A. Load Brick Mastery
-        let allBricks: [BrickItem] = (data.bricks?.constants ?? []) + 
-                                     (data.bricks?.variables ?? []) + 
-                                     (data.bricks?.structural ?? [])
-                                     
-        for brick in allBricks {
-            let text = brick.word
-            // Direct Read: Logic Layer already populated this from DB
-            if let score = brick.mastery {
-                componentMastery[brick.safeID] = score
-                if score > 0.1 {
-                     print("      ✅ [Engine] Restored Mastery for Brick '\(text)': \(String(format: "%.2f", score))")
-                }
-            } else {
-                componentMastery[brick.safeID] = 0.0
-            }
-            self.lastRecallStep[brick.safeID] = 0
-        }
-        
-        // B. Load Pattern Mastery (NEW: Fixes Pattern Mode Selection)
-        if let patterns = data.patterns {
-            for pattern in patterns {
-                let id = pattern.pattern_id
-                // Direct Read: Logic Layer already populated this
-                if let score = pattern.mastery {
-                    componentMastery[id] = score
-                    if score > 0.1 {
-                        print("      ✅ [Engine] Restored Mastery for Pattern '\(id)': \(String(format: "%.2f", score))")
-                    }
-                } else {
-                    componentMastery[id] = 0.0
-                }
-                // Patterns have multiple drill types (-d0, -d1 etc), but base mastery is per Pattern ID
+        // Load Mastery from ALL groups
+        print("\n🚀 [Engine: Init] Loading Mastery for all groups...")
+        for group in self.groups {
+            // Prerequisites
+            for p in group.prerequisites ?? [] { componentMastery[p.safeID] = p.mastery ?? 0.0 }
+            
+            // patterns
+            for p in group.patterns ?? [] { componentMastery[p.id] = p.mastery ?? 0.0 }
+            
+            // Bricks
+            if let bricks = group.bricks {
+                let allBricks = (bricks.constants ?? []) + (bricks.variables ?? []) + (bricks.structural ?? [])
+                for b in allBricks { componentMastery[b.safeID] = b.mastery ?? 0.0 }
             }
         }
+        
+        // KICKSTART THE LOOP (Empty History)
+        print("   ⚡️ [Engine] Kickstart: Asking Flow for First Pattern in Group \(currentGroupIndex + 1)...")
+        flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
     }
     
-    func calculateOverallProgress() -> Double {
-        let masteredCount = allDrills.filter { getBlendedMastery(for: $0.id) >= 0.95 }.count
-        return allDrills.isEmpty ? 0.0 : Double(masteredCount) / Double(allDrills.count)
-    }
-
-    func calculatePatternPriority(pattern: DrillState, lastPattern: DrillResultEntry?) -> Double {
-        // Pure stateless priority calculation (mocked for now)
-        return 1.0 
-    }
-    
-    /// Returns the mastery score adjusted for intra-session decay.
-    /// Uses 'w_sessionDecay' (-0.02) per step since last recall.
-    func getDecayedMastery(for id: String) -> Double {
-        let rawMastery = componentMastery[id] ?? 0.0
-        let lastStep = lastRecallStep[id] ?? 0
-        let stepsSince = max(0, currentStep - lastStep)
-        
-        if stepsSince == 0 { return rawMastery }
-        
-        let decay = Double(stepsSince) * AdaptiveConfig.w_sessionDecay
-        let effectiveMastery = max(0.0, rawMastery - decay)
-        
-        if decay > 0 {
-             print("      📉 [Memory Decay] [\(id)]")
-             print("         ↳ Steps Since Recall: \(stepsSince) steps (At Step: \(currentStep))")
-             print("         ↳ Formula: \(String(format: "%.2f", rawMastery)) - (\(stepsSince) * \(String(format: "%.3f", AdaptiveConfig.w_sessionDecay)))")
-             print("         ↳ Effective Mastery: \(String(format: "%.2f", effectiveMastery))")
+    // MARK: - Entry Point
+    func startLesson() {
+        print("🚀 [Engine] Lesson Started.")
+        // The flow already handles the first pattern selection during initialize if history is empty.
+        // But we can explicitly trigger it here if needed to be sure.
+        if recentPatternHistory.isEmpty {
+            flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
         }
-        
-        return effectiveMastery
     }
     
-    // MARK: - Mastery Updates (Consolidated)
+    // MARK: - The Callback (Called by Orchestrator when Done)
+    func patternCompleted(id: String) {
+        print("\n🏁 [Engine] Pattern '\(id)' Completed.")
+        
+        // 1. Update History
+        recentPatternHistory.append(id)
+        if recentPatternHistory.count > 4 { recentPatternHistory.removeFirst() }
+        
+        // 2. Advance Groups if needed (Simple version: if all patterns in group mastered or seen)
+        // For now, let the Flow decide based on current rawPatterns.
+        
+        // 3. Trigger Flow (The Loop)
+        print("   🌊 [Engine] Calling Flow for Next Pattern...")
+        flow?.pickNextPattern(history: recentPatternHistory, mastery: componentMastery, candidates: rawPatterns)
+    }
     
-    // MARK: - Mastery Hub (Simplified)
+    // Advance to next group manually if we have logic for it
+    func advanceGroup() {
+        if currentGroupIndex < groups.count - 1 {
+            currentGroupIndex += 1
+            print("   🚀 [Engine] Advancing to Group \(currentGroupIndex + 1)")
+            flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
+        } else {
+            print("   🏁 [Engine] No more groups. Session complete.")
+            isSessionComplete = true
+        }
+    }
     
-    /// Updates the mastery score for a component by a specific delta.
-    func updateMastery(id: String, delta: Double, reason: String = "") {
+    // MARK: - Mastery Updates (Pure Data)
+    func updateMastery(id: String, delta: Double) {
         let current = componentMastery[id] ?? 0.0
         let newValue = (current + delta).clamped(to: 0.0...1.0)
         componentMastery[id] = newValue
-        
-        // RECALL REFRESH: If score improved or stayed high, reset the decay timer
-        if delta >= 0 {
-            lastRecallStep[id] = currentStep
-            print("      ✨ [Memory: Recall] [\(id)] Reset timer to step \(currentStep)")
-        }
-        
-        let direction = delta > 0 ? "📈" : (delta < 0 ? "📉" : "⚪️")
-        let icon = reason.contains("Brick") || reason.contains("Ripple") ? "🧱" : "🧬"
-        
-        print("      \(direction) \(icon) [Mastery Update] [\(id)]")
-        print("         ↳ Current: \(String(format: "%.2f", current)) -> New: \(String(format: "%.2f", newValue)) (Δ \(String(format: "%.3f", delta)))")
-        print("         ↳ Reason: \(reason)")
-        
-        // PERSISTENCE: 3. Save to Disk (Via Logic Layer)
-        // We need to resolve the ID to a Brick OR Pattern to get its text/vector
-        if let brick = resolveBrick(id: id) {
-            let text = brick.word
-            // Optimization: Vector should be available on the model
-            let vector = brick.vector ?? validator?.getVector(for: text)
-            
-            GenerateSentenceLogic.shared.updateMastery(
-                text: text,
-                vector: vector,
-                mode: "practice",
-                isCorrect: delta > 0
-            )
-        } else if let pattern = resolvePattern(id: id) {
-            let text = pattern.meaning // Track patterns by Meaning
-            let vector = pattern.vector // Should be on model
-            
-            GenerateSentenceLogic.shared.updateMastery(
-                text: text,
-                vector: vector,
-                mode: "practice",
-                isCorrect: delta > 0
-            ) 
-        }
+        // Persistence calls here...
     }
     
-    private func resolveBrick(id: String) -> BrickItem? {
-        let all = (lessonData?.bricks?.constants ?? []) + 
-                  (lessonData?.bricks?.variables ?? []) + 
-                  (lessonData?.bricks?.structural ?? [])
-        // ID often matches one of these
-        // IDs are "INT-xxx" stripped usually before calling updateMastery?
-        // updateMastery(id: "apple") usually.
-        return all.first { ($0.id ?? $0.word) == id }
-    }
-    
-    private func resolvePattern(id: String) -> PatternData? {
-        return rawPatterns.first { $0.pattern_id == id }
+    // MARK: - Extension Helpers
+    func getDecayedMastery(for id: String) -> Double {
+        return componentMastery[id] ?? 0.0
     }
 }
 
-// MARK: - Clamping Helper
 extension FloatingPoint {
     func clamped(to range: ClosedRange<Self>) -> Self {
         return max(range.lowerBound, min(range.upperBound, self))
     }
 }
-
-// Minimal placeholder types for compilation
-struct CooldownService {
-    var recentPatterns: [String] = []
-}
-

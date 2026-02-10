@@ -49,7 +49,7 @@ struct TypingValidator: DrillValidator {
         // GATE 3: ADAPTIVE SEMANTIC MATCH
         let threshold = MasteryFilterService.calculateThreshold(
             text: cleanTarget,
-            mastery: context.state.id.isEmpty ? 0.0 : context.session.engine.getBlendedMastery(for: context.state.id),
+            mastery: context.state.id.isEmpty ? 0.0 : context.engine.getBlendedMastery(for: context.state.id),
             languageCode: langCode
         )
         

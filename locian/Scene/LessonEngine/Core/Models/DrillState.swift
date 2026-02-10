@@ -18,6 +18,7 @@ enum DrillMode: String, Codable {
     case componentTyping = "Component-Typing"
     case speaking = "Speaking"
     case ghostManager = "Ghost-Manager"
+    case prerequisites = "Prerequisites"
     
     var displayName: String {
         switch self {
@@ -35,6 +36,7 @@ enum DrillMode: String, Codable {
         case .speaking: return "SPEAKING"
         case .vocabIntro: return "VOCAB INTRODUCTION"
         case .ghostManager: return "REHEARSAL"
+        case .prerequisites: return "FOUNDATION"
         }
     }
 }
