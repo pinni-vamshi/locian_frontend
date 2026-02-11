@@ -1,8 +1,16 @@
 import SwiftUI
 
 struct BrickTypingView: View {
-    @ObservedObject var logic: BrickTypingLogic
+    @StateObject var logic: BrickTypingLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: (() -> Void)?
     @FocusState private var isFocused: Bool
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickTypingLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -38,7 +46,11 @@ struct BrickTypingView: View {
             }
             
             // 3. Footer
-            footer
+            if let wrapper = lessonDrillLogic {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {

@@ -211,7 +211,8 @@ class LearnTabState: ObservableObject {
     // MARK: - Teaching Flow
     
     func generateSentence(for moment: String, fromPlace named: String? = nil) {
-        print("\n🟢 [LearnTabState] generateSentence called")
+        // 2. Original Logic (Restored)
+        print("\n🟢 [LearnTabState] generateSentence called (LEGACY ENGINE)")
         print("   - Moment: '\(moment)'")
         print("   - Override Place: '\(named ?? "nil")'")
         
@@ -246,27 +247,11 @@ class LearnTabState: ObservableObject {
             .prefix(1)
             .map { PlaceHistoryItem(place: $0.place_name ?? "Unknown", time: $0.time ?? "00:00 AM") }
             
-        // descriptive intent
-        // We'll join the fields into a readable string for the backend
-        // descriptive intent
-        // We'll join the fields into a readable string for the backend
-        
-        if history.first?.profession != nil { 
-            // Wait, the intent usually comes from the first fetch response in refreshTokenContext/fetchFirstRecommendedPlace
-        }
-        
-        // We actually need the intent from the latest fetch. Let's find where we stored it.
-        // Actually, LearnTabService.fetchAndLoadContent returned UserIntent.
-        // For now, let's use a dummy intent or pull it from a stored property if we add one.
-        // I'll check if LearnTabState has a property for the raw intent.
-        
         self.activeGeneratingMoment = moment
         generationState = .callingAI
         
         // Removed invalid learnTabViewModel reference.
-        // TODO: Re-implement lesson completion observation if needed.
-        // For now, reliance on View state binding is sufficient.
-
+        
         rawLessonResponse = nil
         self.currentLesson = nil
         
@@ -278,7 +263,7 @@ class LearnTabState: ObservableObject {
         GenerateSentenceService.shared.generateSentence(
             placeName: placeName,
             microSituation: moment,
-            userIntent: nil, // TODO: Pull descriptive intent if available
+            userIntent: nil, // TODO: Pull descriptive intent
             previousPlaces: previousItems,
             futurePlaces: futureItems,
             sessionToken: sessionToken
@@ -289,11 +274,9 @@ class LearnTabState: ObservableObject {
                     print("   ✅ [LearnTabState] generateSentence Success")
                     self?.generationState = .preparing
                     if let data = try? JSONEncoder().encode(response), let str = String(data: data, encoding: .utf8) {
-                        print("      Raw JSON Size: \(str.count) bytes")
                         self?.rawLessonResponse = str
                     }
                     self?.currentLesson = response.data
-                    print("      Lesson Data Set. Ready to Show.")
                 case .failure(let error):
                     print("🔴 [LearnTabState] generateSentence Failed: \(error.localizedDescription)")
                     self?.generationState = .idle

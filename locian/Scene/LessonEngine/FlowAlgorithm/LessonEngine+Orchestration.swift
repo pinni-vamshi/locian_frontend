@@ -20,7 +20,6 @@ class LessonOrchestrator: ObservableObject {
     // MARK: - Entry Point (Called by Flow)
     func startPattern(_ pattern: PatternData) {
         self.currentPattern = pattern
-        engine?.patternIntroMistakes = [] // ✅ Reset mistake pool for the new pattern's intro
         
         // --- STAGE 1: VOCAB INTRO (Skip Prereqs) ---
         self.currentMode = .vocabIntro

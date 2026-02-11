@@ -18,12 +18,15 @@ class BrickClozeLogic: ObservableObject {
     @Published var isCorrect: Bool?
     
     var onComplete: (() -> Void)?
-    weak var patternIntroLogic: PatternIntroLogic?  // ✅ NEW: Reference to notify pattern intro
+    weak var patternIntroLogic: PatternIntroLogic?  // ✅ Sync: Recap Phase reporting
+    weak var lessonDrillLogic: LessonDrillLogic?    // ✅ Sync: Practice Phase (Ghost) reporting
     
-    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
         self.state = state
         self.engine = engine
         self.patternIntroLogic = patternIntroLogic
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
         
         let target = state.drillData.target
         
@@ -86,8 +89,9 @@ class BrickClozeLogic: ObservableObject {
         // UI Effects
         self.isCorrect = isCorrect
         
-        // ✅ NOTIFY PATTERN INTRO - Tell parent view to show continue button
+        // ✅ UNIFIED REPORTING - Notify the active parent manager
         patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect)
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
         
         playAudio()
     }
@@ -106,9 +110,14 @@ class BrickClozeLogic: ObservableObject {
         }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, onComplete: (() -> Void)? = nil) -> some View {
-        let logic = BrickClozeLogic(state: state, engine: engine)
-        logic.onComplete = onComplete
-        return BrickClozeView(logic: logic)
+    @ViewBuilder
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) -> some View {
+        if let introLogic = patternIntroLogic {
+            // ✅ Direction A: Pattern Intro (Recap) -> Mini Interaction
+            BrickClozeInteraction(drill: state, engine: engine, showPrompt: true, patternIntroLogic: introLogic, onComplete: onComplete)
+        } else {
+            // ✅ Direction B: Ghost Mode (Practice) -> Full View
+            BrickClozeView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete)
+        }
     }
 }

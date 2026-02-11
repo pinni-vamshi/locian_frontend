@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct BrickVoiceView: View {
-    @ObservedObject var logic: BrickVoiceLogic
+    @StateObject var logic: BrickVoiceLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: (() -> Void)?
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickVoiceLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -43,7 +51,11 @@ struct BrickVoiceView: View {
             }
             
             // 3. Footer
-            footer
+            if let wrapper = lessonDrillLogic {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
     }

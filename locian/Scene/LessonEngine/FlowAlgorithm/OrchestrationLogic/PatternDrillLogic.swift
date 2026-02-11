@@ -33,6 +33,12 @@ class LessonDrillLogic: ObservableObject {
     func markDrillAnswered(isCorrect: Bool) {
         self.isCorrect = isCorrect
         self.isDrillAnswered = true
+        
+        // ✅ NEW: Capture failure in Ghost Mode pool for both Bricks and Patterns
+        if !isCorrect {
+            engine.patternIntroMistakes.append(state)
+            print("   ⚠️ [LessonDrillLogic] Captured failure for \(state.id). Added to recycling pool.")
+        }
     }
     
     func continueToNext() {

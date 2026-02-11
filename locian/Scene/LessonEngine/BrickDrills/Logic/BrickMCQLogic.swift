@@ -12,14 +12,16 @@ class BrickMCQLogic: ObservableObject {
     
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
-    
     var onComplete: (() -> Void)?
-    weak var patternIntroLogic: PatternIntroLogic?  // ✅ NEW: Reference to notify pattern intro
+    weak var patternIntroLogic: PatternIntroLogic?  // ✅ Sync: Recap Phase reporting
+    weak var lessonDrillLogic: LessonDrillLogic?    // ✅ Sync: Practice Phase (Ghost) reporting
     
-    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
         self.state = state
         self.engine = engine
         self.patternIntroLogic = patternIntroLogic
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
         let targetLanguageCode = engine.lessonData?.target_language ?? "es"
         
         // BRICK MCQ: Meaning (L1) -> Word (L2)
@@ -78,11 +80,12 @@ class BrickMCQLogic: ObservableObject {
         let result = validator.validate(input: option, target: actualTarget, context: context)
         let isCorrect = (result == .correct || result == .meaningCorrect)
         
-        // ✅ PUBLISH TO VIEW - This triggers UI updates (colors, continue button)
+        // ✅ UI TRIGGER - Update local state to show green/red card backgrounds
         self.isCorrect = isCorrect
         
-        // ✅ NOTIFY PATTERN INTRO - Tell parent view to show continue button
+        // ✅ UNIFIED REPORTING - Notify the active parent manager
         patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect)
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
         
         // Update Mastery (Only this brick)
         let brickId = state.id.replacingOccurrences(of: "INT-", with: "")
@@ -104,9 +107,14 @@ class BrickMCQLogic: ObservableObject {
         }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, onComplete: (() -> Void)? = nil) -> some View {
-        let logic = BrickMCQLogic(state: state, engine: engine)
-        logic.onComplete = onComplete
-        return BrickMCQView(logic: logic)
+    @ViewBuilder
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) -> some View {
+        if let introLogic = patternIntroLogic {
+            // ✅ Direction A: Pattern Intro (Recap) -> Mini Interaction
+            BrickMCQInteraction(drill: state, engine: engine, showPrompt: true, patternIntroLogic: introLogic, onComplete: onComplete)
+        } else {
+            // ✅ Direction B: Ghost Mode (Practice) -> Full View
+            BrickMCQView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete)
+        }
     }
 }

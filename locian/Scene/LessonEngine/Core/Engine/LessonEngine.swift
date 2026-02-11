@@ -144,6 +144,10 @@ class LessonEngine: ObservableObject {
         recentPatternHistory.append(id)
         if recentPatternHistory.count > 4 { recentPatternHistory.removeFirst() }
         
+        // 2. 🧼 Centralized Cleanup: Clear mistakes from the just-finished pattern
+        self.patternIntroMistakes = []
+        print("   🧹 [LessonEngine] Pattern \(id) complete. Mistake pool cleared for next loop.")
+        
         // 2. Advance Groups if needed (Simple version: if all patterns in group mastered or seen)
         // For now, let the Flow decide based on current rawPatterns.
         

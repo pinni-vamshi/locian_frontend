@@ -1,9 +1,17 @@
 import SwiftUI
 
 struct BrickClozeView: View {
-    @ObservedObject var logic: BrickClozeLogic
+    @StateObject var logic: BrickClozeLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: (() -> Void)?
     @FocusState private var isFocused: Bool
     @State private var isHintExpanded: Bool = false
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickClozeLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -45,7 +53,11 @@ struct BrickClozeView: View {
             }
             
             // 3. Footer
-            footer
+            if let wrapper = lessonDrillLogic {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {

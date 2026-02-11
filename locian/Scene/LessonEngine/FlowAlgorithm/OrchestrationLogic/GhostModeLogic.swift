@@ -15,13 +15,17 @@ class GhostModeLogic: ObservableObject {
         self.targetPattern = targetPattern
         self.engine = engine
         
-        print("🌪️ [GhostMode] INITIALIZING...")
+        print("🌪️ [GhostMode] INITIALIZING... (Transitioning to: \(targetPattern.id) - \(targetPattern.drillData.target))")
         
         // 1. Phase 1: Capturing recycled mistakes from Intro
         self.mistakeQueue = engine.patternIntroMistakes
-        print("   🌪️ [GhostMode] Phase 1 (Mistakes): Found \(mistakeQueue.count) items.")
+        print("   🌪️ [GhostMode] Phase 1 (Mistakes): Found \(mistakeQueue.count) items. Pool: [\(mistakeQueue.map { $0.id }.joined(separator: ", "))]")
+        for item in mistakeQueue {
+            print("      - Pool Mistake: \(item.id) (\(item.drillData.target))")
+        }
         
         // 2. Phase 2: Building History Rehearsal Queue
+        print("   🌪️ [GhostMode] Phase 2 (History): Full Engine History: [\(engine.recentPatternHistory.joined(separator: ", "))]")
         buildHistoryQueue()
         
         // 3. Global Skip Check
@@ -45,14 +49,12 @@ class GhostModeLogic: ObservableObject {
             return
         }
         
-        // Clear engine mistakes so we don't double-practice if we re-enter
-        engine.patternIntroMistakes = []
-        
         findGhostToRehearse()
     }
     
     private func buildHistoryQueue() {
         let visited = Array(engine.recentPatternHistory).filter { $0 != targetPattern.patternId }
+        print("   🌪️ [GhostMode] History Evaluation (Filtered): \(visited)")
         print("   🌪️ [GhostMode] Phase 2 (History): Evaluating \(visited.count) recent patterns...")
         
         guard !visited.isEmpty else { 
@@ -116,11 +118,7 @@ struct GhostModeManagerView: View {
     
     var body: some View {
         ZStack {
-            if logic.shouldSkip {
-                Color.clear.onAppear {
-                    logic.engine.orchestrator?.finishGhostMode()
-                }
-            } else if let ghost = logic.activeGhost {
+            if let ghost = logic.activeGhost {
                 FullDrillManagerView(
                     state: ghost, 
                     engine: logic.engine,
@@ -131,11 +129,10 @@ struct GhostModeManagerView: View {
                         }
                     }
                 )
-                .id("ghost-practice-\(ghost.id)")
+                .id("ghost-\(ghost.isBrick ? "brick" : "pattern")-\(ghost.id)")
             } else {
-                Color.clear.onAppear {
-                    logic.engine.orchestrator?.finishGhostMode()
-                }
+                // Waiting/Finished state
+                Color.black.ignoresSafeArea()
             }
         }
         .onAppear {

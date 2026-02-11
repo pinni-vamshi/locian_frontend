@@ -1,8 +1,16 @@
 import SwiftUI
 
 struct BrickMCQView: View {
-    @ObservedObject var logic: BrickMCQLogic
+    @StateObject var logic: BrickMCQLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: (() -> Void)?
     @State private var isHintExpanded: Bool = false
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickMCQLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
+        self.lessonDrillLogic = lessonDrillLogic
+        self.onComplete = onComplete
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -37,7 +45,11 @@ struct BrickMCQView: View {
             }
             
             // 3. Footer
-            footer
+            if let wrapper = lessonDrillLogic {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
     }

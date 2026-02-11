@@ -68,6 +68,7 @@ struct LearnTabView: View {
         .onChange(of: appState.isLoadingTimeline) { _, newVal in handleLoadingHistoryChange(newVal) } 
         .onChange(of: scenePhase) { _, newPhase in handleScenePhaseChange(newPhase) }
         .onChange(of: state.showLessonView) { _, newValue in if !newValue { state.currentLesson = nil } }
+
         .fullScreenCover(isPresented: Binding(get: { state.generationState != .idle }, set: { _ in })) {
             SentenceGenerationLoadingModal(appState: appState, state: state)
         }

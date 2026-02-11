@@ -13,88 +13,90 @@ struct PatternIntroView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 1. Header (Pattern Context)
-            LessonPromptHeader(
-                instruction: "PATTERN RECAP",
-                prompt: drill.drillData.meaning,
-                targetLanguage: TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english,
-                hintText: "REVEAL TARGET",
-                meaningText: drill.drillData.target,
-                contextSentence: nil,
-                isHintExpanded: $isHintExpanded,
-                backgroundColor: .white,
-                textColor: .black
-            )
-            
-            // 2. Dynamic Horizontal Selector (Meanings/L1)
-            if !logic.brickDrills.isEmpty {
-                VStack(alignment: .leading, spacing: 12) {
-                    ScrollViewReader { proxy in
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(Array(logic.brickDrills.enumerated()), id: \.offset) { index, brickState in
-                                    let isActive = logic.currentBrickIndex == index
-                                    let meaning = brickState.drillData.meaning
-                                    
-                                    Text(meaning)
-                                        .font(.system(size: 14, weight: .black, design: .monospaced))
-                                        .foregroundColor(isActive ? .black : .white.opacity(0.4))
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 12)
-                                        .background(isActive ? CyberColors.neonCyan : Color.white.opacity(0.05))
-                                        .overlay(
-                                            Rectangle()
-                                                .stroke(isActive ? Color.white : Color.white.opacity(0.1), lineWidth: 1)
-                                        )
-                                        .id(index)
-                                }
-                            }
-                            .padding(.horizontal)
-                        }
-                        .onChange(of: logic.currentBrickIndex) { _, newIndex in
-                            withAnimation {
-                                proxy.scrollTo(newIndex, anchor: .center)
-                            }
-                            // Reset answer state when brick changes
-                            isBrickAnswered = false
-                            lastBrickResult = nil
-                        }
-                    }
-                }
-                .padding(.vertical, 20)
-                .background(Color.black)
-            }
-            
-            // 3. Dynamic Interaction Zone (L2 Focus)
-            ScrollView {
-                VStack(spacing: 0) {
-                    if let brickState = logic.currentDrill {
-                        // Create brick interaction with patternIntroLogic reference
-                        let mode = brickState.currentMode ?? BrickModeSelector.resolveMode(for: brickState, engine: engine)
-                        
-                        switch mode {
-                        case .componentMcq:
-                            PatternIntroBrickMCQ(drill: brickState, engine: engine, patternIntroLogic: logic)
-                        case .cloze:
-                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
-                        case .componentTyping:
-                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
-                        case .speaking:
-                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
-                        default:
-                            PatternIntroBrickMCQ(drill: brickState, engine: engine, patternIntroLogic: logic)
-                        }
-                    }
-                }
-                .id(logic.currentBrickIndex)  // ✅ Force view refresh when brick changes
-                .padding(.bottom, 120)  // Extra padding for footer
-            }
-            
-            // 4. Footer Logic
+            headerSection
+            horizontalSelectorSection
+            interactionZoneSection
             footer
         }
         .background(Color.black.ignoresSafeArea())
     }
+    
+    @ViewBuilder
+    private var headerSection: some View {
+        LessonPromptHeader(
+            instruction: "PATTERN RECAP",
+            prompt: drill.drillData.meaning,
+            targetLanguage: TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english,
+            hintText: "REVEAL TARGET",
+            meaningText: drill.drillData.target,
+            contextSentence: nil,
+            isHintExpanded: $isHintExpanded,
+            backgroundColor: .white,
+            textColor: .black
+        )
+    }
+    
+    @ViewBuilder
+    private var horizontalSelectorSection: some View {
+        if !logic.brickDrills.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(Array(logic.brickDrills.enumerated()), id: \.offset) { index, brickState in
+                                let isActive = logic.currentBrickIndex == index
+                                let meaning = brickState.drillData.meaning
+                                
+                                Text(meaning)
+                                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                                    .foregroundColor(isActive ? .black : .white.opacity(0.4))
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 12)
+                                    .background(isActive ? CyberColors.neonCyan : Color.white.opacity(0.05))
+                                    .overlay(
+                                        Rectangle()
+                                            .stroke(isActive ? Color.white : Color.white.opacity(0.1), lineWidth: 1)
+                                    )
+                                    .id(index)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .onChange(of: logic.currentBrickIndex) { _, newIndex in
+                        withAnimation {
+                            proxy.scrollTo(newIndex, anchor: .center)
+                        }
+                        // Reset answer state when brick changes
+                        isBrickAnswered = false
+                        lastBrickResult = nil
+                    }
+                }
+            }
+            .padding(.vertical, 20)
+            .background(Color.black)
+        }
+    }
+    
+    @ViewBuilder
+    private var interactionZoneSection: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if let brickState = logic.currentDrill {
+                    // ✅ RESTORED: Using BrickModeSelector as the universal gateway.
+                    // The BrickLogic view methods will "sense" the patternIntroLogic sensor.
+                    BrickModeSelector(
+                        drill: brickState,
+                        engine: engine,
+                        patternIntroLogic: logic,
+                        onComplete: { logic.advance() }
+                    )
+                }
+            }
+            .id(logic.currentBrickIndex)  // ✅ Force view refresh when brick changes
+            .padding(.bottom, 120)  // Extra padding for footer
+        }
+    }
+
     
     private var footer: some View {
         VStack(spacing: 0) {
@@ -125,36 +127,3 @@ struct PatternIntroView: View {
     }
 }
 
-// ✅ Custom brick MCQ interaction for Pattern Intro
-// Passes patternIntroLogic reference so brick can notify when answered
-struct PatternIntroBrickMCQ: View {
-    let drill: DrillState
-    @ObservedObject var engine: LessonEngine
-    @ObservedObject var patternIntroLogic: PatternIntroLogic
-    
-    @StateObject private var logic: BrickMCQLogic
-    
-    init(drill: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic) {
-        self.drill = drill
-        self.engine = engine
-        self.patternIntroLogic = patternIntroLogic
-        
-        _logic = StateObject(wrappedValue: BrickMCQLogic(
-            state: drill,
-            engine: engine,
-            patternIntroLogic: patternIntroLogic  // ✅ Pass reference
-        ))
-    }
-    
-    var body: some View {
-        VStack(spacing: 24) {
-            MCQSelectionGrid(
-                options: logic.options,
-                selectedOption: logic.selectedOption,
-                correctOption: (logic.isCorrect != nil) ? logic.correctOption : nil,
-                isAnswered: logic.isCorrect != nil,
-                onSelect: { option in logic.selectOption(option) }
-            )
-        }
-    }
-}
