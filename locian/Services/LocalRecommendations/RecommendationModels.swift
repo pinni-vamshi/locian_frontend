@@ -23,11 +23,6 @@ struct LocalRecommendationResult {
         self.sections = sections
         self.suggestedPlaceName = suggestedPlaceName
         self.hasHighQualityMatches = hasHighQualityMatches
-        print("\n🟢 [Model] LocalRecommendationResult initialized")
-        print("   - Sections: \(sections.count)")
-        print("   - Most Likely Items: \(sections.first?.items.count ?? 0)")
-        print("   - Suggested Name: \(suggestedPlaceName)")
-        print("   - Has High Quality Matches: \(hasHighQualityMatches)")
     }
 }
 
@@ -38,7 +33,6 @@ struct RecommendationResultSection {
     init(title: String, items: [ScoredPlace]) {
         self.title = title
         self.items = items
-        print("   🔹 [Model] Section '\(title)' Created with \(items.count) items")
     }
 }
 
@@ -55,8 +49,6 @@ struct ScoredPlace: Identifiable {
         self.score = score
         self.matchReason = matchReason
         self.extractedName = extractedName
-        // Commented out to avoid 1000s of lines per second, but can be enabled if user insists
-        // print("      🔸 [Model] ScoredPlace Created: '\(extractedName)' (Score: \(score))")
     }
 }
 

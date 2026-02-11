@@ -20,16 +20,15 @@ class GetStudiedPlacesLogic {
         data: Data,
         completion: @escaping (Result<GetStudiedPlacesResponse, Error>) -> Void
     ) {
-        print("📦 [GetStudiedPlacesLogic] Raw Data Received (\(data.count) bytes). Parsing...")
+        // Parsing...
         Task.detached { @Sendable in
             do {
                 guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    print("❌ [GetStudiedPlacesLogic] JSON Serialization failed.")
+                    // JSON Serialization failed
                     throw NSError(domain: "DecodingError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON format"])
                 }
                 
                 let success = jsonObject["success"] as? Bool ?? false
-                print("📦 [GetStudiedPlacesLogic] Success Flag: \(success)")
                 let message = jsonObject["message"] as? String
                 let error = jsonObject["error"] as? String
                 
@@ -39,13 +38,10 @@ class GetStudiedPlacesLogic {
                     // Parse the NEW hierarchical structure: dates → moments
                     var dateGroups: [DateGroup] = []
                     if let datesArray = dataObj["dates"] as? [[String: Any]] {
-                        print("📦 [GetStudiedPlacesLogic] Found \(datesArray.count) date groups")
                         
                         for dateDict in datesArray {
                             guard let dateString = dateDict["date"] as? String else { continue }
                             let momentsArray = dateDict["moments"] as? [[String: Any]] ?? []
-                            
-                            print("📦 [GetStudiedPlacesLogic] Date: '\(dateString)' - Parsing \(momentsArray.count) moments...")
                             
                             var moments: [MicroSituationData] = []
                             for momentDict in momentsArray {
@@ -54,7 +50,7 @@ class GetStudiedPlacesLogic {
                                 }
                             }
                             
-                            print("📦 [GetStudiedPlacesLogic] Successfully decoded \(moments.count) / \(momentsArray.count) moments for \(dateString)")
+                            // Successfully decoded moments
                             
                             let dateGroup = DateGroup(date: dateString, moments: moments)
                             dateGroups.append(dateGroup)
@@ -64,7 +60,6 @@ class GetStudiedPlacesLogic {
                     // Calculate totals
                     let totalDates = dateGroups.count
                     let totalMoments = dateGroups.reduce(0) { $0 + $1.moments.count }
-                    print("📦 [GetStudiedPlacesLogic] Total: \(totalDates) dates, \(totalMoments) moments")
                     
                     // Parse User Intent if available
                     var userIntent: UserIntent? = nil
@@ -94,17 +89,19 @@ class GetStudiedPlacesLogic {
                             emergency: intentDict["emergency"] as? String,
                             suggested_needs: needsString
                         )
-                        print("🧠 [GetStudiedPlacesLogic] Successfully parsed User Intent")
                     } else {
-                        print("⚠️ [GetStudiedPlacesLogic] No User Intent found in response")
+                        // No User Intent found
                     }
                     
+                    let timeSpan = dataObj["time_span"] as? String
+
                     dataDict = GetStudiedPlacesData(
                         dates: dateGroups,
                         total_dates: totalDates,
                         total_moments: totalMoments,
                         input_time: dataObj["input_time"] as? String ?? "",
-                        user_intent: userIntent
+                        user_intent: userIntent,
+                        time_span: timeSpan
                     )
                 }
                 
@@ -145,9 +142,7 @@ class GetStudiedPlacesLogic {
             }
         }
         
-        if let name = dict["place_name"] as? String {
-            print("📦 [GetStudiedPlacesLogic] Decoded place: '\(name)' at Hour: \(hour ?? -1)")
-        }
+
         
         return MicroSituationData(
             place_name: dict["place_name"] as? String,
@@ -196,7 +191,6 @@ class GetStudiedPlacesLogic {
     
     private nonisolated func parseHourFromTimeString(_ rawTimeStr: String) -> Int? {
         let timeStr = rawTimeStr.replacingOccurrences(of: "\u{00A0}", with: " ").trimmingCharacters(in: .whitespacesAndNewlines)
-        print("🕒 [GetStudiedPlacesLogic] Attempting to parse time: '\(timeStr)'")
         
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -207,13 +201,11 @@ class GetStudiedPlacesLogic {
             formatter.dateFormat = format
             if let date = formatter.date(from: timeStr) {
                 let hour = Calendar.current.component(.hour, from: date)
-                print("   ✅ Parsed with format '\(format)' -> Hour: \(hour)")
                 return hour
             }
         }
         
         // Fallback: Regex parsing
-        print("   ⚠️ Decoder failing for '\(timeStr)'. Trying Regex.")
         let pattern = #"^(\d{1,2}):(\d{2})\s*([AP]M)"#
         if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
            let match = regex.firstMatch(in: timeStr, range: NSRange(timeStr.startIndex..., in: timeStr)) {
@@ -225,12 +217,10 @@ class GetStudiedPlacesLogic {
                 var h = hVal
                 if ampmStr.uppercased() == "PM" && h < 12 { h += 12 }
                 if ampmStr.uppercased() == "AM" && h == 12 { h = 0 }
-                print("   ✅ Regex Fixed -> Hour: \(h)")
                 return h
             }
         }
         
-        print("   ❌ Parsing FAILED for '\(timeStr)'")
         return nil
     }
 }

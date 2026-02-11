@@ -12,9 +12,12 @@ class PatternTypingLogic: ObservableObject {
     @Published var userInput: String = ""
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, engine: LessonEngine) {
+    weak var lessonDrillLogic: LessonDrillLogic? // ✅ Wrapper Reference
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
         self.state = state
         self.engine = engine
+        self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.meaning
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
@@ -28,7 +31,6 @@ class PatternTypingLogic: ObservableObject {
     
     func checkAnswer() {
         guard isCorrect == nil && !userInput.isEmpty else { return }
-        print("      - Validating typing [Pattern Typing]...")
         
         // Save input to session for persistence
         // Save input to session for persistence
@@ -48,13 +50,14 @@ class PatternTypingLogic: ObservableObject {
 
         
         // 2. Perform Granular Analysis (The Ripple Effect)
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.lessonData?.bricks,
+            bricks: engine.activeGroupBricks,
             targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: userInput,
@@ -77,6 +80,9 @@ class PatternTypingLogic: ObservableObject {
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
         playAudio()
+        
+        // ✅ Notify Wrapper
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
     }
     
     func playAudio() {
@@ -85,11 +91,8 @@ class PatternTypingLogic: ObservableObject {
         AudioManager.shared.speak(text: text, language: language)
     }
     
-    func continueToNext() {
-        engine.orchestrator?.finishPattern()
-    }
-    
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
-        return PatternTypingView(state: state, engine: engine)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
+        // View now owns the logic creation via StateObject
+        return PatternTypingView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
     }
 }

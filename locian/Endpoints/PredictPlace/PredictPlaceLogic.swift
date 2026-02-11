@@ -18,22 +18,19 @@ class PredictPlaceLogic {
         data: Data,
         completion: @escaping (Result<PredictPlaceResponse, Error>) -> Void
     ) {
-        print("🧠 [PredictPlaceLogic] parseResponse called. Data size: \(data.count) bytes")
+        // parseResponse called.
         
-        // Debug: Print raw JSON string
-        if let jsonStr = String(data: data, encoding: .utf8) {
-            print("📦 [PredictPlaceLogic] RAW JSON: \(jsonStr.prefix(500))... (truncated)") 
-        }
+
 
         Task.detached { @Sendable in
             do {
                 // First decode the raw JSON to inspect structure
                 guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    print("❌ [PredictPlaceLogic] JSON Serialization Failed")
+                    // JSON Serialization Failed
                     throw NSError(domain: "PredictPlaceLogic", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON"])
                 }
                 
-                print("✅ [PredictPlaceLogic] JSON Parsed as Dictionary. Keys: \(json.keys)")
+                // JSON Parsed as Dictionary.
                 
                 let success = json["success"] as? Bool ?? false
                 let message = json["message"] as? String

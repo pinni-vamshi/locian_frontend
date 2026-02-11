@@ -27,7 +27,6 @@ class NeuralValidator: ObservableObject {
     func updateLocale(_ locale: Locale) {
         if self.targetLocale.identifier != locale.identifier {
             self.targetLocale = locale
-            print("🧠 [Neural] Switched target locale to: \(locale.identifier)")
         }
     }
     
@@ -40,8 +39,6 @@ class NeuralValidator: ObservableObject {
         if let cached = cachedEmbeddings[clean] {
             return cached
         }
-        
-        print("      🧠 [LessonFlow] [Neural] JIT Fetch for: '\(clean)'")
         
         let code = targetLocale.language.languageCode?.identifier ?? "en"
         if let vector = EmbeddingService.getVector(for: clean, languageCode: code) {
@@ -57,7 +54,6 @@ class NeuralValidator: ObservableObject {
     /// Pre-compute embeddings for a batch of sentences
     func precomputeTargets(_ targets: [String]) {
         let code = targetLocale.language.languageCode?.identifier ?? "en"
-        print("🧠 [LessonFlow] [Neural] Pre-computing embeddings for \(targets.count) targets (\(code))...")
         
         let uniqueTargets = Set(targets)
         for target in uniqueTargets {
@@ -68,61 +64,25 @@ class NeuralValidator: ObservableObject {
                 }
             }
         }
-        print("🧠 [LessonFlow] [Neural] Generated \(cachedEmbeddings.count) vectors (Memory Only).")
     }
     
     
-    // MARK: - Diagnostics (User Request)
-    static func runDiagnostics(for targetCode: String) {
-        print("\n🔍 [LessonFlow] [Neural] --- Embedding Diagnostics ---")
-        
-        let targetLang = NLLanguage(rawValue: targetCode)
-        if let targetModel = NLEmbedding.sentenceEmbedding(for: targetLang) {
-            print("   👉 [LessonFlow] Target Lang (\(targetCode)): AVAILABLE ✅ (Dim: \(targetModel.dimension))")
-        } else {
-            print("   👉 [LessonFlow] Target Lang (\(targetCode)): MISSING ❌")
-        }
-        
-        if let nativeModel = NLEmbedding.wordEmbedding(for: .english) {
-            print("   👉 [LessonFlow] Native Lang (en): AVAILABLE ✅ (Dim: \(nativeModel.dimension))")
-        } else {
-            print("   👉 [LessonFlow] Native Lang (en): MISSING ❌")
-        }
-        print("   ---------------------------------------\n")
-    }
-
-    // Instance wrapper for convenience
-    func printEmbeddingDiagnostics() {
-        let code = targetLocale.language.languageCode?.identifier ?? "en"
-        NeuralValidator.runDiagnostics(for: code)
-    }
-
     // MARK: - Asset Management
     /// Proactively download assets for a language with retries
     // MARK: - Asset Management
     /// Proactively download assets for a language with retries
     static func downloadAssets(for languageCode: String, retryCount: Int = 3) {
         let nlLanguage = NLLanguage(rawValue: languageCode)
-        print("   ⬇️ [Neural] Requesting assets for \(languageCode) (Retries left: \(retryCount))...")
         
-        NLTagger.requestAssets(for: nlLanguage, tagScheme: .lemma) { result, error in
-            if let error = error {
-                print("   ❌ [Neural] Asset Download FAILED for '\(languageCode)'")
-                print("      - Error: \(error.localizedDescription)")
-                print("      - Domain: \(error as NSError).domain")
-                print("      - Code: \((error as NSError).code)")
-                
+        NLTagger.requestAssets(for: nlLanguage, tagScheme: .lemma) { _, error in
+            if error != nil {
                 if retryCount > 0 {
-                    print("   🔄 [Neural] Retrying download for \(languageCode) in 2 seconds...")
                     DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
                         downloadAssets(for: languageCode, retryCount: retryCount - 1)
                     }
-                } else {
-                    print("   ⛔️ [Neural] Asset Download GAVE UP for \(languageCode) after all retries.")
                 }
             } else {
-                print("   ✅ [Neural] Assets Downloaded/Available for \(languageCode).")
-                print("      - Result Status: \(result.rawValue)")
+                // Done
             }
         }
     }
@@ -134,13 +94,10 @@ class NeuralValidator: ObservableObject {
         let mag2 = sqrt(v2.map { $0 * $0 }.reduce(0, +))
         
         if mag1 == 0 || mag2 == 0 {
-             print("      ⚠️ [LessonFlow] [Neural] Zero magnitude vector detected (Mag1: \(mag1), Mag2: \(mag2))")
              return 0.0
         }
         
         let sim = dot / (mag1 * mag2)
-        print("      🧮 [Neural: Cosine] Sim: \(String(format: "%.4f", sim)) | Vectors: [\(v1.count)] vs [\(v2.count)]")
-        
         return sim
     }    
         // Clamp and Invert

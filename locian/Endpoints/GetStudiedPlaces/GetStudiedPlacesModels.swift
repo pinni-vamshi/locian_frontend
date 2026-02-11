@@ -33,6 +33,7 @@ struct GetStudiedPlacesData: Codable {
     let total_moments: Int?
     let input_time: String?
     let user_intent: UserIntent?
+    let time_span: String?
     
     // For backwards compatibility, we expose a flat "places" array
     var places: [MicroSituationData] {

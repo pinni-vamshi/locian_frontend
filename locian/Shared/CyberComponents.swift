@@ -150,6 +150,9 @@ struct LessonPromptHeader: View {
     var backgroundColor: Color = .white
     var textColor: Color = .black
     
+    // NEW: Mode Indicator (e.g. "GHOST REHEARSAL")
+    var modeLabel: String? = nil
+    
     var onReplay: (() -> Void)? = nil
     
     // Default initializer without binding (for non-expandable usage)
@@ -161,6 +164,7 @@ struct LessonPromptHeader: View {
         meaning: String? = nil,
         backgroundColor: Color = .white,
         textColor: Color = .black,
+        modeLabel: String? = nil,
         onReplay: (() -> Void)? = nil
     ) {
         self.instruction = instruction
@@ -172,6 +176,7 @@ struct LessonPromptHeader: View {
         self._isHintExpanded = .constant(false)
         self.backgroundColor = backgroundColor
         self.textColor = textColor
+        self.modeLabel = modeLabel
         self.onReplay = onReplay
     }
     
@@ -185,7 +190,8 @@ struct LessonPromptHeader: View {
         contextSentence: String?,
         isHintExpanded: Binding<Bool>,
         backgroundColor: Color = .white,
-        textColor: Color = .black
+        textColor: Color = .black,
+        modeLabel: String? = nil
     ) {
         self.instruction = instruction
         self.prompt = prompt
@@ -197,6 +203,7 @@ struct LessonPromptHeader: View {
         self._isHintExpanded = isHintExpanded
         self.backgroundColor = backgroundColor
         self.textColor = textColor
+        self.modeLabel = modeLabel
         self.onReplay = nil
     }
     
@@ -204,14 +211,25 @@ struct LessonPromptHeader: View {
         HStack(alignment: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 // 1. Instruction Label
-                Text(instruction.uppercased())
-                    .font(.system(size: 12, weight: .black, design: .monospaced)) // Bold/Black font
-                    .foregroundColor(.black)
-                    .tracking(1.0)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(CyberColors.neonCyan) // Cyan Background
-                    //.cornerRadius(4) // Optional corner radius
+                HStack(alignment: .center, spacing: 8) {
+                    Text(instruction.uppercased())
+                        .font(.system(size: 12, weight: .black, design: .monospaced)) // Bold/Black font
+                        .foregroundColor(.black)
+                        .tracking(1.0)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(CyberColors.neonCyan) // Cyan Background
+                    
+                    if let modeLabel = modeLabel {
+                        Text(modeLabel.uppercased())
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                            .tracking(1.0)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 4)
+                            .background(CyberColors.neonBlue) // Distinct Blue for Mode
+                    }
+                }
                 
                 // 2. Main Prompt Text or Replay Button
                 if let replay = onReplay {
@@ -544,5 +562,47 @@ struct TypingCorrectionView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
+    }
+}
+
+// MARK: - 12. Inline Components
+struct InlineTypingInputArea: View {
+    @Binding var text: String
+    let targetWord: String
+    let isCorrect: Bool?
+    let isDisabled: Bool
+    
+    var body: some View {
+        let underlineColor: Color
+        if let correct = isCorrect {
+            underlineColor = correct ? CyberColors.success : CyberColors.error
+        } else {
+            underlineColor = CyberColors.neonCyan
+        }
+
+        return ZStack(alignment: .bottom) {
+            // 1. Hidden Measurement Text (Forces ZStack to targetWord's exact width)
+            Text(targetWord)
+                .font(.system(size: 24, weight: .bold)) // Must match TextField
+                .foregroundColor(.clear)
+                .fixedSize(horizontal: true, vertical: true)
+                .padding(.horizontal, 2) // Slight breathing room for the caret
+            
+            // 2. The actual input field
+            TextField("", text: $text)
+                .font(.system(size: 24, weight: .bold))
+                .multilineTextAlignment(.center)
+                .foregroundColor(.white)
+                .disabled(isDisabled)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .baselineOffset(-2) // Sync baseline
+            
+            // 3. The Underline
+            Rectangle()
+                .frame(height: 3)
+                .foregroundColor(underlineColor)
+                .offset(y: 4)
+        }
     }
 }

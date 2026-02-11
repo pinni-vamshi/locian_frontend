@@ -14,15 +14,11 @@ extension LessonEngine {
             languageCode: self.lessonData?.target_language ?? "en"
         )
         
-        print("\n🧱 [LessonFlow] [BricksCalculations] Arranging bricks for Pattern: \(state.id)")
-        print("   📊 [LessonFlow] [BricksCalculations] Pattern Mastery: \(String(format: "%.2f", patternMastery)) -> Dynamic Threshold: \(String(format: "%.2f", dynamicThreshold))")
-        
         // 1.5 Tag the Sentence (System Tagger)
         let sentenceTags = TokenTaggerService.tagContent(
             text: state.drillData.target,
             languageCode: self.lessonData?.target_language ?? "en"
         )
-        print("   🏷️ [LessonFlow] [BricksCalculations] Tags: \(sentenceTags)")
         
         // 2. Perform Filtering & Scoring
         var bricksToQueue: [(id: String, score: Double)] = []
@@ -32,7 +28,8 @@ extension LessonEngine {
             let brickId = match.id
             
             // B. Semantic Filter & Type Check
-            if let brick = MasteryFilterService.getBrick(id: brickId, from: lessonData?.bricks) {
+            // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
+            if let brick = MasteryFilterService.getBrick(id: brickId, from: activeGroupBricks) {
                 
                 // [MODIFIED] Use System Tagger instead of API Lists
                 // "Variable" -> Content Word (Noun, Verb, Adj, Adv) in THIS context
@@ -76,7 +73,8 @@ extension LessonEngine {
         let sortedIds = bricksToQueue.sorted { $0.score > $1.score }.map { $0.id }
         
         // Resolve full objects in sorted order
-        let finalTextBricks = MasteryFilterService.resolveBricks(ids: Set(sortedIds), from: lessonData?.bricks)
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
+        let finalTextBricks = MasteryFilterService.resolveBricks(ids: Set(sortedIds), from: activeGroupBricks)
             .sorted { brick1, brick2 in
                 // Re-apply sort because resolveBricks returns arbitrary order
                 let score1 = bricksToQueue.first(where: { $0.id == (brick1.id ?? brick1.word) })?.score ?? 0
@@ -84,7 +82,6 @@ extension LessonEngine {
                 return score1 > score2
             }
         
-        print("   � [LessonFlow] [BricksCalculations] Final Count: \(finalTextBricks.count)")
         return finalTextBricks
     }
     
@@ -92,7 +89,6 @@ extension LessonEngine {
     private func ensureDrillStateExists(for brickId: String, originalPattern: DrillState, brick: BrickItem) {
         let drillId = "INT-\(brickId)"
         if !allDrills.contains(where: { $0.id == drillId }) {
-            print("      🏭 [BricksQueuing] Materializing State for: \(brick.word)")
             let fakeItem = DrillItem(
                 target: brick.word,
                 meaning: brick.meaning,

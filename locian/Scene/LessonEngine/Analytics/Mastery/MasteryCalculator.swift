@@ -33,8 +33,6 @@ struct MasteryCalculator {
         // No fancy weights, no time multipliers, no 'new pattern' logic.
         let combinedScore = (structureScore + brickScore) / 2.0
         
-        print("   🧮 [Basics Calc] \(id): (Struct \(String(format: "%.2f", structureScore)) + Bricks \(String(format: "%.2f", brickScore))) / 2 = \(String(format: "%.2f", combinedScore))")
-        
         return min(combinedScore, 1.0)
     }
     

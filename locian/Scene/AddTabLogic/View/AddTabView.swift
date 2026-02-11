@@ -43,18 +43,20 @@ struct AddTabView: View {
                 }
                 
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 48) { // Increased from 24 to 48
+                    VStack(alignment: .leading, spacing: 4) { // Reduced spacing to bring sections together
                         // timelineSection removed - user doesn't need next/previous routine display
                         // .diagnosticBorder(.pink, width: 1, label: "TIMELINE")
                         textInputSection
+                            .padding(.bottom, 5) // Small extra gap as requested
                             .diagnosticBorder(.cyan, width: 1, label: "INPUT")
                         suggestedPlacesView
                             .diagnosticBorder(.white.opacity(0.3), width: 1, label: "SUGGESTED")
                         imageActionsSection
+                            .padding(.top, 44) // Add "cabin" gap
                             .diagnosticBorder(.green.opacity(0.3), width: 1, label: "IMAGES")
                         Spacer(minLength: 100)
                     }
-                    .padding(.top, 20) // Add space from header
+                    .padding(.top, 35) // Increased from 20 to 35 to provide breathing room from header
                     .diagnosticBorder(.white.opacity(0.2), width: 1.5, label: "SEC_V_S:48")
                     .background(Color.black)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -213,39 +215,64 @@ struct AddRoutineHeader: View {
     var onStart: () -> Void
     var body: some View {
         let hr = Calendar.current.component(.hour, from: Date())
-        VStack(alignment: .leading, spacing: 10) {
-            if let p = selectedPlaces[hr] {
-                Button(action: onStart) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack { Image(systemName: "hand.tap.fill"); Text(LocalizationManager.shared.string(.tapToStartLearning)) }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
-                            .diagnosticBorder(.gray, width: 0.5)
-                        LocianSmartHeader(text: p.uppercased(), fontSize: 35.5, maxLines: 3, textColor: .white, shadowColor: .gray, scale: 1.0)
-                            .diagnosticBorder(.white, width: 1)
+        let nextHr = (hr + 1) % 24
+        
+        VStack(spacing: 0) {
+            // Replaced Button with onTapGesture to allow ScrollView interaction
+            HStack(alignment: .top, spacing: 16) {
+                // LEFT SIDE: NOW
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("NOW")
+                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .foregroundColor(ThemeColors.secondaryAccent)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Color.white.opacity(0.1))
+                        .diagnosticBorder(.white.opacity(0.3), width: 0.5)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        Text((selectedPlaces[hr] ?? "ADD ROUTINE").uppercased())
+                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
-                    .diagnosticBorder(.blue, width: 1.5)
-                    .padding(.horizontal, 16).padding(.vertical, 12)
-                }.buttonStyle(PlainButtonStyle())
-            } else {
-                Button(action: { showingRoutineModal = true }) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack { Image(systemName: "hand.tap.fill"); Text(LocalizationManager.shared.string(.tapToSetup)) }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5))
-                            .diagnosticBorder(.gray, width: 0.5)
-                        LocianSmartHeader(text: LocalizationManager.shared.string(.addRoutine).uppercased(), fontSize: 35.5, maxLines: 3, textColor: .white, shadowColor: .gray, scale: 1.0)
-                            .diagnosticBorder(.white, width: 1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                // VERTICAL DIVIDER
+                Rectangle()
+                    .fill(Color.white.opacity(0.2))
+                    .frame(width: 1, height: 40)
+                    
+                // RIGHT SIDE: LATER
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("LATER")
+                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.5))
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(Color.white.opacity(0.1))
+                        .diagnosticBorder(.white.opacity(0.3), width: 0.5)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        Text((selectedPlaces[nextHr] ?? "ADD ROUTINE").uppercased())
+                            .font(.system(size: 24, weight: .black, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineLimit(1)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
-                    .diagnosticBorder(.orange, width: 1.5)
-                    .padding(.horizontal, 16).padding(.vertical, 12)
-                }.buttonStyle(PlainButtonStyle())
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            
-            // Only show Edit Routine button if user has at least one routine set
-            if !selectedPlaces.isEmpty {
-                ZStack { Rectangle().fill(Color.white.opacity(0.3)).frame(height: 1); Button(action: { showingRoutineModal = true }) { Text("EDIT ROUTINE").font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundColor(.black).padding(.horizontal, 12).padding(.vertical, 4).background(ThemeColors.primaryAccent) } }
-                    .diagnosticBorder(.white.opacity(0.2), width: 1)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 22) // Adjusted height to 22 as requested
+            .background(Color.black)
+            .diagnosticBorder(.white.opacity(0.2), width: 1, label: "ROUTINE_SPLIT")
+            .contentShape(Rectangle()) // Ensure tap works on empty spaces
+            .onTapGesture {
+                showingRoutineModal = true
             }
         }
-        .diagnosticBorder(.pink.opacity(0.3), width: 2)
-        .padding(.top, 10).padding(.trailing, 16)
+        .padding(.top, 22) // Adjusted top spacing to 22 as requested
     }
 }
 
@@ -323,8 +350,8 @@ struct SuggestedPlacesView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack { Image(systemName: "location.fill"); Text(LocalizationManager.shared.string(.chooseContext)) }.font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.5)).padding(.bottom, 6).padding(.leading, 6)
-                .diagnosticBorder(.white.opacity(0.2), width: 0.5, label: "P:B6,L6")
+
+            
             
             HStack(spacing: 0) {
                 VerticalHeading(

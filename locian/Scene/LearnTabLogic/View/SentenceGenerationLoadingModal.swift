@@ -188,7 +188,6 @@ struct SentenceGenerationLoadingModal: View {
         .onAppear {
             dataReady = isReady
             checkModelStatus()
-            NeuralValidator.runDiagnostics(for: targetCode)
             startAnimationSequence()
         }
         .onChange(of: isReady) { _, newValue in

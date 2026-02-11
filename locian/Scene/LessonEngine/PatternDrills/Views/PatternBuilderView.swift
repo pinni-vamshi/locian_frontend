@@ -3,9 +3,11 @@ import SwiftUI
 struct PatternBuilderView: View {
     @StateObject private var logic: PatternBuilderLogic
     @EnvironmentObject var appState: AppStateManager
+    var lessonDrillLogic: LessonDrillLogic?
     
-    init(state: DrillState, engine: LessonEngine) {
-        _logic = StateObject(wrappedValue: PatternBuilderLogic(state: state, engine: engine, appState: nil))
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+        _logic = StateObject(wrappedValue: PatternBuilderLogic(state: state, engine: engine, appState: nil, lessonDrillLogic: lessonDrillLogic))
+        self.lessonDrillLogic = lessonDrillLogic
     }
     
     var body: some View {
@@ -18,7 +20,8 @@ struct PatternBuilderView: View {
                         prompt: logic.prompt,
                         targetLanguage: logic.targetLanguage,
                         backgroundColor: .white,
-                        textColor: .black
+                        textColor: .black,
+                        modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
                     )
                     
                     Color.clear.frame(height: 40) // Spacing from header
@@ -94,7 +97,13 @@ struct PatternBuilderView: View {
             }
             
             // 3. Footer (STAYS FIXED)
-            footer
+            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
+            if let wrapper = lessonDrillLogic, logic.checked {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                // Otherwise show Local Footer (Check Button)
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {
@@ -114,7 +123,7 @@ struct PatternBuilderView: View {
                         let title = isCorrect ? "CORRECT!" : "INCORRECT"
                         
                         CyberProceedButton(
-                            action: { logic.continueToNext() },
+                            action: { lessonDrillLogic?.continueToNext() },
                             label: "NEXT_STORY_STEP",
                             title: title,
                             color: color,
@@ -201,9 +210,9 @@ fileprivate struct ExploreSimilarWordsSection: View {
             // Search Results
             if logic.isSearching {
                 ProgressView()
-                    .tint(CyberColors.neonCyan)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                .tint(CyberColors.neonCyan)
+                .frame(maxWidth: .infinity)
+                .padding()
             } else if !logic.searchResults.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(logic.searchResults) { item in
@@ -221,8 +230,8 @@ fileprivate struct ExploreSimilarWordsSection: View {
                             }
                             
                             Text(item.meaning)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white)
                             
                             if let example = item.example_sentence {
                                 Text(example)
@@ -284,4 +293,3 @@ fileprivate struct TechWordButton: View {
         .buttonStyle(.plain)
     }
 }
-

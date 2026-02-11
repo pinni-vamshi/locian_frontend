@@ -4,7 +4,7 @@ import Foundation
 struct SemanticFilterService {
     
     // MARK: - LOGGING
-    static let LOG_FILTERING = true
+    static let LOG_FILTERING = false
     
     /// Finds relevant bricks in the text using Neural Search (ContentAnalyzer)
     static func getFilteredBricks(
@@ -17,11 +17,6 @@ struct SemanticFilterService {
         validator: NeuralValidator?,
         threshold: Double // NOW PASSED IN
     ) -> [MasteryFilterService.FilterResult] { 
-        
-        if LOG_FILTERING {
-            print("\n🧱 [LessonFlow] [SemanticFilter] Starting SEMANTIC analysis for: \(drillId ?? "Unknown")")
-            print("   📏 [LessonFlow] [Parameter] Using Threshold: \(String(format: "%.2f", threshold))")
-        }
         
         // DYNAMIC LOGIC REMOVED (User Request Step 4998)
         // Now handled by caller (LessonEngine+Bricks).
@@ -66,22 +61,11 @@ struct SemanticFilterService {
             maxScore = max(maxScore, meaningScore)
             
             scoredBricks.append((brickId: candidateId, score: maxScore))
-            
-            if LOG_FILTERING {
-                let statusEmoji = maxScore >= threshold ? "✅" : "⚠️"
-                print("      \(statusEmoji) [Semantic] '\(brick.word)': \(String(format: "%.3f", maxScore))")
-                print("         ↳ Target (L2) Similarity: \(String(format: "%.3f", targetScore))")
-                print("         ↳ Meaning (L1) Similarity: \(String(format: "%.3f", meaningScore))")
-            }
         }
 
         
         // Filter by threshold
         let filteredBricks = scoredBricks.filter { $0.score >= threshold }
-        
-        if LOG_FILTERING {
-            print("   🔍 [LessonFlow] [SemanticFilter] Filtered \(filteredBricks.count)/\(scoredBricks.count) bricks (threshold: \(String(format: "%.2f", threshold)))")
-        }
         
         // Convert to FilterResult format (mastery will be looked up by caller)
         return filteredBricks.map { 

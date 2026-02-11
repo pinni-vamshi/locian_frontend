@@ -1,19 +1,18 @@
 import SwiftUI
 
-struct PatternDictationView: View {
-    @ObservedObject var logic: PatternVoiceLogic
+struct BrickVoiceView: View {
+    @ObservedObject var logic: BrickVoiceLogic
     
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
                 // 1. Header
                 LessonPromptHeader(
-                    instruction: "LISTEN AND TYPE",
+                    instruction: "SPEAK THE WORD",
                     prompt: logic.prompt,
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
-                    textColor: .black,
-                    onReplay: { logic.playAudio() }
+                    textColor: .black
                 )
                 
                 // 2. Body
@@ -63,7 +62,7 @@ struct PatternDictationView: View {
                     title: title,
                     color: color,
                     systemImage: "arrow.right",
-                    isEnabled: true
+                    isEnabled: !logic.isAudioPlaying
                 )
             } else {
                 CyberProceedButton(

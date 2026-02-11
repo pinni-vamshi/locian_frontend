@@ -33,9 +33,6 @@ class MCQOptionGenerator {
 
     /// Generate L2 distractor options for a target (L2) answer
     static func generateOptions(target: String, candidates: [String], targetLanguage: String, validator: NeuralValidator? = nil) -> [String] {
-        print("\n🎲 [LessonFlow] [MCQ-Gen] Generating Options for: '\(target)'")
-        print("   - Pool Size: \(candidates.count)")
-        
         var opts = Set<String>()
         opts.insert(target)
         
@@ -45,28 +42,19 @@ class MCQOptionGenerator {
         var allCandidates = candidates.shuffled() // Default random
         var similarityMap: [String: Double] = [:]
 
-        // Debug: Check who is calling and what they passed
+        // Check A:
         if validator == nil {
-             print("   ⚠️ [LessonFlow] [MCQ-Gen] Validator is NIL! (Caller passed nothing)")
         }
         
         // Use centralized semantic logic from ContentAnalyzer
         if let validator = validator {
-             print("   🧠 [LessonFlow] [Neural Engine] Status: SUCCESS (Using ContentAnalyzer Unified Logic)")
-             
              for c in candidates {
                  // Use similarity directly (1.0 = identical, 0.0 = unrelated)
                  let sim = SemanticMatcher.calculatePairSimilarity(target: targetText, candidate: c, validator: validator)
                  similarityMap[c] = sim
-                 
-                 // EXTENSIVE LOG:
-                 print("      - Candidate: '\(c.prefix(15))...' -> Score: \(String(format: "%.4f", sim))")
              }
         } else {
             // Fallback: Use Levenshtein (Spelling Distance)
-            print("   🧠 [LessonFlow] [Neural Engine] Status: FAILED (Model Missing)")
-            print("   ⚠️ Sorting FULL pool by Spelling distance (Levenshtein)...")
-            
             for c in candidates {
                 // Normalize by length matches roughly (0-large)
                 // For Levenshtein, lower is better, so we invert it to match similarity semantics
@@ -100,7 +88,6 @@ class MCQOptionGenerator {
         
         // Pass 2: Fallback (Relaxed Type) - From Top 20
         if opts.count < 4 {
-            print("   ⚠️ Options < 4 (\(opts.count)). Filling from Top 20 Sorted...")
             for candidate in topTier {
                 if opts.count >= 4 { break }
                 if !opts.contains(candidate) && candidate != targetText {
@@ -111,7 +98,6 @@ class MCQOptionGenerator {
         
         // Pass 3: Random Fill (If Top 20 wasn't enough)
         if opts.count < 4 {
-             print("   ⚠️ Options < 4 (\(opts.count)). Filling from Random Remaining...")
              for candidate in bottomTier {
                  if opts.count >= 4 { break }
                  if !opts.contains(candidate) && candidate != targetText {
@@ -121,14 +107,11 @@ class MCQOptionGenerator {
         }
         
         let finalOpts = Array(opts.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }).shuffled()
-        print("   ✅ [MCQ-Gen] Finished. Distractors: \(finalOpts.filter { $0 != targetText })")
         return finalOpts
     }
     
     /// Generate Native (L1) options for a Target (L2) audio/text
     static func generateNativeOptions(targetMeaning: String, candidates: [String], validator: NeuralValidator? = nil) -> [String] {
-        print("\n🎲 [LessonFlow] [Native-MCQ-Gen] Generating Options for: '\(targetMeaning)'")
-        
         var opts = Set<String>()
         opts.insert(targetMeaning)
         
@@ -138,16 +121,13 @@ class MCQOptionGenerator {
         var allCandidates = candidates.shuffled() // Default random
         var similarityMap: [String: Double] = [:]
         
-        // Debug: Check validator
+        // Check A:
         if validator == nil {
-             print("   ⚠️ [LessonFlow] [MCQ-Gen] Native Validator is NIL!")
         }
         
         // Use centralized semantic logic from ContentAnalyzer
         // Even for Native, the logic (Containment + Embedding) is valid.
         if let validator = validator {
-            print("   🧠 [LessonFlow] [Neural Engine] Status: SUCCESS (Using ContentAnalyzer Unified Logic)")
-            
             for c in candidates {
                 // Use similarity directly (no conversion)
                 let sim = SemanticMatcher.calculatePairSimilarity(target: targetMean, candidate: c, validator: validator)
@@ -191,7 +171,6 @@ class MCQOptionGenerator {
 
         // Pass 2: Fallback (Relaxed Type) - From Top 20
         if opts.count < 4 {
-            // print("   ⚠️ Options < 4 (\(opts.count)). Filling from Top 20 Sorted...")
             for candidate in topTier {
                 if opts.count >= 4 { break }
                 if !opts.contains(candidate) && candidate != targetMean {
@@ -202,7 +181,6 @@ class MCQOptionGenerator {
         
         // Pass 3: Random Fill
         if opts.count < 4 {
-             // print("   ⚠️ Options < 4 (\(opts.count)). Filling from Random Remaining...")
              for candidate in bottomTier {
                  if opts.count >= 4 { break }
                  if !opts.contains(candidate) && candidate != targetMean {
@@ -212,7 +190,6 @@ class MCQOptionGenerator {
         }
         
         let finalOpts = Array(opts.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }).shuffled()
-        print("   ✅ [Native-MCQ-Gen] Finished. Distractors: \(finalOpts.filter { $0 != targetMeaning })")
         return finalOpts
     }
 }

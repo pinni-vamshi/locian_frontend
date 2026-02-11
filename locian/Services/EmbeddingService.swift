@@ -21,19 +21,17 @@ class EmbeddingService {
         if #available(macOS 14.0, iOS 17.0, *) {
             let lang = NLLanguage(rawValue: code)
             guard let model = NLContextualEmbedding(language: lang) else {
-                print("   ⚠️ [Embedding: Download] Contextual embedding not supported for '\(code)'.")
                 completion(false)
                 return
             }
             
             model.requestAssets { status, error in
-                if let error = error {
-                    print("   ❌ [Embedding: Download] Asset request failed for '\(code)': \(error.localizedDescription)")
+                if error != nil {
                     completion(false)
                     return
                 }
                 
-                print("   🧠 [Embedding: Download] Status for '\(code)': \(status == .available ? "AVAILABLE" : "NOT YET AVAILABLE")")
+
                 completion(status == .available)
             }
         } else {
@@ -80,10 +78,8 @@ class EmbeddingService {
     
     /// Converts any text (Brick or Pattern) into a vector for the specified language.
     static func getVector(for text: String, languageCode: String) -> [Double]? {
-        print("\n🆔 [Embedding] getVector: '\(text)' (Lang: \(languageCode))")
         let cleanText = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanText.isEmpty else { 
-            print("   ❌ [Embedding] Text is empty. Returning nil.")
             return nil 
         }
         
@@ -91,32 +87,23 @@ class EmbeddingService {
         let cacheKey = "\(cleanText)_\(code)"
         
         if let cached = vectorCache[cacheKey] {
-            print("   🟢 [Embedding] Cache HIT for '\(cleanText)'")
             return cached
         }
-        print("   🟠 [Embedding] Cache MISS. Generating vector...")
         
         // 1. Try Contextual Embedding (iOS 17+)
         if #available(macOS 14.0, iOS 17.0, *) {
-            print("   🔍 [Embedding] Attempting Contextual...")
             if let vector = getContextualVector(for: cleanText, languageCode: code) {
-                print("   ✅ [Embedding] Contextual SUCCESS (Dim: \(vector.count))")
                 vectorCache[cacheKey] = vector
                 return vector
             }
         }
         
         // 2. Fallback to Static Embedding
-        print("   🔍 [Embedding] Attempting Static Fallback...")
         if let staticModel = getStaticModel(for: code) {
             if let vector = staticModel.vector(for: cleanText) {
-                print("   ✅ [Embedding] Static SUCCESS (Dim: \(vector.count))")
                 vectorCache[cacheKey] = vector
                 return vector
             }
-            print("   ❌ [Embedding] Static vector() returned nil.")
-        } else {
-            print("   ❌ [Embedding] No models available for '\(code)'.")
         }
 
         return nil
@@ -126,7 +113,6 @@ class EmbeddingService {
     private static func getContextualVector(for text: String, languageCode: String) -> [Double]? {
         let code = normalizeCode(languageCode)
         guard let model = getContextualModel(for: code) else { 
-            print("      ❌ [Contextual] Model assets not missing for '\(code)'")
             return nil 
         }
         let lang = NLLanguage(rawValue: code)
@@ -146,11 +132,9 @@ class EmbeddingService {
             
             if tokenCount > 0 {
                 let final = sumVector.map { $0 / Double(tokenCount) }
-                // print("      ✅ [Contextual] Averaged \(tokenCount) tokens.")
                 return final
             }
         } catch {
-            print("      ⚠️ [Contextual] Error in embeddingResult: \(error.localizedDescription)")
         }
         return nil
     }

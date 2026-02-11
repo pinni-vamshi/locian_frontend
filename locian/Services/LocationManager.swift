@@ -136,6 +136,21 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     // MARK: - Nearby Places
+    struct NearbyAmbience: Codable {
+        let id: String
+        let name: String
+        let latitude: Double
+        let longitude: Double
+        let vector: [Double]
+    }
+    
+    @Published var nearbyPlaceAmbience: [NearbyAmbience] = []
+    
+    private var currentLanguageCode: String {
+        let nativeName = AppStateManager.shared.nativeLanguage
+        return NativeLanguageMapping.shared.getCode(for: nativeName) ?? "en"
+    }
+    
     func fetchNearbyPlaces(completion: @escaping ([String]) -> Void) {
         print("📍 [NEARBY] Starting fetchNearbyPlaces...")
         
@@ -168,52 +183,55 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private func performLocalSearch(location: CLLocation, completion: @escaping ([String]) -> Void) {
         print("📍 [NEARBY] Performing MKLocalPointsOfInterestRequest...")
         
-        // Use MKLocalPointsOfInterestRequest (iOS 14+) which finds ALL POIs without a text query
         let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 5000) // 5km radius
-        request.pointOfInterestFilter = .includingAll // Get everything
+        request.pointOfInterestFilter = .includingAll
         
         let search = MKLocalSearch(request: request)
         search.start { response, error in
             if let error = error {
-                let nsError = error as NSError
-                if nsError.domain == MKErrorDomain && nsError.code == 4 {
-                    print("⚠️ [NEARBY] MapKit Error 4: Placemark not found. Triggering fallback...")
-                } else if nsError.domain == NSURLErrorDomain && nsError.code == -1009 {
-                     print("❌ [NEARBY] Network Error: The Internet connection appears to be offline.")
-                } else {
-                    print("❌ [NEARBY] MapKit Search Error: \(error.localizedDescription)")
-                }
-                
-                // On ANY error (including Code 4), try the fallback
+                print("❌ [NEARBY] MapKit Search Error: \(error.localizedDescription)")
                 self.performGeocoderFallback(location: location, completion: completion)
                 return
             }
             
             guard let response = response else {
-                print("❌ [NEARBY] MapKit response was NIL. Triggering fallback...")
                 self.performGeocoderFallback(location: location, completion: completion)
                 return
             }
             
             if response.mapItems.isEmpty {
-                 print("ℹ️ [NEARBY] Search succeeded but found 0 places nearby. Triggering fallback...")
                  self.performGeocoderFallback(location: location, completion: completion)
                  return
             }
             
-            print("✅ [NEARBY] Got \(response.mapItems.count) items from MapKit")
-            
-            // Sort by distance
+            // Sort and uniquely name
             let sortedItems = response.mapItems.sorted { item1, item2 in
                 let dist1 = item1.placemark.location?.distance(from: location) ?? Double.greatestFiniteMagnitude
                 let dist2 = item2.placemark.location?.distance(from: location) ?? Double.greatestFiniteMagnitude
                 return dist1 < dist2
             }
             
-            let places = sortedItems.compactMap { $0.name }
-            // Let's take up to 30 since we are filtering duplicates
-            let uniquePlaces = Array(Set(places)).prefix(20)
-            completion(Array(uniquePlaces))
+            var ambience: [NearbyAmbience] = []
+            for item in sortedItems {
+                guard let name = item.name, let loc = item.placemark.location else { continue }
+                if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
+                    // Use coordinate hash as stable identifier since itemIdentifier is not available
+                    let stableID = "\(loc.coordinate.latitude)_\(loc.coordinate.longitude)"
+                    ambience.append(NearbyAmbience(
+                        id: stableID,
+                        name: name,
+                        latitude: loc.coordinate.latitude,
+                        longitude: loc.coordinate.longitude,
+                        vector: vector
+                    ))
+                }
+            }
+            
+            DispatchQueue.main.async {
+                self.nearbyPlaceAmbience = ambience
+                print("🎨 [NEARBY] Generated ambience for \(ambience.count) places.")
+                completion(ambience.map { $0.name })
+            }
         }
     }
     

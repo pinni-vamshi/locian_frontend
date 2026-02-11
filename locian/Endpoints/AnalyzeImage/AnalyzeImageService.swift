@@ -111,19 +111,19 @@ class AnalyzeImageService {
             
             // 2. Start Timeout Timer (3.0s)
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                print("⏳ [AnalyzeImageService] GPS Timeout (3s) reached. Proceeding without location.")
+                // GPS Timeout (3s) reached. Proceeding without location.
                 proceed(location: nil)
             }
             
             // 3. Request Location
-            print("📍 [AnalyzeImageService] Requesting current location via LocationManager...")
+            // Requesting current location via LocationManager...
             LocationManager.shared.getCurrentLocation { result in
                 switch result {
                 case .success(let location):
-                    print("📍 [AnalyzeImageService] Location fetched: \(location.coordinate)")
+                    // Location fetched
                     proceed(location: location)
-                case .failure(let error):
-                    print("⚠️ [AnalyzeImageService] Location fetch failed: \(error.localizedDescription)")
+                case .failure:
+                    // Location fetch failed
                     proceed(location: nil)
                 }
             }

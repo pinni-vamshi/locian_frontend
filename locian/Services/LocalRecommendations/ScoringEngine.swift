@@ -16,7 +16,6 @@ class ScoringEngine {
     // MARK: - Core Scoring
     
     func score(place: MicroSituationData, intentVectors: [String: [Double]], userLocation: CLLocation?, languageCode: String) -> [ScoredPlace] {
-        // print("\n🟢 [ScoringEngine] score() called for Place: '\(place.place_name ?? "Unknown")'")
         var scoredMoments: [ScoredPlace] = []
         
         // 1. Semantic Similarity (Max-Sim Strategy)
@@ -26,12 +25,10 @@ class ScoringEngine {
                 for moment in section.moments {
                     // 🚀 USE PRE-CALCULATED EMBEDDING FROM THE SOURCE
                     guard let momentVector = moment.embedding else {
-                        print("      ⚠️ [ScoringEngine] Moment '\(moment.text.prefix(30))...' has NO embedding. Skipping.")
                         continue
                     }
                     
-                    print("\n      🧠 [ScoringEngine] SCORING: '\(moment.text.prefix(40))...'")
-                    print("         Vector Dimension: \(momentVector.count)")
+
                     
                     // --- MAX SIMILARITY LOGIC ---
                     var maxSim = 0.0
@@ -47,9 +44,7 @@ class ScoringEngine {
                     
                     let baseScore = maxSim // Raw Cosine Similarity (0.0 to 1.0)
                     
-                    if maxSim > 0.05 {
-                         print("      🧠 [ScoringEngine] '...' -> Similarity: \(String(format: "%.3f", maxSim)) (Best Match: \(bestField))")
-                    }
+
                     
                     // Only include relevant matches
                     if maxSim > 0.1 {
@@ -90,11 +85,9 @@ class ScoringEngine {
                             if distance < 100 {
                                 gpsBoost = 0.2 // Boost logic scaled down found to fit [0,1] range roughly or just add on top
                                 matchReasons.append("Nearby (<100m)")
-                                print("         📍 GPS Boost (+0.2) Applied")
                             } else if distance < 500 {
                                 gpsBoost = 0.1
                                 matchReasons.append("Nearby (<500m)")
-                                print("         📍 GPS Boost (+0.1) Applied")
                             }
                         }
                         
@@ -164,30 +157,20 @@ class ScoringEngine {
         guard magnitudeA > 0, magnitudeB > 0 else { return 0.0 }
         let similarity = dotProduct / (magnitudeA * magnitudeB)
         
-        // 🧮 [DETAILED MATH LOGGING]
-        if similarity > 0.15 { // Only log meaningful similarities
-            print("         🧮 [Math] Dot Product: \(String(format: "%.4f", dotProduct))")
-            print("         🧮 [Math] ||A||: \(String(format: "%.4f", magnitudeA)), ||B||: \(String(format: "%.4f", magnitudeB))")
-            print("         🧮 [Math] Cosine Similarity = \(String(format: "%.4f", dotProduct)) / (\(String(format: "%.4f", magnitudeA)) * \(String(format: "%.4f", magnitudeB))) = \(String(format: "%.4f", similarity))")
-        }
+
         
         return similarity
     }
     
     private func extractPlaceName(from place: MicroSituationData) -> String {
-        // print("\n🟢 [ScoringEngine] extractPlaceName called for Place ID: \(place.id)")
         let rawName = place.place_name ?? "Unknown Place"
         
         if rawName != "Unknown Place" && rawName != "Unknown" {
-            // print("   ✅ Using Raw Name: '\(rawName)'")
             return rawName
         }
         
-       // print("   ⚠️ Raw Name is Unknown. Attempting NLTagger extraction...")
-        
         // Try to extract from context if name is unknown
         if let context = place.context_description {
-            // print("   🔹 Context available: '\(context)'")
             let tagger = NLTagger(tagSchemes: [.nameType, .lexicalClass])
             tagger.string = context
             var foundName: String?
@@ -195,7 +178,6 @@ class ScoringEngine {
             tagger.enumerateTags(in: context.startIndex..<context.endIndex, unit: .word, scheme: .nameType, options: [.omitPunctuation, .omitWhitespace]) { tag, range in
                 if tag == .placeName || tag == .organizationName {
                     foundName = String(context[range])
-                    // print("      ✅ NLTagger Found: '\(foundName ?? "")' (Tag: \(tag?.rawValue ?? "nil"))")
                     return false // Stop at first found
                 }
                 return true
@@ -203,11 +185,7 @@ class ScoringEngine {
             
             if let name = foundName {
                 return name.capitalized
-            } else {
-                // print("      ❌ NLTagger found nothing valid.")
             }
-        } else {
-            // print("      ❌ No Context Description available.")
         }
         
         return rawName

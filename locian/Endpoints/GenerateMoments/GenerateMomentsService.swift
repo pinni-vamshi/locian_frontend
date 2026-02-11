@@ -93,19 +93,18 @@ class GenerateMomentsService: ObservableObject {
         
         // 2. Start Timeout Timer (3.0s)
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            print("⏳ [GenerateMomentsService] GPS Timeout (3s) reached. Proceeding without location.")
+            // GPS Timeout (3s) reached. Proceeding without location.
             proceed(location: nil)
         }
         
         // 3. Request Location
-        print("📍 [GenerateMomentsService] Requesting current location...")
         LocationManager.shared.getCurrentLocation { result in
             switch result {
             case .success(let location):
-                print("📍 [GenerateMomentsService] Location fetched: \(location.coordinate)")
+                // Location fetched
                 proceed(location: location)
-            case .failure(let error):
-                print("⚠️ [GenerateMomentsService] Location fetch failed: \(error.localizedDescription)")
+            case .failure:
+                // Location fetch failed
                 proceed(location: nil)
             }
         }

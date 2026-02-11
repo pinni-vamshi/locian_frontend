@@ -48,27 +48,18 @@ struct LessonView: View {
                 
                 // --- MAIN CONTENT ---
                 ZStack {
-                    if let state = engine.orchestrator?.activeState {
-                         if state.isBrick {
-                             BrickModeSelector(drill: state, engine: engine)
-                                 .id(state.id)
-                                 .transition(.opacity)
-                         } else {
-                             switch state.currentMode {
-                             case .prerequisites:
-                                 PrerequisiteManagerView(state: state, engine: engine)
-                                     .id("prereq-\(state.id)")
-                             case .vocabIntro:
-                                 PatternIntroManagerView(state: state, engine: engine)
-                                     .id("intro-\(state.id)")
-                             case .ghostManager:
-                                 GhostModeManagerView(targetPattern: state, engine: engine)
-                                     .id("ghost-\(state.id)")
-                             default:
-                                 PatternDrillManagerView(state: state, engine: engine)
-                                     .id("practice-\(state.id)")
-                             }
-                         }
+                    if let orchestrator = engine.orchestrator, let state = orchestrator.activeState {
+                        switch state.currentMode {
+                        case .vocabIntro:
+                            PatternIntroManagerView(state: state, engine: engine)
+                                .id("intro-\(state.id)")
+                        case .ghostManager:
+                            GhostModeManagerView(targetPattern: state, engine: engine)
+                                .id("ghost-\(state.id)")
+                        default:
+                            FullDrillManagerView(state: state, engine: engine)
+                                .id("practice-\(state.id)")
+                        }
                     } else if engine.isSessionComplete {
 LessonCompletionView(onFinish: {
                             dismiss()
@@ -77,7 +68,6 @@ LessonCompletionView(onFinish: {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: CyberColors.neonCyan))
                             .onAppear {
-                                print("🚀 [LessonView] Booting Engine with Data...")
                                 engine.initialize(with: lessonData)
                                 
                                 // Kickstart the flow
@@ -92,11 +82,9 @@ LessonCompletionView(onFinish: {
         }
         .navigationBarBackButtonHidden(true)
         .onAppear {
-            print("\n🎬 [LessonView] View Mounted")
             appState.isLessonActive = true
         }
         .onDisappear {
-            print("🛑 [LessonView] View Unmounted")
             appState.isLessonActive = false
         }
     }

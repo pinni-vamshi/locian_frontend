@@ -18,11 +18,6 @@ enum SentenceGenerationState {
     case preparing      // New: Response received, preparing lesson
 }
 
-// MARK: - Timeline Data (App-level wrapper)
-struct TimelineData {
-    let places: [MicroSituationData]
-    let inputTime: String?
-}
 
 // MARK: - Main State
 class LearnTabState: ObservableObject {
@@ -124,6 +119,7 @@ class LearnTabState: ObservableObject {
         // CRITICAL: Observe when recommendations are ready
         LocalRecommendationService.shared.$hasHighQualityMatches
             .receive(on: RunLoop.main)
+            .removeDuplicates() // ✅ STOP THE LOOP: Only fire when state ACTUALLY changes
             .sink { [weak self] ready in
                 print("🔄 [LearnTabState] LocalRecommendationService.hasHighQualityMatches changed: \(ready)")
                 if ready {

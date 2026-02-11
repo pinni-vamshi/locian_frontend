@@ -14,7 +14,11 @@ class AddTabState: ObservableObject {
     @Published var activeGenerationSource: AddTabGenerationSource = .none
     
     // Routine Management
-    @Published var routineSelections: [Int: String] = [:]
+    @Published var routineSelections: [Int: String] = [:] {
+        didSet {
+            saveRoutineSelections()
+        }
+    }
     @AppStorage("routine_selections_json") private var routineSelectionsJSON: String = "{}"
     
     // Pull-to-Refresh State
@@ -59,11 +63,7 @@ class AddTabState: ObservableObject {
     // MARK: - Persistence
     
     func saveRoutineSelections() {
-        // Backend validation: Only save if user has earned the routine feature
-        guard maxLongestStreak > 3 else {
-            print("⚠️ [ROUTINE] Cannot save routine. User needs streak > 3. Current: \(maxLongestStreak)")
-            return
-        }
+
         
         if let encoded = try? JSONEncoder().encode(routineSelections) {
             routineSelectionsJSON = String(data: encoded, encoding: .utf8) ?? "{}"

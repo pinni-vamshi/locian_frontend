@@ -1,43 +1,45 @@
 import SwiftUI
 
-struct BrickVoiceView: View {
-    @ObservedObject var logic: BrickVoiceLogic
+struct BrickClozeView: View {
+    @ObservedObject var logic: BrickClozeLogic
+    @FocusState private var isFocused: Bool
+    @State private var isHintExpanded: Bool = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
-                // 1. Header
+                // 1. Header with Hint (meaning only)
                 LessonPromptHeader(
-                    instruction: "SPEAK THE WORD",
+                    instruction: "FILL IN THE BLANK",
                     prompt: logic.prompt,
                     targetLanguage: logic.targetLanguage,
+                    hintText: "Hint",
+                    meaningText: logic.state.contextMeaning ?? logic.state.drillData.meaning,
+                    contextSentence: nil,
+                    isHintExpanded: $isHintExpanded,
                     backgroundColor: .white,
                     textColor: .black
                 )
                 
                 // 2. Body
                 ScrollView {
-                    VStack(spacing: 32) {
-                        SharedMicButton(
-                            isRecording: logic.isRecording,
-                            action: { logic.triggerSpeechRecognition() }
+                    VStack(spacing: 24) {
+                        // FALLBACK / TRADITIONAL MODE
+                        TypingInputArea(
+                            text: $logic.userInput,
+                            placeholder: "Fill in the blank...",
+                            isCorrect: logic.isCorrect,
+                            isDisabled: logic.isCorrect != nil
                         )
-                        .padding(.top, 60)
-                        
-                        // User Transcript (Keep below as it grows)
-                        if !logic.recognizedText.isEmpty || logic.isRecording {
-                            Text("\"" + logic.recognizedText + "\"")
-                                .font(.system(size: 22, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                        }
+                        .focused($isFocused)
+                        .padding(.horizontal, 24)
                         
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
                             TypingCorrectionView(correctAnswer: logic.state.drillData.target)
                         }
                     }
+                    .padding(.top, 80)
                     .padding(.bottom, 120)
                 }
             }
@@ -46,6 +48,9 @@ struct BrickVoiceView: View {
             footer
         }
         .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            isFocused = true
+        }
     }
     
     private var footer: some View {

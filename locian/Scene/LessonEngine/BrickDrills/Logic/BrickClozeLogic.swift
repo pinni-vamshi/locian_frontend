@@ -9,28 +9,43 @@ class BrickClozeLogic: ObservableObject {
     let prompt: String
     let targetLanguage: String
     
+    // Inline Support
+    let sentencePartA: String?
+    let sentencePartB: String?
+    let isInline: Bool
+    
     @Published var userInput: String = ""
     @Published var isCorrect: Bool?
     
     var onComplete: (() -> Void)?
+    weak var patternIntroLogic: PatternIntroLogic?  // ✅ NEW: Reference to notify pattern intro
     
-    init(state: DrillState, engine: LessonEngine) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil) {
         self.state = state
         self.engine = engine
+        self.patternIntroLogic = patternIntroLogic
         
-        // Generate Cloze Prompt: "Es mi _______"
-        // If context exists, mask the target word. Otherwise fallback to meaning (Typing style).
+        let target = state.drillData.target
+        
         if let context = state.contextSentence, !context.isEmpty {
-            let target = state.drillData.target
-            // Case-insensitive replacement
-            let masked = context.replacingOccurrences(of: target, with: "_______", options: .caseInsensitive)
-            self.prompt = masked
-            print("   🧩 [BrickCloze] Mode: Context Masking")
-            print("      - Original: '\(context)'")
-            print("      - Masked:   '\(masked)'")
+            // Case-insensitive range finding
+            if let range = context.range(of: target, options: .caseInsensitive) {
+                self.sentencePartA = String(context[..<range.lowerBound])
+                self.sentencePartB = String(context[range.upperBound...])
+                self.isInline = true
+                self.prompt = context.replacingOccurrences(of: target, with: "_______", options: .caseInsensitive)
+            } else {
+                // Fallback if target not found in context (shouldn't happen with system logic)
+                self.sentencePartA = nil
+                self.sentencePartB = nil
+                self.isInline = false
+                self.prompt = context.replacingOccurrences(of: target, with: "_______", options: .caseInsensitive)
+            }
         } else {
+            self.sentencePartA = nil
+            self.sentencePartB = nil
+            self.isInline = false
             self.prompt = state.drillData.meaning // Fallback
-            print("   🧩 [BrickCloze] Mode: Meaning Fallback (No Context Available)")
         }
         
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
@@ -46,8 +61,6 @@ class BrickClozeLogic: ObservableObject {
     
     func checkAnswer() {
         guard isCorrect == nil && !userInput.isEmpty else { return }
-        print("   👉 [BrickCloze] Checking answer: '\(userInput)'")
-        print("      - Validating cloze [Brick Cloze]...")
         
         // Save input to session for persistence
         // Save input if needed (skipped for now as we removed session.activeInput)
@@ -72,6 +85,10 @@ class BrickClozeLogic: ObservableObject {
         
         // UI Effects
         self.isCorrect = isCorrect
+        
+        // ✅ NOTIFY PATTERN INTRO - Tell parent view to show continue button
+        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect)
+        
         playAudio()
     }
     
@@ -82,11 +99,16 @@ class BrickClozeLogic: ObservableObject {
     }
     
     func continueToNext() {
-        onComplete?()
+        if let onComplete = onComplete {
+            onComplete()
+        } else {
+            engine.orchestrator?.finishPattern()
+        }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, onComplete: (() -> Void)? = nil) -> some View {
         let logic = BrickClozeLogic(state: state, engine: engine)
+        logic.onComplete = onComplete
         return BrickClozeView(logic: logic)
     }
 }

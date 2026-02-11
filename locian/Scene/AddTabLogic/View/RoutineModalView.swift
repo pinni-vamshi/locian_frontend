@@ -13,10 +13,7 @@ struct RoutineModalView: View {
     @Binding var selectedPlaces: [Int: String]
     @State private var localSelections: [Int: String] = [:]
     
-    var canSave: Bool {
-        let maxStreak = appState.userLanguagePairs.map { calculateStreak(practiceDates: $0.practice_dates) }.max() ?? 0
-        return maxStreak > 3
-    }
+
     
     var body: some View {
         ZStack(alignment: .top) {
@@ -48,63 +45,10 @@ struct RoutineModalView: View {
                 VStack(spacing: 12) { 
                     Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
                     
-                    // Progress indicator
-                    let currentStreak = appState.userLanguagePairs.map { calculateStreak(practiceDates: $0.practice_dates) }.max() ?? 0
-                    let daysRemaining = max(0, 3 - currentStreak)
+
                     
-                    if !canSave {
-                        VStack(spacing: 8) {
-                            HStack {
-                                Text("METRIC_REPORT")
-                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white.opacity(0.5))
-                                Spacer()
-                                Text("THRESHOLD")
-                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white.opacity(0.5))
-                            }
-                            
-                            HStack {
-                                Text("STREAK: \(currentStreak)")
-                                    .font(.system(size: 20, weight: .black))
-                                    .foregroundColor(.white)
-                                Spacer()
-                                Text("REQUIRED")
-                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white.opacity(0.7))
-                            }
-                            
-                            // Progress bar
-                            let progress = min(CGFloat(currentStreak) / 3.0, 1.0)
-                            
-                            ZStack(alignment: .leading) {
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.1))
-                                    .frame(height: 8)
-                                
-                                Rectangle()
-                                    .fill(ThemeColors.getColor(for: "Neon Green"))
-                                    .frame(width: progress * (UIScreen.main.bounds.width - 64), height: 8)
-                            }
-                            
-                            // Days remaining message
-                            if daysRemaining == 1 {
-                                Text("Need 1 more day to save your routine")
-                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                    .foregroundColor(ThemeColors.secondaryAccent)
-                            } else if daysRemaining > 1 {
-                                Text("Need \(daysRemaining) more days to save your routine")
-                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                                    .foregroundColor(ThemeColors.secondaryAccent)
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.05))
-                    }
-                    
-                    // Only show button when user can save
-                    if canSave {
+                    // Always show button
+
                         LocianButton(
                             action: { 
                                 selectedPlaces = localSelections
@@ -119,7 +63,7 @@ struct RoutineModalView: View {
                                 .padding(.vertical, 8)
                         }
                         .diagnosticBorder(.pink, width: 1)
-                    }
+
                 }
                 .diagnosticBorder(.white.opacity(0.1), width: 1)
                 .padding(16)

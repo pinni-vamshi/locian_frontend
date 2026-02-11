@@ -8,6 +8,8 @@ struct PatternIntroView: View {
     @ObservedObject var logic: PatternIntroLogic
     
     @State private var isHintExpanded: Bool = false
+    @State private var isBrickAnswered: Bool = false
+    @State private var lastBrickResult: Bool?  // true = correct, false = incorrect
     
     var body: some View {
         VStack(spacing: 0) {
@@ -53,6 +55,9 @@ struct PatternIntroView: View {
                             withAnimation {
                                 proxy.scrollTo(newIndex, anchor: .center)
                             }
+                            // Reset answer state when brick changes
+                            isBrickAnswered = false
+                            lastBrickResult = nil
                         }
                     }
                 }
@@ -64,55 +69,92 @@ struct PatternIntroView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     if let brickState = logic.currentDrill {
-                        // Using the specialized interaction dispatcher
-                        // This will show MCQ, Typing, or Voice based on the pre-resolved mode
-                        BrickModeSelector.interactionView(
-                            for: brickState, 
-                            engine: engine, 
-                            showPrompt: false,
-                            onComplete: { logic.advance() }
-                        )
-                        .id("brick-interaction-\(brickState.id)")
-                        .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
-                                              removal: .move(edge: .leading).combined(with: .opacity)))
+                        // Create brick interaction with patternIntroLogic reference
+                        let mode = brickState.currentMode ?? BrickModeSelector.resolveMode(for: brickState, engine: engine)
+                        
+                        switch mode {
+                        case .componentMcq:
+                            PatternIntroBrickMCQ(drill: brickState, engine: engine, patternIntroLogic: logic)
+                        case .cloze:
+                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
+                        case .componentTyping:
+                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
+                        case .speaking:
+                            BrickModeSelector.interactionView(for: brickState, engine: engine, showPrompt: true, patternIntroLogic: logic, onComplete: { logic.advance() })
+                        default:
+                            PatternIntroBrickMCQ(drill: brickState, engine: engine, patternIntroLogic: logic)
+                        }
                     }
                 }
-                .padding(.bottom, 100)
+                .id(logic.currentBrickIndex)  // ✅ Force view refresh when brick changes
+                .padding(.bottom, 120)  // Extra padding for footer
             }
             
             // 4. Footer Logic
             footer
         }
         .background(Color.black.ignoresSafeArea())
-        // .onChange(of: engine.lastAnswerCorrect) { ... } Removed deprecated logic
     }
     
     private var footer: some View {
         VStack(spacing: 0) {
-            // TODO: Refactor Footer to not use deprecated engine.lastAnswerCorrect
-            /*
-            if let isCorrect = engine.lastAnswerCorrect {
+            if logic.currentBrickAnswered {
                 Divider().background(Color.white.opacity(0.1))
                 
-                let color: Color = isCorrect ? CyberColors.neonPink : .red
-                let title = isCorrect ? "CORRECT!" : "INCORRECT"
+                let color: Color = logic.currentBrickCorrect ? CyberColors.neonPink : .red
+                let title = logic.currentBrickCorrect ? "CORRECT!" : "INCORRECT"
+                let isLastBrick = logic.currentBrickIndex == (logic.brickDrills.count - 1)
+                let buttonLabel = isLastBrick ? "CONTINUE" : "NEXT_COMPONENT"
                 
                 CyberProceedButton(
                     action: { 
                         logic.advance()
-                        engine.lastAnswerCorrect = nil
                     },
-                    label: "NEXT_COMPONENT",
+                    label: buttonLabel,
                     title: title,
                     color: color,
                     systemImage: "arrow.right",
-                    isEnabled: true
+                    isEnabled: !logic.isAudioPlaying
                 )
+               .padding(.horizontal)
                 .padding(.top, 16)
                 .padding(.bottom, 8)
                 .background(Color.black)
             }
-            */
+        }
+    }
+}
+
+// ✅ Custom brick MCQ interaction for Pattern Intro
+// Passes patternIntroLogic reference so brick can notify when answered
+struct PatternIntroBrickMCQ: View {
+    let drill: DrillState
+    @ObservedObject var engine: LessonEngine
+    @ObservedObject var patternIntroLogic: PatternIntroLogic
+    
+    @StateObject private var logic: BrickMCQLogic
+    
+    init(drill: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic) {
+        self.drill = drill
+        self.engine = engine
+        self.patternIntroLogic = patternIntroLogic
+        
+        _logic = StateObject(wrappedValue: BrickMCQLogic(
+            state: drill,
+            engine: engine,
+            patternIntroLogic: patternIntroLogic  // ✅ Pass reference
+        ))
+    }
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            MCQSelectionGrid(
+                options: logic.options,
+                selectedOption: logic.selectedOption,
+                correctOption: (logic.isCorrect != nil) ? logic.correctOption : nil,
+                isAnswered: logic.isCorrect != nil,
+                onSelect: { option in logic.selectOption(option) }
+            )
         }
     }
 }

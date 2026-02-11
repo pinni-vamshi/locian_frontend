@@ -386,10 +386,6 @@ struct LearnTabView: View {
 
     private func recommendedCardHeader(momentData: UnifiedMoment, time: String, isGreen: Bool) -> some View {
         HStack { 
-            if let mastery = getMomentMastery(momentData) {
-                Text("\(Int(mastery * 100))%")
-                    .foregroundColor(isGreen ? .black.opacity(0.8) : ThemeColors.secondaryAccent)
-            }
             Spacer() 
             Text(time) 
         }
@@ -427,22 +423,4 @@ struct LearnTabView: View {
         }
     }
 
-    // MARK: - Mastery Calculation
-    
-    private func getMomentMastery(_ momentData: UnifiedMoment) -> Double? {
-        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
-        let targetLangCode = activePair?.target_language ?? "en"
-        
-        // Use existing embedding if available (Fixes redundant on-the-fly generation)
-        let vector = momentData.embedding
-        
-        let score = SemanticMemoryService.shared.getEffectiveMastery(
-            text: momentData.text,
-            vector: vector, 
-            languageCode: targetLangCode,
-            currentStep: 0
-        )
-        
-        return score > 0.05 ? score : nil // Only show if there's meaningful progress
-    }
 }

@@ -34,13 +34,19 @@ struct ValidationUtils {
     
     /// Calculate Levenshtein distance between two strings
     static func levenshteinDistance(_ s1: String, _ s2: String) -> Int {
+        if s1.isEmpty { return s2.count }
+        if s2.isEmpty { return s1.count }
+        
         let s1 = Array(s1)
         let s2 = Array(s2)
         let m = s1.count
         let n = s2.count
+        
         var matrix = Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
+        
         for i in 0...m { matrix[i][0] = i }
         for j in 0...n { matrix[0][j] = j }
+        
         for i in 1...m {
             for j in 1...n {
                 if s1[i-1] == s2[j-1] {

@@ -20,7 +20,6 @@ func pickNextPattern(history: [String], mastery: [String: Double], candidates: [
             
             if historyWeakSpots.isEmpty {
                 // ALL PATTERNS IN CURRENT GROUP > 0.85 -> Advance or Stop
-                print("   🏁 [Flow] ALL patterns in group mastered (>0.85). Advancing Group...")
                 DispatchQueue.main.async {
                     self.orchestrator?.engine?.advanceGroup()
                 }
@@ -28,7 +27,6 @@ func pickNextPattern(history: [String], mastery: [String: Double], candidates: [
             } else {
                 // Polish the weakest link in the recent history
                 if let weakest = historyWeakSpots.min(by: { (mastery[$0.id] ?? 0.0) < (mastery[$1.id] ?? 0.0) }) {
-                    print("   ✨ [Flow] Non-history mastered. Polishing weakest history pattern: \(weakest.id)")
                     orchestrator?.startPattern(weakest)
                     return
                 }
@@ -49,8 +47,6 @@ func pickNextPattern(history: [String], mastery: [String: Double], candidates: [
         let selected = potential.min(by: { 
             (mastery[$0.id] ?? 0.0) < (mastery[$1.id] ?? 0.0)
         }) ?? candidates[0]
-        
-        print("   🎯 [Flow] Selected Weakest Candidate: '\(selected.id)' (Mastery: \(String(format: "%.2f", mastery[selected.id] ?? 0.0)))")
         
         // 3. HANDOFF: Flow -> Orchestrator
         orchestrator?.startPattern(selected)

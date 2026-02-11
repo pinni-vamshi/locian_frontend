@@ -28,10 +28,13 @@ class PatternBuilderLogic: ObservableObject {
     let prompt: String
     let targetLanguage: String
     
-    init(state: DrillState, engine: LessonEngine, appState: AppStateManager?) {
+    weak var lessonDrillLogic: LessonDrillLogic? // ✅ Wrapper Reference
+    
+    init(state: DrillState, engine: LessonEngine, appState: AppStateManager?, lessonDrillLogic: LessonDrillLogic? = nil) {
         self.state = state
         self.engine = engine
         self.appState = appState
+        self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.meaning
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
@@ -80,11 +83,9 @@ class PatternBuilderLogic: ObservableObject {
     @Published private var _isCorrectResult: Bool?
     
     func checkAnswer() {
-        guard !checked else { return }
         checked = true
         
         let userInput = selectedTokens.map { $0.text }.joined(separator: " ")
-        print("      🔍 [LessonFlow] [PatternBuilder] Validating with inputs: '\(userInput)'")
         
         let context = ValidationContext(
             state: state,
@@ -99,13 +100,14 @@ class PatternBuilderLogic: ObservableObject {
         let isCorrect = (result == .correct || result == .meaningCorrect)
         
         // 2. Perform Granular Analysis (The Ripple Effect)
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.lessonData?.bricks,
+            bricks: engine.activeGroupBricks,
             targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: userInput,
@@ -114,12 +116,6 @@ class PatternBuilderLogic: ObservableObject {
             type: .typing, // Builder validates like typing
             context: context
         )
-        print("      🌊 [Ripple] Analyzing constituent bricks for Mastery Impact...")
-        for (i, res) in rippleResults.enumerated() {
-            let status = res.isCorrect ? "✅ MATCH" : "❌ MISS "
-            print("         [\(i)] Brick: '\(res.brickId.prefix(10))...' -> \(status) (Sim: \(String(format: "%.2f", res.similarity)))")
-        }
-        print("      🌊 [Ripple] Summary: \(rippleResults.filter { $0.isCorrect }.count)/\(rippleResults.count) Bricks Correct")
         
         // 3. Update Mastery Directly in Engine
         let delta = isCorrect ? 0.30 : -0.10
@@ -134,15 +130,14 @@ class PatternBuilderLogic: ObservableObject {
         // 4. Trigger UI Side Effects in Engine
         // 4. Trigger UI Side Effects in Engine
         self._isCorrectResult = isCorrect
+        
+        // ✅ Notify Wrapper
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
     }
     
     func selectExploreWord(_ word: String) {
         selectedExploreWord = word
         fetchSimilarWords(for: word)
-    }
-    
-    func continueToNext() {
-        engine.orchestrator?.finishPattern()
     }
     
     func getWordColor(_ word: String, index: Int) -> Color {
@@ -156,16 +151,18 @@ class PatternBuilderLogic: ObservableObject {
         return .red
     }
     
+    
     func computeValidBricks() {
         let targetCode = engine.lessonData?.target_language ?? "es"
         let nativeCode = engine.lessonData?.user_language ?? "en"
 
         // Use SemanticFilterService to get actual scores for all candidate bricks
         // Use threshold 0.0 here because we want to see ALL matches to rank them
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
         let brickMatches = SemanticFilterService.getFilteredBricks(
             text: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.lessonData?.bricks,
+            bricks: engine.activeGroupBricks,
             targetLanguage: targetCode,
             nativeLanguage: nativeCode,
             validator: NeuralValidator(),
@@ -174,10 +171,11 @@ class PatternBuilderLogic: ObservableObject {
         
         let brickIds = brickMatches.map { $0.brickId }
         
-        if let lessonData = engine.lessonData {
-            let allBricks = (lessonData.bricks?.constants ?? []) + 
-                           (lessonData.bricks?.variables ?? []) + 
-                           (lessonData.bricks?.structural ?? [])
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
+        if let groupBricks = engine.activeGroupBricks {
+            let allBricks = (groupBricks.constants ?? []) + 
+                           (groupBricks.variables ?? []) + 
+                           (groupBricks.structural ?? [])
             
             for brickId in brickIds {
                 if let brick = allBricks.first(where: { ($0.id ?? $0.word) == brickId }) {
@@ -205,7 +203,6 @@ class PatternBuilderLogic: ObservableObject {
             .sorted(by: { $0.2 > $1.2 })
             
             self.exploreWords = Array(scoredExplore.prefix(3))
-            print("   🛠️ [PatternBuilder] Computed \(validBrickWords.count) valid bricks and \(exploreWords.count) explore words")
         }
     }
     
@@ -217,7 +214,6 @@ class PatternBuilderLogic: ObservableObject {
         }
         
         guard let token = appState?.authToken else { return }
-        
         
         isSearching = true
         GetSimilarWordsService.shared.getSimilarWords(
@@ -236,15 +232,15 @@ class PatternBuilderLogic: ObservableObject {
                         self?.similarWordsCache[word] = data
                         self?.searchResults = data.similar_words ?? []
                     }
-                case .failure(let error):
-                    print("❌ [SimilarWords] Error: \(error.localizedDescription)")
+                case .failure:
                     self?.searchResults = []
                 }
             }
         }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
-        return PatternBuilderView(state: state, engine: engine)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
+        // View now owns the logic creation via StateObject
+        return PatternBuilderView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
     }
 }

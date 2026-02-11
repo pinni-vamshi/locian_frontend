@@ -31,18 +31,18 @@ class PredictPlaceService: ObservableObject {
             lock.lock()
             guard !didProceed else { 
                 lock.unlock()
-                print("🛑 [PredictPlaceService] 'proceed' blocked - already proceeded.")
+                // 'proceed' blocked - already proceeded.
                 return 
             }
             didProceed = true
             lock.unlock()
             
-            print("🚀 [PredictPlaceService] 'proceed' executing with \(fetchedPlaces.count) places.")
+            
+            // 'proceed' executing
 
             // 2. Gather History Context from TimelineContextService
             let timeline = AppStateManager.shared.timeline
             let history = timeline?.places ?? []
-            print("   -> History Count: \(history.count)")
             
             let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
             
@@ -50,11 +50,8 @@ class PredictPlaceService: ObservableObject {
             let previous = context.pastPlaces.map { $0.toContext }
             let future = context.futurePlaces.map { $0.toContext }
             
-            print("   -> Past Context: \(previous.count) (Most Common: \(context.mostCommonPastPlace ?? "None"))")
-            print("   -> Future Context: \(future.count) (Most Common: \(context.mostCommonFuturePlace ?? "None"))")
             
             // 3. Perform the actual request
-            print("   -> Calling performPredictRequest...")
             self.performPredictRequest(
                 places: fetchedPlaces,
                 previousPlaces: Array(previous),
@@ -66,14 +63,13 @@ class PredictPlaceService: ObservableObject {
         
         // Start Timeout Timer (2.0s) // Changed from 10s to 2.0s as per requirement
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            print("⏳ [PredictPlaceService] GPS Timeout (2s) reached. Proceeding without places.")
+            // GPS Timeout (2s) reached. Proceeding without places.
             proceed(with: [])
         }
         
         // Start GPS Fetch
-        print("📍 [PredictPlaceService] requesting fetchNearbyPlaces...")
         LocationManager.shared.fetchNearbyPlaces { nearbyPlaces in
-            print("📍 [PredictPlaceService] GPS Fetch returned \(nearbyPlaces.count) places.")
+            // GPS Fetch returned places.
             proceed(with: nearbyPlaces)
         }
     }
@@ -96,11 +92,10 @@ class PredictPlaceService: ObservableObject {
         dateFormatter.dateFormat = "MMMM d, yyyy"
         let dateString = dateFormatter.string(from: currentDate)
         
-        print("🕒 [PredictPlaceService] Current Time: \(timeString), Date: \(dateString)")
+
         
         // Gather location
         let userLocation = LocationManager.shared.currentLocation
-        print("📍 [PredictPlaceService] User Coords: \(String(describing: userLocation?.coordinate))")
         
         // Gather user profile data from AppState
         let appState = AppStateManager.shared
@@ -109,7 +104,7 @@ class PredictPlaceService: ObservableObject {
         let userLanguage = appState.nativeLanguage
         let level = defaultPair?.user_level ?? "BEGINNER"
         
-        print("👤 [PredictPlaceService] Profile: \(userLanguage) -> \(String(describing: targetLanguage)) [\(level)]")
+
         
         // Build request
         let request = PredictPlaceRequest(
@@ -125,11 +120,9 @@ class PredictPlaceService: ObservableObject {
             date: dateString
         )
         
-        print("📦 [PredictPlaceService] Request Body Prepared. Places Count: \(places.count)")
-        
         let headers = ["Authorization": "Bearer \(sessionToken)"]
         
-        print("🚀 [PredictPlaceService] Sending Raw Request to /api/user/context/text...")
+        // Sending Raw Request...
         BaseAPIManager.shared.performRawRequest(
             endpoint: "/api/user/context/text",
             method: "POST",
@@ -141,10 +134,10 @@ class PredictPlaceService: ObservableObject {
                 
                 switch result {
                 case .success(let data):
-                    print("✅ [PredictPlaceService] Raw Response Received: \(data.count) bytes")
+                    // Raw Response Received
                     PredictPlaceLogic.shared.parseResponse(data: data, completion: completion)
                 case .failure(let error):
-                    print("❌ [PredictPlaceService] Raw Request Failed: \(error.localizedDescription)")
+                    // Raw Request Failed
                     completion(.failure(error))
                 }
             }

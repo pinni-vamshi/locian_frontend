@@ -10,18 +10,23 @@ class PatternVoiceLogic: ObservableObject {
     let targetLanguage: String
     
     @Published var isCorrect: Bool?
+    @Published var isAudioPlaying: Bool = false
     private var cancellables = Set<AnyCancellable>()
     
     // Local Speech Recognizer (or Shared Singleton)
     private let speechRecognizer = SpeechRecognizer.shared 
     
-    init(state: DrillState, engine: LessonEngine) {
+    weak var lessonDrillLogic: LessonDrillLogic? // ✅ Wrapper Reference
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
         self.state = state
         self.engine = engine
+        self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.target
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         // BRIDGE: Notify View when speech recognizer updates
+        speechRecognizer.reset()
         speechRecognizer.objectWillChange
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
@@ -42,17 +47,13 @@ class PatternVoiceLogic: ObservableObject {
     
     func triggerSpeechRecognition() {
         if speechRecognizer.isRecording {
-            print("   🎤 [BrickVoice] STOPPING recording. Finalizing transcript...")
             speechRecognizer.stopRecording()
         } else {
-            print("   🎤 [BrickVoice] Requesting MIC access via Autonomous Service...")
             PermissionsService.shared.ensureVoiceAccess { granted in
                 guard granted else { 
-                    print("   🚫 [BrickVoice] Access DENIED. Alert handled by Service.")
                     return 
                 }
                 
-                print("   🎤 [BrickVoice] Access GRANTED. STARTING recording...")
                 try? self.speechRecognizer.startRecording()
             }
         }
@@ -60,7 +61,12 @@ class PatternVoiceLogic: ObservableObject {
     
     func checkAnswer() {
         guard isCorrect == nil else { return }
-        print("      - Validating voice [Pattern Voice]...")
+        
+        // LOGIC CORRECT: Stop recording BEFORE checking answer and playing feedback
+        // This prevents the speaker and mic from fighting during validation
+        if speechRecognizer.isRecording {
+            speechRecognizer.stopRecording()
+        }
         
         let input = speechRecognizer.recognizedText
         let context = ValidationContext(
@@ -76,13 +82,14 @@ class PatternVoiceLogic: ObservableObject {
         let isCorrect = (result == .correct || result == .meaningCorrect)
         
         // 2. Perform Granular Analysis (The Ripple Effect)
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.lessonData?.bricks,
+            bricks: engine.activeGroupBricks,
             targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: input,
@@ -106,20 +113,31 @@ class PatternVoiceLogic: ObservableObject {
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
         playAudio()
-    }
-    
-    func continueToNext() {
-        engine.orchestrator?.finishPattern()
+        
+        // ✅ Notify Wrapper
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
     }
     
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(text: text, language: language)
+        
+        self.isAudioPlaying = true
+        self.lessonDrillLogic?.isAudioPlaying = true
+        AudioManager.shared.speak(text: text, language: language) { [weak self] in
+            DispatchQueue.main.async {
+                self?.isAudioPlaying = false
+                self?.lessonDrillLogic?.isAudioPlaying = false
+            }
+        }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
-        let logic = PatternVoiceLogic(state: state, engine: engine)
-        return PatternDictationView(logic: logic)
+    deinit {
+        speechRecognizer.stopRecording()
+    }
+    
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
+        // View now owns the logic creation via StateObject
+        return PatternDictationView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
     }
 }

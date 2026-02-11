@@ -64,7 +64,7 @@ struct LessonGroup: Codable, Identifiable, Sendable {
     var id: String { group_id }
     
     var patterns: [PatternData]?
-    var prerequisites: [BrickItem]?
+
     var bricks: BricksData?
 }
 
@@ -88,9 +88,6 @@ struct BrickItem: Codable, Identifiable, Sendable {
     
     // Semantic Vector (Filled by Logic Layer)
     var vector: [Double]?
-    
-    // Mastery Score (Filled by Logic Layer, Read by Engine)
-    var mastery: Double?
 }
 
 struct BricksData: Codable, Sendable {
@@ -116,9 +113,7 @@ struct PatternData: Codable, Identifiable, Sendable {
     
     // Semantic Vector (Filled by Logic Layer)
     var vector: [Double]?
-    
-    // Mastery Score (Filled by Logic Layer)
-    var mastery: Double?
+    var mastery: Int?
 }
 
 struct DrillItem: Codable, Sendable {

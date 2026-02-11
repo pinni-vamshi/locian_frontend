@@ -1,7 +1,14 @@
 import SwiftUI
 
 struct PatternMCQView: View {
-    @ObservedObject var logic: PatternMCQLogic
+    @StateObject var logic: PatternMCQLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    
+    // ✅ Updated Init: View owns the Logic
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+        _logic = StateObject(wrappedValue: PatternMCQLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic))
+        self.lessonDrillLogic = lessonDrillLogic
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -32,11 +39,18 @@ struct PatternMCQView: View {
             }
             
             // 3. Footer
-            footer
+            if let wrapper = lessonDrillLogic {
+                // ✅ Use Wrapper Footer
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                // Fallback (for standalone testing)
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
     }
     
+    // Fallback Legacy Footer
     private var footer: some View {
         VStack(spacing: 0) {
             if let isCorrect = logic.isCorrect {
@@ -46,7 +60,7 @@ struct PatternMCQView: View {
                 let title = isCorrect ? "CORRECT!" : "INCORRECT"
                 
                 CyberProceedButton(
-                    action: { logic.continueToNext() },
+                    action: { lessonDrillLogic?.continueToNext() }, // Use wrapper for flow control
                     label: "NEXT_STORY_STEP",
                     title: title,
                     color: color,
@@ -62,3 +76,32 @@ struct PatternMCQView: View {
     }
 }
 
+// ✅ Helper to observe wrapper changes
+struct DrillFooterWrapper: View {
+    @ObservedObject var logic: LessonDrillLogic
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            if logic.isDrillAnswered {
+                Divider().background(Color.white.opacity(0.1))
+                
+                let isCorrect = logic.isCorrect
+                let color: Color = isCorrect ? CyberColors.neonPink : .red
+                let title = isCorrect ? "CORRECT!" : "INCORRECT"
+                
+                CyberProceedButton(
+                    action: { logic.continueToNext() },
+                    label: "CONTINUE",
+                    title: title,
+                    color: color,
+                    systemImage: "arrow.right",
+                    isEnabled: !logic.isAudioPlaying
+                )
+                .padding(.horizontal)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                .background(Color.black)
+            }
+        }
+    }
+}

@@ -3,9 +3,11 @@ import SwiftUI
 struct PatternTypingView: View {
     @StateObject private var logic: PatternTypingLogic
     @FocusState private var isFocused: Bool
+    var lessonDrillLogic: LessonDrillLogic?
     
-    init(state: DrillState, engine: LessonEngine) {
-        _logic = StateObject(wrappedValue: PatternTypingLogic(state: state, engine: engine))
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+        _logic = StateObject(wrappedValue: PatternTypingLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic))
+        self.lessonDrillLogic = lessonDrillLogic
     }
     
     var body: some View {
@@ -17,7 +19,8 @@ struct PatternTypingView: View {
                     prompt: logic.prompt,
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
-                    textColor: .black
+                    textColor: .black,
+                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
                 )
                 
                 // 2. Body
@@ -45,13 +48,19 @@ struct PatternTypingView: View {
                             TypingCorrectionView(correctAnswer: logic.state.drillData.target)
                         }
                     }
-                    .padding(.top, 0) // Removed extra top padding as we added spacing
+                    .padding(.top, 0)
                     .padding(.bottom, 120)
                 }
             }
             
             // 3. Footer
-            footer
+            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
+            if let wrapper = lessonDrillLogic, logic.isCorrect != nil {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                // Otherwise show Local Footer (Check Button)
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear { isFocused = true }
@@ -68,7 +77,7 @@ struct PatternTypingView: View {
                         let title = isCorrect ? "CORRECT!" : "INCORRECT"
                         
                         CyberProceedButton(
-                            action: { logic.continueToNext() },
+                            action: { lessonDrillLogic?.continueToNext() },
                             label: "NEXT_STORY_STEP",
                             title: title,
                             color: color,
@@ -94,4 +103,3 @@ struct PatternTypingView: View {
         }
     }
 }
-

@@ -20,13 +20,6 @@ class SemanticMatcher {
         static let synonymThreshold = 0.25
     }
     
-    // MARK: - Logging Helper
-    // MARK: - Logging Helper
-    private static func logMatch(target: String, candidate: String, score: Double, method: String) {
-        // Detailed log format per user request (Similarity Only)
-        // print("   📏 [Semantic] '\(candidate)' vs '\(target)' -> Sim: \(String(format: "%.3f", score)) (\(method))")
-    }
-
     // MARK: - Core Matching Logic
     
     // MARK: - Core Matching Logic

@@ -1,54 +1,65 @@
 import SwiftUI
 
-struct BrickClozeView: View {
-    @ObservedObject var logic: BrickClozeLogic
-    @FocusState private var isFocused: Bool
-    @State private var isHintExpanded: Bool = false
+struct PatternDictationView: View {
+    @StateObject private var logic: PatternVoiceLogic
+    var lessonDrillLogic: LessonDrillLogic?
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+        _logic = StateObject(wrappedValue: PatternVoiceLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic))
+        self.lessonDrillLogic = lessonDrillLogic
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             VStack(spacing: 0) {
-                // 1. Header with Hint (meaning only)
+                // 1. Header
                 LessonPromptHeader(
-                    instruction: "FILL IN THE BLANK",
+                    instruction: "LISTEN AND TYPE",
                     prompt: logic.prompt,
                     targetLanguage: logic.targetLanguage,
-                    hintText: "Hint",
-                    meaningText: logic.state.contextMeaning ?? logic.state.drillData.meaning,
-                    contextSentence: nil,
-                    isHintExpanded: $isHintExpanded,
                     backgroundColor: .white,
-                    textColor: .black
+                    textColor: .black,
+                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil,
+                    onReplay: { logic.playAudio() }
                 )
                 
                 // 2. Body
                 ScrollView {
-                    VStack(spacing: 24) {
-                        TypingInputArea(
-                            text: $logic.userInput,
-                            placeholder: "Fill in the blank...",
-                            isCorrect: logic.isCorrect,
-                            isDisabled: logic.isCorrect != nil
+                    VStack(spacing: 32) {
+                        SharedMicButton(
+                            isRecording: logic.isRecording,
+                            action: { logic.triggerSpeechRecognition() }
                         )
-                        .focused($isFocused)
+                        .padding(.top, 60)
+                        
+                        // User Transcript (Keep below as it grows)
+                        if !logic.recognizedText.isEmpty || logic.isRecording {
+                            Text("\"" + logic.recognizedText + "\"")
+                                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
                         
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
                             TypingCorrectionView(correctAnswer: logic.state.drillData.target)
                         }
                     }
-                    .padding(.top, 80)
                     .padding(.bottom, 120)
                 }
             }
             
             // 3. Footer
-            footer
+            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
+            if let wrapper = lessonDrillLogic, logic.isCorrect != nil {
+                DrillFooterWrapper(logic: wrapper)
+            } else {
+                // Otherwise show Local Footer (Check Button)
+                footer
+            }
         }
         .background(Color.black.ignoresSafeArea())
-        .onAppear {
-            isFocused = true
-        }
     }
     
     private var footer: some View {
@@ -60,12 +71,12 @@ struct BrickClozeView: View {
                 let title = isCorrect ? "CORRECT!" : "INCORRECT"
                 
                 CyberProceedButton(
-                    action: { logic.continueToNext() },
+                    action: { lessonDrillLogic?.continueToNext() },
                     label: "NEXT_STORY_STEP",
                     title: title,
                     color: color,
                     systemImage: "arrow.right",
-                    isEnabled: true
+                    isEnabled: !logic.isAudioPlaying
                 )
             } else {
                 CyberProceedButton(
@@ -84,4 +95,3 @@ struct BrickClozeView: View {
         .background(Color.black)
     }
 }
-

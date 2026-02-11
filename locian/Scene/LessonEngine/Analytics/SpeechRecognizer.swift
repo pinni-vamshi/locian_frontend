@@ -17,6 +17,7 @@ class SpeechRecognizer: ObservableObject {
     private let audioEngine = AVAudioEngine()
     
     private let locale: Locale
+    private var isStopping: Bool = false
     
     // MARK: - Singleton
     static let shared = SpeechRecognizer()
@@ -40,15 +41,16 @@ class SpeechRecognizer: ObservableObject {
     // MARK: - Public Control
     
     func startRecording() throws {
-        // Cancel existing task if any
+        isStopping = false
+        if isRecording {
+            stopRecording()
+        }
+        
         recognitionTask?.cancel()
         self.recognitionTask = nil
         
-        #if os(iOS)
-        let audioSession = AVAudioSession.sharedInstance()
-        try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        #endif
+        // LOGIC CORRECT: Use central traffic controller for session
+        AudioManager.shared.configureSession(for: .recording)
         
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         
@@ -71,6 +73,7 @@ class SpeechRecognizer: ObservableObject {
                 isFinal = result.isFinal
             }
             
+            // LOGIC CORRECT: Stop if error or final, but don't force cancel here
             if error != nil || isFinal {
                 self?.stopRecording()
             }
@@ -79,6 +82,8 @@ class SpeechRecognizer: ObservableObject {
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         inputNode.removeTap(onBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] (buffer, when) in
+            // FIX: Robust guard against empty or zero-size buffers to satisfy AVAudioBuffer requirement
+            guard buffer.frameLength > 0, buffer.audioBufferList.pointee.mBuffers.mDataByteSize > 0 else { return }
             self?.recognitionRequest?.append(buffer)
         }
         
@@ -92,15 +97,36 @@ class SpeechRecognizer: ObservableObject {
     }
     
     func stopRecording() {
+        // LOGIC CORRECT: Idempotent guard to prevent recursive disconnect calls
+        guard !isStopping else { return }
+        isStopping = true
+        
+        // 1. Kill the engine immediately (Stops buffer warnings)
         audioEngine.inputNode.removeTap(onBus: 0)
         audioEngine.stop()
+        audioEngine.reset() // DEEP RESET: Hardware cleanup
+        
+        // 2. Gracefully end the request (Signals server cleanly)
         recognitionRequest?.endAudio()
         recognitionRequest = nil
-        recognitionTask?.cancel()
-        recognitionTask = nil
         
+        // NO: recognitionTask?.cancel() 
+        // We let it finish via endAudio() to avoid "Reporter disconnected"
+        
+        // 3. Revert session with 100ms grace period for "Reporter" wind-down
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            AudioManager.shared.configureSession(for: .playback)
+            
+            self?.recognizedText = ""
+            self?.isRecording = false
+            self?.isStopping = false
+            self?.recognitionTask = nil
+        }
+    }
+    
+    func reset() {
         DispatchQueue.main.async {
-            self.isRecording = false
+            self.recognizedText = ""
         }
     }
 }

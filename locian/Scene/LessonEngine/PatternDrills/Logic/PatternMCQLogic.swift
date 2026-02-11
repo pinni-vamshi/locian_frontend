@@ -13,9 +13,12 @@ class PatternMCQLogic: ObservableObject {
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
     
-    init(state: DrillState, engine: LessonEngine) {
+    weak var lessonDrillLogic: LessonDrillLogic?
+    
+    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
         self.state = state
         self.engine = engine
+        self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.target
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
@@ -23,8 +26,7 @@ class PatternMCQLogic: ObservableObject {
         if let existing = state.mcqOptions, !existing.isEmpty {
             self.options = existing
         } else {
-            print("      - [PatternMCQLogic] Self-healing: Generating options...")
-            let candidates = engine.rawPatterns.map { $0.meaning }
+            let candidates = engine.allPatterns.map { $0.meaning }  // ✅ Use ALL groups
             self.options = MCQOptionGenerator.generateNativeOptions(
                 targetMeaning: state.drillData.meaning,
                 candidates: candidates,
@@ -32,20 +34,13 @@ class PatternMCQLogic: ObservableObject {
             )
         }
         
-        print("   🧬 [PatternMCQLogic] Initialized for \(state.id)")
-        print("      - Target: \(state.drillData.target)")
-        print("      - Meaning: \(state.drillData.meaning)")
-        print("      - Final Options: \(self.options)")
-        
         // 4. Pre-Validation Check
          // State restoration removed
 
     }
     
     func selectOption(_ option: String) {
-        print("   👉 [PatternMCQLogic] User selected: \(option)")
         guard isCorrect == nil else { 
-            print("      - Ignoring select (Already answered)")
             return 
         }
         
@@ -57,7 +52,6 @@ class PatternMCQLogic: ObservableObject {
     }
     
     private func validateSelection(_ option: String) {
-        print("      - Validating selection [Pattern MCQ]...")
         
         let context = ValidationContext(
             state: state,
@@ -73,13 +67,14 @@ class PatternMCQLogic: ObservableObject {
         
         // 2. Perform Granular Analysis (The Ripple Effect)
         // We find which bricks are in this pattern and evaluate them based on the user's choice
+        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
         let brickMatches = ContentAnalyzer.findRelevantBricks(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.lessonData?.bricks,
+            bricks: engine.activeGroupBricks,
             targetLanguage: engine.lessonData?.target_language ?? "es"
         )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.lessonData?.bricks)
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
         
         let rippleResults = GranularAnalyzer.analyze(
             input: option,
@@ -101,6 +96,9 @@ class PatternMCQLogic: ObservableObject {
         
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
+        
+        // ✅ Notify Wrapper
+        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
     }
     
     func playAudio() {
@@ -109,12 +107,8 @@ class PatternMCQLogic: ObservableObject {
         AudioManager.shared.speak(text: text, language: language)
     }
     
-    func continueToNext() {
-        engine.orchestrator?.finishPattern()
-    }
-    
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
-        let logic = PatternMCQLogic(state: state, engine: engine)
-        return PatternMCQView(logic: logic)
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
+        // View now owns the logic creation via StateObject
+        return PatternMCQView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
     }
 }

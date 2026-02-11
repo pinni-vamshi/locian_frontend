@@ -111,7 +111,11 @@ class StatsTabState: ObservableObject {
                     switch result {
                     case .success(let response):
                         if let data = response.data {
-                            self?.appState.timeline = TimelineData(places: data.places, inputTime: data.input_time)
+                            self?.appState.timeline = TimelineData(
+                                places: data.places,
+                                inputTime: data.input_time,
+                                timeSpan: data.time_span
+                            )
                         }
                     case .failure(let error):
                         print("Failed to load stats history: \(error)")

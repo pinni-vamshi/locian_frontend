@@ -107,6 +107,14 @@ class AppStateManager: ObservableObject {
         }
     }
     
+    @Published var lastNotificationFireDate: Date? {
+        didSet {
+            if let date = lastNotificationFireDate {
+                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastNotificationFireDate")
+            }
+        }
+    }
+    
     @Published var lastNotificationRefreshDate: Date? {
         didSet {
             if let date = lastNotificationRefreshDate {
@@ -116,12 +124,21 @@ class AppStateManager: ObservableObject {
     }
     
     @Published var notifiedMomentIDs: Set<String> = [] {
+        didSet { UserDefaults.standard.set(Array(notifiedMomentIDs), forKey: "notifiedMomentIDs") }
+    }
+    
+    @Published var notificationIgnoreStreak: Int = 0 {
+        didSet { UserDefaults.standard.set(notificationIgnoreStreak, forKey: "notificationIgnoreStreak") }
+    }
+    
+    @Published var lastOpenedNotificationDate: Date? {
         didSet {
-            UserDefaults.standard.set(Array(notifiedMomentIDs), forKey: "notifiedMomentIDs")
+            if let date = lastOpenedNotificationDate {
+                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastOpenedNotificationDate")
+            }
         }
     }
     
-    // MARK: - Quick Recall Toggle (for floating button)
     
     @Published var profileImageData: Data? {
         didSet {
@@ -204,7 +221,13 @@ class AppStateManager: ObservableObject {
     
     // MARK: - Studied Places (New)
     // EPHEMERAL - DO NOT PERSIST (In-Memory Only)
-    @Published var timeline: TimelineData? = nil
+    @Published var timeline: TimelineData? = nil {
+        didSet {
+            if let data = timeline {
+                NotificationManager.shared.harvest(from: data)
+            }
+        }
+    }
     @Published var isLoadingTimeline: Bool = false // Tracks if timeline request is in flight
     @Published var hasInitialHistoryLoaded: Bool = false // Tracks if we've fetched initial history this session
     
@@ -309,8 +332,10 @@ class AppStateManager: ObservableObject {
         self.isLocationTrackingEnabled = (UserDefaults.standard.object(forKey: "isLocationTrackingEnabled") as? Bool) ?? true
         self.showDiagnosticBorders = UserDefaults.standard.bool(forKey: "showDiagnosticBorders")
         
-        // Initialize Smart Location Notifications
-        NotificationManager.shared.startMonitoring()
+        // Initialize Smart Location Notifications - Async to avoid Init Cycle with AppStateManager.shared
+        DispatchQueue.main.async {
+            NotificationManager.shared.startMonitoring()
+        }
         
         // Load persistable intent
         if let data = UserDefaults.standard.data(forKey: "userIntent"),
@@ -321,6 +346,10 @@ class AppStateManager: ObservableObject {
         self.completedNotificationCount = UserDefaults.standard.integer(forKey: "completedNotificationCount")
         if let timeInterval = UserDefaults.standard.object(forKey: "lastNotificationRefreshDate") as? TimeInterval {
             self.lastNotificationRefreshDate = Date(timeIntervalSince1970: timeInterval)
+        }
+        
+        if let fireInterval = UserDefaults.standard.object(forKey: "lastNotificationFireDate") as? TimeInterval {
+            self.lastNotificationFireDate = Date(timeIntervalSince1970: fireInterval)
         }
         
         if let momentIDs = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
@@ -363,6 +392,15 @@ class AppStateManager: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
            let pairs = try? JSONDecoder().decode([LanguagePair].self, from: data) {
             self.userLanguagePairs = pairs
+        }
+        
+        // Engagement Tracking
+        self.notificationIgnoreStreak = UserDefaults.standard.integer(forKey: "notificationIgnoreStreak")
+        if let lastOpen = UserDefaults.standard.object(forKey: "lastOpenedNotificationDate") as? Double {
+            self.lastOpenedNotificationDate = Date(timeIntervalSince1970: lastOpen)
+        }
+        if let notified = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
+            self.notifiedMomentIDs = Set(notified)
         }
         
         
@@ -431,12 +469,16 @@ class AppStateManager: ObservableObject {
                 switch result {
                 case .success(let response):
                     if let data = response.data {
-                        print("   ✅ [AppStateManager] Studied places loaded: \(data.places.count) places")
+                        print("   ✅ [AppStateManager] History loaded. Found \(data.places.count) moments across \(data.dates?.count ?? 0) dates. (Span: \(data.time_span ?? "nil"))")
                         
-                        // Store timeline
-                        self.timeline = TimelineData(places: data.places, inputTime: data.input_time)
+                        // Pass time_span into the timeline wrapper
+                        self.timeline = TimelineData(
+                            places: data.places,
+                            inputTime: data.input_time,
+                            timeSpan: data.time_span
+                        )
                         
-                        // Store intent
+                        // Store the intent for immediate UI use if needed (harvesting happens in NotificationManager)
                         self.userIntent = data.user_intent
                         
                         print("   🔄 [AppStateManager] Initializing LocalRecommendationService...")
@@ -445,6 +487,8 @@ class AppStateManager: ObservableObject {
                             timeline: self.timeline,
                             intent: data.user_intent
                         )
+                        
+                        self.hasInitialHistoryLoaded = true
                     } else {
                         print("   ⚠️ [AppStateManager] No data in response")
                     }

@@ -49,8 +49,6 @@ struct MasteryUtils {
         
         let threshold = startSim + ((endSim - startSim) * progress)
         
-         print("      🎚️ [Relevance Internal] Mastery \(String(format: "%.2f", mastery)) -> LERP(\(startSim) -> \(endSim)) = \(String(format: "%.3f", threshold))")
-        
         return threshold
     }
     
@@ -58,10 +56,6 @@ struct MasteryUtils {
     static func checkImplicitMastery(avgResponseTime: TimeInterval, successRate: Double) -> Bool {
         // Must be very accurate (> 90%) and very fast (< 2.5s)
         let isFluent = successRate > 0.9 && avgResponseTime > 0 && avgResponseTime <= AdaptiveConfig.Fluency.fastThreshold
-        
-        if isFluent {
-             print("      ⚡️ [Implicit Mastery] VALID: Speed \(String(format: "%.2f", avgResponseTime))s <= \(AdaptiveConfig.Fluency.fastThreshold)s AND Acc \(Int(successRate*100))% > 90%")
-        }
         
         return isFluent
     }

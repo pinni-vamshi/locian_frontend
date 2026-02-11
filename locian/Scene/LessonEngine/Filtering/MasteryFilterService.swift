@@ -4,7 +4,7 @@ import Foundation
 struct MasteryFilterService {
     
     // MARK: - LOGGING
-    static let LOG_FILTERING = true
+    static let LOG_FILTERING = false
     
     /// Result returned by any brick filtering logic
     struct FilterResult {
@@ -37,28 +37,10 @@ struct MasteryFilterService {
     
     /// Dynamically calculates the threshold for semantic filtering.
     static func calculateThreshold(text: String, mastery: Double, languageCode: String) -> Double {
-        let isContextual = EmbeddingService.isContextualAvailable(for: languageCode)
-        let wordCount = Double(text.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ").count)
-        
-        let base: Double
-        if isContextual {
-            let wordPenalty = min(0.1, wordCount * 0.01)
-            base = 0.72 - wordPenalty
-        } else {
-            base = 0.59 - (wordCount * 0.01)
-        }
-        
         let dynamic = 0.85 - (mastery * 0.60)
         let final = min(0.85, max(0.25, dynamic))
         
-        if LOG_FILTERING {
-            print("   ⚖️ [LessonFlow] [Threshold] Logic:")
-            print("      - Model: \(isContextual ? "CONTEXTUAL" : "STATIC")")
-            print("      - Text: '\(text.prefix(30))...'")
-            print("      - Base: \(String(format: "%.2f", base)) (WordCount: \(Int(wordCount)))")
-            print("      - Mastery Adj: -\(String(format: "%.2f", mastery * 0.08)) (\(String(format: "%.0f%%", mastery * 100)) mastery)")
-            print("      - Result: \(String(format: "%.2f", final))")
-        }
+        print("🔍 [MASTERY_FILTER] Threshold for \"\(text)\": Mastery=\(String(format: "%.2f", mastery)) -> Raw=\(String(format: "%.2f", dynamic)) -> Final=\(String(format: "%.2f", final))")
         
         return final
     }
@@ -76,14 +58,14 @@ struct MasteryFilterService {
         let scoreStr = String(format: "%.3f", boostedScore)
         let threshStr = String(format: "%.2f", threshold)
         
-        let comparisonSymbol = accepted ? "<" : ">="
-        let statusEmoji = accepted ? "❌" : "✅"
+        let comparisonSymbol = accepted ? ">=" : "<"
         let statusText = accepted ? "KEEP (For Intro)" : "SKIP (Mastered)"
+        
+        print("   -> 🧱 [\(brickType)] \"\(brick)\": Score=\(String(format: "%.3f", score)) + Boost=\(String(format: "%.3f", adaptiveBoost)) = \(scoreStr) \(comparisonSymbol) Thresh \(threshStr) -> \(statusText)")
         
         let reason = "\(brickType) [\(statusText)]: Final \(scoreStr) \(comparisonSymbol) Thresh \(threshStr)"
         
         let result = (accepted, reason)
-        print("      \(statusEmoji) [LessonFlow] [Filter] '\(brick)' - \(reason)")
         return result
     }
     

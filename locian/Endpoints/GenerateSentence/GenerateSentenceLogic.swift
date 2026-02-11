@@ -31,20 +31,14 @@ class GenerateSentenceLogic {
             
             if let targetLang = response.data?.target_language {
                 let code = targetLang 
-                print("\n🧪 [GenerateSentenceLogic] Starting Enrichment Pipeline for: \(code)")
+                // Starting Enrichment Pipeline for: \(code)
                 
                 // Process Groups (New LEGO Structure)
                 if var groups = response.data?.groups {
                     for i in 0..<groups.count {
-                        print("   📦 Group [\(i+1)/\(groups.count)]: Enriching components...")
+                        // Enriching components...
                         
-                        // 1. Prerequisites
-                        if var prereqs = groups[i].prerequisites {
-                            for j in 0..<prereqs.count {
-                                prereqs[j].vector = EmbeddingService.getVector(for: prereqs[j].meaning, languageCode: code)
-                            }
-                            groups[i].prerequisites = prereqs
-                        }
+
                         
                         // 2. Patterns
                         if var patterns = groups[i].patterns {
@@ -107,40 +101,22 @@ class GenerateSentenceLogic {
                     response.data?.bricks = bricks
                 }
                 
-                print("🧪 [GenerateSentenceLogic] Enrichment COMPLETE for target \(code).\n")
-                
-                // ---------------------------------------------------------
-                // 🚀 HANDOVER TO MEMORY SERVICE (The Linear Pipeline)
-                // ---------------------------------------------------------
-                if var finalData = response.data {
-                    print("💾 [GenerateSentenceLogic] Passing enriched data to SemanticMemoryService...")
-                    SemanticMemoryService.shared.processLessonData(data: &finalData)
-                }
+                // Enrichment COMPLETE
             }
              
             DispatchQueue.main.async { completion(.success(response)) }
         } catch {
-            print("❌ [GenerateSentenceLogic] Parse Error: \(error.localizedDescription)")
+            // Parse Error
             DispatchQueue.main.async { completion(.failure(error)) }
         }
     }
     
     // MARK: - Centralized Writer
     
+    
     /// Update mastery for a specific brick/pattern (called by Lesson Engine)
     func updateMastery(text: String, vector: [Double]?, languageCode: String, mode: String, isCorrect: Bool, currentStep: Int) {
-        print("\n📝 [GenerateSentenceLogic] updateMastery bridge: '\(text)' (Correct: \(isCorrect))")
-        guard let vector = vector else {
-             print("   ⚠️ [GenerateSentenceLogic] Skipping update: Missing vector for '\(text)'")
-             return
-        }
         
-        SemanticMemoryService.shared.updateRecall(
-            text: text,
-            vector: vector,
-            languageCode: languageCode,
-            isCorrect: isCorrect,
-            currentStep: currentStep
-        )
+        // Memory removal: Skipping persistent update as per user request.
     }
 }

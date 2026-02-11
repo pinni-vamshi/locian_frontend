@@ -7,6 +7,7 @@ struct PatternModeSelector: View {
     let drill: DrillState
     @ObservedObject var engine: LessonEngine
     var forcedMode: DrillMode? = nil
+    var lessonDrillLogic: LessonDrillLogic? = nil  // ✅ NEW: Wrapper logic reference
     
     // Static Resolver (Moved from Manager)
     static func resolveMode(for drill: DrillState, engine: LessonEngine) -> DrillMode {
@@ -15,10 +16,15 @@ struct PatternModeSelector: View {
         // Default Logic based on Mastery
         let mastery = engine.getBlendedMastery(for: drill.id)
         
-        if mastery >= 0.85 { return .speaking }
-        if mastery >= 0.60 { return .typing }
-        if mastery >= 0.30 { return .sentenceBuilder }
-        return .mcq // Foundation
+        let result: DrillMode
+        if mastery >= 0.85 { result = .speaking }
+        else if mastery >= 0.60 { result = .typing }
+        else if mastery >= 0.30 { result = .sentenceBuilder }
+        else { result = .mcq }
+        
+        print("   🧠 [PatternSelector] Mastery: \(String(format: "%.2f", mastery)) | Mode: \(result) | Pattern: \(drill.id) ('\(drill.drillData.target)')")
+        
+        return result
     }
     
     var body: some View {
@@ -27,11 +33,11 @@ struct PatternModeSelector: View {
         
         Group {
             switch mode {
-            case .mcq: PatternMCQLogic.view(for: drill, mode: mode, engine: engine)
-            case .sentenceBuilder: PatternBuilderLogic.view(for: drill, mode: mode, engine: engine)
-            case .typing: PatternTypingLogic.view(for: drill, mode: mode, engine: engine)
-            case .speaking, .voiceMcq: PatternVoiceLogic.view(for: drill, mode: mode, engine: engine)
-            default: PatternMCQLogic.view(for: drill, mode: mode, engine: engine)
+            case .mcq: PatternMCQLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: lessonDrillLogic)
+            case .sentenceBuilder: PatternBuilderLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: lessonDrillLogic)
+            case .typing: PatternTypingLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: lessonDrillLogic)
+            case .speaking, .voiceMcq: PatternVoiceLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: lessonDrillLogic)
+            default: PatternMCQLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: lessonDrillLogic)
             }
         }
         .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .opacity))

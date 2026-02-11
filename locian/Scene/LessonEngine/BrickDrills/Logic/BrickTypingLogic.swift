@@ -13,18 +13,17 @@ class BrickTypingLogic: ObservableObject {
     @Published var isCorrect: Bool?
     
     var onComplete: (() -> Void)?
+    weak var patternIntroLogic: PatternIntroLogic?  // ✅ NEW: Reference to notify pattern intro
     
-    init(state: DrillState, engine: LessonEngine) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil) {
         self.state = state
         self.engine = engine
+        self.patternIntroLogic = patternIntroLogic
         self.prompt = state.drillData.meaning
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
-        // Restore State if engine already has result
-        // Restore State logic removed
         // if engine.activeState?.id == state.id ...
         
-        print("   ⌨️ [BrickTyping] Init (Prompt: '\(prompt)', Target: '\(state.drillData.target)')")
     }
     
     var hasInput: Bool {
@@ -33,8 +32,6 @@ class BrickTypingLogic: ObservableObject {
     
     func checkAnswer() {
         guard isCorrect == nil && !userInput.isEmpty else { return }
-        print("   👉 [BrickTyping] Checking answer: '\(userInput)'")
-        print("      - Validating typing [Brick Typing]...")
         
         // Save input to session for persistence
         // Save input to session for persistence
@@ -58,8 +55,11 @@ class BrickTypingLogic: ObservableObject {
         engine.updateMastery(id: brickId, delta: delta)
         
         // UI Effects
-        // UI Effects
         self.isCorrect = isCorrect
+        
+        // ✅ NOTIFY PATTERN INTRO - Tell parent view to show continue button
+        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect)
+        
         playAudio()
     }
     
@@ -70,11 +70,16 @@ class BrickTypingLogic: ObservableObject {
     }
     
     func continueToNext() {
-        onComplete?()
+        if let onComplete = onComplete {
+            onComplete()
+        } else {
+            engine.orchestrator?.finishPattern()
+        }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine) -> some View {
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, onComplete: (() -> Void)? = nil) -> some View {
         let logic = BrickTypingLogic(state: state, engine: engine)
+        logic.onComplete = onComplete
         return BrickTypingView(logic: logic)
     }
 }

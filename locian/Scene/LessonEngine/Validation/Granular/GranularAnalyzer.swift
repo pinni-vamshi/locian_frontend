@@ -18,11 +18,6 @@ struct GranularAnalyzer {
         context: ValidationContext
     ) -> [BrickAnalysisResult] {
         
-        print("🔍 [LessonFlow] [GranularAnalyzer] Analyzing \(type.rawValue) for required bricks...")
-        let requiredNames = requiredBricks.map { $0.word }
-        let requiredIds = requiredBricks.map { $0.id ?? "nil" }
-        print("   🧱 [LessonFlow] [Granular] Required: \(requiredNames) (IDs: \(requiredIds))")
-        
         let responseTokens = GranularAnalyzerCore.parseTextTokens(input)
         let validator = ValidationFactory.validator(for: type)
         var results: [BrickAnalysisResult] = []
@@ -69,12 +64,6 @@ struct GranularAnalyzer {
                 similarity: bestMatch.similarity,
                 masteryChange: isCorrect ? 1.0 : 0.0 
             ))
-            
-            if isCorrect {
-                print("   ✅ [LessonFlow] [Granular] Brick [\(brick.word)] matched via \"\(bestMatch.matchedToken)\" (Sim: \(String(format: "%.2f", bestMatch.similarity)))")
-            } else {
-                print("   ❌ [LessonFlow] [Granular] Brick [\(brick.word)] missing/incorrect (best match: \"\(bestMatch.matchedToken)\", Sim: \(String(format: "%.2f", bestMatch.similarity)))")
-            }
         }
         
         return results

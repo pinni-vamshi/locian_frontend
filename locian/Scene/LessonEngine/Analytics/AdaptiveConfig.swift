@@ -226,27 +226,21 @@ struct AdaptiveConfig {
             "interferenceThreshold": interferenceThreshold
         ]
         UserDefaults.standard.set(weights, forKey: weightsKey)
-        print("💾 [AdaptiveConfig] Weights saved to UserDefaults")
     }
     
     static func loadWeights() {
         guard let weights = UserDefaults.standard.dictionary(forKey: weightsKey) as? [String: Double] else {
-            print("ℹ️ [AdaptiveConfig] No saved weights found, using defaults")
             return
         }
         
         if let urgency = weights["w_urgency"] { w_urgency = urgency }
         if let difficulty = weights["w_difficulty"] { w_difficulty = difficulty }
-        if let exploration = weights["w_exploration"] { w_exploration = exploration }
-        if let interference = weights["interferenceThreshold"] { interferenceThreshold = interference }
+        if let interf = weights["interferenceThreshold"] { interferenceThreshold = interf }
         
         // Validate loaded value
         if interferenceThreshold <= clusteringMaxSim {
-            print("⚠️ [AdaptiveConfig] Loaded interferenceThreshold (\(interferenceThreshold)) is invalid. Resetting to 0.8")
             interferenceThreshold = 0.8
         }
-        
-        print("📂 [AdaptiveConfig] Weights loaded: w_urgency=\(String(format: "%.2f", w_urgency)), w_exploration=\(String(format: "%.2f", w_exploration)), interferenceThreshold=\(String(format: "%.2f", interferenceThreshold))")
     }
 
     // MARK: - Validation
@@ -267,7 +261,5 @@ struct AdaptiveConfig {
         assert(retentionThreshold > 0 && retentionThreshold < 1, "Invalid retention threshold")
         assert(successRateWindow > 0, "Success rate window must be positive")
         assert(maxConsecutiveFailures > 0, "Max consecutive failures must be positive")
-        
-        print("✅ [AdaptiveConfig] All safety checks passed")
     }
 }
