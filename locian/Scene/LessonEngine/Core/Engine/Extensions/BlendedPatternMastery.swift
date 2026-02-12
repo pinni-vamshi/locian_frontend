@@ -21,11 +21,11 @@ extension LessonEngine {
         let structureScore = self.getDecayedMastery(for: cleanId)
         
         // 3. Extract Semantic/Brick Score (40%)
-        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
+        // ✅ NOW USING ALL BRICKS (Global Influence)
         let brickIds = ContentAnalyzer.findRelevantBricks(
             in: p.target,
             meaning: p.meaning,
-            bricks: self.activeGroupBricks,
+            bricks: self.allBricks,
             targetLanguage: self.lessonData?.target_language ?? "es"
         )
         
