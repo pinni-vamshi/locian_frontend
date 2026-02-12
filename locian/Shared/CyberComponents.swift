@@ -127,7 +127,7 @@ struct CyberOption: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isCorrect)
             .animation(.easeInOut(duration: 0.2), value: showCorrectHint)
         }
-        .disabled(isCorrect != nil)
+        // Removed .disabled(isCorrect != nil) to allow audio replay after selection
     }
 }
 
@@ -153,7 +153,13 @@ struct LessonPromptHeader: View {
     // NEW: Mode Indicator (e.g. "GHOST REHEARSAL")
     var modeLabel: String? = nil
     
+    var phonetic: String? = nil // Support for phonetic sounds
+    
     var onReplay: (() -> Void)? = nil
+    
+    // NEW: Control whether phonetics appear on the primary prompt
+    // Set to false if prompt is native language (English) to avoid confusion.
+    var showPhoneticOnPrompt: Bool = true
     
     // Default initializer without binding (for non-expandable usage)
     init(
@@ -165,6 +171,8 @@ struct LessonPromptHeader: View {
         backgroundColor: Color = .white,
         textColor: Color = .black,
         modeLabel: String? = nil,
+        phonetic: String? = nil,
+        showPhoneticOnPrompt: Bool = true,
         onReplay: (() -> Void)? = nil
     ) {
         self.instruction = instruction
@@ -177,10 +185,12 @@ struct LessonPromptHeader: View {
         self.backgroundColor = backgroundColor
         self.textColor = textColor
         self.modeLabel = modeLabel
+        self.phonetic = phonetic
+        self.showPhoneticOnPrompt = showPhoneticOnPrompt
         self.onReplay = onReplay
     }
     
-    // Expandable hint initializer (for Bricks)
+    // Initializer with binding (for expandable hint mode)
     init(
         instruction: String,
         prompt: String,
@@ -191,7 +201,9 @@ struct LessonPromptHeader: View {
         isHintExpanded: Binding<Bool>,
         backgroundColor: Color = .white,
         textColor: Color = .black,
-        modeLabel: String? = nil
+        modeLabel: String? = nil,
+        phonetic: String? = nil,
+        showPhoneticOnPrompt: Bool = true
     ) {
         self.instruction = instruction
         self.prompt = prompt
@@ -204,6 +216,8 @@ struct LessonPromptHeader: View {
         self.backgroundColor = backgroundColor
         self.textColor = textColor
         self.modeLabel = modeLabel
+        self.phonetic = phonetic
+        self.showPhoneticOnPrompt = showPhoneticOnPrompt
         self.onReplay = nil
     }
     
@@ -254,6 +268,14 @@ struct LessonPromptHeader: View {
                             .padding(.vertical, 4)
                             .background(backgroundColor)
                         
+                        if showPhoneticOnPrompt, let ph = phonetic, !ph.isEmpty {
+                            Text(ph)
+                                .font(.system(size: 14, design: .monospaced))
+                                .foregroundColor(.gray)
+                                .padding(.horizontal, 8)
+                                .offset(y: -4)
+                        }
+                        
                         if let sub = subPrompt, !sub.isEmpty {
                             Text(sub)
                                 .font(.system(size: 14, weight: .bold))
@@ -284,6 +306,13 @@ struct LessonPromptHeader: View {
                                                 .font(.system(size: 15, weight: .bold))
                                                 .foregroundColor(.black)
                                                 .multilineTextAlignment(.leading)
+                                            
+                                            if let ph = phonetic, !ph.isEmpty {
+                                                Text(ph)
+                                                    .font(.system(size: 13, design: .monospaced))
+                                                    .foregroundColor(.black.opacity(0.5))
+                                                    .multilineTextAlignment(.leading)
+                                            }
                                             
                                             if let sentence = contextSentence, !sentence.isEmpty {
                                                 Text(sentence)
@@ -478,6 +507,7 @@ struct CyberGridBackground: View {
 // MARK: - 11. MCQ Components (Shared)
 struct MCQSelectionGrid: View {
     let options: [String]
+    var optionPhonetics: [String: String]? = nil
     let selectedOption: String?
     let correctOption: String?
     let isAnswered: Bool
@@ -496,6 +526,7 @@ struct MCQSelectionGrid: View {
                 
                 CyberOption(
                     text: option,
+                    phonetic: optionPhonetics?[option],
                     index: index,
                     isSelected: selectedOption == option,
                     isCorrect: isThisCorrect,
@@ -544,6 +575,7 @@ struct TypingInputArea: View {
 
 struct TypingCorrectionView: View {
     let correctAnswer: String
+    var phonetic: String? = nil
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -553,12 +585,20 @@ struct TypingCorrectionView: View {
                 .foregroundColor(.gray)
                 .padding(.leading, 5)
             
-            Text(correctAnswer)
-                 .font(.system(size: 20, weight: .bold, design: .monospaced))
-                 .foregroundColor(.black)
-                 .padding(.horizontal, 10)
-                 .padding(.vertical, 5)
-                 .background(CyberColors.neonGreen)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(correctAnswer)
+                     .font(.system(size: 20, weight: .bold, design: .monospaced))
+                     .foregroundColor(.black)
+                
+                if let ph = phonetic, !ph.isEmpty {
+                    Text(ph)
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundColor(.black.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(CyberColors.neonGreen)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)

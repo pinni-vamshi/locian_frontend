@@ -7,6 +7,7 @@ class BrickMCQLogic: ObservableObject {
     
     // Data only - no UI strings
     let options: [String]
+    let optionPhonetics: [String: String]
     let prompt: String
     let targetLanguage: String
     
@@ -49,6 +50,21 @@ class BrickMCQLogic: ObservableObject {
                 validator: NeuralValidator()
             )
         }
+        
+        // 3. Populate Phonetics
+        var phoneticMap: [String: String] = [:]
+        let allItems = (engine.allBricks?.constants ?? []) + 
+                      (engine.allBricks?.variables ?? []) + 
+                      (engine.allBricks?.structural ?? [])
+        
+        for option in self.options {
+            if let match = allItems.first(where: { $0.word == option }) {
+                phoneticMap[option] = match.phonetic
+            }
+        }
+        self.optionPhonetics = phoneticMap
+        
+        print("   🧩 [BrickMCQLogic] Init for brick: \(state.id) | Options: \(self.options)")
     }
     
     var correctOption: String {
@@ -56,17 +72,23 @@ class BrickMCQLogic: ObservableObject {
     }
     
     func selectOption(_ option: String) {
-        guard isCorrect == nil else { return }
+        print("   🧩 [BrickMCQLogic] selectOption called with: \(option)")
         
-        // Speak what the user JUST tapped
+        // ✅ ALWAYS Speak what the user JUST tapped (even if already answered)
         let language = engine.lessonData?.target_language ?? "es-ES"
         AudioManager.shared.speak(text: option, language: language)
+        
+        guard isCorrect == nil else { 
+            print("   🧩 [BrickMCQLogic] selectOption - answer already recorded, replaying audio only")
+            return 
+        }
         
         selectedOption = option
         validateSelection(option)
     }
     
     private func validateSelection(_ option: String) {
+        print("   🧩 [BrickMCQLogic] validateSelection: \(option)")
         let actualTarget = state.drillData.target
         
         let context = ValidationContext(
@@ -79,6 +101,8 @@ class BrickMCQLogic: ObservableObject {
         let validator = MCQValidator()
         let result = validator.validate(input: option, target: actualTarget, context: context)
         let isCorrect = (result == .correct || result == .meaningCorrect)
+        
+        print("   🧩 [BrickMCQLogic] Validation Result: \(isCorrect)")
         
         // ✅ UI TRIGGER - Update local state to show green/red card backgrounds
         self.isCorrect = isCorrect
@@ -100,9 +124,12 @@ class BrickMCQLogic: ObservableObject {
     }
     
     func continueToNext() {
+        print("   🧩 [BrickMCQLogic] continueToNext called")
         if let onComplete = onComplete {
+            print("   🧩 [BrickMCQLogic] Calling onComplete closure")
             onComplete()
         } else {
+            print("   🧩 [BrickMCQLogic] Calling finishPattern (fallback)")
             engine.orchestrator?.finishPattern()
         }
     }
@@ -111,7 +138,8 @@ class BrickMCQLogic: ObservableObject {
     static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) -> some View {
         if let introLogic = patternIntroLogic {
             // ✅ Direction A: Pattern Intro (Recap) -> Mini Interaction
-            BrickMCQInteraction(drill: state, engine: engine, showPrompt: true, patternIntroLogic: introLogic, onComplete: onComplete)
+            // Hiding Prompt because PatternIntroView Header + Tap Strip already shows Meaning.
+            BrickMCQInteraction(drill: state, engine: engine, showPrompt: false, patternIntroLogic: introLogic, onComplete: onComplete)
         } else {
             // ✅ Direction B: Ghost Mode (Practice) -> Full View
             BrickMCQView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete)

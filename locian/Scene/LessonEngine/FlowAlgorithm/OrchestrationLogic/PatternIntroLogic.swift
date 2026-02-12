@@ -19,28 +19,32 @@ class PatternIntroLogic: ObservableObject {
         self.engine = engine
         
         // ========================================
-        // BRICK FILTERING PIPELINE
-        // ========================================
-        // STEP 1: ContentAnalyzer - Word Matching
-        // Finds which bricks exist in the pattern via literal word matching
+        // BRICK FILTERING PIPELINE (V4.1)
         // ========================================
         
-        let brickIDs = ContentAnalyzer.findRelevantBricks(
+        // STEP 1: Discovery (ContentAnalyzer)
+        let brickMatches = ContentAnalyzer.findRelevantBricksWithSimilarity(
             in: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.getBricks(for: state.patternId),  // ✅ PATTERN-SPECIFIC LOOKUP
+            bricks: engine.getBricks(for: state.patternId),
             targetLanguage: engine.lessonData?.target_language ?? "es"
         )
         
-        // ========================================
-        // STEP 2: MasteryFilterService - Resolve to Objects
-        // Converts brick IDs → actual BrickItem objects
-        // ========================================
-        
-        let bricks = MasteryFilterService.resolveBricks(
-            ids: Set(brickIDs), 
-            from: engine.getBricks(for: state.patternId)  // ✅ PATTERN-SPECIFIC LOOKUP
+        // STEP 2: Filtration (MasteryFilterService)
+        let patternMastery = engine.getBlendedMastery(for: state.id)
+        let selectedIDs = MasteryFilterService.filterBricksBySemanticCliff(
+            bricks: brickMatches,
+            patternMastery: patternMastery,
+            activeBricks: engine.getBricks(for: state.patternId)
         )
+        
+        // STEP 3: Resolve & Preserve Order
+        var bricks: [BrickItem] = []
+        for id in selectedIDs {
+            if let brick = MasteryFilterService.getBrick(id: id, from: engine.getBricks(for: state.patternId)) {
+                bricks.append(brick)
+            }
+        }
         
         // ========================================
         // STEP 3: Convert to DrillStates
@@ -91,7 +95,10 @@ class PatternIntroLogic: ObservableObject {
         
         // Resolve mode for the first brick immediately
         if !brickDrills.isEmpty {
+           print("   🧩 [PatternIntro] Found \(brickDrills.count) bricks. Resolving first: \(brickDrills[0].id)")
            resolveCurrentMode(at: 0)
+        } else {
+           print("   🧩 [PatternIntro] No bricks found!")
         }
     }
     
@@ -108,16 +115,27 @@ class PatternIntroLogic: ObservableObject {
         
         // Resolve mode for THIS specific brick AT THIS MOMENT
         let mode = BrickModeSelector.resolveMode(for: brickDrills[index], engine: engine)
+        print("   🧩 [PatternIntro] Resolving brick \(index): \(brickDrills[index].id) -> Mode: \(mode)")
         brickDrills[index].currentMode = mode
     }
     
     // ✅ NEW: Called by brick logic when answer is validated
     func markBrickAnswered(isCorrect: Bool) {
+        print("   🧩 [PatternIntro] markBrickAnswered: Correct=\(isCorrect)")
+        
+        // DEBUG: Trace where this call came from!
+        let symbols = Thread.callStackSymbols
+        print("   🧩 [PatternIntro] Trace (Top 5):")
+        for i in 0..<min(5, symbols.count) {
+            print("      \(symbols[i])")
+        }
+        
         currentBrickAnswered = true
         currentBrickCorrect = isCorrect
         
         // ✅ NEW: Collect mistake for Ghost Mode recycle
         if !isCorrect, let brick = currentDrill {
+            print("   🧩 [PatternIntro] Capturing mistake: \(brick.id)")
             engine.patternIntroMistakes.append(brick)
         }
     }
@@ -126,8 +144,11 @@ class PatternIntroLogic: ObservableObject {
     private var completedIndices: Set<Int> = []
     
     func advance() {
+        print("   🧩 [PatternIntro] Advance called for index \(currentBrickIndex)")
+        
         // Guard: Only advance if this index isn't already marked done
         guard !completedIndices.contains(currentBrickIndex) else {
+            print("   🧩 [PatternIntro] BLOCKED: Index \(currentBrickIndex) already advanced!")
             return
         }
         completedIndices.insert(currentBrickIndex)
@@ -141,11 +162,13 @@ class PatternIntroLogic: ObservableObject {
             withAnimation(.spring()) {
                 currentBrickIndex += 1
                 // Resolve mode for the NEW active brick JIT
+                print("   🧩 [PatternIntro] Advancing to next brick: \(currentBrickIndex)")
                 resolveCurrentMode(at: currentBrickIndex)
             }
         } else {
             // ✅ Last brick completed - notify orchestrator WITHOUT resetting state
             // (Keep footer visible until orchestration switches views)
+            print("   🧩 [PatternIntro] Finishing Intro!")
             engine.orchestrator?.finishVocabIntro()
         }
     }

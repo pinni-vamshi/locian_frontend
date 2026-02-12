@@ -62,32 +62,76 @@ class GhostModeLogic: ObservableObject {
             return 
         }
         
-        let targetText = targetPattern.drillData.target
         let targetLang = engine.lessonData?.target_language ?? "es"
         
-        var candidates: [(id: String, score: Double)] = []
+        // 2. Centroid Selection Strategy
+        // Goal: Pick the pattern closest to the "Average" of the recent session.
+        // This reinforces the core theme rather than just chasing the last item.
+        
+        var vectors: [[Double]] = []
+        var validCandidates: [(id: String, vector: [Double])] = []
+        
         for id in visited {
-            guard let raw = engine.rawPatterns.first(where: { $0.id == id }) else { continue }
-            let sim = EmbeddingService.compare(textA: targetText, textB: raw.target, languageCode: targetLang)
-            let mastery = engine.getBlendedMastery(for: "\(id)-d0")
-            let finalScore = (sim * 0.7) + ((1.0 - mastery) * 0.3)
-            
-            print("      - Pattern [\(id)]: Sim=\(String(format: "%.2f", sim)), Mastery=\(String(format: "%.2f", mastery)) -> Final=\(String(format: "%.2f", finalScore))")
-            candidates.append((id, finalScore))
+            if let raw = engine.rawPatterns.first(where: { $0.id == id }),
+               let v = EmbeddingService.getVector(for: raw.target, languageCode: targetLang) {
+                vectors.append(v)
+                validCandidates.append((id, v))
+            }
         }
         
-        let sorted = candidates.sorted { $0.score > $1.score }
-        if let winner = sorted.first {
-            print("   🌪️ [GhostMode] WINNING GHOST: \(winner.id) with score \(String(format: "%.3f", winner.score))")
+        guard !vectors.isEmpty, let firstVec = vectors.first else { return }
+        
+        // A. Calculate Average Vector (Centroid)
+        let dim = firstVec.count
+        var avgVector = [Double](repeating: 0.0, count: dim)
+        
+        for v in vectors {
+            for i in 0..<dim {
+                avgVector[i] += v[i]
+            }
+        }
+        
+        for i in 0..<dim {
+            avgVector[i] /= Double(vectors.count)
+        }
+        
+        print("\n   🌪️ [GhostMode] CENTROID CALCULATION")
+        print("      - Vectors Averaged: \(vectors.count)")
+        print("      - Dimensions: \(dim)")
+        print("      - Centroid Preview: [\(avgVector.prefix(3).map{ String(format: "%.3f", $0) }.joined(separator: ", "))...]")
+
+        // B. Find Closest to Centroid (Select Top 2)
+        var scoredCandidates: [(id: String, score: Double)] = []
+        
+        print("\n   🌪️ [GhostMode] CANDIDATE SCORING (Distance to Center)")
+        for candidate in validCandidates {
+            let score = EmbeddingService.cosineSimilarity(v1: avgVector, v2: candidate.vector)
+            let mastery = engine.getBlendedMastery(for: "\(candidate.id)-d0")
+            let weightedScore = (score * 0.7) + ((1.0 - mastery) * 0.3)
+            
+            print("      - [\(candidate.id)] Dist: \(String(format: "%.3f", score)) | Mastery: \(String(format: "%.2f", mastery)) -> Score: \(String(format: "%.3f", weightedScore))")
+            
+            scoredCandidates.append((candidate.id, weightedScore))
+        }
+        
+        // Sort by Score DESCENDING
+        scoredCandidates.sort { $0.score > $1.score }
+        
+        // Take Top 2
+        let winners = scoredCandidates.prefix(2)
+        
+        for (index, winner) in winners.enumerated() {
+            print("   ✅ [GhostMode] WINNER #\(index + 1): \(winner.id) (Score: \(String(format: "%.3f", winner.score)))")
+            
             if let raw = engine.rawPatterns.first(where: { $0.id == winner.id }) {
                 let drillItem = DrillItem(target: raw.target, meaning: raw.meaning, phonetic: raw.phonetic)
-                historyQueue = [DrillState(
+                historyQueue.append(DrillState(
                     id: "\(winner.id)-d0",
                     patternId: winner.id,
                     drillIndex: -1,
                     drillData: drillItem,
                     isBrick: false
-                )]
+                ))
             }
         }
     }

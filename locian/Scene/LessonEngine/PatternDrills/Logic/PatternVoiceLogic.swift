@@ -7,6 +7,7 @@ class PatternVoiceLogic: ObservableObject {
     
     // Data only
     let prompt: String
+    let phonetic: String?
     let targetLanguage: String
     
     @Published var isCorrect: Bool?
@@ -23,6 +24,7 @@ class PatternVoiceLogic: ObservableObject {
         self.engine = engine
         self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.target
+        self.phonetic = state.drillData.phonetic
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         // BRIDGE: Notify View when speech recognizer updates

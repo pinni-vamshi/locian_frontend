@@ -12,10 +12,13 @@ struct PatternIntroView: View {
     @State private var lastBrickResult: Bool?  // true = correct, false = incorrect
     
     var body: some View {
-        VStack(spacing: 0) {
-            headerSection
-            horizontalSelectorSection
-            interactionZoneSection
+        ZStack(alignment: .bottom) {
+            VStack(spacing: 0) {
+                headerSection
+                horizontalSelectorSection
+                interactionZoneSection
+            }
+            
             footer
         }
         .background(Color.black.ignoresSafeArea())
@@ -32,7 +35,9 @@ struct PatternIntroView: View {
             contextSentence: nil,
             isHintExpanded: $isHintExpanded,
             backgroundColor: .white,
-            textColor: .black
+            textColor: .black,
+            phonetic: drill.drillData.phonetic,
+            showPhoneticOnPrompt: false
         )
     }
     

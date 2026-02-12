@@ -44,8 +44,22 @@ class ContentAnalyzer {
         findMatchingBricks(list: bricks?.variables)
         findMatchingBricks(list: bricks?.structural)
         
-        // Return as (id, 1.0) - score unused, SemanticFilterService will score them
-        let result = foundBricks.map { (id: $0, score: 1.0) }
+        // Return as (id, score) - Using actual semantic similarity instead of hardcoded 1.0
+        let result = foundBricks.compactMap { id -> (id: String, score: Double)? in
+            // Resolve the brick item to get its word for comparison
+            let all = (bricks?.constants ?? []) + (bricks?.variables ?? []) + (bricks?.structural ?? [])
+            guard let brick = all.first(where: { ($0.id ?? $0.word) == id }) else { return nil }
+            
+            // Calculate real neural similarity between the pattern text and this specific brick
+            let score = EmbeddingService.compare(
+                textA: text,
+                textB: brick.word,
+                languageCode: targetLanguage
+            )
+            
+            print("🧠 [ContentAnalyzer] Scored Brick \"\(brick.word)\": Similarity=\(String(format: "%.3f", score))")
+            return (id: id, score: score)
+        }
         
         return result
     }

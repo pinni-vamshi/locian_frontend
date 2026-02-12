@@ -33,44 +33,48 @@ struct MasteryFilterService {
         return all.first(where: { ($0.id ?? $0.word) == id })
     }
     
-    // MARK: - SHARED THRESHOLD LOGIC
+    // MARK: - SEMANTIC CLIFF DETECTION (V4.1)
     
-    /// Dynamically calculates the threshold for semantic filtering.
-    static func calculateThreshold(text: String, mastery: Double, languageCode: String) -> Double {
-        let dynamic = 0.85 - (mastery * 0.60)
-        let final = min(0.85, max(0.25, dynamic))
+    /// The "Brain" of the filtration system. 
+    /// Takes raw similarity scores and decides which bricks to include based on 
+    /// the "Semantic Cliff" - the point where relevance breaks.
+    /// Simplified 3-Stage Reveal Logic (Locian-Appropriate)
+    /// 0.00 - 0.25 Mastery: Core (2 bricks)
+    /// 0.25 - 0.50 Mastery: Most (3-4 bricks)
+    /// > 0.50 Mastery: Full (all bricks)
+    static func filterBricksBySemanticCliff(
+        bricks: [(id: String, score: Double)],
+        patternMastery: Double,
+        activeBricks: BricksData?
+    ) -> [String] {
+        guard !bricks.isEmpty else { return [] }
         
-        print("🔍 [MASTERY_FILTER] Threshold for \"\(text)\": Mastery=\(String(format: "%.2f", mastery)) -> Raw=\(String(format: "%.2f", dynamic)) -> Final=\(String(format: "%.2f", final))")
+        // 1. Weight = similarity only (keep simple)
+        let ranked = bricks.sorted { $0.score > $1.score }
+        let scores = ranked.map { $0.score }
+        let total = scores.reduce(0, +)
         
-        return final
-    }
-    
-    /// Determines if a brick should be included in a lesson based on its type and semantic relevance.
-    static func evaluateBrickRelevance(brick: String, isVariable: Bool, isConstant: Bool, score: Double, threshold: Double, mastery: Double) -> (accepted: Bool, reason: String) {
-        // Core Word Boost: Adaptive based on Mastery
-        let baseBoost = isVariable ? 0.05 : 0.0
-        let adaptiveBoost = baseBoost * (1.0 - mastery)
+        // 2. Fast growth schedule (full reveal reached by 0.50 mastery)
+        // Formula: C(M) = 0.50 + 0.50 * min(M/0.50, 1.0)
+        let normalized = min(patternMastery / 0.50, 1.0)
+        let coverage = 0.50 + (0.50 * normalized)
+        let requiredTotal = coverage * total
         
-        let boostedScore = score + adaptiveBoost
-        let accepted = boostedScore >= threshold
-        let brickType = isVariable ? "Variable" : (isConstant ? "Constant" : "Structural")
+        // 3. Selection loop until coverage reached
+        var selectedIDs: [String] = []
+        var currentSum: Double = 0
         
-        let scoreStr = String(format: "%.3f", boostedScore)
-        let threshStr = String(format: "%.2f", threshold)
+        for item in ranked {
+            selectedIDs.append(item.id)
+            currentSum += item.score
+            if currentSum >= requiredTotal { break }
+        }
         
-        let comparisonSymbol = accepted ? ">=" : "<"
-        let statusText = accepted ? "KEEP (For Intro)" : "SKIP (Mastered)"
+        // 4. Locian Guardrails: Minimum 2 bricks
+        if selectedIDs.count < 2 && ranked.count >= 2 {
+            selectedIDs = Array(ranked.prefix(2)).map { $0.id }
+        }
         
-        print("   -> 🧱 [\(brickType)] \"\(brick)\": Score=\(String(format: "%.3f", score)) + Boost=\(String(format: "%.3f", adaptiveBoost)) = \(scoreStr) \(comparisonSymbol) Thresh \(threshStr) -> \(statusText)")
-        
-        let reason = "\(brickType) [\(statusText)]: Final \(scoreStr) \(comparisonSymbol) Thresh \(threshStr)"
-        
-        let result = (accepted, reason)
-        return result
-    }
-    
-    /// Sorting score boost for main words (Variables) to ensure they appear first in lists.
-    static func getSortingScore(originalScore: Double, isVariable: Bool) -> Double {
-        return isVariable ? (originalScore + 2.0) : originalScore
+        return selectedIDs
     }
 }

@@ -19,7 +19,8 @@ struct PatternMCQView: View {
                     prompt: logic.prompt,
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
-                    textColor: .black
+                    textColor: .black,
+                    phonetic: logic.phonetic
                 )
                 
                 // 2. Body

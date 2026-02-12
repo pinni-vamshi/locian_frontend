@@ -33,6 +33,7 @@ struct BrickMCQView: View {
                     VStack(spacing: 24) {
                         MCQSelectionGrid(
                             options: logic.options,
+                            optionPhonetics: logic.optionPhonetics,
                             selectedOption: logic.selectedOption,
                             correctOption: (logic.isCorrect != nil) ? logic.correctOption : nil,
                             isAnswered: logic.isCorrect != nil,

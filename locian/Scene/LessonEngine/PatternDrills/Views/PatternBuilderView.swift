@@ -12,19 +12,21 @@ struct PatternBuilderView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // 1. Header (Now INSIDE scroll for better depth control)
-                    LessonPromptHeader(
-                        instruction: "BUILD THE SENTENCE",
-                        prompt: logic.prompt,
-                        targetLanguage: logic.targetLanguage,
-                        backgroundColor: .white,
-                        textColor: .black,
-                        modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
-                    )
-                    
-                    Color.clear.frame(height: 40) // Spacing from header
+            VStack(spacing: 0) {
+                // 1. Header (FIXED at the top)
+                LessonPromptHeader(
+                    instruction: "BUILD THE SENTENCE",
+                    prompt: logic.prompt,
+                    targetLanguage: logic.targetLanguage,
+                    backgroundColor: .white,
+                    textColor: .black,
+                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
+                )
+                
+                // 2. Body (SCROLLABLE content)
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Color.clear.frame(height: 40) // Spacing from header
                     
                         VStack(spacing: 8) {
                             Text("YOUR ANSWER")
@@ -58,6 +60,7 @@ struct PatternBuilderView: View {
                     
                     Color.clear.frame(height: 16) // Tightened gap
                     Divider().background(Color.white.opacity(0.2)) // Edge-to-edge divider
+
                     
                     // Available Area / Result Area
                     if !logic.checked {
@@ -95,6 +98,9 @@ struct PatternBuilderView: View {
                     Color.clear.frame(height: 200) // Huge bottom spacer for scroll safety
                 }
             }
+            }
+
+            
             
             // 3. Footer (STAYS FIXED)
             // ✅ Only use Wrapper (Continue) if we are in CHECK mode
@@ -112,6 +118,7 @@ struct PatternBuilderView: View {
     }
     
     private var footer: some View {
+
         VStack(spacing: 0) {
             if logic.checked || !logic.selectedTokens.isEmpty {
                 Divider().background(Color.white.opacity(0.1))

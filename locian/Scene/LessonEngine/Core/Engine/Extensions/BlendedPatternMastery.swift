@@ -31,12 +31,29 @@ extension LessonEngine {
         
         let brickMasteries = brickIds.map { self.getDecayedMastery(for: $0) }
         
-        // 4. Final Weighted Blend (60/40 Rule)
+        // 4. Final Weighted Blend (ASA Rule - Asymptotic Syntax Anchor)
         if brickMasteries.isEmpty {
             return structureScore
         } else {
             let brickAvg = brickMasteries.reduce(0, +) / Double(brickMasteries.count)
-            let finalScore = (structureScore * 0.60) + (brickAvg * 0.40)
+            
+            // ✅ DYNAMIC WEIGHTING (ASA)
+            // Low Mastery: 50/50 balance (Bricks are essential to start)
+            // Mid Mastery: 75/25 balance (Architecture starts to dominate)
+            // High Mastery: 90/10 balance (Architecture is the anchor; vocab errors shouldn't block progress)
+            
+            let structuralWeight: Double
+            if structureScore < 0.30 {
+                structuralWeight = 0.50
+            } else if structureScore < 0.70 {
+                structuralWeight = 0.75
+            } else {
+                structuralWeight = 0.90
+            }
+            
+            let semanticWeight = 1.0 - structuralWeight
+            let finalScore = (structureScore * structuralWeight) + (brickAvg * semanticWeight)
+            
             return min(1.0, max(0.0, finalScore))
         }
     }

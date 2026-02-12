@@ -20,6 +20,7 @@ struct PatternDictationView: View {
                     backgroundColor: .white,
                     textColor: .black,
                     modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil,
+                    phonetic: logic.phonetic,
                     onReplay: { logic.playAudio() }
                 )
                 
@@ -43,7 +44,10 @@ struct PatternDictationView: View {
                         
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
-                            TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                            TypingCorrectionView(
+                                correctAnswer: logic.state.drillData.target,
+                                phonetic: logic.state.drillData.phonetic
+                            )
                         }
                     }
                     .padding(.bottom, 120)

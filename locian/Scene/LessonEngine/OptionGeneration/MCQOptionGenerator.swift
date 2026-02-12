@@ -71,12 +71,19 @@ class MCQOptionGenerator {
             }
         }
         
-        // 2. Selection Strategy:
-        // A. Try Top 20 Sorted (High Quality)
-        // B. If exhausted, fallback to Remaining Random
+        // 2. Selection Strategy (Mid-Range Distractors):
+        // Safety Fallback: Only skip top matches if we have enough candidates (>= 8).
+        // Otherwise, use the top matches to guarantee 4 options.
         
-        let topTier = Array(allCandidates.prefix(20))
-        let bottomTier = Array(allCandidates.dropFirst(20)).shuffled()
+        let useMidRange = allCandidates.count >= 8
+        
+        let topTier = useMidRange 
+            ? Array(allCandidates.dropFirst(3).prefix(20))
+            : Array(allCandidates.prefix(20))
+            
+        let bottomTier = useMidRange
+            ? Array(allCandidates.dropFirst(23)).shuffled()
+            : Array(allCandidates.dropFirst(20)).shuffled()
         
         // Pass 1: Semantic Match (From Top 20)
         for candidate in topTier {
@@ -157,9 +164,19 @@ class MCQOptionGenerator {
             }
         }
         
-        // 2. Selection Strategy
-        let topTier = Array(allCandidates.prefix(20))
-        let bottomTier = Array(allCandidates.dropFirst(20)).shuffled()
+        // 2. Selection Strategy (Mid-Range Distractors):
+        // Safety Fallback: Only skip top matches if we have enough candidates (>= 8).
+        // Otherwise, use the top matches to guarantee 4 options.
+        
+        let useMidRange = allCandidates.count >= 8
+        
+        let topTier = useMidRange 
+            ? Array(allCandidates.dropFirst(3).prefix(20))
+            : Array(allCandidates.prefix(20))
+            
+        let bottomTier = useMidRange
+            ? Array(allCandidates.dropFirst(23)).shuffled()
+            : Array(allCandidates.dropFirst(20)).shuffled()
         
         // Pass 1: Semantic Match (From Top 20)
         for candidate in topTier {

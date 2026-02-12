@@ -45,7 +45,10 @@ struct PatternTypingView: View {
                         
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
-                            TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                            TypingCorrectionView(
+                                correctAnswer: logic.state.drillData.target,
+                                phonetic: logic.state.drillData.phonetic
+                            )
                         }
                     }
                     .padding(.top, 0)

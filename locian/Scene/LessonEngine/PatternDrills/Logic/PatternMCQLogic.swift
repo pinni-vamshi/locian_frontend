@@ -7,6 +7,7 @@ class PatternMCQLogic: ObservableObject {
     
     // Data only
     let prompt: String
+    let phonetic: String?
     let options: [String]
     let targetLanguage: String
     
@@ -20,6 +21,7 @@ class PatternMCQLogic: ObservableObject {
         self.engine = engine
         self.lessonDrillLogic = lessonDrillLogic
         self.prompt = state.drillData.target
+        self.phonetic = state.drillData.phonetic
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         // SELF-HEALING: Generate options if missing
@@ -40,12 +42,12 @@ class PatternMCQLogic: ObservableObject {
     }
     
     func selectOption(_ option: String) {
+        // ✅ ALWAYS Speak the option (English meaning)
+        AudioManager.shared.speak(text: option, language: "en-US")
+        
         guard isCorrect == nil else { 
             return 
         }
-        
-        // Speak the option (English meaning)
-        AudioManager.shared.speak(text: option, language: "en-US")
         
         selectedOption = option
         validateSelection(option)

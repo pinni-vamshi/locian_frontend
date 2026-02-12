@@ -133,7 +133,8 @@ class BrickVoiceLogic: ObservableObject {
     static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) -> some View {
         if let introLogic = patternIntroLogic {
             // ✅ Direction A: Pattern Intro (Recap) -> Mini Interaction
-            BrickVoiceInteraction(drill: state, engine: engine, showPrompt: true, patternIntroLogic: introLogic, onComplete: onComplete)
+            // Hiding Prompt because PatternIntroView Header + Tap Strip already shows Meaning.
+            BrickVoiceInteraction(drill: state, engine: engine, showPrompt: false, patternIntroLogic: introLogic, onComplete: onComplete)
         } else {
             // ✅ Direction B: Ghost Mode (Practice) -> Full View
             BrickVoiceView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete)

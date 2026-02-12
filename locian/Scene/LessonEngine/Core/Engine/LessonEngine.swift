@@ -173,6 +173,21 @@ class LessonEngine: ObservableObject {
         let current = componentMastery[id] ?? 0.0
         let newValue = (current + delta).clamped(to: 0.0...1.0)
         componentMastery[id] = newValue
+        
+        // ✅ ID UNIFICATION (ASA Rule)
+        // If this is a mode-specific ID (e.g., "P1-typing"), also update the base ID ("P1")
+        // This ensures the structural anchor grows alongside the specific drill.
+        let modeSuffixes = ["-mcq", "-typing", "-speaking", "-sentenceBuilder", "-voiceMcq", "-auto", "-vocabIntro", "-ghostManager"]
+        for suffix in modeSuffixes {
+            if id.hasSuffix(suffix) {
+                let baseId = id.replacingOccurrences(of: suffix, with: "")
+                let baseCurrent = componentMastery[baseId] ?? 0.0
+                let baseNew = (baseCurrent + delta).clamped(to: 0.0...1.0)
+                componentMastery[baseId] = baseNew
+                print("   🔗 [MasteryLink] Syncing base ID '\(baseId)' with delta \(delta) (from \(id))")
+                break
+            }
+        }
     }
     
     // MARK: - Extension Helpers

@@ -25,11 +25,22 @@ struct TypingValidator: DrillValidator {
         }
         
         // GATE 3: ADAPTIVE SEMANTIC MATCH
-        let threshold = MasteryFilterService.calculateThreshold(
-            text: cleanTarget,
-            mastery: context.state.id.isEmpty ? 0.0 : context.engine.getBlendedMastery(for: context.state.id),
-            languageCode: langCode
-        )
+        // GATE 3: ADAPTIVE SEMANTIC MATCH (V4.1)
+        // Use the Semantic Cliff tolerance logic to see if this input is "relevant enough"
+        // We simulate a mini-cliff check: If the input's score is within the tolerance window of the target's self-score (1.0), it passes.
+        
+        let mastery = context.state.id.isEmpty ? 0.0 : context.engine.getBlendedMastery(for: context.state.id)
+        
+        // Calculate G(M) tolerance
+        // Since target is always 1.0, the spread is (1.0 - inputScore).
+        // If (1.0 - inputScore) < G(M), then the input is "close enough" to be considered a valid synonym/alternative.
+        // G(M) = alpha * delta * mastery -> Delta is effectively 1.0 here vs perfect match
+        // Logic: 
+        // - Low Mastery (0.0): Tolerance -> 0.0 (Must be exact/perfect semantic)
+        // - High Mastery (1.0): Tolerance -> 0.25 (Allows looser synonyms)
+        
+        let tolerance = 0.25 * mastery 
+        let threshold = 1.0 - tolerance
         
         if similarity >= threshold {
             return .meaningCorrect

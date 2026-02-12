@@ -32,6 +32,7 @@ struct BrickMCQInteraction: View {
             
             MCQSelectionGrid(
                 options: logic.options,
+                optionPhonetics: logic.optionPhonetics,
                 selectedOption: logic.selectedOption,
                 correctOption: (logic.isCorrect != nil) ? logic.correctOption : nil,
                 isAnswered: logic.isCorrect != nil,
@@ -63,15 +64,17 @@ struct BrickClozeInteraction: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            // TRADITIONAL / FALLBACK MODE
-            VStack(spacing: 16) {
-                Text(logic.prompt)
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            .padding(.top)
+            if showPrompt {
+                // TRADITIONAL / FALLBACK MODE
+                VStack(spacing: 16) {
+                    Text(logic.prompt)
+                        .font(.system(size: 28, weight: .black))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .padding(.top)
+             }
             
             TypingInputArea(
                 text: $logic.userInput,
@@ -83,7 +86,10 @@ struct BrickClozeInteraction: View {
             .padding(.horizontal)
             
             if let isCorrect = logic.isCorrect, !isCorrect {
-                TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                TypingCorrectionView(
+                    correctAnswer: logic.state.drillData.target,
+                    phonetic: logic.state.drillData.phonetic
+                )
             }
             
             if logic.isCorrect == nil {
@@ -140,7 +146,10 @@ struct BrickTypingInteraction: View {
             .padding(.horizontal)
             
             if let isCorrect = logic.isCorrect, !isCorrect {
-                TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                TypingCorrectionView(
+                    correctAnswer: logic.state.drillData.target,
+                    phonetic: logic.state.drillData.phonetic
+                )
             }
             
             if logic.isCorrect == nil {
@@ -196,7 +205,10 @@ struct BrickVoiceInteraction: View {
             }
             
             if let isCorrect = logic.isCorrect, !isCorrect {
-                TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                TypingCorrectionView(
+                    correctAnswer: logic.state.drillData.target,
+                    phonetic: logic.state.drillData.phonetic
+                )
             }
             
             if logic.isCorrect == nil && logic.hasInput {

@@ -37,7 +37,10 @@ struct BrickTypingView: View {
                         
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
-                            TypingCorrectionView(correctAnswer: logic.state.drillData.target)
+                            TypingCorrectionView(
+                                correctAnswer: logic.state.drillData.target,
+                                phonetic: logic.state.drillData.phonetic
+                            )
                         }
                     }
                     .padding(.top, 80)
@@ -46,7 +49,10 @@ struct BrickTypingView: View {
             }
             
             // 3. Footer
-            if let wrapper = lessonDrillLogic {
+            // 3. Footer
+            // ✅ Only show shared wrapper POST-ANSWER (to get the "Continue" logic).
+            // During input, show local footer (for "Check" button).
+            if let wrapper = lessonDrillLogic, wrapper.isDrillAnswered {
                 DrillFooterWrapper(logic: wrapper)
             } else {
                 footer
