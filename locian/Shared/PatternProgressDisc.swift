@@ -22,6 +22,7 @@ struct PatternProgressDisc: View {
                 )
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(-90)) // Start from top
+                .animation(.easeInOut(duration: 0.5), value: mastery) // Smooth animation
         }
     }
 }

@@ -93,7 +93,6 @@ struct PatternBuilderView: View {
                             
                             ExploreSimilarWordsSection(logic: logic)
                         }
-                        .padding(.horizontal, 24)
                     }
 
                     
@@ -181,7 +180,6 @@ fileprivate struct CorrectSolutionView: View {
         .background(CyberColors.neonGreen) // Pure Neon
         .cornerRadius(0) // Sharp
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
     }
 }
 
@@ -191,15 +189,13 @@ fileprivate struct ExploreSimilarWordsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Heading with pink background
-            HStack(spacing: 8) {
-                Text("EXPLORE SIMILAR WORDS")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .tracking(1)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(CyberColors.neonPink)
-            }
+            Text("EXPLORE SIMILAR WORDS")
+                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                .tracking(1)
+                .foregroundColor(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(CyberColors.neonPink)
             
             // Buttons (Top 3)
             FlowLayout(data: logic.exploreWords, id: \.word, spacing: 12) { item in
