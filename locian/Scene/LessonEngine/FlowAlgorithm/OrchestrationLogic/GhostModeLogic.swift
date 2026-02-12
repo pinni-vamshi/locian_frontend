@@ -134,7 +134,37 @@ class GhostModeLogic: ObservableObject {
                 ))
             }
         }
+        
+        // ✅ PATTERN REINFORCEMENT: Add original pattern at the beginning if needed
+        let patternMastery = engine.getBlendedMastery(for: targetPattern.id)
+        let hadMistakes = !mistakeQueue.isEmpty
+        
+        if patternMastery < 0.60 || hadMistakes {
+            print("   🔄 [GhostMode] REINFORCEMENT: Adding original pattern '\(targetPattern.id)' to start of history queue")
+            print("      - Mastery: \(String(format: "%.2f", patternMastery)) | Had Mistakes: \(hadMistakes)")
+            
+            let drillItem = DrillItem(
+                target: targetPattern.drillData.target,
+                meaning: targetPattern.drillData.meaning,
+                phonetic: targetPattern.drillData.phonetic
+            )
+            
+            let reinforcementDrill = DrillState(
+                id: "\(targetPattern.patternId)-d0",
+                patternId: targetPattern.patternId,
+                drillIndex: -1,
+                drillData: drillItem,
+                isBrick: false
+            )
+
+            
+            // Insert at the beginning of history queue
+            historyQueue.insert(reinforcementDrill, at: 0)
+        } else {
+            print("   ⏭️ [GhostMode] SKIP REINFORCEMENT: Pattern mastery sufficient (\(String(format: "%.2f", patternMastery))) and no mistakes")
+        }
     }
+
     
     func findGhostToRehearse() {
         if !mistakeQueue.isEmpty {

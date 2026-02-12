@@ -188,20 +188,24 @@ fileprivate struct ExploreSimilarWordsSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Heading
+            // Heading with pink background
             HStack(spacing: 8) {
-                Rectangle()
-                    .fill(CyberColors.neonCyan)
-                    .frame(width: 4, height: 14)
-                
                 Text("EXPLORE SIMILAR WORDS")
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .tracking(1)
-                    .foregroundColor(.gray)
-                
-                Spacer()
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(CyberColors.neonPink)
             }
             .padding(.horizontal, 24)
+            
+            // Divider - 2pt thick, pink color, moved down
+            Rectangle()
+                .fill(CyberColors.neonPink)
+                .frame(height: 2)
+                .padding(.horizontal, 24)
+
             
             // Buttons (Top 3)
             FlowLayout(data: logic.exploreWords, id: \.word, spacing: 12) { item in
