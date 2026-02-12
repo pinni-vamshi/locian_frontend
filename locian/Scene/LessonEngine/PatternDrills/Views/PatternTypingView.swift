@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PatternTypingView: View {
     @StateObject private var logic: PatternTypingLogic
+    @EnvironmentObject var appState: AppStateManager
     @FocusState private var isFocused: Bool
     var lessonDrillLogic: LessonDrillLogic?
     
@@ -72,7 +73,11 @@ struct PatternTypingView: View {
             }
         }
         .background(Color.black.ignoresSafeArea())
-        .onAppear { isFocused = true }
+        .background(Color.black.ignoresSafeArea())
+        .onAppear { 
+            isFocused = true 
+            logic.appState = appState
+        }
     }
     
     private var footer: some View {

@@ -23,6 +23,7 @@ class PatternTypingLogic: ObservableObject {
     @Published var validBrickWords: Set<String> = []
 
     weak var lessonDrillLogic: LessonDrillLogic? // ✅ Wrapper Reference
+    var appState: AppStateManager?
     
     init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
         self.state = state
@@ -166,7 +167,7 @@ class PatternTypingLogic: ObservableObject {
             return 
         }
         
-        guard let token = CommonAuth.shared.sessionToken else { return }
+        guard let token = appState?.authToken else { return }
         
         isSearching = true
         GetSimilarWordsService.shared.getSimilarWords(
