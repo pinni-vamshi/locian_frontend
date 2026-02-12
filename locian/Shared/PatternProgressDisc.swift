@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A circular disc that shows pattern mastery progress with a clockwise green sweep
+/// A simple circular progress ring showing pattern mastery
 struct PatternProgressDisc: View {
     let mastery: Double // 0.0 to 1.0
     let isActive: Bool // true = pink background, false = white background
@@ -8,15 +8,18 @@ struct PatternProgressDisc: View {
     
     var body: some View {
         ZStack {
-            // Background disc (white or pink) - full circle
+            // Background ring
             Circle()
-                .fill(isActive ? CyberColors.neonPink : Color.white)
+                .stroke(Color.white.opacity(0.3), lineWidth: 2)
                 .frame(width: size, height: size)
             
-            // Green progress sweep (clockwise from top) - overlays on top
+            // Progress ring
             Circle()
                 .trim(from: 0, to: min(mastery / 0.85, 1.0)) // 85% mastery = full circle
-                .fill(Color.green)
+                .stroke(
+                    isActive ? CyberColors.neonPink : Color.green,
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                )
                 .frame(width: size, height: size)
                 .rotationEffect(.degrees(-90)) // Start from top
         }

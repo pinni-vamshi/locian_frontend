@@ -200,13 +200,11 @@ fileprivate struct ExploreSimilarWordsSection: View {
                     .padding(.vertical, 6)
                     .background(CyberColors.neonPink)
             }
-            .padding(.horizontal, 24)
             
             // Divider - 2pt thick, pink color, moved down
             Rectangle()
                 .fill(CyberColors.neonPink)
                 .frame(height: 2)
-                .padding(.horizontal, 24)
 
             
             // Buttons (Top 3)
@@ -218,7 +216,6 @@ fileprivate struct ExploreSimilarWordsSection: View {
                     action: { logic.selectExploreWord(item.word) }
                 )
             }
-            .padding(.horizontal, 24)
             
             // Search Results
             if logic.isSearching {
@@ -262,7 +259,6 @@ fileprivate struct ExploreSimilarWordsSection: View {
                         )
                     }
                 }
-                .padding(.horizontal, 24)
             }
         }
     }
