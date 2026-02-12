@@ -161,6 +161,11 @@ struct LessonPromptHeader: View {
     // Set to false if prompt is native language (English) to avoid confusion.
     var showPhoneticOnPrompt: Bool = true
     
+    // NEW: Pattern Progress Discs
+    var patternIds: [String]? = nil
+    var currentPatternId: String? = nil
+    var engine: LessonEngine? = nil
+    
     // Default initializer without binding (for non-expandable usage)
     init(
         instruction: String,
@@ -173,7 +178,10 @@ struct LessonPromptHeader: View {
         modeLabel: String? = nil,
         phonetic: String? = nil,
         showPhoneticOnPrompt: Bool = true,
-        onReplay: (() -> Void)? = nil
+        onReplay: (() -> Void)? = nil,
+        patternIds: [String]? = nil,
+        currentPatternId: String? = nil,
+        engine: LessonEngine? = nil
     ) {
         self.instruction = instruction
         self.prompt = prompt
@@ -188,6 +196,9 @@ struct LessonPromptHeader: View {
         self.phonetic = phonetic
         self.showPhoneticOnPrompt = showPhoneticOnPrompt
         self.onReplay = onReplay
+        self.patternIds = patternIds
+        self.currentPatternId = currentPatternId
+        self.engine = engine
     }
     
     // Initializer with binding (for expandable hint mode)
@@ -203,7 +214,10 @@ struct LessonPromptHeader: View {
         textColor: Color = .black,
         modeLabel: String? = nil,
         phonetic: String? = nil,
-        showPhoneticOnPrompt: Bool = true
+        showPhoneticOnPrompt: Bool = true,
+        patternIds: [String]? = nil,
+        currentPatternId: String? = nil,
+        engine: LessonEngine? = nil
     ) {
         self.instruction = instruction
         self.prompt = prompt
@@ -219,12 +233,16 @@ struct LessonPromptHeader: View {
         self.phonetic = phonetic
         self.showPhoneticOnPrompt = showPhoneticOnPrompt
         self.onReplay = nil
+        self.patternIds = patternIds
+        self.currentPatternId = currentPatternId
+        self.engine = engine
     }
+
     
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
-                // 1. Instruction Label
+                // 1. Instruction Label with Progress Discs
                 HStack(alignment: .center, spacing: 8) {
                     Text(instruction.uppercased())
                         .font(.system(size: 12, weight: .black, design: .monospaced)) // Bold/Black font
@@ -243,7 +261,19 @@ struct LessonPromptHeader: View {
                             .padding(.vertical, 4)
                             .background(CyberColors.neonBlue) // Distinct Blue for Mode
                     }
+                    
+                    Spacer()
+                    
+                    // Pattern Progress Discs (right-aligned)
+                    if let patterns = patternIds, let currentId = currentPatternId, let eng = engine {
+                        PatternProgressRow(
+                            patterns: patterns,
+                            currentPatternId: currentId,
+                            engine: eng
+                        )
+                    }
                 }
+
                 
                 // 2. Main Prompt Text or Replay Button
                 if let replay = onReplay {

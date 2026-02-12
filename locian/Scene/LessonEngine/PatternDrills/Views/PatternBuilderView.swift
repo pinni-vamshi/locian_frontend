@@ -93,7 +93,9 @@ struct PatternBuilderView: View {
                             
                             ExploreSimilarWordsSection(logic: logic)
                         }
+                        .padding(.horizontal, 24)
                     }
+
                     
                     Color.clear.frame(height: 200) // Huge bottom spacer for scroll safety
                 }
