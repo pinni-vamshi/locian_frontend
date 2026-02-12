@@ -170,18 +170,43 @@ class LessonEngine: ObservableObject {
     
     // MARK: - Mastery Updates (Pure Data)
     func updateMastery(id: String, delta: Double) {
+        
+        // 1. Update the Target ID
         let current = componentMastery[id] ?? 0.0
         let newValue = (current + delta).clamped(to: 0.0...1.0)
         componentMastery[id] = newValue
         
-        // ✅ Live Update Hook: Force SwiftUI to re-render ALL views
-        // This ensures shared bricks immediately update pattern progress discs
+        // 2. ✅ GLOBAL BRICK SYNC (The "Same Word" Rule)
+        // If this ID belongs to a brick, find ALL other bricks with the SAME ID (word text) and update them too.
+        // This prevents "apple" in Group 1 from being different than "apple" in Group 2.
+        if let allBricks = self.allBricks {
+            // Find the word text for this ID
+            let flatList = (allBricks.constants ?? []) + (allBricks.variables ?? []) + (allBricks.structural ?? [])
+            
+            if let sourceBrick = flatList.first(where: { ($0.id ?? $0.word) == id }) {
+                let sourceWord = sourceBrick.word.lowercased()
+                
+                // Find all OTHER bricks with the exact same word
+                let duplicates = flatList.filter {
+                    let brickId = $0.id ?? $0.word
+                    return brickId != id && $0.word.lowercased() == sourceWord
+                }
+                
+                for dup in duplicates {
+                    let dupId = dup.id ?? dup.word
+                    componentMastery[dupId] = newValue
+                    print("   🔄 [GlobalSync] Synced Duplicate Brick '\(dup.word)' (ID: \(dupId)) to \(newValue)")
+                }
+            }
+        }
+        
+        // 3. ✅ Live Update Hook: Force SwiftUI to re-render ALL views
         DispatchQueue.main.async {
             self.objectWillChange.send()
         }
 
         
-        // ✅ ID UNIFICATION (ASA Rule)
+        // 4. ✅ ID UNIFICATION (ASA Rule)
         // If this is a mode-specific ID (e.g., "P1-typing"), also update the base ID ("P1")
         // This ensures the structural anchor grows alongside the specific drill.
         let modeSuffixes = ["-mcq", "-typing", "-speaking", "-sentenceBuilder", "-voiceMcq", "-auto", "-vocabIntro", "-ghostManager"]
