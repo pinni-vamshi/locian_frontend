@@ -174,6 +174,13 @@ class LessonEngine: ObservableObject {
         let newValue = (current + delta).clamped(to: 0.0...1.0)
         componentMastery[id] = newValue
         
+        // ✅ Live Update Hook: Force SwiftUI to re-render ALL views
+        // This ensures shared bricks immediately update pattern progress discs
+        DispatchQueue.main.async {
+            self.objectWillChange.send()
+        }
+
+        
         // ✅ ID UNIFICATION (ASA Rule)
         // If this is a mode-specific ID (e.g., "P1-typing"), also update the base ID ("P1")
         // This ensures the structural anchor grows alongside the specific drill.
