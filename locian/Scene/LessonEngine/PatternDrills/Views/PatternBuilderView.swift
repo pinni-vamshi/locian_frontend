@@ -201,12 +201,6 @@ fileprivate struct ExploreSimilarWordsSection: View {
                     .background(CyberColors.neonPink)
             }
             
-            // Divider - 2pt thick, pink color, moved down
-            Rectangle()
-                .fill(CyberColors.neonPink)
-                .frame(height: 2)
-
-            
             // Buttons (Top 3)
             FlowLayout(data: logic.exploreWords, id: \.word, spacing: 12) { item in
                 TechWordButton(
