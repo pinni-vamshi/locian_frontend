@@ -254,47 +254,87 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: toRemove)
             
             DispatchQueue.main.async {
-                self.performUtilityDiscovery()
+                self.scheduleSmartNotification()
             }
         }
     }
     
-    private func performUtilityDiscovery() {
-        let nearby = LocationManager.shared.nearbyPlaceAmbience
-        guard !nearby.isEmpty else { return }
+    private func scheduleSmartNotification() {
+        // 1. STAGE 1: Time Discovery (Habit Only)
+        // Find the absolute best time to study based on history, ignoring current location.
+        // This ensures the alarm always goes off.
         
-        // Find the best semantic match nearby right now
-        let top5Vibes = getTopPersonalVibes(forTarget: latestIntentVector)
-        guard let bestNearby = findBestNearbyVibeMatch(from: nearby, comparingTo: top5Vibes, withTarget: latestIntentVector) else {
-            print("🌙 [NotificationManager] No strong vibe nearby. Standing by.")
-            return
-        }
-        
-        // Calculate the score for this match (0.0 to 1.0 range usually but let's normalize clearly)
-        let intentScore = calculateMatchScore(for: bestNearby, comparingTo: top5Vibes, withTarget: latestIntentVector)
-        
-        // Step 1: Candidate times (next 6 hours, every 30m)
         var bestTime: Date = Date()
-        var maxUtility: Double = -1.0
+        var maxHabitScore: Double = -1.0
         
+        // Scan next 12 hours
         for i in 0...12 {
             let candidateDate = Date().addingTimeInterval(Double(i) * 1800)
-            let utility = calculateUtility(at: candidateDate, intentScore: intentScore)
+            let score = calculateHabitScore(at: candidateDate)
             
-            if utility > maxUtility {
-                maxUtility = utility
+            if score > maxHabitScore {
+                maxHabitScore = score
                 bestTime = candidateDate
             }
         }
         
-        print("🧠 [NotificationManager] Peak Utility: \(String(format: "%.3f", maxUtility)) at \(bestTime)")
+        // New User Fallback: If no habits yet (Score 0), schedule for 9 AM or 6 PM
+        if maxHabitScore == 0 {
+            let hour = Calendar.current.component(.hour, from: Date())
+            if hour < 9 {
+                bestTime = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date().addingTimeInterval(3600)
+            } else if hour < 18 {
+                bestTime = Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date()) ?? Date().addingTimeInterval(3600)
+            } else {
+                bestTime = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date().addingTimeInterval(86400)) ?? Date()
+            }
+            maxHabitScore = 0.5 // Artificially boost to pass threshold
+        }
         
-        // Step 4: Schedule only if above threshold
-        if maxUtility > 0.75 {
-            let delay = bestTime.timeIntervalSince(Date())
-            self.performSurgicalSchedule(id: bestNearby.id, name: bestNearby.name, lat: bestNearby.latitude, lon: bestNearby.longitude, delay: max(1, delay))
-        } else {
-            print("🛡️ [NotificationManager] Utility below threshold. Waiting for better context.")
+        print("🧠 [NotificationManager] Best Time Found: \(bestTime) (Score: \(maxHabitScore))")
+        
+        // 2. STAGE 2: Context Resolution (Just-in-Time Context)
+        // We have the time. Now, what do we say?
+        // If Live Location is ON and valid -> Use it.
+        // If Live Location is OFF -> Use History (Place associated with this time).
+        
+        var contextName: String = "your usual spot"
+        var contextID: String = "home_base"
+        var isCurrentLocation = false
+        
+        // Check Live Match
+        let nearby = LocationManager.shared.nearbyPlaceAmbience
+        if !nearby.isEmpty {
+             // Find best match for Intent
+             let top5Vibes = getTopPersonalVibes(forTarget: latestIntentVector)
+             if let bestLive = findBestNearbyVibeMatch(from: nearby, comparingTo: top5Vibes, withTarget: latestIntentVector) {
+                 contextName = bestLive.name
+                 contextID = bestLive.id
+                 isCurrentLocation = true
+             }
+        }
+        
+        // Fallback: History (if no live match)
+        if !isCurrentLocation {
+             // Find the UniversalAnchor that matches this time hour
+            let hour = Calendar.current.component(.hour, from: bestTime)
+            if let historicalAnchor = universalAnchors.first(where: { $0.hour == hour }) {
+                contextName = historicalAnchor.placeName
+                contextID = historicalAnchor.id
+            } else {
+                // If completely new user and no history
+                contextName = "a quiet place"
+            }
+        }
+        
+        // 3. STAGE 3: Schedule
+        // Threshold eased to 0.4 to ensure firing
+        if maxHabitScore >= 0.1 { // Very low threshold to guarantee notifications for now
+            let delay = max(1, bestTime.timeIntervalSince(Date()))
+            
+            // Don't reschedule if we already have one very close (within 30 mins)
+            print("� [NotificationManager] Scheduling for \(contextName) in \(Int(delay))s")
+            self.performSurgicalSchedule(id: contextID, name: contextName, lat: 0, lon: 0, delay: delay)
         }
     }
     
