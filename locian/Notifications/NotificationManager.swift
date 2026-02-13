@@ -35,6 +35,8 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     
     private let logLimit = 50
     private let logKey = "notification_log_history"
+    private let globalMinGap: TimeInterval = 6 * 3600
+    private let dailyCap: Int = 2
     
     // Configuration
     
@@ -148,28 +150,46 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let identifier = response.notification.request.identifier
-        
-        // Interaction resets ignore streak
-        AppStateManager.shared.notificationIgnoreStreak = 0
-        AppStateManager.shared.lastOpenedNotificationDate = Date()
+        let userInfo = response.notification.request.content.userInfo
         
         // Start cooling period upon interaction
         AppStateManager.shared.lastNotificationFireDate = Date()
         
-        handleNotificationEngagement(for: identifier)
+        // Resolve Deep Link Context
+        if let placeName = userInfo["place_name"] as? String,
+           let id = userInfo["place_id"] as? String {
+            print("📱 [NotificationManager] Engagement: \(placeName) (\(id))")
+            
+            DispatchQueue.main.async {
+                AppStateManager.shared.pendingDeepLinkPlace = placeName
+                // If it's a smart habit, extract hour from ID (e.g., Library_10 -> 10)
+                if identifier.hasPrefix("smart_time_"), let hourStr = id.split(separator: "_").last, let hour = Int(hourStr) {
+                    AppStateManager.shared.pendingDeepLinkHour = hour
+                }
+                
+                self.handleNotificationEngagement(for: identifier)
+                self.refreshIfNecessary()
+            }
+        } else {
+            handleNotificationEngagement(for: identifier)
+        }
+        
         completionHandler()
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         let identifier = notification.request.identifier
         
-        // If delivered, we increment ignore streak until opened
-        AppStateManager.shared.notificationIgnoreStreak += 1
+        // Removed ignore streak tracking for simpler state
         
         // Start cooling period upon delivery
         AppStateManager.shared.lastNotificationFireDate = Date()
         
-        handleNotificationEngagement(for: identifier)
+        // Foreground delivery should not trigger immediate rediscovery; this was
+        // creating rapid notification loops when the app was open.
+        if identifier.hasPrefix("smart_time_") {
+            AppStateManager.shared.notifiedMomentIDs.insert(identifier.replacingOccurrences(of: "smart_time_", with: ""))
+        }
         completionHandler([.banner, .sound, .badge])
     }
     
@@ -187,10 +207,8 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         
         // No more partners to remove as geofencing is abolished.
         
-        // Proactive Chaining: Re-run discovery to either fire now or plan the next optimal window
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.executeSemanticDiscovery()
-        }
+        // Interaction no longer triggers immediate re-discovery to reduce churn;
+        // natural triggers (App Open/Location Change) will handle planning.
     }
     
     // MARK: - Permissions
@@ -229,6 +247,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     
     func refreshIfNecessary() {
         cleanupNotifiedIDs()
+        guard canScheduleNow() else { return }
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
             // If we have a future smart notification scheduled, we might want to keep it
             // or re-evaluate if the user moved significantly.
@@ -246,9 +265,15 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     }
     
     func executeSemanticDiscovery() {
-        guard isNotificationsEnabled, !universalAnchors.isEmpty else { return }
+        guard isNotificationsEnabled, !universalAnchors.isEmpty, canScheduleNow() else { return }
         
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            // Keep already pending smart notifications to avoid destructive churn.
+            let hasPendingSmart = requests.contains { $0.identifier.hasPrefix("smart_") }
+            if hasPendingSmart {
+                return
+            }
+
             // Clear current pending smart notifications before re-calculating the best window
             let toRemove = requests.filter { $0.identifier.hasPrefix("smart_") }.map { $0.identifier }
             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: toRemove)
@@ -260,6 +285,12 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     }
     
     private func scheduleSmartNotification() {
+        guard canScheduleNow() else { return }
+
+        let now = Date()
+        // Shift window by 20 mins to prevent "instant" notifications on app open
+        let nextAllowed = max(now.addingTimeInterval(1200), nextAllowedByGlobalGap())
+
         // 1. STAGE 1: Time Discovery (Habit Only)
         // Find the absolute best time to study based on history, ignoring current location.
         // This ensures the alarm always goes off.
@@ -269,7 +300,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         
         // Scan next 12 hours
         for i in 0...12 {
-            let candidateDate = Date().addingTimeInterval(Double(i) * 1800)
+            let candidateDate = nextAllowed.addingTimeInterval(Double(i) * 1800)
             let score = calculateHabitScore(at: candidateDate)
             
             if score > maxHabitScore {
@@ -330,7 +361,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         // 3. STAGE 3: Schedule
         // Threshold eased to 0.4 to ensure firing
         if maxHabitScore >= 0.1 { // Very low threshold to guarantee notifications for now
-            let delay = max(1, bestTime.timeIntervalSince(Date()))
+            let delay = max(1, bestTime.timeIntervalSince(now))
             
             // Don't reschedule if we already have one very close (within 30 mins)
             print("� [NotificationManager] Scheduling for \(contextName) in \(Int(delay))s")
@@ -338,18 +369,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         }
     }
     
-    private func calculateUtility(at date: Date, intentScore: Double) -> Double {
-        let alpha = 0.4 // Weight for Intent
-        let beta = 0.5  // Weight for Habit
-        let lambda = 0.3 // Weight for Spam Penalty (subtractive/penalty)
-        
-        let h_score = calculateHabitScore(at: date)
-        let s_penalty = calculateSpamPenalty(at: date)
-        
-        // U(t) = alpha*I + beta*H - lambda*S
-        let utility = (alpha * intentScore) + (beta * h_score) - (lambda * s_penalty)
-        return utility
-    }
+        // Dead math removed
     
     private func calculateHabitScore(at date: Date) -> Double {
         let calendar = Calendar.current
@@ -370,14 +390,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         return totalContribution / max(1.0, Double(universalAnchors.count / 2)) // Slight boost for visibility
     }
     
-    private func calculateSpamPenalty(at date: Date) -> Double {
-        let lastFire = AppStateManager.shared.lastNotificationFireDate ?? .distantPast
-        let deltaT = date.timeIntervalSince(lastFire) / 3600.0 // in hours
-        let tau = 4.0 // 4 hours decay constant
-        
-        // S(t) = exp(-deltaT / tau) -> 1.0 if just fired, decays to ~0 after 12h
-        return exp(-deltaT / tau)
-    }
+        // Dead math removed
     
     private func calculateMatchScore(for place: LocationManager.NearbyAmbience, comparingTo topVibes: [PersonalVibe], withTarget target: [Double]?) -> Double {
         var intentSimilarity: Double = 0.0
@@ -458,6 +471,26 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
             print("🕒 [NotificationManager] Scheduled ID: \(id) in \(Int(delay))s")
             self.saveLogEntry(placeName: name, lat: lat, lon: lon)
         }
+    }
+
+    private func nextAllowedByGlobalGap() -> Date {
+        let lastFire = AppStateManager.shared.lastNotificationFireDate ?? .distantPast
+        return lastFire.addingTimeInterval(globalMinGap)
+    }
+
+    private func notificationsSentToday() -> Int {
+        let calendar = Calendar.current
+        return getLogs().filter { calendar.isDateInToday($0.timestamp) }.count
+    }
+
+    private func canScheduleNow() -> Bool {
+        if notificationsSentToday() >= dailyCap {
+            return false
+        }
+        if Date() < nextAllowedByGlobalGap() {
+            return false
+        }
+        return true
     }
     
     private func getGreeting() -> String {

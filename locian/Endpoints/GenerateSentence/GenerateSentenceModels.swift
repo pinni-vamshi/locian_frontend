@@ -27,12 +27,7 @@ struct GenerateSentenceRequest: Codable, Sendable {
     let bypass_cache: Bool?
 }
 
-// Nearby Place Data (Reused from TimelineContextModels if available, or defined here)
-struct NearbyPlaceData: Codable, Sendable {
-    let name: String
-    let type: String?
-    let distance: Double?
-}
+
 
 // MARK: - Response Models
 

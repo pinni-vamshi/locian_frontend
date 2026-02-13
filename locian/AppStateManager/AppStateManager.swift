@@ -101,11 +101,7 @@ class AppStateManager: ObservableObject {
     }
     
     // MARK: - Notifications State
-    @Published var completedNotificationCount: Int = 0 {
-        didSet {
-            UserDefaults.standard.set(completedNotificationCount, forKey: "completedNotificationCount")
-        }
-    }
+    // Simplified state: tracking is now derived from NotificationManager history
     
     @Published var lastNotificationFireDate: Date? {
         didSet {
@@ -115,21 +111,13 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    @Published var lastNotificationRefreshDate: Date? {
-        didSet {
-            if let date = lastNotificationRefreshDate {
-                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastNotificationRefreshDate")
-            }
-        }
-    }
+    // Removed redundant refresh tracking
     
     @Published var notifiedMomentIDs: Set<String> = [] {
         didSet { UserDefaults.standard.set(Array(notifiedMomentIDs), forKey: "notifiedMomentIDs") }
     }
     
-    @Published var notificationIgnoreStreak: Int = 0 {
-        didSet { UserDefaults.standard.set(notificationIgnoreStreak, forKey: "notificationIgnoreStreak") }
-    }
+    // Removed ignore streak tracking
     
     @Published var lastOpenedNotificationDate: Date? {
         didSet {
@@ -343,11 +331,6 @@ class AppStateManager: ObservableObject {
             self.userIntent = intent
         }
         
-        self.completedNotificationCount = UserDefaults.standard.integer(forKey: "completedNotificationCount")
-        if let timeInterval = UserDefaults.standard.object(forKey: "lastNotificationRefreshDate") as? TimeInterval {
-            self.lastNotificationRefreshDate = Date(timeIntervalSince1970: timeInterval)
-        }
-        
         if let fireInterval = UserDefaults.standard.object(forKey: "lastNotificationFireDate") as? TimeInterval {
             self.lastNotificationFireDate = Date(timeIntervalSince1970: fireInterval)
         }
@@ -395,10 +378,7 @@ class AppStateManager: ObservableObject {
         }
         
         // Engagement Tracking
-        self.notificationIgnoreStreak = UserDefaults.standard.integer(forKey: "notificationIgnoreStreak")
-        if let lastOpen = UserDefaults.standard.object(forKey: "lastOpenedNotificationDate") as? Double {
-            self.lastOpenedNotificationDate = Date(timeIntervalSince1970: lastOpen)
-        }
+        // Interaction state cleaned up
         if let notified = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
             self.notifiedMomentIDs = Set(notified)
         }

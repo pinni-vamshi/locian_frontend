@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 class GenerateSentenceService {
     static let shared = GenerateSentenceService()

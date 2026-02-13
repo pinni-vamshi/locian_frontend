@@ -267,7 +267,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     // MARK: - API Helper
     func getNearbyPlacesForAPI() -> [NearbyPlaceData] {
         return nearbyPlaceAmbience.prefix(5).map { 
-            NearbyPlaceData(place_name: $0.name, distance: $0.distance)
+            NearbyPlaceData(place_name: $0.name, distance: $0.distance, type: nil)
         }
     }
 }

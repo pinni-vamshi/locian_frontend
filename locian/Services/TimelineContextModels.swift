@@ -33,9 +33,10 @@ struct TimelinePlaceContext: Codable {
     let time: String
 }
 
-struct NearbyPlaceData: Codable {
+struct NearbyPlaceData: Codable, Sendable {
     let place_name: String
     let distance: Double
+    let type: String?
 }
 
 extension PlaceAtTime {
