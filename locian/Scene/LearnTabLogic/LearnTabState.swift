@@ -240,12 +240,12 @@ class LearnTabState: ObservableObject {
         // previous: 3 places before now
         let previousItems = history.filter { ($0.hour ?? 0) < currentHour }
             .suffix(3)
-            .map { PlaceHistoryItem(place: $0.place_name ?? "Unknown", time: $0.time ?? "00:00 AM") }
+            .compactMap { $0.place_name }
         
         // future: 1 place after now
         let futureItems = history.filter { ($0.hour ?? 0) > currentHour }
             .prefix(1)
-            .map { PlaceHistoryItem(place: $0.place_name ?? "Unknown", time: $0.time ?? "00:00 AM") }
+            .compactMap { $0.place_name }
             
         self.activeGeneratingMoment = moment
         generationState = .callingAI

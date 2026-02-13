@@ -11,20 +11,27 @@ import Foundation
 
 struct GenerateSentenceRequest: Codable, Sendable {
     let target_language: String
-    let place_name: String
     let user_language: String
+    let place_name: String
     let micro_situation: String
     let user_intent: String?
-    let previous_places: [PlaceHistoryItem]?
-    let future_places: [PlaceHistoryItem]?
     let profession: String?
+    let level: String?
+    
     let time: String?
     let date: String?
+    
+    let nearby_places: [NearbyPlaceData]?
+    let previous_places: [String]?
+    let future_places: [String]?
+    let bypass_cache: Bool?
 }
 
-struct PlaceHistoryItem: Codable, Sendable {
-    let place: String
-    let time: String
+// Nearby Place Data (Reused from TimelineContextModels if available, or defined here)
+struct NearbyPlaceData: Codable, Sendable {
+    let name: String
+    let type: String?
+    let distance: Double?
 }
 
 // MARK: - Response Models
