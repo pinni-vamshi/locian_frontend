@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 import NaturalLanguage
 
 struct LearnTabView: View {
@@ -15,9 +16,16 @@ struct LearnTabView: View {
     @Environment(\.scenePhase) var scenePhase 
     @State private var animateIn = false
     
-    // Custom Moment Input
     @State private var showCustomInput: Bool = false
     @State private var customMomentText: String = ""
+    
+    // Data Manifestation Phase
+    @State private var manifestPhase: Int = 0
+    
+    // Dot Animation for Loading States
+    @State private var dotCount = 0
+    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    
     var body: some View {
         let _ = print("🎨 [LearnTabView] BODY RE-EVALUATING")
         NavigationStack {
@@ -38,6 +46,18 @@ struct LearnTabView: View {
                 }
             }
         }
+        .onReceive(timer) { _ in
+            if state.isFetchingData {
+                dotCount = (dotCount + 1) % 4
+                
+                // Advance manifestation phase every 0.3s
+                if manifestPhase < appState.dynamicApiMetadata.count + 1 {
+                    manifestPhase += 1
+                }
+            } else {
+                manifestPhase = 0
+            }
+        }
         .onAppear { 
             print("🎨 [LearnTabView] onAppear TRIGGERED")
             // Reset immediately without animation to ensure clean state
@@ -52,15 +72,18 @@ struct LearnTabView: View {
             }
         }
         .onChange(of: appState.hasInitialHistoryLoaded) { _, loaded in
-            print("🔄 [ANIMATION] hasInitialHistoryLoaded changed to: \(loaded)")
+            print("🔄 [LearnTabView] hasInitialHistoryLoaded changed to: \(loaded)")
             if loaded && state.generationState == .idle && !animateIn {
-                print("   -> Triggering delayed animation after loading screen dismissal")
+                print("   ✅ [LearnTabView] Gating condition MET. Triggering reveal animation...")
                 // Small delay to ensure loading screen animation completes first
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                         animateIn = true
+                        print("   ✨ [LearnTabView] reveal animation started")
                     }
                 }
+            } else {
+                print("   ⏳ [LearnTabView] reveal skipped: generationState=\(state.generationState), alreadyAnimating=\(animateIn)")
             }
         }
         .onChange(of: state.generationState) { _, newState in handleGenerationStateChange(newState) }
@@ -164,7 +187,7 @@ struct LearnTabView: View {
         let _ = print("🏷 [PLACE-HEADER] Evaluating placeNameHeader")
         let _ = print("   -> isFetchingData: \(isFetching) (History: \(state.isLoadingHistory), Timeline: \(appState.isLoadingTimeline))")
         
-        let name = isFetching ? "GETTING YOUR PLACE..." : (state.showingNoDataError ? "NO DATA AVAILABLE" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
+        let name = isFetching ? "GETTING YOUR PLACE" + String(repeating: ".", count: dotCount) : (state.showingNoDataError ? "NO DATA AVAILABLE" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
         
         return VStack(spacing: 0) {
             let _ = print("   -> Rendering Text View for Name")
@@ -295,7 +318,7 @@ struct LearnTabView: View {
             )
             Spacer()
             Group {
-                if state.isFetchingData { Text("LOADING...").foregroundColor(ThemeColors.secondaryAccent) }
+                if state.isFetchingData { Text("LOADING" + String(repeating: ".", count: dotCount)).foregroundColor(ThemeColors.secondaryAccent) }
                 else if state.showingNoDataError { Text("NO DATA").foregroundColor(.gray) }
                 else if let selectedCat = state.selectedRecommendedCategory { Text(selectedCat.uppercased()).foregroundColor(ThemeColors.secondaryAccent) }
                 else { Text("SELECT").foregroundColor(.gray) }
@@ -328,7 +351,23 @@ struct LearnTabView: View {
                  
                  if state.isFetchingData {
                      let _ = print("   - state isFetchingData=true -> Loading Card")
-                     RecommendedCard(momentData: UnifiedMoment(text: "GETTING A MOMENT...", keywords: nil, embedding: nil), time: "LIVE", isGreen: false) {}
+                     VStack(alignment: .leading, spacing: 12) {
+                         RecommendedCard(momentData: UnifiedMoment(text: "GETTING A MOMENT" + String(repeating: ".", count: dotCount), keywords: nil, embedding: nil), time: "LIVE", isGreen: false) {}
+                         
+                         // Manifestation Rows (Dynamic & Staggered)
+                         VStack(alignment: .leading, spacing: 6) {
+                             ForEach(0..<appState.dynamicApiMetadata.count, id: \.self) { index in
+                                 let pair = appState.dynamicApiMetadata[index]
+                                 ManifestDataRow(
+                                     label: pair.label,
+                                     value: pair.value,
+                                     isVisible: manifestPhase > index
+                                 )
+                             }
+                         }
+                         .padding(.leading, 12)
+                         .padding(.top, -4)
+                     }
                  } else if state.showingNoDataError {
                      let _ = print("   - state showingNoDataError=true -> No Data Card")
                      RecommendedCard(momentData: UnifiedMoment(text: "NO DATA AVAILABLE", keywords: nil, embedding: nil), time: "--:--", isGreen: false) {}

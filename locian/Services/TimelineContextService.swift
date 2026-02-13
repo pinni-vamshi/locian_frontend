@@ -15,7 +15,7 @@ class TimelineContextService {
     // Config
     private let lookbackDays = 5
     private let timeWindowMinutes = 60
-    private let maxPastPlaces = 2
+    private let maxPastPlaces = 1
     private let maxFuturePlaces = 1
     
     // Simple Date Formatter reuse
@@ -32,7 +32,7 @@ class TimelineContextService {
     ///   - places: Flat list of MicroSituationData
     ///   - inputTime: The anchor time provided by the API (e.g. "3:00 PM")
     ///   - currentTime: Fallback for now if inputTime is missing
-    func getContext(places: [MicroSituationData], inputTime: String? = nil, currentTime: Date = Date()) -> TimelineContext {
+    func getContext(places: [MicroSituationData], currentPlaceName: String? = nil, inputTime: String? = nil, currentTime: Date = Date()) -> TimelineContext {
         guard !places.isEmpty else {
             return .empty
         }
@@ -70,6 +70,36 @@ class TimelineContextService {
         // 4. Convert ranked results to PlaceAtTime format
         var pastAtTime = rankedPast.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
         var futureAtTime = rankedFuture.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
+        
+        // ---------------------------------------------------------------------
+        // 5. Build Situational Match (Pillar 2)
+        // ---------------------------------------------------------------------
+        if let placeName = currentPlaceName {
+             print("   📍 [Situational Match] Searching for similarity to: '\(placeName)'")
+             if let currentEmbedding = EmbeddingService.getVector(for: placeName, languageCode: "en") {
+                 var highestSimilarity = -1.0
+                 var situMatch: MicroSituationData? = nil
+                 
+                 for candidate in places {
+                     guard let candidateEmbedding = candidate.micro_situations?.first?.moments.first?.embedding else { continue }
+                     let sim = cosineSimilarity(currentEmbedding, candidateEmbedding)
+                     if sim > highestSimilarity {
+                         highestSimilarity = sim
+                         situMatch = candidate
+                     }
+                 }
+                 
+                 if let match = situMatch, highestSimilarity > 0.0 {
+                     print("   ✅ [Situational Match] Found match: '\(match.place_name ?? "??")' (Sim: \(String(format: "%.2f", highestSimilarity)))")
+                     if let p = match.toPlaceAtTime(currentTime: anchorMinutes) {
+                         // Avoid duplicates with Pillar 1
+                         if !pastAtTime.contains(where: { $0.placeName == p.placeName }) {
+                             pastAtTime.append(p)
+                         }
+                     }
+                 }
+             }
+        }
         
         // ---------------------------------------------------------------------
         // 5. Append User Routine (Predictable Schedule)

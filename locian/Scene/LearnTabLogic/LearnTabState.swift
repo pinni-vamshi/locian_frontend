@@ -232,20 +232,19 @@ class LearnTabState: ObservableObject {
         }
         
         // 1. Gather Contextual Data
-        let history = allTimelinePlaces
-        let calendar = Calendar.current
-        let now = Date()
-        let currentHour = calendar.component(.hour, from: now)
+        // 1. Gather Contextual Data
+        // Use TimelineContextService for Vibe & Situational Matching
+        print("   🔹 [LearnTabState] Requesting Context from TimelineContextService...")
+        let context = TimelineContextService.shared.getContext(
+            places: allTimelinePlaces,
+            currentPlaceName: placeName
+        )
         
-        // previous: 3 places before now
-        let previousItems = history.filter { ($0.hour ?? 0) < currentHour }
-            .suffix(3)
-            .compactMap { $0.place_name }
+        let previousItems = context.pastPlaces.map { $0.placeName }
+        let futureItems = context.futurePlaces.map { $0.placeName }
         
-        // future: 1 place after now
-        let futureItems = history.filter { ($0.hour ?? 0) > currentHour }
-            .prefix(1)
-            .compactMap { $0.place_name }
+        print("   ✅ [Relay] Past Candidates: \(previousItems)")
+        print("   ✅ [Relay] Future Candidates: \(futureItems)")
             
         self.activeGeneratingMoment = moment
         generationState = .callingAI
@@ -309,10 +308,13 @@ class LearnTabState: ObservableObject {
     }
     
     // MARK: - Text Analysis (Unified Flow)
-    func generateMomentsForPlace(name: String) {
+    func generateMomentsForPlace(name: String, detail: String? = nil) {
         guard !name.isEmpty, let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
         
-        GenerateMomentsService.shared.generateMoments(placeName: name, sessionToken: sessionToken) { [weak self] result in
+        // Enrich the name for API context if detail is available
+        let apiPlaceName = detail != nil ? "\(name) (\(detail!))" : name
+        
+        GenerateMomentsService.shared.generateMoments(placeName: apiPlaceName, placeDetail: detail, sessionToken: sessionToken) { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
                 

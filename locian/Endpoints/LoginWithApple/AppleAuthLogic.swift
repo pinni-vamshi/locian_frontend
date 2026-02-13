@@ -155,6 +155,7 @@ class AppleAuthLogic {
         }
         
         appState.isLoggedIn = true
+        appState.loadInitialData()
         appState.checkLanguagePairsAndShowModalIfNeeded()
         PermissionsService.shared.ensureNotificationAccess { _ in
             UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")

@@ -274,6 +274,9 @@ class AppStateManager: ObservableObject {
     @Published var pendingDeepLinkPlace: String?
     @Published var pendingDeepLinkHour: Int?
     
+    // MARK: - API Diagnostics
+    @Published var dynamicApiMetadata: [(label: String, value: String)] = []
+    
     // MARK: - Initialization
     init() {
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
@@ -427,20 +430,27 @@ class AppStateManager: ObservableObject {
     
     /// Fetch studied places and initialize recommendations during app launch
     func loadInitialData() {
-        print("\n🚀 [AppStateManager] loadInitialData() starting...")
+        print("\n🚀 [AppStateManager] loadInitialData() sequence triggered")
         
         guard let sessionToken = authToken, !sessionToken.isEmpty else {
-            print("⚠️ [AppStateManager] No auth token, skipping data load")
+            print("   ⚠️ [AppStateManager] ABORT: No auth token available.")
+            // Don't set hasInitialHistoryLoaded = true here, wait for auth success
             return
         }
         
         guard !userLanguagePairs.isEmpty else {
-            print("⚠️ [AppStateManager] No language pairs configured, skipping data load")
+            print("   ⚠️ [AppStateManager] ABORT: No language pairs. Waiting for Setup Flow...")
+            // Don't set hasInitialHistoryLoaded = true here, Setup Flow will trigger this after selection
+            return
+        }
+        
+        guard !isLoadingTimeline else {
+            print("   ⏳ [AppStateManager] SKIP: Load already in progress")
             return
         }
         
         isLoadingTimeline = true
-        print("   📡 [AppStateManager] Calling GetStudiedPlacesService...")
+        print("   📡 [AppStateManager] Requesting history from API...")
         
         GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { [weak self] result in
             guard let self = self else { return }
@@ -449,37 +459,31 @@ class AppStateManager: ObservableObject {
                 switch result {
                 case .success(let response):
                     if let data = response.data {
-                        print("   ✅ [AppStateManager] History loaded. Found \(data.places.count) moments across \(data.dates?.count ?? 0) dates. (Span: \(data.time_span ?? "nil"))")
+                        print("   ✅ [AppStateManager] SUCCESS: Received \(data.places.count) moments. (Span: \(data.time_span ?? "nil"))")
                         
-                        // Pass time_span into the timeline wrapper
                         self.timeline = TimelineData(
                             places: data.places,
                             inputTime: data.input_time,
                             timeSpan: data.time_span
                         )
-                        
-                        // Store the intent for immediate UI use if needed (harvesting happens in NotificationManager)
                         self.userIntent = data.user_intent
                         
-                        print("   🔄 [AppStateManager] Initializing LocalRecommendationService...")
-                        // Initialize local recommendations
+                        print("   🔄 [AppStateManager] Initializing Recommendation Engine...")
                         LocalRecommendationService.shared.initialize(
                             timeline: self.timeline,
                             intent: data.user_intent
                         )
-                        
-                        self.hasInitialHistoryLoaded = true
                     } else {
-                        print("   ⚠️ [AppStateManager] No data in response")
+                        print("   ⚠️ [AppStateManager] WARNING: API returned success but empty payload")
                     }
                     
                 case .failure(let error):
-                    print("   ❌ [AppStateManager] Failed to load studied places: \(error.localizedDescription)")
+                    print("   ❌ [AppStateManager] ERROR: API call failed: \(error.localizedDescription)")
                 }
                 
+                print("   🏁 [AppStateManager] Initialization Sequence COMPLETED. Unlocking UI.")
                 self.hasInitialHistoryLoaded = true
                 self.isLoadingTimeline = false
-                print("   ✅ [AppStateManager] loadInitialData() complete")
             }
         }
     }

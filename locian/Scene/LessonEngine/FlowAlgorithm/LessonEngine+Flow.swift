@@ -7,6 +7,10 @@ class LessonFlow {
     weak var orchestrator: LessonOrchestrator?
     
     func pickNextPattern(history: [String], mastery: [String: Double], candidates: [PatternData]) {
+        guard !candidates.isEmpty else {
+            print("⚠️ [Flow] pickNextPattern called with EMPTY candidates. Aborting.")
+            return
+        }
         
         // ✅ [ASA] STANDARD BLENDING: 
         // Use the engine's blended formula (60/40 or ASA) instead of raw structural scores.
@@ -46,12 +50,14 @@ class LessonFlow {
             potential = candidates // Fallback to avoid stall
         }
         
+        print("\n🌊 [Flow] PICK NEXT PATTERN TRIGGERED")
+        print("   - Non-History Candidates: \(potential.count)")
+        print("   - History Buffer: \(history)")
+        
         // Split into "Active" (Started) and "New" (Untouched)
         let active = potential.filter { getBlendedScore(for: $0.id) > 0.0 }
         let new = potential.filter { getBlendedScore(for: $0.id) == 0.0 }
         
-        print("\n🌊 [Flow] SELECTION ANALYTICS (Using Blended ASA Mastery)")
-        print("   - Total Candidates: \(potential.count)")
         print("   - Active Pool (>0.0): \(active.count)")
         print("   - New Pool (0.0): \(new.count)")
         

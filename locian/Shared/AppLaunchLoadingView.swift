@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct AppLaunchLoadingView: View {
     @ObservedObject var appState: AppStateManager
@@ -11,6 +12,10 @@ struct AppLaunchLoadingView: View {
     @State private var letterOpacities: [Double] = [0, 0, 0, 0, 0, 0]
     @State private var letterScales: [CGFloat] = [0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
     @State private var subtitleOpacity: Double = 0.0
+    
+    // Dot Animation for "GETTING YOUR MOMENTS"
+    @State private var dotCount = 0
+    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
     
     private let brandingLetters = Array("LOCIAN")
     
@@ -30,7 +35,7 @@ struct AppLaunchLoadingView: View {
                     dotScale: dotScale,
                     tailScale: tailScale
                 )
-                .frame(width: 140, height: 260)
+                .frame(width: 190, height: 140) // Updated frame for side-by-side layout
                 
                 // Techy Logo Branding
                 VStack(spacing: 16) {
@@ -53,11 +58,20 @@ struct AppLaunchLoadingView: View {
                 
                 Spacer()
                 
-                // Minimalist Progress
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: ThemeColors.secondaryAccent))
-                    .opacity(subtitleOpacity > 0.8 ? 1.0 : 0.0)
-                    .padding(.bottom, 60)
+                // Minimalist Progress & Status
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.cyan))
+                    
+                    Text("GETTING YOUR MOMENTS" + String(repeating: ".", count: dotCount))
+                        .font(.system(size: 14, weight: .bold, design: .monospaced))
+                        .foregroundColor(Color.cyan) // Requested Cyan color
+                        .onReceive(timer) { _ in
+                            dotCount = (dotCount + 1) % 4
+                        }
+                }
+                .opacity(subtitleOpacity >= 0.01 ? 1.0 : 0.0) // Show almost immediately
+                .padding(.bottom, 60)
             }
         }
         .onAppear {
@@ -76,6 +90,7 @@ struct AppLaunchLoadingView: View {
         // 2. Instant Scale Reveal (Removed delay for immediate feedback)
         withAnimation(.easeInOut(duration: 0.9)) {
             dotScale = 1.0
+            subtitleOpacity = 0.5 // Start revealing text immediately
         }
         
         // --- TAIL SEQUENCE (Staggered) ---
@@ -103,8 +118,8 @@ struct AppLaunchLoadingView: View {
         }
         
         // Final Subtitle Reveal
-        withAnimation(.easeOut(duration: 1.5).delay(1.8)) {
-            subtitleOpacity = 0.8
+        withAnimation(.easeOut(duration: 1.5).delay(1.0)) {
+            subtitleOpacity = 1.0
         }
     }
 }
@@ -119,33 +134,33 @@ struct SemicolonLogoView: View {
     let tailScale: CGFloat
     
     var body: some View {
-        VStack(spacing: 20) {
-            // THE DOT (White Square)
+        HStack(spacing: 20) {
+            // LEFT COMMA (White)
             ZStack {
-                Rectangle()
+                CommaShape()
                     .trim(from: 0, to: dotDraw)
-                    .stroke(Color.white, lineWidth: 2.03) // Refined to 2.03
-                    .frame(width: 80, height: 80)
+                    .stroke(Color.white, lineWidth: 2.03)
+                    .frame(width: 80, height: 135)
                 
-                Rectangle()
+                CommaShape()
                     .fill(Color.white)
-                    .frame(width: 80, height: 80)
+                    .frame(width: 80, height: 135)
             }
-            .opacity(dotFillOpacity) // Entire block fades in together
+            .opacity(dotFillOpacity)
             .scaleEffect(dotScale)
             
-            // THE COMMA (Red/Pink Tail)
+            // RIGHT COMMA (Pink)
             ZStack {
                 CommaShape()
                     .trim(from: 0, to: tailDraw)
-                    .stroke(ThemeColors.secondaryAccent, lineWidth: 2.03) // Refined to 2.03
+                    .stroke(ThemeColors.secondaryAccent, lineWidth: 2.03)
                     .frame(width: 80, height: 135)
                 
                 CommaShape()
                     .fill(ThemeColors.secondaryAccent)
                     .frame(width: 80, height: 135)
             }
-            .opacity(tailFillOpacity) // Entire tail fades in together
+            .opacity(tailFillOpacity)
             .scaleEffect(tailScale)
         }
     }
@@ -161,7 +176,8 @@ struct CommaShape: Shape {
         // Proportions based on the logo image
         let blockHeight = w // Perfect square block
         let indentWidth = w * 0.54
-        let tipEdgeHeight = h * 0.08
+        let tipEdgeHeight = h * 0.16 // Increased thickness for blunter tip
+        let tailTipX = w * 0.15 // Offset from the left edge so tail doesn't reach full width
         
         // Start Top Left
         path.move(to: CGPoint(x: 0, y: 0))
@@ -174,17 +190,17 @@ struct CommaShape: Shape {
         
         // 3. The outer sweep of the comma tail
         // Pure smooth sweep from the vertical edge to the tip
-        path.addCurve(to: CGPoint(x: 0, y: h),
+        path.addCurve(to: CGPoint(x: tailTipX, y: h),
                       control1: CGPoint(x: w, y: blockHeight + (h - blockHeight) * 0.5),
                       control2: CGPoint(x: w * 0.5, y: h))
         
         // 4. THE TIP EDGE (Vertical blunt tip)
-        path.addLine(to: CGPoint(x: 0, y: h - tipEdgeHeight))
+        path.addLine(to: CGPoint(x: tailTipX, y: h - tipEdgeHeight))
         
         // 5. The inner curve of the tail
         // Aligned and parallel to the outer sweep for a clean professional look
         path.addCurve(to: CGPoint(x: indentWidth, y: blockHeight),
-                      control1: CGPoint(x: indentWidth * 0.2, y: h - tipEdgeHeight),
+                      control1: CGPoint(x: indentWidth * 0.2 + tailTipX, y: h - tipEdgeHeight),
                       control2: CGPoint(x: indentWidth, y: h * 0.8))
         
         // 6. THE HORIZONTAL SEGMENT ("Straight inside")

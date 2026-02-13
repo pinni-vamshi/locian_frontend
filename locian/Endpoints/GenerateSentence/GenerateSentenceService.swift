@@ -70,6 +70,8 @@ class GenerateSentenceService {
                 nearby_places: nearby ?? nearbyPlaces, // Prioritize fresh fetch
                 previous_places: previousPlaces,
                 future_places: futurePlaces,
+                latitude: location?.coordinate.latitude,
+                longitude: location?.coordinate.longitude,
                 bypass_cache: false 
             )
             
@@ -85,7 +87,18 @@ class GenerateSentenceService {
                 completion: { (result: Result<Data, Error>) in
                     switch result {
                     case .success(let data):
-                        GenerateSentenceLogic.shared.parseResponse(data: data, completion: completion)
+                        if let jsonString = String(data: data, encoding: .utf8) {
+                           print("🔥 [GenerateSentenceService] RAW JSON: \(jsonString)")
+                        }
+                        
+                        do {
+                            let response = try JSONDecoder().decode(GenerateSentenceResponse.self, from: data)
+                            print("✅ [GenerateSentenceService] Decoding Successful. Groups: \(response.data?.groups?.count ?? 0)")
+                            completion(.success(response))
+                        } catch {
+                            print("❌ [GenerateSentenceService] Decoding Error: \(error)")
+                            completion(.failure(error))
+                        }
                     case .failure(let error):
                         completion(.failure(error))
                     }

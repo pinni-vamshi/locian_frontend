@@ -85,10 +85,17 @@ struct SentenceGenerationLoadingModal: View {
     
     private func onFinish() {
         if state.currentLesson != nil {
+            // Updated Flow:
+            // 1. Dismiss Modal FIRST
             withAnimation {
-                state.showLessonView = true
                 state.generationState = .idle
                 state.activeGeneratingMoment = nil
+            }
+            
+            // 2. Trigger Navigation AFTER modal is gone
+            // This prevents the "Dismiss cancels Push" race condition
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                state.showLessonView = true
             }
         }
     }
@@ -272,24 +279,6 @@ struct GridBackground: View {
     }
 }
 
-struct TypingTextView: View {
-    let text: String
-    let isTyping: Bool
-    @State private var displayedText: String = ""
-    var body: some View {
-        ZStack(alignment: .leading) {
-            Text(text).opacity(0)
-            Text(displayedText)
-        }
-        .onChange(of: isTyping) { _, newValue in if newValue { typeOut() } }
-    }
-    private func typeOut() {
-        displayedText = ""
-        for (index, character) in text.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) { displayedText.append(character) }
-        }
-    }
-}
 
 struct TickIcon: View {
     var body: some View {

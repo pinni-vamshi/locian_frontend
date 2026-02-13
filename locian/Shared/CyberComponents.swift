@@ -676,3 +676,53 @@ struct InlineTypingInputArea: View {
         }
     }
 }
+
+// MARK: - 13. Data Manifestation Components
+struct TypingTextView: View {
+    let text: String
+    let isTyping: Bool
+    @State private var displayedText: String = ""
+    
+    var body: some View {
+        ZStack(alignment: .leading) {
+            Text(text).opacity(0)
+            Text(displayedText)
+        }
+        .onChange(of: isTyping) { _, newValue in
+            if newValue {
+                typeOut()
+            }
+        }
+    }
+    
+    private func typeOut() {
+        displayedText = ""
+        for (index, character) in text.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
+                displayedText.append(character)
+            }
+        }
+    }
+}
+
+struct ManifestDataRow: View {
+    let label: String
+    let value: String
+    let isVisible: Bool
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text("[\(label.uppercased())]")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(.gray.opacity(0.8))
+            
+            TypingTextView(text: value.uppercased(), isTyping: isVisible)
+                .font(.system(size: 11, weight: .black, design: .monospaced))
+                .foregroundColor(CyberColors.neonCyan)
+            
+            Spacer()
+        }
+        .frame(height: 14)
+        .opacity(isVisible ? 1.0 : 0.0)
+    }
+}

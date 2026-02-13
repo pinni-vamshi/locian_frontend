@@ -55,9 +55,9 @@ class AddTabState: ObservableObject {
         learnState.analyzeImageAndGenerateMoments(image: image)
     }
     
-    func selectSuggestedPlace(_ place: String) {
-        self.customPlaceText = place
-        learnState.generateMomentsForPlace(name: place)
+    func selectSuggestedPlace(name: String, category: String? = nil) {
+        self.customPlaceText = name
+        learnState.generateMomentsForPlace(name: name, detail: category)
     }
     
     // MARK: - Persistence

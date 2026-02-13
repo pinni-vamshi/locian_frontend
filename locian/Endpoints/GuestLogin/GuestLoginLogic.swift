@@ -34,6 +34,7 @@ class GuestLoginLogic {
                         
                         // Set logged in state
                         appState.isLoggedIn = true
+                        appState.loadInitialData()
                         
                         appState.checkLanguagePairsAndShowModalIfNeeded()
                         PermissionsService.shared.ensureNotificationAccess { _ in

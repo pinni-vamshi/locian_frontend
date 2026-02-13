@@ -27,7 +27,7 @@ class PredictPlaceService: ObservableObject {
         var didProceed = false
         let lock = NSLock()
         
-        func proceed(with fetchedPlaces: [String]) {
+        func proceed(with fetchedPlaces: [LocationManager.NearbyAmbience]) {
             lock.lock()
             guard !didProceed else { 
                 lock.unlock()
@@ -44,16 +44,42 @@ class PredictPlaceService: ObservableObject {
             let timeline = AppStateManager.shared.timeline
             let history = timeline?.places ?? []
             
-            let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
+            let context = TimelineContextService.shared.getContext(
+                places: history,
+                currentPlaceName: fetchedPlaces.first?.name,
+                inputTime: timeline?.inputTime
+            )
             
             // Map to TimelinePlaceContext
             let previous = context.pastPlaces.map { $0.toContext }
             let future = context.futurePlaces.map { $0.toContext }
             
             
+            // Format names with categories for better API context
+            let enrichedPlaces = fetchedPlaces.map { 
+                $0.category != nil ? "\($0.name) (\($0.category!))" : $0.name
+            }
+            
+            let pastList = previous.compactMap { $0.place_name }.joined(separator: ", ")
+            let futureList = future.compactMap { $0.place_name }.joined(separator: ", ")
+            
+            // Update metadata with final results
+            DispatchQueue.main.async {
+                AppStateManager.shared.dynamicApiMetadata = [
+                    ("REQ", "CONTEXT_TEXT"),
+                    ("LOC", LocationManager.shared.locationStatus.rawValue),
+                    ("LAT", LocationManager.shared.currentLocation != nil ? String(format: "%.4f", LocationManager.shared.currentLocation!.coordinate.latitude) : "N/A"),
+                    ("LNG", LocationManager.shared.currentLocation != nil ? String(format: "%.4f", LocationManager.shared.currentLocation!.coordinate.longitude) : "N/A"),
+                    ("PST", pastList.isEmpty ? "EMPTY" : pastList),
+                    ("FTR", futureList.isEmpty ? "EMPTY" : futureList),
+                    ("PLC_COUNT", "\(fetchedPlaces.count)"),
+                    ("SYS_TIME", DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .short))
+                ]
+            }
+            
             // 3. Perform the actual request
             self.performPredictRequest(
-                places: fetchedPlaces,
+                places: enrichedPlaces,
                 previousPlaces: Array(previous),
                 futurePlaces: Array(future),
                 sessionToken: sessionToken,
@@ -64,6 +90,7 @@ class PredictPlaceService: ObservableObject {
         // Start Timeout Timer (2.0s) // Changed from 10s to 2.0s as per requirement
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             // GPS Timeout (2s) reached. Proceeding without places.
+            LocationManager.shared.locationStatus = .timeout
             proceed(with: [])
         }
         
@@ -119,6 +146,19 @@ class PredictPlaceService: ObservableObject {
             longitude: userLocation?.coordinate.longitude,
             date: dateString
         )
+        
+        // Capture dynamic metadata (Initial)
+        DispatchQueue.main.async {
+            appState.dynamicApiMetadata = [
+                ("REQ", "CONTEXT_TEXT"),
+                ("LOC", LocationManager.shared.locationStatus.rawValue),
+                ("LAT", userLocation != nil ? String(format: "%.4f", userLocation!.coordinate.latitude) : "N/A"),
+                ("LNG", userLocation != nil ? String(format: "%.4f", userLocation!.coordinate.longitude) : "N/A"),
+                ("PST", "CALCULATING..."),
+                ("FTR", "CALCULATING..."),
+                ("SYS_TIME", timeString)
+            ]
+        }
         
         let headers = ["Authorization": "Bearer \(sessionToken)"]
         

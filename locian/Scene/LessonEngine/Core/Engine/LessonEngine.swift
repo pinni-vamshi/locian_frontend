@@ -109,13 +109,16 @@ class LessonEngine: ObservableObject {
         self.isSessionComplete = false
         
         let patternCount = groups.flatMap { $0.patterns ?? [] }.count
-        print("   📦 [LessonEngine] Received \(groups.count) groups with \(patternCount) patterns.")
+        print("� [LessonEngine] INITIALIZE: Received \(groups.count) groups with \(patternCount) total patterns.")
         
         // Load Mastery from ALL groups (Forced to 0.0 as per memory removal)
         for group in self.groups {
 
             // patterns
-            for p in group.patterns ?? [] { componentMastery[p.id] = 0.0 }
+            for p in group.patterns ?? [] { 
+                componentMastery[p.id] = 0.0 
+                // print("   🔹 [Zero-Conf] Reset mastery for \(p.id)")
+            }
             
             // Bricks
             if let bricks = group.bricks {
@@ -125,7 +128,12 @@ class LessonEngine: ObservableObject {
         }
         
         // KICKSTART THE LOOP (Empty History)
-        flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
+        if !rawPatterns.isEmpty {
+            flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
+        } else {
+            print("⚠️ [LessonEngine] No patterns available to start lesson.")
+            isSessionComplete = true
+        }
     }
     
     // MARK: - Entry Point
@@ -133,7 +141,12 @@ class LessonEngine: ObservableObject {
         // The flow already handles the first pattern selection during initialize if history is empty.
         // But we can explicitly trigger it here if needed to be sure.
         if recentPatternHistory.isEmpty {
-            flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
+            if !rawPatterns.isEmpty {
+                flow?.pickNextPattern(history: [], mastery: componentMastery, candidates: rawPatterns)
+            } else {
+                print("⚠️ [LessonEngine] Start requested but no patterns available.")
+                isSessionComplete = true
+            }
         }
     }
     
@@ -152,7 +165,12 @@ class LessonEngine: ObservableObject {
         // For now, let the Flow decide based on current rawPatterns.
         
         // 3. Trigger Flow (The Loop)
-        flow?.pickNextPattern(history: recentPatternHistory, mastery: componentMastery, candidates: rawPatterns)
+        if !rawPatterns.isEmpty {
+            flow?.pickNextPattern(history: recentPatternHistory, mastery: componentMastery, candidates: rawPatterns)
+        } else {
+            print("⚠️ [LessonEngine] Pattern completed but no more candidates available.")
+            isSessionComplete = true
+        }
     }
     
     // Advance to next group manually if we have logic for it

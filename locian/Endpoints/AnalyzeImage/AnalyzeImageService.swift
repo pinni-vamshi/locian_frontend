@@ -78,7 +78,11 @@ class AnalyzeImageService {
                 // Gather history context via TimelineContextService
                 let timeline = AppStateManager.shared.timeline
                 let history = timeline?.places ?? []
-                let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
+                let context = TimelineContextService.shared.getContext(
+                    places: history,
+                    currentPlaceName: nil, // Image analysis is searching for the place name
+                    inputTime: timeline?.inputTime
+                )
                 
                 let previous = context.pastPlaces.map { $0.toContext }
                 let future = context.futurePlaces.map { $0.toContext }
@@ -105,6 +109,23 @@ class AnalyzeImageService {
                     nearby_places: LocationManager.shared.getNearbyPlacesForAPI(),
                     date: dateString
                 )
+                
+                let pastList = context.pastPlaces.compactMap { $0.placeName }.joined(separator: ", ")
+                let futureList = context.futurePlaces.compactMap { $0.placeName }.joined(separator: ", ")
+                
+                // Capture dynamic metadata for UI manifestation
+                DispatchQueue.main.async {
+                    appState.dynamicApiMetadata = [
+                        ("REQ", "ANALYZE_IMAGE"),
+                        ("IMG", "\(imageData.count / 1024)KB"),
+                        ("LOC", LocationManager.shared.locationStatus.rawValue),
+                        ("LAT", lat != nil ? String(format: "%.4f", lat!) : "N/A"),
+                        ("LNG", long != nil ? String(format: "%.4f", long!) : "N/A"),
+                        ("PST", pastList.isEmpty ? "EMPTY" : pastList),
+                        ("FTR", futureList.isEmpty ? "EMPTY" : futureList),
+                        ("SYS_DATE", dateString)
+                    ]
+                }
                 
                 // Make API call
                 self.performRequest(request: request, sessionToken: sessionToken, completion: completion)

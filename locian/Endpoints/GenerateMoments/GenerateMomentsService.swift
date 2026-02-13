@@ -57,7 +57,11 @@ class GenerateMomentsService: ObservableObject {
             // Gather history context via TimelineContextService
             let timeline = AppStateManager.shared.timeline
             let history = timeline?.places ?? []
-            let context = TimelineContextService.shared.getContext(places: history, inputTime: timeline?.inputTime)
+            let context = TimelineContextService.shared.getContext(
+                places: history,
+                currentPlaceName: placeName,
+                inputTime: timeline?.inputTime
+            )
             
             let previous = context.pastPlaces.map { $0.toContext }
             let future = context.futurePlaces.map { $0.toContext }
@@ -87,6 +91,23 @@ class GenerateMomentsService: ObservableObject {
                 level: level,
                 remember: false
             )
+            
+            let pastList = context.pastPlaces.compactMap { $0.placeName }.joined(separator: ", ")
+            let futureList = context.futurePlaces.compactMap { $0.placeName }.joined(separator: ", ")
+            
+            // Capture dynamic metadata for UI manifestation
+            DispatchQueue.main.async {
+                appState.dynamicApiMetadata = [
+                    ("REQ", "GENERATE_MOMENTS"),
+                    ("PLC", placeName.uppercased()),
+                    ("LOC", LocationManager.shared.locationStatus.rawValue),
+                    ("LAT", lat != nil ? String(format: "%.4f", lat!) : "N/A"),
+                    ("LNG", long != nil ? String(format: "%.4f", long!) : "N/A"),
+                    ("PST", pastList.isEmpty ? "EMPTY" : pastList),
+                    ("FTR", futureList.isEmpty ? "EMPTY" : futureList),
+                    ("SYS_TIME", timeString)
+                ]
+            }
             
             // Make API call
             self.performRequest(request: request, sessionToken: sessionToken, completion: completion)

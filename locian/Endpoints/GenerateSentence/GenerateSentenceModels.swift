@@ -24,6 +24,8 @@ struct GenerateSentenceRequest: Codable, Sendable {
     let nearby_places: [NearbyPlaceData]?
     let previous_places: [String]?
     let future_places: [String]?
+    let latitude: Double?
+    let longitude: Double?
     let bypass_cache: Bool?
 }
 
@@ -38,6 +40,33 @@ struct GenerateSentenceResponse: Codable, Sendable {
     let message: String?
     var data: GenerateSentenceData?
     let error: String?
+    
+    // Custom decoder to handle nested "data.data" structure from API
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        self.success = try container.decode(Bool.self, forKey: .success)
+        self.lesson_id = try container.decodeIfPresent(String.self, forKey: .lesson_id)
+        self.moment_label = try container.decodeIfPresent(String.self, forKey: .moment_label)
+        self.message = try container.decodeIfPresent(String.self, forKey: .message)
+        self.error = try container.decodeIfPresent(String.self, forKey: .error)
+        
+        // Handle nested data.data structure
+        if let outerData = try container.decodeIfPresent(OuterDataWrapper.self, forKey: .data) {
+            self.data = outerData.data
+        } else {
+            self.data = nil
+        }
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case success, lesson_id, moment_label, message, data, error
+    }
+    
+    // Wrapper to decode the outer "data" object which contains another "data" object
+    private struct OuterDataWrapper: Codable {
+        let data: GenerateSentenceData?
+    }
 }
 
 struct GenerateSentenceData: Codable, Sendable {

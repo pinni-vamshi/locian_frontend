@@ -16,6 +16,16 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     let locationManager = CLLocationManager()
     
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    
+    enum LocationStatus: String {
+        case idle = "IDLE"
+        case searching = "SEARCHING"
+        case found = "LOCATION_FOUND"
+        case denied = "PERMISSION_DENIED"
+        case timeout = "TIMEOUT_EXCEEDED"
+        case error = "SIGNAL_ERROR"
+    }
+    @Published var locationStatus: LocationStatus = .idle
     @Published var currentLocation: CLLocation?
     @Published var latitude: Double?
     @Published var longitude: Double?
@@ -42,12 +52,14 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func getCurrentLocation(completion: @escaping (Result<CLLocation, Error>) -> Void) {
         // CRITICAL: Check if user has enabled location tracking in Settings
         guard AppStateManager.shared.isLocationTrackingEnabled else {
+            locationStatus = .denied
             let error = NSError(domain: "LocationManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Location tracking is disabled in Settings"])
             print("⚠️ [LOCATION] Location tracking is DISABLED in Settings. Blocking location access.")
             completion(.failure(error))
             return
         }
         
+        locationStatus = .searching
         // Check authorization using published property (safe, no main thread blocking)
         guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
             let error = NSError(domain: "LocationManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Location permission not granted"])
@@ -125,8 +137,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         switch authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
+            locationStatus = .idle
             break
         case .denied, .restricted:
+            locationStatus = .denied
             break
         case .notDetermined:
             break
@@ -136,9 +150,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     // MARK: - Nearby Places
-    struct NearbyAmbience: Codable {
+    struct NearbyAmbience: Codable, Hashable, Identifiable {
         let id: String
         let name: String
+        let category: String?
         let latitude: Double
         let longitude: Double
         let distance: Double
@@ -152,11 +167,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         return NativeLanguageMapping.shared.getCode(for: nativeName) ?? "en"
     }
     
-    func fetchNearbyPlaces(completion: @escaping ([String]) -> Void) {
+    func fetchNearbyPlaces(completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Starting fetchNearbyPlaces...")
+        locationStatus = .searching
         
         // CRITICAL: Check if user has enabled location tracking in Settings
         guard AppStateManager.shared.isLocationTrackingEnabled else {
+            locationStatus = .denied
             print("⚠️ [NEARBY] Location tracking is DISABLED in Settings. Skipping location access.")
             completion([])
             return
@@ -172,6 +189,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     self?.performLocalSearch(location: loc, completion: completion)
                 case .failure(let error):
                     print("❌ [NEARBY] Failed to get location: \(error.localizedDescription)")
+                    self?.locationStatus = .error
                     completion([])
                 }
             }
@@ -181,7 +199,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         performLocalSearch(location: location, completion: completion)
     }
     
-    private func performLocalSearch(location: CLLocation, completion: @escaping ([String]) -> Void) {
+    private func performLocalSearch(location: CLLocation, completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Performing MKLocalPointsOfInterestRequest...")
         
         let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 5000) // 5km radius
@@ -191,17 +209,17 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         search.start { response, error in
             if let error = error {
                 print("❌ [NEARBY] MapKit Search Error: \(error.localizedDescription)")
-                self.performGeocoderFallback(location: location, completion: completion)
+                completion([]) // Skip fallback for now to focus on MKPOI structure
                 return
             }
             
             guard let response = response else {
-                self.performGeocoderFallback(location: location, completion: completion)
+                completion([])
                 return
             }
             
             if response.mapItems.isEmpty {
-                 self.performGeocoderFallback(location: location, completion: completion)
+                 completion([])
                  return
             }
             
@@ -215,6 +233,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             var ambience: [NearbyAmbience] = []
             for item in sortedItems {
                 guard let name = item.name, let loc = item.placemark.location else { continue }
+                
+                // Extract and clean category
+                var category: String? = nil
+                if let cat = item.pointOfInterestCategory {
+                    category = cat.rawValue.replacingOccurrences(of: "MKPointOfInterestCategory", with: "")
+                }
+                
                 if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
                     // Use coordinate hash as stable identifier since itemIdentifier is not available
                     let distance = loc.distance(from: location)
@@ -222,6 +247,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     ambience.append(NearbyAmbience(
                         id: stableID,
                         name: name,
+                        category: category,
                         latitude: loc.coordinate.latitude,
                         longitude: loc.coordinate.longitude,
                         distance: distance,
@@ -231,14 +257,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
             
             DispatchQueue.main.async {
+                self.locationStatus = .found
                 self.nearbyPlaceAmbience = ambience
                 print("🎨 [NEARBY] Generated ambience for \(ambience.count) places.")
-                completion(ambience.map { $0.name })
+                completion(ambience)
             }
         }
     }
     
-    private func performGeocoderFallback(location: CLLocation, completion: @escaping ([String]) -> Void) {
+    private func performGeocoderFallback(location: CLLocation, completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Starting Geocoder fallback...")
         let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { placemarks, error in
@@ -258,16 +285,29 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             if let inlandWater = place.inlandWater { results.append(inlandWater) }
             if let interest = place.areasOfInterest?.first { results.append(interest) }
             
-            print("✅ [NEARBY] Geocoder found: \(results)")
-            let unique = Array(Set(results)).prefix(8)
-            completion(Array(unique))
+            var ambience: [NearbyAmbience] = []
+            for name in Array(Set(results)).prefix(8) {
+                if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
+                    ambience.append(NearbyAmbience(
+                        id: "\(location.coordinate.latitude)_\(location.coordinate.longitude)_\(name)",
+                        name: name,
+                        category: nil,
+                        latitude: location.coordinate.latitude,
+                        longitude: location.coordinate.longitude,
+                        distance: 0,
+                        vector: vector
+                    ))
+                }
+            }
+            completion(ambience)
         }
     }
     
     // MARK: - API Helper
     func getNearbyPlacesForAPI() -> [NearbyPlaceData] {
         return nearbyPlaceAmbience.prefix(5).map { 
-            NearbyPlaceData(place_name: $0.name, distance: $0.distance, type: nil)
+            let enrichedName = $0.category != nil ? "\($0.name) (\($0.category!))" : $0.name
+            return NearbyPlaceData(place_name: enrichedName, distance: $0.distance, type: $0.category)
         }
     }
 }

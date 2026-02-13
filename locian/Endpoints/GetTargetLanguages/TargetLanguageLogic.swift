@@ -210,6 +210,10 @@ class TargetLanguageLogic {
             if let defaultPair = pairs.first(where: { $0.is_default }) {
                 NeuralValidator.downloadAssets(for: defaultPair.target_language)
             }
+            
+            // 🚀 PERFECT SEQUENCE: Trigger history/recommendation load once focus is known
+            print("🚀 [TargetLanguageLogic] Focus established (\(pairs.count) pairs). Triggering loadInitialData...")
+            appState.loadInitialData()
         }
         
         return !pairs.isEmpty

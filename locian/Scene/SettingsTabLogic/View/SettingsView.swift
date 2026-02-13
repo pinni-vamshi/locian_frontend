@@ -431,9 +431,7 @@ struct SettingsView: View {
                         }
                     }
                 ))
-                    .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
                     .labelsHidden()
-                    .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
             }
             .foregroundColor(.white.opacity(0.3))
             .padding(.horizontal, 5)
@@ -473,7 +471,6 @@ struct SettingsView: View {
                         }
                     }
                 ))
-                .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
                 .labelsHidden()
             }
             .foregroundColor(.white.opacity(0.3))
@@ -512,35 +509,15 @@ struct SettingsView: View {
                 .fixedSize()
 
                 HStack(spacing: 20) {
-                    accountBox(title: languageManager.settings.logout, icon: "arrow.right.square", color: .cyan) { state.showingLogoutAlert = true }
-                    accountBox(title: languageManager.ui.delete, icon: "trash", color: ThemeColors.secondaryAccent) { state.showingDeleteAlert = true }
+                    accountBox(title: languageManager.settings.logout, icon: "arrow.right.square", color: .cyan, isLoading: state.isLoggingOut) { state.showingLogoutAlert = true }
+                    accountBox(title: languageManager.ui.delete, icon: "trash", color: ThemeColors.secondaryAccent, isLoading: state.isDeletingAccount) { state.showingDeleteAlert = true }
                 }
                 .padding(.leading, 20)
                 // Removed .padding(.vertical, 10) to align tops with VerticalHeading
             }
             .fixedSize(horizontal: false, vertical: true)
             
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(languageManager.settings.diagnosticBorders.uppercased())
-                            .font(.system(size: 14, weight: .black, design: .monospaced))
-                            .foregroundColor(.white)
-                        Text(languageManager.getString("Visualize UI layout frames for debugging.").uppercased())
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundColor(.gray)
-                    }
-                    Spacer()
-                    Toggle("", isOn: $appState.showDiagnosticBorders)
-                        .toggleStyle(SwitchToggleStyle(tint: ThemeColors.secondaryAccent))
-                        .labelsHidden()
-                }
-                .padding(.horizontal, 5)
-                .padding(.vertical, 16)
-                .background(Color.white.opacity(0.05))
-                .overlay(Rectangle().stroke(Color.white.opacity(0.1), lineWidth: 1))
-            }
-            .padding(.top, 40)
+
             
             Text(languageManager.settings.systemConfig.uppercased())
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -556,7 +533,7 @@ struct SettingsView: View {
         .diagnosticBorder(.white.opacity(0.1), width: 2)
     }
     
-    private func accountBox(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func accountBox(title: String, icon: String, color: Color, isLoading: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title)
@@ -565,9 +542,16 @@ struct SettingsView: View {
                 
                 ZStack {
                     Rectangle().fill(Color.white.opacity(0.05))
-                    Image(systemName: icon)
-                        .font(.system(size: 40))
-                        .foregroundColor(color)
+                    
+                    if isLoading {
+                        ProgressView()
+                            .tint(color)
+                            .scaleEffect(1.5)
+                    } else {
+                        Image(systemName: icon)
+                            .font(.system(size: 40))
+                            .foregroundColor(color)
+                    }
                     
                     VStack {
                         HStack {

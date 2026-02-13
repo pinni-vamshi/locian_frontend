@@ -107,7 +107,7 @@ struct AddTabView: View {
     }
 
     private var suggestedPlacesView: some View {
-        SuggestedPlacesView(appState: appState, customPlaceText: $state.customPlaceText, refreshId: state.refreshId) { state.selectSuggestedPlace($0); switchToLearnTab() }
+        SuggestedPlacesView(appState: appState, customPlaceText: $state.customPlaceText, refreshId: state.refreshId) { name, category in state.selectSuggestedPlace(name: name, category: category); switchToLearnTab() }
             .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
             .animation(.spring().delay(0.2), value: animateIn)
             .diagnosticBorder(.white.opacity(0.3), width: 1)
@@ -343,9 +343,9 @@ struct TextInputSection: View {
 }
 
 struct SuggestedPlacesView: View {
-    @ObservedObject var appState: AppStateManager; @Binding var customPlaceText: String; var refreshId: UUID; var onSelect: (String) -> Void
+    @ObservedObject var appState: AppStateManager; @Binding var customPlaceText: String; var refreshId: UUID; var onSelect: (String, String?) -> Void
     @ObservedObject private var locationManager = LocationManager.shared
-    @State private var nearbyPlaces: [String] = []
+    @State private var nearbyPlaces: [LocationManager.NearbyAmbience] = []
     @State private var isLoading: Bool = false
 
     var body: some View {
@@ -398,8 +398,8 @@ struct SuggestedPlacesView: View {
                         .diagnosticBorder(.white.opacity(0.1), width: 1)
                 } else {
                     HorizontalMasonryLayout(data: nearbyPlaces, rows: 3, spacing: 8, constrainedHeight: 130) { p in
-                        Button(action: { onSelect(p) }) {
-                            Text(p.uppercased())
+                        Button(action: { onSelect(p.name, p.category) }) {
+                            Text(p.name.uppercased())
                                 .font(.system(size: 14, weight: .bold, design: .monospaced))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 10)
