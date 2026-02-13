@@ -17,6 +17,7 @@ struct GenerateMomentsRequest: Codable {
     let profession: String?
     let previous_places: [TimelinePlaceContext]?
     let future_places: [TimelinePlaceContext]?
+    let nearby_places: [NearbyPlaceData]?
     let weather: String?
     let activity_duration: String?
     let latitude: Double?

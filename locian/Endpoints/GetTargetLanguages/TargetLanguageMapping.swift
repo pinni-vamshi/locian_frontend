@@ -7,7 +7,7 @@ class TargetLanguageMapping {
     private init() {}
     
     // Full learning catalog
-    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
+    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he", "ta", "ml"]
     
     private let names: [String: (english: String, native: String)] = [
         "en": ("English", "English"),
@@ -29,7 +29,9 @@ class TargetLanguageMapping {
         "da": ("Danish", "Dansk"),
         "fi": ("Finnish", "Suomi"),
         "el": ("Greek", "Ελληνικά"),
-        "he": ("Hebrew", "עبيرية")
+        "he": ("Hebrew", "עברית"),
+        "ta": ("Tamil", "தமிழ்"),
+        "ml": ("Malayalam", "മലയാളം")
     ]
     
     func getDisplayNames(for code: String) -> (english: String, native: String) {

@@ -20,6 +20,7 @@ struct AnalyzeImageRequest: Codable {
     let target_language: String?
     let previous_places: [TimelinePlaceContext]?
     let future_places: [TimelinePlaceContext]?
+    let nearby_places: [NearbyPlaceData]?
     let date: String?
 }
 

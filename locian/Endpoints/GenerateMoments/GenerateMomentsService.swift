@@ -78,6 +78,7 @@ class GenerateMomentsService: ObservableObject {
                 profession: profession,
                 previous_places: Array(previous),
                 future_places: Array(future),
+                nearby_places: LocationManager.shared.getNearbyPlacesForAPI(),
                 weather: nil,
                 activity_duration: nil,
                 latitude: lat,
@@ -101,8 +102,10 @@ class GenerateMomentsService: ObservableObject {
         LocationManager.shared.getCurrentLocation { result in
             switch result {
             case .success(let location):
-                // Location fetched
-                proceed(location: location)
+                // Fetch nearby places to ground the generation before proceeding
+                LocationManager.shared.fetchNearbyPlaces { _ in
+                    proceed(location: location)
+                }
             case .failure:
                 // Location fetch failed
                 proceed(location: nil)

@@ -141,6 +141,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         let name: String
         let latitude: Double
         let longitude: Double
+        let distance: Double
         let vector: [Double]
     }
     
@@ -216,12 +217,14 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 guard let name = item.name, let loc = item.placemark.location else { continue }
                 if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
                     // Use coordinate hash as stable identifier since itemIdentifier is not available
+                    let distance = loc.distance(from: location)
                     let stableID = "\(loc.coordinate.latitude)_\(loc.coordinate.longitude)"
                     ambience.append(NearbyAmbience(
                         id: stableID,
                         name: name,
                         latitude: loc.coordinate.latitude,
                         longitude: loc.coordinate.longitude,
+                        distance: distance,
                         vector: vector
                     ))
                 }
@@ -258,6 +261,13 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             print("✅ [NEARBY] Geocoder found: \(results)")
             let unique = Array(Set(results)).prefix(8)
             completion(Array(unique))
+        }
+    }
+    
+    // MARK: - API Helper
+    func getNearbyPlacesForAPI() -> [NearbyPlaceData] {
+        return nearbyPlaceAmbience.prefix(5).map { 
+            NearbyPlaceData(place_name: $0.name, distance: $0.distance)
         }
     }
 }

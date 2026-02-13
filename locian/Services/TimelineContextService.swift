@@ -68,8 +68,51 @@ class TimelineContextService {
         let futureLeader = rankedFuture.first
         
         // 4. Convert ranked results to PlaceAtTime format
-        let pastAtTime = rankedPast.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
-        let futureAtTime = rankedFuture.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
+        var pastAtTime = rankedPast.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
+        var futureAtTime = rankedFuture.compactMap { $0.toPlaceAtTime(currentTime: anchorMinutes) }
+        
+        // ---------------------------------------------------------------------
+        // 5. Append User Routine (Predictable Schedule)
+        // ---------------------------------------------------------------------
+        // We append the routine places for (Anchor - 1) to Past and (Anchor + 1) to Future
+        // This ensures the AI knows about the user's predictable life alongside historical vibes.
+        
+        let profession = AppStateManager.shared.profession
+        let currentHour = anchorMinutes / 60
+        
+        // Past Routine (Hour - 1)
+        let pastRoutinePlaces = UserRoutineManager.getPlaces(for: profession, hour: currentHour - 1)
+        for placeName in pastRoutinePlaces {
+            // Avoid duplicates if already present in vibe history
+            if !pastAtTime.contains(where: { $0.placeName == placeName }) {
+                let p = PlaceAtTime(
+                    placeName: placeName,
+                    time: String(format: "%02d:00", max(0, currentHour - 1)),
+                    date: "Routine",
+                    timeDifference: 60,
+                    originalHour: currentHour - 1
+                )
+                pastAtTime.append(p)
+            }
+        }
+        
+        // Future Routine (Hour + 1)
+        let futureRoutinePlaces = UserRoutineManager.getPlaces(for: profession, hour: currentHour + 1)
+        for placeName in futureRoutinePlaces {
+            // Avoid duplicates
+            if !futureAtTime.contains(where: { $0.placeName == placeName }) {
+                let p = PlaceAtTime(
+                    placeName: placeName,
+                    time: String(format: "%02d:00", min(23, currentHour + 1)),
+                    date: "Routine",
+                    timeDifference: 60,
+                    originalHour: currentHour + 1
+                )
+                futureAtTime.append(p)
+            }
+        }
+        
+        // ---------------------------------------------------------------------
         
         // 5. Build Result
         let result = TimelineContext(

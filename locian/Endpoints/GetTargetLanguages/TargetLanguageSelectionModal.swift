@@ -21,13 +21,23 @@ struct TargetLanguageSelectionModal: View {
             
             VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .center) {
-                        headingBadge()
-                        Spacer()
-                        dismissButton()
+                    VStack(spacing: 0) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: -5) {
+                                Text("SELECT").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
+                                    .diagnosticBorder(.white.opacity(0.5), width: 0.5)
+                                Text("TARGET").font(.system(size: 36, weight: .heavy)).foregroundColor(.pink)
+                                    .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
+                            }
+                            .diagnosticBorder(.white.opacity(0.2), width: 1)
+                            Spacer()
+                            LocianButton(action: { dismiss() }, backgroundColor: .white, foregroundColor: .black, shadowColor: .gray, shadowOffset: 4) { Image(systemName: "xmark").font(.system(size: 16, weight: .bold)).frame(width: 32, height: 32) }
+                                .diagnosticBorder(.white, width: 1)
+                        }
+                        .diagnosticBorder(.pink.opacity(0.3), width: 1.5)
+                        .padding().background(Color.black.opacity(0.9))
+                        Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
                     }
-                    .padding(.horizontal, 5)
-                    .padding(.top, 10)
                     
                     VStack(alignment: .leading, spacing: 10) {
                         previewSection()
@@ -65,23 +75,7 @@ struct TargetLanguageSelectionModal: View {
         }
     }
     
-    private func headingBadge() -> some View {
-        Text(LocalizationManager.shared.string(.targetLanguages).uppercased())
-            .font(.system(size: 20, weight: .black, design: .monospaced))
-            .foregroundColor(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color.pink)
-    }
-    
-    private func dismissButton() -> some View {
-        Button(action: { dismiss() }) {
-            Image(systemName: "xmark")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-                .padding(8)
-        }
-    }
+
     
     private func previewSection() -> some View {
         let currentCode = previewCode ?? "es"
@@ -133,12 +127,14 @@ struct TargetLanguageSelectionModal: View {
         return Button(action: { saveSelection(code: currentCode) }) {
             Text("CONTINUE WITH \(targetName)")
                 .font(.system(size: 18, weight: .black, design: .monospaced))
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
                 .background(Color.pink)
-                .padding(.vertical, 12)
+                .cornerRadius(0)
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .disabled(isLoading)
     }
     

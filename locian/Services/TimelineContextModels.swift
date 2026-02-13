@@ -33,6 +33,11 @@ struct TimelinePlaceContext: Codable {
     let time: String
 }
 
+struct NearbyPlaceData: Codable {
+    let place_name: String
+    let distance: Double
+}
+
 extension PlaceAtTime {
     var toContext: TimelinePlaceContext {
         return TimelinePlaceContext(place_name: placeName, time: time)
