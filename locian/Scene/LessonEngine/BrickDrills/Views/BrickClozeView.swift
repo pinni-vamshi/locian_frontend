@@ -2,14 +2,19 @@ import SwiftUI
 
 struct BrickClozeView: View {
     @StateObject var logic: BrickClozeLogic
-    var lessonDrillLogic: LessonDrillLogic?
-    var onComplete: (() -> Void)?
+    var onComplete: ((Bool) -> Void)?
     @FocusState private var isFocused: Bool
     @State private var isHintExpanded: Bool = false
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
-        _logic = StateObject(wrappedValue: BrickClozeLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickClozeLogic(
+            state: state, 
+            engine: engine, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
         self.onComplete = onComplete
     }
     
@@ -42,6 +47,7 @@ struct BrickClozeView: View {
                         .focused($isFocused)
                         .padding(.horizontal, 24)
                         
+                        
                         // Show Correction if wrong
                         if let isCorrect = logic.isCorrect, !isCorrect {
                             TypingCorrectionView(
@@ -55,13 +61,8 @@ struct BrickClozeView: View {
                 }
             }
             
-            // 3. Footer
-            // 3. Footer
-            // ✅ Only show shared wrapper POST-ANSWER (to get the "Continue" logic).
-            // During input, show local footer (for "Check" button).
-            if let wrapper = lessonDrillLogic, wrapper.isDrillAnswered {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            if logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil {
                 footer
             }
         }

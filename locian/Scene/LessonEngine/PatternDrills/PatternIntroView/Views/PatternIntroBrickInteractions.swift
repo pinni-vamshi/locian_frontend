@@ -8,9 +8,9 @@ struct BrickMCQInteraction: View {
     let showPrompt: Bool
     @StateObject var logic: BrickMCQLogic
     
-    let onComplete: (() -> Void)?
+    let onComplete: ((Bool) -> Void)?
     
-    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: (() -> Void)? = nil) {
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.drill = drill
         self.engine = engine
         self.showPrompt = showPrompt
@@ -49,9 +49,9 @@ struct BrickClozeInteraction: View {
     @StateObject var logic: BrickClozeLogic
     @FocusState private var isFocused: Bool
     
-    let onComplete: (() -> Void)?
+    let onComplete: ((Bool) -> Void)?
     
-    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: (() -> Void)? = nil) {
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.drill = drill
         self.engine = engine
         self.showPrompt = showPrompt
@@ -91,14 +91,10 @@ struct BrickClozeInteraction: View {
                     phonetic: logic.state.drillData.phonetic
                 )
             }
-            
-            if logic.isCorrect == nil {
-                CyberOption(text: "CHECK", index: 0, isSelected: false, action: { logic.checkAnswer() })
-                    .padding(.horizontal)
-            }
         }
         .onAppear {
             isFocused = true
+            logic.bindToParent()
         }
     }
 }
@@ -110,9 +106,9 @@ struct BrickTypingInteraction: View {
     @StateObject var logic: BrickTypingLogic
     @FocusState private var isFocused: Bool
     
-    let onComplete: (() -> Void)?
+    let onComplete: ((Bool) -> Void)?
     
-    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: (() -> Void)? = nil) {
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.drill = drill
         self.engine = engine
         self.showPrompt = showPrompt
@@ -151,14 +147,10 @@ struct BrickTypingInteraction: View {
                     phonetic: logic.state.drillData.phonetic
                 )
             }
-            
-            if logic.isCorrect == nil {
-                CyberOption(text: "CHECK", index: 0, isSelected: false, action: { logic.checkAnswer() })
-                    .padding(.horizontal)
-            }
         }
         .onAppear {
             isFocused = true
+            logic.bindToParent()
         }
     }
 }
@@ -169,9 +161,9 @@ struct BrickVoiceInteraction: View {
     let showPrompt: Bool
     @StateObject var logic: BrickVoiceLogic
     
-    let onComplete: (() -> Void)?
+    let onComplete: ((Bool) -> Void)?
     
-    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: (() -> Void)? = nil) {
+    init(drill: DrillState, engine: LessonEngine, showPrompt: Bool = true, patternIntroLogic: PatternIntroLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.drill = drill
         self.engine = engine
         self.showPrompt = showPrompt
@@ -210,11 +202,9 @@ struct BrickVoiceInteraction: View {
                     phonetic: logic.state.drillData.phonetic
                 )
             }
-            
-            if logic.isCorrect == nil && logic.hasInput {
-                CyberOption(text: "CHECK", index: 0, isSelected: false, action: { logic.checkAnswer() })
-                    .padding(.horizontal)
-            }
+        }
+        .onAppear {
+            logic.bindToParent()
         }
     }
 }

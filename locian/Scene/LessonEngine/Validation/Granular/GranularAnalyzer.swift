@@ -8,64 +8,86 @@
 import Foundation
 
 struct GranularAnalyzer {
-    
-    /// Analyzes a response to determine which bricks were used correctly
-    static func analyze(
-        input: String,
+    /// 🛡️ POSITION-BASED RIPPLE EFFECT: Centralized mastery updates for bricks within a pattern.
+    /// This uses the "Anchor Model" to accurately map user input to specific brick positions in the solution.
+    static func processGranularMastery(
+        engine: LessonEngine,
         target: String,
-        requiredBricks: [BrickItem],
+        meaning: String,
+        userInput: String,
         type: DrillType,
         context: ValidationContext
-    ) -> [BrickAnalysisResult] {
+    ) {
+        // 1. Identify which bricks belong to this pattern solution
+        let brickMatches = ContentAnalyzer.findRelevantBricks(
+            in: target,
+            meaning: meaning,
+            bricks: engine.activeGroupBricks,
+            targetLanguage: engine.lessonData?.target_language ?? "es"
+        )
+        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
         
-        let responseTokens = GranularAnalyzerCore.parseTextTokens(input)
-        let validator = ValidationFactory.validator(for: type)
-        var results: [BrickAnalysisResult] = []
+        // 2. The Anchor: Tokenize the official Solution and the User Input
+        // We check against 'target' for foreign modes and 'meaning' for MCQ
+        let solutionText = (type == .multipleChoice || type == .vocabMatch) ? meaning : target
+        let solutionTokens = parseTextTokens(solutionText)
+        let inputTokens = parseTextTokens(userInput)
         
-        for brick in requiredBricks {
-            // DYNAMIC TARGET: For MCQs, the response is in English (Meaning). 
-            // For others (Speaking/Typing), it's in the Target Language (Word).
-            let isMeaningBase = (type == .multipleChoice || type == .vocabMatch)
-            let primaryTarget = isMeaningBase ? brick.meaning.lowercased() : brick.word.lowercased()
-            let secondaryTarget = isMeaningBase ? brick.word.lowercased() : brick.meaning.lowercased()
+        // 3. The Map: Find where each brick sits in the Solution Anchor
+        for brick in bricks {
+            let brickSearchTerm = (type == .multipleChoice || type == .vocabMatch) ? brick.meaning : brick.word
             
-            // 1. Find the best match in the user's response tokens
-            let match = GranularAnalyzerCore.findBestSemanticMatch(
-                brickWord: primaryTarget,
-                responseTokens: responseTokens,
-                validator: context.neuralEngine,
-                threshold: 0.65 
-            )
+            // Find the index of this brick in the solution tokens (handles duplicates)
+            // Note: In a professional implementation, we'd map whole sentences, 
+            // but for this ripple effect, we find the "Best Anchor" match.
+            var bestAnchorToken = ""
+            var maxSim: Double = 0.0
             
-            // 2. Double check against secondary target (just in case of mixed input or builder modes)
-            let secondaryMatch = GranularAnalyzerCore.findBestSemanticMatch(
-                brickWord: secondaryTarget,
-                responseTokens: responseTokens,
-                validator: context.neuralEngine,
-                threshold: 0.65
-            )
+            for sToken in solutionTokens {
+                let sim = SemanticMatcher.calculatePairSimilarity(
+                    target: brickSearchTerm.lowercased(),
+                    candidate: sToken.lowercased(),
+                    validator: context.neuralEngine,
+                    silent: true
+                )
+                if sim > maxSim {
+                    maxSim = sim
+                    bestAnchorToken = sToken
+                }
+            }
             
-            let bestMatch = (match.similarity >= secondaryMatch.similarity) ? match : secondaryMatch
-            let bestTarget = (match.similarity >= secondaryMatch.similarity) ? primaryTarget : secondaryTarget
+            // 4. Verify: Now check if the user's input matches that SPECIFIC anchor word
+            var userSim: Double = 0.0
+            for iToken in inputTokens {
+                let sim = SemanticMatcher.calculatePairSimilarity(
+                    target: bestAnchorToken.lowercased(),
+                    candidate: iToken.lowercased(),
+                    validator: context.neuralEngine,
+                    silent: true
+                )
+                if sim > userSim {
+                    userSim = sim
+                }
+            }
             
-            // 3. Delegate to the ACTUAL mode-specific validator for the final verdict
-            let result = validator.validate(
-                input: bestMatch.matchedToken,
-                target: bestTarget,
-                context: context
-            )
+            // Verdict: Strictly check against the Anchor token with 0.65 similarity (Thematic Vibe)
+            let isCorrect = userSim >= 0.65
             
-            let isCorrect = (result == .correct || result == .meaningCorrect)
+            // 5. Direct Engine Connection: +10% success / -5% failure
+            let delta = isCorrect ? 0.10 : -0.05
+            engine.updateMastery(id: brick.id ?? brick.word, delta: delta)
             
-            results.append(BrickAnalysisResult(
-                brickId: brick.id ?? brick.word,
-                word: brick.word,
-                isCorrect: isCorrect,
-                similarity: bestMatch.similarity,
-                masteryChange: isCorrect ? 1.0 : 0.0 
-            ))
+            print("⚓ Anchor Analysis [\(brick.word)]: \(isCorrect ? "✅ +0.10" : "❌ -0.05") (Anchor: '\(bestAnchorToken)' -> User Match: \(String(format: "%.2f", userSim)))")
         }
-        
-        return results
+    }
+    
+    // MARK: - Internal Utilities (Merged from Core)
+    
+    static func parseTextTokens(_ text: String) -> [String] {
+        let cleaned = text.lowercased()
+        return cleaned
+            .components(separatedBy: .punctuationCharacters).joined()
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
     }
 }

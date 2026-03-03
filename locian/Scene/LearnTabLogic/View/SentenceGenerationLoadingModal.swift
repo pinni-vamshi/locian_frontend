@@ -43,7 +43,7 @@ struct SentenceGenerationLoadingModal: View {
     }
     
     private var placeName: String {
-        state.recommendedPlaces.first?.place_name ?? "Unknown"
+        state.recommendations.first?.place_id ?? "Unknown"
     }
     
     private var moment: String {
@@ -94,7 +94,7 @@ struct SentenceGenerationLoadingModal: View {
             
             // 2. Trigger Navigation AFTER modal is gone
             // This prevents the "Dismiss cancels Push" race condition
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 state.showLessonView = true
             }
         }
@@ -200,7 +200,7 @@ struct SentenceGenerationLoadingModal: View {
         .onChange(of: isReady) { _, newValue in
             dataReady = newValue
             if newValue && animationFinished {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { onFinish() }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { onFinish() }
             }
             if newValue && waitingForData { transitionToPhase3() }
         }
@@ -233,7 +233,7 @@ struct SentenceGenerationLoadingModal: View {
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + revealTimes[index]) {
-            withAnimation(.easeOut(duration: 0.5)) { reveals[index] = true }
+            withAnimation(.easeOut(duration: 0.1)) { reveals[index] = true }
             revealNextData(index: index + 1)
         }
     }
@@ -254,7 +254,7 @@ struct SentenceGenerationLoadingModal: View {
     
     private func transitionToPhase3() {
         waitingForData = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring()) { phase = 3; statusText = "SYNTHESIZED"; dotCount = 0 }
             startFinalPhase()
         }

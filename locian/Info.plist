@@ -27,6 +27,8 @@
 	<string>Locian needs location access to provide location-based language learning features and context.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Locian needs location access to provide location-based language learning features and context.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Locian needs motion access to customize your language learning moments based on your current physical activity.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UISupportedInterfaceOrientations</key>
@@ -36,6 +38,12 @@
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Locian needs local network access to communicate with your development server.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
 	</array>
 </dict>
 </plist>

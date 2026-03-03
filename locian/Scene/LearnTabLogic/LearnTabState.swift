@@ -2,65 +2,64 @@
 //  LearnTabState.swift
 //  locian
 //
-//  Consolidated Logic for Learn Tab (State, Service, Parsing)
+//  V3.0 "Context Intelligence" State Management
 //
 
 import SwiftUI
 import Combine
-import CoreLocation
-import NaturalLanguage
 
 // MARK: - Enums
 enum SentenceGenerationState {
     case idle
-    case callingAI      // New: 0-3 seconds
-    case generating     // New: 3s until response
-    case preparing      // New: Response received, preparing lesson
+    case callingAI      
+    case generating     
+    case preparing      
 }
-
 
 // MARK: - Main State
 class LearnTabState: ObservableObject {
+    
+    // MARK: - V3 Context Intelligence State
+    @Published var recommendations: [PlaceRecommendation] = []
+    @Published var selectedRecommendationIndex: Int = 0
+    @Published var selectedPatternIndex: Int = 0
+    
     @Published var activeGeneratingMoment: String? = nil
+    @Published var isGeneratingSentence: Bool = false
     
-    @Published var recentHistory: [StudiedPlaceWithSituations] = []
-    @Published var isLoadingHistory: Bool = false
-    @Published var hasAnyStudiedPlaces: Bool = false
-    
-    
-    // Unified Timeline Data
-    @Published var allTimelinePlaces: [MicroSituationData] = []
-    
-    // Recommended Context Data (Predicted/Analyzed)
-    @Published var recommendedPlaces: [MicroSituationData] = []
-    
-    // Error State
-    @Published var showingNoDataError: Bool = false
-    
-    @Published var selectedRecommendedCategory: String? = nil
-    
-    // UI-Ready Properties (Pure Data for Views)
-    @Published var uiStreakText: String = ""
-    
-    // Teaching Flow Properties
-    @Published var rawLessonResponse: String? = nil
-    @Published var generationState: SentenceGenerationState = .idle
-    @Published var currentLesson: GenerateSentenceData? = nil
-    @Published var showLessonView: Bool = false
-
-    
-    var isGeneratingSentence: Bool {
-        return generationState != .idle
+    // UI State
+    @Published var generationState: SentenceGenerationState = .idle {
+        didSet {
+            isGeneratingSentence = (generationState != .idle)
+        }
     }
     
-    // UNIFIED LOADING STATE: Aggregates all data fetch activities
+    @Published var isTextInputMode: Bool = false
+    @Published var manualInputText: String = ""
+    @Published var showingCamera: Bool = false
+    
+    @Published var currentLesson: GenerateSentenceData? = nil
+    @Published var showLessonView: Bool = false
+    
+    // Nearby Section State
+    @Published var nearbyPlaces: [LocationManager.NearbyAmbience] = []
+    @Published var isNearbyLoading: Bool = false
+    
+    // MARK: - Computed Properties
+    var activeRecommendation: PlaceRecommendation? {
+        guard selectedRecommendationIndex < recommendations.count else { return nil }
+        return recommendations[selectedRecommendationIndex]
+    }
+    
+    var activePattern: RecommendationPattern? {
+        guard let rec = activeRecommendation,
+              let patterns = rec.patterns,
+              selectedPatternIndex < patterns.count else { return nil }
+        return patterns[selectedPatternIndex]
+    }
+    
     var isFetchingData: Bool {
-        return PredictPlaceService.shared.isLoading ||
-               AnalyzeImageService.shared.isLoading ||
-               GenerateMomentsService.shared.isLoading ||
-               LocalRecommendationService.shared.isLoading ||
-               appState.isLoadingTimeline ||
-               isLoadingHistory
+        return DiscoverMomentsService.shared.isLoading
     }
     
     let appState: AppStateManager
@@ -68,378 +67,117 @@ class LearnTabState: ObservableObject {
     
     init(appState: AppStateManager) {
         self.appState = appState
-        
-
-        
-        if appState.hasInitialHistoryLoaded {
-             print("♻️ [LearnTabState] Global load complete. Restoring local state from AppStateManager...")
-             if let persistedTimeline = appState.timeline {
-                 self.allTimelinePlaces = persistedTimeline.places
-                 self.hasAnyStudiedPlaces = !persistedTimeline.places.isEmpty
-             } else {
-                 self.hasAnyStudiedPlaces = false
-             }
-        }
-        
         setupObservers()
     }
     
     private func setupObservers() {
-        // Observe Services to trigger UI updates for isFetchingData
-        // Observe Services to trigger UI updates for isFetchingData
-        
-        // Note: Generic erasing is tricky in mixed array. Individual subscriptions are safer.
-        
-        PredictPlaceService.shared.$isLoading
+        // Observe DiscoverMomentsService for UI loading state updates
+        DiscoverMomentsService.shared.$isLoading
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        AnalyzeImageService.shared.$isLoading
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        GenerateMomentsService.shared.$isLoading
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        LocalRecommendationService.shared.$isLoading
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        // Observe AppStateManager specifically for timeline loading
-        appState.$isLoadingTimeline
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-            
-        // CRITICAL: Observe when recommendations are ready
-        LocalRecommendationService.shared.$hasHighQualityMatches
-            .receive(on: RunLoop.main)
-            .removeDuplicates() // ✅ STOP THE LOOP: Only fire when state ACTUALLY changes
-            .sink { [weak self] ready in
-                print("🔄 [LearnTabState] LocalRecommendationService.hasHighQualityMatches changed: \(ready)")
-                if ready {
-                    self?.loadRecommendations()
-                }
-            }
-            .store(in: &cancellables)
-            
-        // Observe Context Fallback Results
-        LocalRecommendationService.shared.$contextPlace
-            .receive(on: RunLoop.main)
-            .compactMap { $0 }
-            .sink { [weak self] place in
-                print("🔄 [LearnTabState] Context match arrived: '\(place.place_name ?? "nil")'")
-                self?.setActivePlace(place: place)
-            }
             .store(in: &cancellables)
     }
-    
 
-    // MARK: - Fetching Logic
+    // MARK: - Discovery (Unified Endpoint)
     
-    // MARK: - Load Recommendations
-    
-    /// Load recommendations from LocalRecommendationService (called when Learn Tab appears)
-    func loadRecommendations() {
-        print("\n🟢 [LearnTabState] loadRecommendations called")
+    func discover(explicitText: String? = nil, image: UIImage? = nil) {
+        print("🔍 [LearnTabState] discover() V3 called")
         
-        guard appState.hasInitialHistoryLoaded else {
-            print("   ⚠️ [LearnTabState] Initial history not loaded yet, skipping...")
+        DiscoverMomentsService.shared.discoverMoments(explicitRequest: explicitText, image: image) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let response):
+                DispatchQueue.main.async {
+                    if let rawRecs = response.data?.recommendations {
+                        // V3.45: Filter out fallback "unknown" places and places with zero patterns
+                        let validRecs = rawRecs.filter { rec in
+                            let isNotUnknown = rec.place_id.lowercased() != "unknown"
+                            let hasPatterns = !(rec.patterns ?? []).isEmpty
+                            return isNotUnknown && hasPatterns
+                        }
+                        
+                        if !validRecs.isEmpty {
+                            print("   ✨ [LearnTabState] Discovery Filtered. Showing \(validRecs.count) valid recommendations.")
+                            self.recommendations = validRecs
+                            self.selectedRecommendationIndex = 0
+                            self.selectedPatternIndex = 0
+                        } else {
+                            print("   ⚠️ [LearnTabState] Discovery returned no valid recommendations after filtering.")
+                            self.recommendations = []
+                        }
+                    } else {
+                        self.recommendations = []
+                    }
+                }
+                
+            case .failure(let error):
+                print("   ❌ [LearnTabState] Discovery Failed: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    /// Bridges the selected V3 context into the Lesson Engine via the hydration pipeline
+    func startPractice() {
+        guard let recommendation = activeRecommendation else {
+            print("⚠️ [LearnTabState] startPractice BLOCKED: No active recommendation.")
+            return
+        }
+        guard !(recommendation.patterns ?? []).isEmpty else {
+            print("⚠️ [LearnTabState] startPractice BLOCKED: Recommendation has no patterns.")
             return
         }
         
-        let service = LocalRecommendationService.shared
-        print("   - Service isLoading: \(service.isLoading)")
-        print("   - Service hasHighQualityMatches: \(service.hasHighQualityMatches)")
+        print("🚀 [LearnTabState] START PRACTICE: '\(recommendation.place_id)' — routing through GenerateSentenceLogic.hydrateFromV3()")
         
-        let data = service.latestResult?.toMicroSituationData() ?? []
-        print("   - Loading recommendations via unified handover (Count: \(data.count))...")
-        self.setActivePlace(places: data)
-        
-        if !service.hasHighQualityMatches {
-            print("   ℹ️ [LearnTabState] Matches are low quality/empty. Context fallback should trigger automatically.")
+        GenerateSentenceLogic.shared.hydrateFromV3(recommendation: recommendation) { [weak self] lessonData in
+            guard let self = self else { return }
+            self.currentLesson = lessonData
+            self.showLessonView = true
         }
     }
     
-    func clearMoments() {
-        // No longer calling fetchFirstRecommendedPlace()
+    // MARK: - Deep Link Handling
+    
+    func handleDeepLink(placeName: String, hour: Int) {
+        print("📱 [LearnTabState] Handling Deep Link: \(placeName) at \(hour):00")
+        
+        // V3 Logic: Trigger a fresh discovery with the deep-linked place name as an explicit request
+        // This will force the API to return recommendations specifically for this context
+        self.discover(explicitText: "I am at \(placeName)")
+    }
+    
+    func submitManualDiscovery() {
+        guard !manualInputText.isEmpty else { return }
+        print("⌨️ [LearnTabState] Submitting Manual Discovery: \(manualInputText)")
+        discover(explicitText: manualInputText)
+        isTextInputMode = false
+        manualInputText = ""
+    }
+    
+    // MARK: - Nearby Section Logic
+    
+    func loadNearbyPlaces() {
+        guard appState.isLocationTrackingEnabled else { return }
+        isNearbyLoading = true
+        LocationManager.shared.fetchNearbyPlaces { [weak self] places in
+            DispatchQueue.main.async {
+                self?.nearbyPlaces = places
+                self?.isNearbyLoading = false
+            }
+        }
+    }
+    
+    func selectNearbyPlace(name: String, category: String?) {
+        print("📍 [LearnTabState] Selected Nearby Place: \(name)")
+        discover(explicitText: name)
     }
     
     func clearState() {
-        self.hasAnyStudiedPlaces = false
-        self.allTimelinePlaces = []
-    }
-
-    // MARK: - Context Refresh (Manual)
-    
-    func refreshTokenContext() {
-        guard let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
-        
-        PredictPlaceService.shared.predictPlace(sessionToken: sessionToken) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                
-                if case .success(let response) = result, let data = response.data {
-                    self.setActivePlace(place: data.toMicroSituationData())
-                } else {
-                    self.handleNoDataFallback()
-                }
-            }
-        }
-    }
-
-
-
-
-    private func syncUIProperties() {
-        print("🟢 [LearnTabState] syncUIProperties called")
-        let streak = appState.userLanguagePairs.first(where: { $0.is_default }).map { 
-            "\(calculateCurrentStreak(practiceDates: $0.practice_dates)) " + LocalizationManager.shared.string(.daysLabel)
-        } ?? ""
-
-        DispatchQueue.main.async {
-            print("   - Streak Updated: '\(streak)'")
-            self.uiStreakText = streak
-        }
-    }
-    
-    // MARK: - Teaching Flow
-    
-    func generateSentence(for moment: String, fromPlace named: String? = nil) {
-        // 2. Original Logic (Restored)
-        print("\n🟢 [LearnTabState] generateSentence called (LEGACY ENGINE)")
-        print("   - Moment: '\(moment)'")
-        print("   - Override Place: '\(named ?? "nil")'")
-        
-        guard let sessionToken = appState.authToken, !sessionToken.isEmpty,
-              appState.userLanguagePairs.contains(where: { $0.is_default }) else {
-            print("🔴 [LearnTabState] generateSentence ABORT: Missing Token or Language Pair")
-            return
-        }
-        
-        // Fallback to recommended place if available
-        let placeName = named ?? recommendedPlaces.first?.place_name ?? "Unknown"
-        print("   - Final Context Place: '\(placeName)'")
-        
-        guard generationState == .idle else {
-            print("⚠️ [LearnTabState] generateSentence SKIP: State is not idle (\(generationState))")
-            return
-        }
-        
-        // 1. Gather Contextual Data
-        // 1. Gather Contextual Data
-        // Use TimelineContextService for Vibe & Situational Matching
-        print("   🔹 [LearnTabState] Requesting Context from TimelineContextService...")
-        let context = TimelineContextService.shared.getContext(
-            places: allTimelinePlaces,
-            currentPlaceName: placeName
-        )
-        
-        let previousItems = context.pastPlaces.map { $0.placeName }
-        let futureItems = context.futurePlaces.map { $0.placeName }
-        
-        print("   ✅ [Relay] Past Candidates: \(previousItems)")
-        print("   ✅ [Relay] Future Candidates: \(futureItems)")
-            
-        self.activeGeneratingMoment = moment
-        generationState = .callingAI
-        
-        // Removed invalid learnTabViewModel reference.
-        
-        rawLessonResponse = nil
-        self.currentLesson = nil
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-            if self?.generationState == .callingAI { self?.generationState = .generating }
-        }
-        
-        print("   🔹 Calling GenerateSentenceService...")
-        GenerateSentenceService.shared.generateSentence(
-            placeName: placeName,
-            microSituation: moment,
-            userIntent: nil, // TODO: Pull descriptive intent
-            previousPlaces: previousItems,
-            futurePlaces: futureItems,
-            sessionToken: sessionToken
-        ) { [weak self] result in
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
-                    print("   ✅ [LearnTabState] generateSentence Success")
-                    self?.generationState = .preparing
-                    if let data = try? JSONEncoder().encode(response), let str = String(data: data, encoding: .utf8) {
-                        self?.rawLessonResponse = str
-                    }
-                    self?.currentLesson = response.data
-                case .failure(let error):
-                    print("🔴 [LearnTabState] generateSentence Failed: \(error.localizedDescription)")
-                    self?.generationState = .idle
-                }
-            }
-        }
-    }
-    
-
-
-    // MARK: - Helpers
-    
-
-    
-    // MARK: - Image Analysis
-    func analyzeImageAndGenerateMoments(image: UIImage) {
-        guard let sessionToken = appState.authToken else { return }
-        
-        AnalyzeImageService.shared.analyzeImage(image: image, sessionToken: sessionToken) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                
-                if case .success(let response) = result, let data = response.data {
-                    self.setActivePlace(place: data.toMicroSituationData())
-                } else {
-                    self.handleNoDataFallback()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Text Analysis (Unified Flow)
-    func generateMomentsForPlace(name: String, detail: String? = nil) {
-        guard !name.isEmpty, let sessionToken = appState.authToken, !sessionToken.isEmpty else { return }
-        
-        // Enrich the name for API context if detail is available
-        let apiPlaceName = detail != nil ? "\(name) (\(detail!))" : name
-        
-        GenerateMomentsService.shared.generateMoments(placeName: apiPlaceName, placeDetail: detail, sessionToken: sessionToken) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                
-                if case .success(let response) = result, let data = response.data {
-                    self.setActivePlace(place: data.toMicroSituationData())
-                } else {
-                    self.handleNoDataFallback()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Selection & Deep Links
-
-    
-    func handleDeepLink(placeName: String, hour: Int) {
-        print("\n🟢 [LearnTabState] handleDeepLink called")
-        print("   - Place: '\(placeName)'")
-        print("   - Hour: \(hour)")
-        
-        let place = MicroSituationData(
-            place_name: placeName,
-            latitude: 0,
-            longitude: 0,
-            time: "",
-            hour: hour,
-            created_at: "",
-            context_description: nil,
-            micro_situations: [],
-            priority_score: 2.0,
-            distance_meters: 0,
-            time_span: "",
-            type: "deep_link",
-            profession: appState.profession,
-            updated_at: "",
-            target_language: nil,
-            document_id: UUID().uuidString
-        )
-        self.setActivePlace(place: place, isPersistent: true)
-    }
-
-}
-
-
-extension LearnTabState {
-    private func calculateCurrentStreak(practiceDates: [String]) -> Int {
-        guard !practiceDates.isEmpty else { return 0 }
-        let formatter = DateFormatter(); formatter.dateFormat = "yyyy-MM-dd"
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        let validDates = practiceDates.compactMap { formatter.date(from: $0) }
-        guard !validDates.isEmpty else { return 0 }
-        let uniqueDates = Set(validDates); let sortedDates = uniqueDates.sorted(by: >)
-        let calendar = Calendar.current; let today = Date()
-        guard let latestDate = sortedDates.first else { return 0 }
-        let isToday = calendar.isDateInToday(latestDate)
-        let isYesterday = calendar.isDate(latestDate, inSameDayAs: calendar.date(byAdding: .day, value: -1, to: today)!)
-        if !isToday && !isYesterday { return 0 }
-        var currentStreak = 1; var previousDate = latestDate
-        for i in 1..<sortedDates.count {
-            let date = sortedDates[i]
-            if let expectedPrevDay = calendar.date(byAdding: .day, value: -1, to: previousDate),
-               calendar.isDate(date, inSameDayAs: expectedPrevDay) {
-                currentStreak += 1; previousDate = date
-            } else { break }
-        }
-        return currentStreak
-    }
-    // MARK: - Centralized Selection
-    
-    /// Sets the active places in the Learn Tab lineup and unifies the handover from all sources.
-    /// - Parameters:
-    ///   - places: The MicroSituationData objects containing moments.
-    ///   - isPersistent: If true, adds/moves the first place to the top of the timeline history.
-    func setActivePlace(places: [MicroSituationData], isPersistent: Bool = false) {
-        let name = places.first?.place_name ?? "nil"
-        print("\n🟢 [LearnTabState] setActivePlace called")
-        print("   - Count: \(places.count)")
-        print("   - First Name: '\(name)'")
-        print("   - Persistent: \(isPersistent)")
-        
-        if isPersistent, let firstPlace = places.first {
-            print("   🔹 Updating Timeline History...")
-            allTimelinePlaces.removeAll { $0.place_name == firstPlace.place_name }
-            allTimelinePlaces.insert(firstPlace, at: 0)
-        }
-        
-        DispatchQueue.main.async {
-            print("   ✅ [LearnTabState] Updating UI for Active Result(s)")
-            self.recommendedPlaces = places
-            
-            // Centralized UI Reset
-            
-            // Auto-select first category of the first place if available
-            if let firstCat = places.first?.micro_situations?.first?.category {
-                print("      - Auto-selecting category: '\(firstCat)'")
-                self.selectedRecommendedCategory = firstCat
-            }
-        }
-    }
-    
-    // Internal helper for single place handover
-    func setActivePlace(place: MicroSituationData, isPersistent: Bool = false) {
-        self.setActivePlace(places: [place], isPersistent: isPersistent)
-    }
-    
-    func clearRecommendedPlaces() {
-        print("🟡 [LearnTabState] clearRecommendedPlaces called")
-        DispatchQueue.main.async {
-            self.recommendedPlaces = []
-        }
-    }
-    
-    // MARK: - Centralized Error Handling
-    
-    private func handleNoDataFallback() {
-        print("⚠️ [LearnTabState] No Data / Error -> Triggering Fallback Flow")
-        DispatchQueue.main.async {
-            self.showingNoDataError = true
-            
-            // Wait 2 seconds, then revert and load recommendations
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                print("   Time's up! Reverting to Suggested Places...")
-                self?.showingNoDataError = false
-                self?.loadRecommendations()
-            }
-        }
+        self.recommendations = []
+        self.selectedRecommendationIndex = 0
+        self.selectedPatternIndex = 0
+        self.isTextInputMode = false
+        self.manualInputText = ""
     }
 }

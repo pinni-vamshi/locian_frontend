@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 class UpdateLanguageLevelService {
     static let shared = UpdateLanguageLevelService()

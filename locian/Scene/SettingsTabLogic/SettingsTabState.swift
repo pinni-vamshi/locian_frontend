@@ -184,31 +184,24 @@ class SettingsTabState: ObservableObject {
         isRefreshingPersonalization = true
         showRefreshSuccess = false
         
-        // Use dedicated service
-        RefreshContextService.refreshContext { [weak self] result in
+        // Use the new Daily Intent discovery logic
+        UserIntentContextLogic.shared.discoverDailyIntent { [weak self] success in
             DispatchQueue.main.async {
                 self?.isRefreshingPersonalization = false
                 
-                switch result {
-                case .success(let response):
-                    if response.success {
-                        print("✅ [SettingsTabState] Context refresh successful")
-                        self?.showRefreshSuccess = true
-                        
-                        // Hide success checkmark after 3 seconds
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                            withAnimation {
-                                self?.showRefreshSuccess = false
-                            }
+                if success {
+                    print("✅ [SettingsTabState] Daily Intent Discovery successful")
+                    self?.showRefreshSuccess = true
+                    
+                    // Hide success checkmark after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        withAnimation {
+                            self?.showRefreshSuccess = false
                         }
-                        
-                        completion(true)
-                    } else {
-                        print("⚠️ [SettingsTabState] Context refresh returned failure: \(response.message ?? "Unknown")")
-                        completion(false)
                     }
-                case .failure(let error):
-                    print("❌ [SettingsTabState] Context refresh failed: \(error.localizedDescription)")
+                    completion(true)
+                } else {
+                    print("⚠️ [SettingsTabState] Daily Intent Discovery failed")
                     completion(false)
                 }
             }

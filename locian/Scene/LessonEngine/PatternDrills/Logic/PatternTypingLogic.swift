@@ -9,7 +9,12 @@ class PatternTypingLogic: ObservableObject {
     let prompt: String
     let targetLanguage: String
     
-    @Published var userInput: String = ""
+    @Published var userInput: String = "" {
+        didSet {
+            // Sync input state to parent for Footer Button
+            patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
+        }
+    }
     @Published var isCorrect: Bool?
     
     // Similar Words Logic
@@ -22,17 +27,36 @@ class PatternTypingLogic: ObservableObject {
     @Published var isSearching: Bool = false
     @Published var validBrickWords: Set<String> = []
 
-    weak var lessonDrillLogic: LessonDrillLogic? // ✅ Wrapper Reference
+    var onComplete: ((Bool) -> Void)? // ✅ Direct closure reference
     var appState: AppStateManager?
+    weak var patternIntroLogic: PatternIntroLogic?
+    weak var practiceLogic: PatternPracticeLogic?
+    weak var ghostLogic: GhostModeLogic?
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.state = state
         self.engine = engine
-        self.lessonDrillLogic = lessonDrillLogic
+        self.patternIntroLogic = patternIntroLogic
+        self.practiceLogic = practiceLogic
+        self.ghostLogic = ghostLogic
+        // We might still receive lessonDrillLogic from legacy callers, but we prefer onComplete.
+        // If onComplete is nil, we can't do much, so we rely on the caller to provide it.
+        self.onComplete = onComplete
+        
         self.prompt = state.drillData.meaning
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
         
         computeValidBricks()
+    }
+    
+    func bindToParent() {
+        // ✅ Bridge Actions to Parent (Intro Recap Phase)
+        patternIntroLogic?.requestCheckAnswer = { [weak self] in
+            self?.checkAnswer()
+        }
+        
+        // Sync initial state
+        patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
     }
     
     var hasInput: Bool {
@@ -59,51 +83,146 @@ class PatternTypingLogic: ObservableObject {
         let isCorrect = (result == .correct || result == .meaningCorrect)
 
         
-        // 2. Perform Granular Analysis (The Ripple Effect)
-        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
-        let brickMatches = ContentAnalyzer.findRelevantBricks(
-            in: state.drillData.target,
-            meaning: state.drillData.meaning,
-            bricks: engine.activeGroupBricks,
-            targetLanguage: engine.lessonData?.target_language ?? "es"
-        )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
-        
-        let rippleResults = GranularAnalyzer.analyze(
-            input: userInput,
+        // 2. Perform Autonomous Granular Analysis (The Ripple Effect)
+        // This directly updates brick mastery in the engine (+0.10 / -0.05)
+        GranularAnalyzer.processGranularMastery(
+            engine: engine,
             target: state.drillData.target,
-            requiredBricks: Array(bricks),
+            meaning: state.drillData.meaning,
+            userInput: userInput,
             type: .typing,
             context: context
         )
         
-        // 3. Update Mastery Directly in Engine
-        let delta = isCorrect ? 0.30 : -0.15
-        engine.updateMastery(id: state.id, delta: delta)
-        
-        // Ripple Effect on Bricks
-        for res in rippleResults {
-            let brickDelta = res.isCorrect ? 0.10 : -0.05
-            engine.updateMastery(id: res.brickId, delta: brickDelta)
-        }
+        // 3. Update Mastery Directly in Engine (Only this pattern)
+        // REDUCED DELTA: 0.15 (Gradual progression)
+        let delta = isCorrect ? 0.15 : -0.05
+        engine.updateMastery(id: state.patternId, delta: delta)
         
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
+        
+        // ✅ Localized Feedback (with speaking nudge)
+        playFeedback(isCorrect: isCorrect)
+        
         playAudio()
         
         // ✅ Notify Wrapper
-        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
+        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect, input: userInput)
+        practiceLogic?.markDrillAnswered(isCorrect: isCorrect)
+        ghostLogic?.markDrillAnswered(isCorrect: isCorrect)
+    }
+    
+    // MARK: - 🎙️ Voice Assets (Decentralized)
+    
+    // 1. Full Context
+    private static let fullIntroVoices = [
+        "Type the full sentence for \"%@\" in %@",
+        "Write out the %@ translation for \"%@\"",
+        "Can you type the %@ for \"%@\"",
+        "Keyboard practice: \"%@\" in %@",
+        "Let's write this sentence: \"%@\" in %@"
+    ]
+    
+
+    private static let correctVoices = [
+        "You are right! \"%@\" in %@ is \"%@\"",
+        "Exactly. \"%@\" in %@ translates to \"%@\"",
+        "Spot on. In %@, \"%@\" matches \"%@\"",
+        "That's correct. We say \"%@\" for \"%@\" in %@",
+        "Perfect match. \"%@\" in %@ is \"%@\""
+    ]
+    
+    // 3. Concise Feedback
+    private static let wrongVoices = [
+        "Actually, we write \"%@\"",
+        "The correct sentence is \"%@\"",
+        "Note the spelling: \"%@\"",
+        "Listen to the phrase: \"%@\"",
+        "It should be \"%@\""
+    ]
+    
+    static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
+        if let override = drill.overrideVoiceInstructions {
+            print("🎙️ [PatternTyping] Using Voice Override: '\(override)'")
+            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            return
+        }
+        
+        guard !drill.suppressIntroAudio else { return }
+        
+        let meaning = drill.drillData.meaning
+        let languageCode = engine.lessonData?.target_language ?? "es"
+        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
+        
+        let template = fullIntroVoices.randomElement() ?? fullIntroVoices[0]
+        
+        // Simple Interpolation
+        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
+        text = text.replacingOccurrences(of: "%@", with: languageName)
+        
+        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
+    }
+    
+    private func playFeedback(isCorrect: Bool) {
+        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
+        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
+            print("🎙️ [PatternTyping] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
+            return
+        }
+        
+        let target = state.drillData.target
+        let meaning = state.drillData.meaning
+        let targetLang = targetLanguage
+        
+        let template = isCorrect ? 
+            (PatternTypingLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
+            (PatternTypingLogic.wrongVoices.randomElement() ?? "Actually, we write \"%@\"")
+        
+        // Split at potential target placeholder
+        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
+        if let langRange = textToSpeak.range(of: "%@") {
+            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
+        }
+        
+        // Split at the final placeholder
+        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
+        
+        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
+        
+        if finalComponents.count >= 2 {
+            AudioManager.shared.speak(segments: [
+                .init(text: finalComponents[0], language: "en-US"),
+                .init(text: target, language: langCode)
+            ])
+        } else {
+            // Fallback for simple templates
+            AudioManager.shared.speak(segments: [
+                .init(text: "That is correct. ", language: "en-US"),
+                .init(text: target, language: langCode)
+            ])
+        }
     }
     
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(text: text, language: language)
+        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
     }
     
     func selectExploreWord(_ word: String) {
         selectedExploreWord = word
         fetchSimilarWords(for: word)
+    }
+    
+    // ...
+    
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) -> some View {
+        // View now owns the logic creation via StateObject
+        return PatternTypingView(state: state, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            .onAppear {
+                PatternTypingLogic.playIntro(drill: state, engine: engine, mode: mode)
+            }
     }
     
     func computeValidBricks() {
@@ -194,8 +313,4 @@ class PatternTypingLogic: ObservableObject {
         }
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
-        // View now owns the logic creation via StateObject
-        return PatternTypingView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
-    }
 }

@@ -12,7 +12,8 @@ extension AppStateManager {
         profession = ""
         nativeLanguage = ""
         userLanguagePairs = []
-        profileImageData = nil
+        intentTimeline = nil
+        currentTimeSpan = nil
         inferredPlaceCategory = nil
         shouldAttemptInferInterest = false
         
@@ -20,9 +21,10 @@ extension AppStateManager {
         UserDefaults.standard.removeObject(forKey: "username")
         UserDefaults.standard.removeObject(forKey: "userPhoneNumber")
         UserDefaults.standard.removeObject(forKey: "profession")
-        UserDefaults.standard.removeObject(forKey: "profileImage")
         UserDefaults.standard.removeObject(forKey: "userNativeLanguage")
         UserDefaults.standard.removeObject(forKey: "userLanguagePairs")
+        UserDefaults.standard.removeObject(forKey: "intentTimeline")
+        UserDefaults.standard.removeObject(forKey: "currentTimeSpan")
         
         // Clear notification data (keep preferences but clear API times)
         
@@ -39,7 +41,8 @@ extension AppStateManager {
         self.username = ""
         self.userPhoneNumber = ""
         self.profession = ""
-        self.profileImageData = nil
+        self.intentTimeline = nil
+        self.currentTimeSpan = nil
         
         
         // Cancel all scheduled notifications
@@ -51,10 +54,7 @@ extension AppStateManager {
         UserDefaults.standard.removeObject(forKey: "userNativeLanguage")
         UserDefaults.standard.removeObject(forKey: "userLanguagePairs")
         
-        // Clear timeline/studied places (FIX: Persisting across accounts bug)
-        self.timeline = nil
-        self.hasInitialHistoryLoaded = false
-        self.isLoadingTimeline = false
+        // Timeline/studied places cleared by API / V3 Discovery flow
         
         // Clear inferred interest state
         self.inferredPlaceCategory = nil

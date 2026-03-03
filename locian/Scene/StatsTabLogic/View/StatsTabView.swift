@@ -18,12 +18,14 @@ struct StatsTabView: View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 Color.black.ignoresSafeArea()
-                if let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first {
+                let pair = appState.getDisplayLanguagePair()
+                // If it's the "ADD LANGUAGE" placeholder, style it as EMPTY
+                if pair.target_language == "ADD LANGUAGE" {
+                    mainContent(pair: pair, geometry: geometry)
+                        .diagnosticBorder(.gray, width: 1, label: "EMPTY_PH")
+                } else {
                     mainContent(pair: pair, geometry: geometry)
                         .diagnosticBorder(.purple, width: 2, label: "MAIN")
-                } else {
-                    noProgressPlaceholder
-                        .diagnosticBorder(.gray, width: 1, label: "EMPTY")
                 }
             }
             .diagnosticBorder(.white, width: 2, label: "ROOT_ZSTACK")

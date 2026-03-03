@@ -2,465 +2,748 @@
 //  LearnTabView.swift
 //  locian
 //
-//  Consolidated Learn Tab UI Layer
+//  V3.0 "Context Intelligence" Cyber UI
 //
 
 import SwiftUI
-import Combine
-import NaturalLanguage
 
 struct LearnTabView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject var state: LearnTabState
     @Binding var selectedTab: MainTabView.TabItem
+    
     @Environment(\.scenePhase) var scenePhase 
+    
+    @State private var selectedImage: UIImage? = nil
+    @State private var isImageSelected = false
     @State private var animateIn = false
     
-    @State private var showCustomInput: Bool = false
-    @State private var customMomentText: String = ""
-    
-    // Data Manifestation Phase
-    @State private var manifestPhase: Int = 0
-    
-    // Dot Animation for Loading States
-    @State private var dotCount = 0
-    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    // Pull-to-refresh state
+    @State private var pullRefreshState: CyberRefreshState = .idle
+    @State private var scrollOffset: CGFloat = 0
     
     var body: some View {
-        let _ = print("🎨 [LearnTabView] BODY RE-EVALUATING")
-        NavigationStack {
-            VStack(spacing: 0) {
-                headerView
-                placeNameHeader
-                languagePromptHeader
-                
-                recommendedSection
-                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                    .padding(.top, 10)
-            }
+        mainContentStack
             .background(Color.black.ignoresSafeArea())
             .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                animateIn = false
+                state.discover()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
+                }
+            }
+            .onDisappear {
+                withAnimation(.none) { animateIn = false }
+            }
+            .onChange(of: state.showLessonView) { _, newValue in 
+                if !newValue { state.currentLesson = nil } 
+            }
+            .fullScreenCover(isPresented: $state.isGeneratingSentence) {
+                SentenceGenerationLoadingModal(appState: appState, state: state)
+            }
+            .fullScreenCover(isPresented: $state.showingCamera) {
+                ImagePicker(sourceType: .camera, selectedImage: $selectedImage, isImageSelected: $isImageSelected) {
+                    if let img = selectedImage {
+                        state.discover(image: img)
+                    }
+                }
+            }
+    }
+
+    private var mainContentStack: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // STICKY HEADER AREA
+                VStack(spacing: 24) {
+                    v3Header
+                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                        .animation(.spring().delay(0.0), value: animateIn)
+                    v3RecommendationSelector
+                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                        .animation(.spring().delay(0.1), value: animateIn)
+                }
+                .padding(.vertical, 10)
+                .background(Color.black)
+                
+                ZStack(alignment: .top) {
+                    if pullRefreshState != .idle {
+                        CyberRefreshIndicator(state: pullRefreshState, height: max(60, scrollOffset), accentColor: ThemeColors.neonGreen).zIndex(0)
+                    }
+                    
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            if state.isFetchingData && state.recommendations.isEmpty {
+                            v3LoadingState
+                        } else if state.recommendations.isEmpty {
+                            v3EmptyState
+                        } else {
+                            // 3. Main Sentence Display
+                            v3MainSentenceModule
+                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                .animation(.spring().delay(0.2), value: animateIn)
+                            
+                            // 4. Interaction Module
+                            Group {
+                                if state.isTextInputMode {
+                                    v3NearbyModule
+                                        .padding(.top, 30)
+                                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                                } else {
+                                    VStack(spacing: 0) {
+                                        HStack(spacing: 16) {
+                                            v3PatternProgressionModule
+                                                .padding(.vertical, 5)
+                                                
+                                            v3ActionModule
+                                        }
+                                        
+                                        v3GradientDivider // Bottom Divider
+                                    }
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                                }
+                            }
+                            .fixedSize(horizontal: false, vertical: true)
+                            .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                            .animation(.spring().delay(0.3), value: animateIn)
+                            
+                            if !state.isTextInputMode {
+                                // 5. LEGO Bricks Grid
+                                v3BricksGrid
+                                    .padding(.top, 40)
+                                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                    .animation(.spring().delay(0.4), value: animateIn)
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                                
+                                // 6. History
+                                v3HistorySection
+                                    .padding(.top, 40)
+                                    .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                    .animation(.spring().delay(0.5), value: animateIn)
+                                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                            }
+                            
+                            // 7. Assembly Bar
+                            v3AssemblyBar
+                                .padding(.top, 24)
+                                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                                .animation(.spring().delay(0.6), value: animateIn)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        } // closes else
+                    } // closes VStack
+                    .padding(.top, 12)
+                    .padding(.bottom, 40)
+                    .padding(.horizontal, 5)
+                    .background(Color.black) // Ensure opaque background over the indicator
+                    .overlay(scrollOffsetTracker, alignment: .top)
+                } // closes ScrollView
+                .coordinateSpace(name: "learnPullToRefresh")
+                .onPreferenceChange(LearnViewOffsetKey.self) { handleRefresh(offset: $0) }
+                
+                } // closes ZStack
+                .onAppear {
+                    state.loadNearbyPlaces()
+                }
+
+            } // closes external VStack
+            .background(Color.black.ignoresSafeArea())
             .navigationDestination(isPresented: $state.showLessonView) {
                 if let lesson = state.currentLesson {
                     LessonView(lessonData: lesson).environmentObject(appState)
                 }
             }
         }
-        .onReceive(timer) { _ in
-            if state.isFetchingData {
-                dotCount = (dotCount + 1) % 4
-                
-                // Advance manifestation phase every 0.3s
-                if manifestPhase < appState.dynamicApiMetadata.count + 1 {
-                    manifestPhase += 1
+    }
+
+    // MARK: - V3 Components
+
+    private var v3Header: some View {
+        HStack {
+            Text(appState.username.uppercased())
+                .font(.system(size: 14, weight: .black, design: .monospaced))
+                .foregroundColor(.black)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(ThemeColors.secondaryAccent)
+            Spacer()
+        }
+        .padding(.horizontal, 5)
+        .padding(.top, 10)
+    }
+
+    private var v3RecommendationSelector: some View {
+        let recs = state.recommendations.prefix(4)
+        
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(recs.enumerated()), id: \.1.id) { index, rec in
+                    let isSelected = state.selectedRecommendationIndex == index && !state.isTextInputMode
+                    
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            state.selectedRecommendationIndex = index
+                            state.selectedPatternIndex = 0
+                            state.isTextInputMode = false
+                        }
+                    }) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Image(systemName: CategoryUI.icon(for: rec.place_id))
+                                .font(.system(size: 18))
+                                .frame(width: 24, height: 24, alignment: .leading)
+                                .foregroundColor(isSelected ? .black : .white)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(rec.place_id.uppercased())
+                                    .font(.system(size: 16, weight: .black))
+                                Text("PRIMARY")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .opacity(0.6)
+                            }
+                            .foregroundColor(isSelected ? .black : .white)
+                            
+                            VStack(alignment: .leading, spacing: 6) {
+                                Rectangle().fill(isSelected ? Color.black : Color.white.opacity(0.3)).frame(height: 1)
+                                
+                                HStack {
+                                    Text("CONFIDENCE")
+                                        .font(.system(size: 8, weight: .bold))
+                                        .foregroundColor(.gray)
+                                    Spacer()
+                                    Text(String(format: "%.2f", rec.confidence))
+                                        .font(.system(size: 14, weight: .black, design: .monospaced))
+                                        .foregroundColor(isSelected ? .black : .white)
+                                }
+                            }
+                        }
+                        .padding(12)
+                        .frame(width: 140, height: 130, alignment: .leading)
+                        .background(isSelected ? Color.white : Color(white: 0.08))
+                        .border(isSelected ? Color.cyan : Color.white.opacity(0.1), width: 1)
+                    }
+                    .buttonStyle(.plain)
                 }
-            } else {
-                manifestPhase = 0
+                
+                // VERTICAL DIVIDER
+                Rectangle()
+                    .fill(ThemeColors.neonGreen)
+                    .frame(width: 3, height: 130)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 4)
+                
+                // CAMERA ACTION CARD
+                Button(action: {
+                    PermissionsService.shared.ensureCameraAccess { if $0 { state.showingCamera = true } }
+                }) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 18))
+                            .frame(width: 24, height: 24, alignment: .leading)
+                            .foregroundColor(.white)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("CAMERA")
+                                .font(.system(size: 16, weight: .black))
+                            Text("MKPY")
+                                .font(.system(size: 8, weight: .bold))
+                                .opacity(0.6)
+                        }
+                        .foregroundColor(.white)
+                        
+                        Spacer()
+                    }
+                    .padding(12)
+                    .frame(width: 140, height: 130, alignment: .leading)
+                    .background(Color(white: 0.08))
+                    .border(Color.white.opacity(0.1), width: 1)
+                }
+                .buttonStyle(.plain)
+                
+                // TEXT ACTION CARD
+                Button(action: {
+                    withAnimation { state.isTextInputMode = true }
+                }) {
+                    let isTextSelected = state.isTextInputMode
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Image(systemName: "square.and.pencil")
+                            .font(.system(size: 18))
+                            .frame(width: 24, height: 24, alignment: .leading)
+                            .foregroundColor(isTextSelected ? .black : .white)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("TEXT")
+                                .font(.system(size: 16, weight: .black))
+                            Text("MKPY")
+                                .font(.system(size: 8, weight: .bold))
+                                .opacity(0.6)
+                        }
+                        .foregroundColor(isTextSelected ? .black : .white)
+                        
+                        Spacer()
+                    }
+                    .padding(12)
+                    .frame(width: 140, height: 130, alignment: .leading)
+                    .background(isTextSelected ? Color.white : Color(white: 0.08))
+                    .border(isTextSelected ? Color.cyan : Color.white.opacity(0.1), width: 1)
+                }
+                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 16)
         }
-        .onAppear { 
-            print("🎨 [LearnTabView] onAppear TRIGGERED")
-            // Reset immediately without animation to ensure clean state
-            animateIn = false
-            handleOnAppear() 
-        }
-        .onDisappear {
-            print("👋 [LearnTabView] onDisappear TRIGGERED - Resetting animation state")
-            // Cancel any in-progress animations immediately
-            withAnimation(.none) {
-                animateIn = false
-            }
-        }
-        .onChange(of: appState.hasInitialHistoryLoaded) { _, loaded in
-            print("🔄 [LearnTabView] hasInitialHistoryLoaded changed to: \(loaded)")
-            if loaded && state.generationState == .idle && !animateIn {
-                print("   ✅ [LearnTabView] Gating condition MET. Triggering reveal animation...")
-                // Small delay to ensure loading screen animation completes first
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                        animateIn = true
-                        print("   ✨ [LearnTabView] reveal animation started")
+    }
+
+    private var v3MainSentenceModule: some View {
+        
+        return VStack(alignment: .leading, spacing: 16) {
+            ZStack(alignment: .leading) {
+                if state.isTextInputMode {
+                    // Manual Text Input Mode
+                    VStack(alignment: .leading, spacing: 12) {
+                       HStack {
+                           Text(">")
+                               .font(.system(size: 32, weight: .black, design: .monospaced))
+                               .foregroundColor(.cyan)
+                               .padding(.leading, 5)
+                           TextField("WHERE ARE YOU?", text: $state.manualInputText)
+                               .font(.system(size: 32, weight: .black, design: .monospaced))
+                               .foregroundColor(.white)
+                               .submitLabel(.go)
+                               .onSubmit { state.submitManualDiscovery() }
+                       }
+                       .padding(.bottom, 8)
+                       
+                       HStack(spacing: 12) {
+                           Button(action: { state.submitManualDiscovery() }) {
+                               Text("DISCOVER")
+                                   .font(.system(size: 14, weight: .black))
+                                   .foregroundColor(.black)
+                                   .padding(.horizontal, 20)
+                                   .padding(.vertical, 10)
+                                   .background(ThemeColors.secondaryAccent)
+                           }
+                           .padding(.leading, 5)
+                           
+                           Button(action: { withAnimation { state.isTextInputMode = false } }) {
+                               Text("CANCEL")
+                                   .font(.system(size: 14, weight: .bold))
+                                   .foregroundColor(.gray)
+                           }
+                       }
+                    }
+                    .padding(.top, 24)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                } else {
+                    // Standard Pattern Mode
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(state.activePattern?.meaning ?? "SELECT A MOMENT")
+                            .font(.system(size: 28, weight: .black))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.5)
+                        
+                        if let target = state.activePattern?.target {
+                            Text(target)
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
+            }
+            .frame(minHeight: 120, alignment: .leading)
+            
+            if !state.isTextInputMode {
+                v3GradientDivider
+            }
+        }
+    }
+    
+    private var v3GradientDivider: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [.clear, ThemeColors.secondaryAccent.opacity(1.0)]),
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+        .frame(height: 2)
+    }
+
+    private var v3NearbyModule: some View {
+        HStack(spacing: 0) {
+            VerticalHeading(
+                text: "NEARBY",
+                textColor: .black,
+                backgroundColor: ThemeColors.neonGreen,
+                width: 20,
+                height: 130
+            )
+            
+            if !state.appState.isLocationTrackingEnabled {
+                ZStack {
+                    Color.black
+                    Text("LOCATION DISABLED")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 130)
+                .border(Color.white.opacity(0.1), width: 1)
+            } else if state.isNearbyLoading {
+                ZStack {
+                    Color.black
+                    ProgressView().tint(.white)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 130)
+                .border(Color.white.opacity(0.1), width: 1)
+            } else if state.nearbyPlaces.isEmpty {
+                ZStack {
+                    Color.black
+                    Text("NO PLACES FOUND")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity, maxHeight: 130)
+                .border(Color.white.opacity(0.1), width: 1)
             } else {
-                print("   ⏳ [LearnTabView] reveal skipped: generationState=\(state.generationState), alreadyAnimating=\(animateIn)")
-            }
-        }
-        .onChange(of: state.generationState) { _, newState in handleGenerationStateChange(newState) }
-        .onChange(of: state.isLoadingHistory) { _, newVal in handleLoadingHistoryChange(newVal) }
-        .onChange(of: appState.isLoadingTimeline) { _, newVal in handleLoadingHistoryChange(newVal) } 
-        .onChange(of: scenePhase) { _, newPhase in handleScenePhaseChange(newPhase) }
-        .onChange(of: state.showLessonView) { _, newValue in if !newValue { state.currentLesson = nil } }
-
-        .fullScreenCover(isPresented: Binding(get: { state.generationState != .idle }, set: { _ in })) {
-            SentenceGenerationLoadingModal(appState: appState, state: state)
-        }
-        .alert("Add Custom Moment", isPresented: $showCustomInput) {
-            TextField("What do you want to say?", text: $customMomentText)
-            Button("Cancel", role: .cancel) { customMomentText = "" }
-            Button("Generate") {
-                if !customMomentText.isEmpty {
-                    state.generateSentence(for: customMomentText) // Use 'state' not 'learnTabState'
-                    customMomentText = ""
+                HorizontalMasonryLayout(data: state.nearbyPlaces, rows: 3, spacing: 8, constrainedHeight: 130) { p in
+                    Button(action: { state.selectNearbyPlace(name: p.name, category: p.category) }) {
+                        Text(p.name.uppercased())
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .frame(maxHeight: .infinity)
+                            .background(Color.white.opacity(0.1))
+                            .border(Color.white.opacity(0.1), width: 1)
+                    }
+                    .frame(maxHeight: .infinity)
                 }
+                .padding(.horizontal, 8)
+                .frame(height: 130)
+                .background(Color.black)
+                .border(Color.white.opacity(0.1), width: 1)
             }
-        } message: {
-            Text("Enter a sentence or moment you want to practice.")
         }
-    }
-    
-    // MARK: - Navigation Components
-    
-    private var addNavigationButton: some View {
-        let _ = print("🔘 [NAV-BTN] evaluating addNavigationButton body")
-        return Button(action: {
-            print("🌊 [NAV-BTN] 'Add a New Place' clicked")
-            print("   -> Current Tab: \(selectedTab)")
-            print("   -> triggering animation info selectedTab = .add")
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                print("   -> [ANIMATION] Inside withAnimation block")
-                selectedTab = .add
-                print("   -> [ANIMATION] selectedTab set to .add")
-            }
-            print("   -> Animation block dispatched")
-        }) {
-            HStack {
-                let _ = print("   -> Rendering Label HStack")
-                Text("NOT SEEING WHAT YOU NEED?")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(Color(white: 0.5))
-                
-                Text("ADD A NEW PLACE")
-                    .font(.system(size: 13, weight: .black))
-                    .foregroundColor(ThemeColors.secondaryAccent)
-                
-                Spacer()
-                
-                Image(systemName: "plus.square.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(ThemeColors.secondaryAccent)
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 60)
-            .background(Color(white: 0.05))
-            .overlay(
-                Rectangle()
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
-            .padding(.horizontal, 16)
-        }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Components
-
-    private var headerView: some View {
-        let _ = print("🎩 [HEADER] Rendering headerView")
-        let username = appState.username.isEmpty ? LocalizationManager.shared.string(.user) : appState.username.uppercased()
-        let _ = print("   -> Username to display: \(username)")
-        let _ = print("   -> Streak text: \(state.uiStreakText)")
-        let _ = print("   -> animateIn state: \(animateIn)")
-        
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .center) {
-                Text(username)
-                    .font(.system(size: 20, weight: .black, design: .monospaced))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .background(ThemeColors.secondaryAccent)
-                
-                Spacer()
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill").font(.system(size: 12, weight: .bold)).foregroundColor(ThemeColors.primaryAccent)
-                    Text(state.uiStreakText).font(.system(size: 13, weight: .bold, design: .monospaced)).foregroundColor(ThemeColors.primaryAccent)
-                }
-            }
-            .padding(.horizontal, 10).padding(.top, 16).padding(.bottom, 10)
-        }
-        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10).animation(.spring(), value: animateIn)
-    }
-
-    private var placeNameHeader: some View {
-        let isFetching = state.isFetchingData
-        let _ = print("🏷 [PLACE-HEADER] Evaluating placeNameHeader")
-        let _ = print("   -> isFetchingData: \(isFetching) (History: \(state.isLoadingHistory), Timeline: \(appState.isLoadingTimeline))")
-        
-        let name = isFetching ? "GETTING YOUR PLACE" + String(repeating: ".", count: dotCount) : (state.showingNoDataError ? "NO DATA AVAILABLE" : (state.recommendedPlaces.first?.place_name ?? "ADD YOUR PLACE"))
-        
-        return VStack(spacing: 0) {
-            let _ = print("   -> Rendering Text View for Name")
-            Text(name.uppercased())
-                .font(.system(size: (isFetching || state.showingNoDataError) ? 35 : 55.5, weight: .heavy))
-                .minimumScaleFactor(0.3)
-                .lineLimit(3)
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 180)
+    private var v3PatternProgressionModule: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("CURRENT PATTERNS")
+                .font(.system(size: 25, weight: .black))
+                .foregroundColor(.gray.opacity(0.2))
             
-            Rectangle()
-                .frame(height: 1)
-                .foregroundColor(Color.white.opacity(0.1))
-        }
-        .background(Color.black)
-        .opacity(animateIn ? 1 : 0)
-        .offset(y: animateIn ? 0 : 10)
-        .animation(.spring(), value: animateIn)
-    }
-
-    private var languagePromptHeader: some View {
-        let _ = print("🗣 [LANG-HEADER] Evaluating languagePromptHeader")
-        let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
-        let _ = print("   -> Active Pair: \(String(describing: activePair))")
-        
-        let targetRaw = activePair?.target_language ?? LocalizationManager.shared.currentLanguage.rawValue
-        let _ = print("   -> Target Raw: \(targetRaw)")
-        
-        // Resolve full English name if targetRaw is a code or rawValue
-        let languageName = AppLanguage(rawValue: targetRaw)?.englishName ?? AppLanguage.fromCode(targetRaw)?.englishName ?? targetRaw
-        let _ = print("   -> Display Language Name: \(languageName)")
-        
-        return VStack(spacing: 0) {
-            HStack {
-                HStack(spacing: 8) {
-                    Text("SELECT YOUR MOMENT TO TALK IN")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(Color(white: 0.5))
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(0..<3, id: \.self) { index in
+                    let patterns = state.activeRecommendation?.patterns ?? []
+                    let p = index < patterns.count ? patterns[index] : nil
+                    let isSelected = state.selectedPatternIndex == index
                     
-                    Text(languageName.uppercased())
-                        .font(.system(size: 13, weight: .black))
-                        .foregroundColor(ThemeColors.secondaryAccent)
+                    Button(action: {
+                        if p != nil {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                state.selectedPatternIndex = index
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 5) {
+                            Rectangle()
+                                .fill(isSelected ? ThemeColors.neonGreen : Color.clear)
+                                .frame(width: 3)
+                                .padding(.vertical, 6)
+                            
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("SENTENCE 0\(index + 1)")
+                                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(isSelected ? Color.white.opacity(0.1) : Color.clear)
+                                
+                                Text(p?.target ?? "---")
+                                    .font(.system(size: (isSelected && p != nil) ? 16 : 14, weight: (isSelected && p != nil) ? .black : .bold))
+                                    .foregroundColor((isSelected && p != nil) ? .black : .gray)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background((isSelected && p != nil) ? Color.white : Color.clear)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .multilineTextAlignment(.leading)
+                                    .lineLimit(nil)
+                                    .opacity(p == nil ? 0.3 : 1.0)
+                            }
+                            .padding(.vertical, 6)
+                            .offset(x: isSelected ? 10 : 0) // Only text slides right
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(p == nil)
                 }
-                .padding(.leading, 5)
+            }
+            .padding(.vertical, 8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var v3ActionModule: some View {
+        Button(action: {
+            state.startPractice()
+        }) {
+            ZStack {
+                // TEXT centered in the column
+                Text("START PRACTICE")
+                    .font(.system(size: 20, weight: .black))
+                    .foregroundColor(.white)
+                    .fixedSize()
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 60, height: 110)
                 
-                Spacer()
-                
-                Button(action: {
-                    print("🔄 [LANG-HEADER] Refresh button tapped - TRIGGERING CONTEXT REFRESH")
-                    print("   -> Calling state.refreshTokenContext()")
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    state.refreshTokenContext()
-                    print("   -> Context Refresh dispatched")
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(ThemeColors.secondaryAccent)
-                        .padding(8)
-                        .background(ThemeColors.secondaryAccent.opacity(0.1))
-                        .clipShape(Circle())
+                // ARROWS pinned to top and bottom edges
+                VStack {
+                    DoubleArrowButton(
+                        direction: .down,
+                        color: .white,
+                        size: 16,
+                        spacing: -4,
+                        action: {}
+                    )
+                    .foregroundColor(.white)
+                    .tint(.white)
+                    .allowsHitTesting(false)
+                    .padding(.vertical, -12)
+                    
+                    Spacer()
+                    
+                    DoubleArrowButton(
+                        direction: .up,
+                        color: .white,
+                        size: 16,
+                        spacing: -4,
+                        action: {}
+                    )
+                    .foregroundColor(.white)
+                    .tint(.white)
+                    .allowsHitTesting(false)
+                    .padding(.vertical, -12)
                 }
-                .padding(.trailing, 16)
             }
-            .frame(height: 50)
-            .background(Color.black)
-            
-            Rectangle()
-                .frame(height: 1)
-                .foregroundColor(Color.white.opacity(0.1))
+            .frame(width: 60)
+            .frame(maxHeight: .infinity)
+            .background(ThemeColors.secondaryAccent)
+            .border(Color.white.opacity(0.1), width: 1)
+            .clipped() // Prevents components from ever bleeding outside the pink area
         }
-        .opacity(animateIn ? 1 : 0)
-        .offset(y: animateIn ? 0 : 10)
-        .animation(.spring(), value: animateIn)
+        .buttonStyle(ActionPressStyle())
     }
 
-    // MARK: - Lifecycle Handlers
-
-    private func handleOnAppear() {
-        print("⚡️ [LIFECYCLE] handleOnAppear() triggered")
-        if appState.hasInitialHistoryLoaded {
-            state.loadRecommendations()
-        }
-        if appState.hasInitialHistoryLoaded && state.generationState == .idle {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
-        } else {
-            animateIn = false
-        }
-    }
-    
-    private func handleGenerationStateChange(_ newState: SentenceGenerationState) {
-        if newState == .idle && !state.isLoadingHistory {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
-            }
-        } else if newState != .idle { 
-            animateIn = false 
-        }
-    }
-    
-    private func handleLoadingHistoryChange(_ isLoading: Bool) {
-        if !isLoading && state.generationState == .idle && !appState.isLoadingTimeline && !state.isLoadingHistory && appState.hasInitialHistoryLoaded {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
-        }
-    }
-    
-    private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-        if newPhase == .active && appState.hasInitialHistoryLoaded {
-            state.loadRecommendations()
-        }
-    }
-
-    private var recommendedSection: some View {
-        HStack(alignment: .top, spacing: 0) {
-            recommendedSidebar.frame(width: 50).frame(maxHeight: .infinity)
-            recommendedMomentsScroll
-        }
-    }
-
-    @ViewBuilder
-    private var recommendedSidebar: some View {
-        VStack(spacing: 0) {
-            Rectangle().fill(Color.white).frame(width: 50, height: 50).overlay(
-                DoubleArrowButton(direction: .up, color: state.isFetchingData ? .gray : ThemeColors.secondaryAccent, size: 16) {
-                    if !state.isFetchingData { cycleCategory(forward: false) }
-                }
-            )
-            Spacer()
-            Group {
-                if state.isFetchingData { Text("LOADING" + String(repeating: ".", count: dotCount)).foregroundColor(ThemeColors.secondaryAccent) }
-                else if state.showingNoDataError { Text("NO DATA").foregroundColor(.gray) }
-                else if let selectedCat = state.selectedRecommendedCategory { Text(selectedCat.uppercased()).foregroundColor(ThemeColors.secondaryAccent) }
-                else { Text("SELECT").foregroundColor(.gray) }
-            }
-            .font(.system(size: 13, weight: .black)).rotationEffect(.degrees(-90)).fixedSize().minimumScaleFactor(0.4).lineLimit(1).frame(width: 50).frame(maxHeight: .infinity).clipped()
-            Spacer()
-            Rectangle().fill(Color.white).frame(width: 50, height: 50).overlay(
-                DoubleArrowButton(direction: .down, color: state.isFetchingData ? .gray : ThemeColors.secondaryAccent, size: 16) {
-                    if !state.isFetchingData { cycleCategory(forward: true) }
-                }
-            )
-        }
-        .frame(width: 50).background(Color(white: 0.05)).overlay(Rectangle().frame(width: 1).foregroundColor(Color.white.opacity(0.1)), alignment: .trailing)
-    }
-
-    private func cycleCategory(forward: Bool) {
-        let situations = state.recommendedPlaces.first?.micro_situations ?? []
-        guard !situations.isEmpty else { return }
-        let categories = situations.map { $0.category }
-        let currentIndex = categories.firstIndex(of: state.selectedRecommendedCategory ?? "") ?? 0
-        let nextIndex = forward ? (currentIndex + 1) % categories.count : (currentIndex - 1 + categories.count) % categories.count
-        withAnimation(.spring()) { state.selectedRecommendedCategory = categories[nextIndex] }
-    }
-
-    private var recommendedMomentsScroll: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-             VStack(spacing: 16) {
-                 let _ = print("📜 [VIEW] Rendering recommendedMomentsScroll")
-                 let _ = print("   - recommendedPlaces count: \(state.recommendedPlaces.count)")
-                 
-                 if state.isFetchingData {
-                     let _ = print("   - state isFetchingData=true -> Loading Card")
-                     VStack(alignment: .leading, spacing: 12) {
-                         RecommendedCard(momentData: UnifiedMoment(text: "GETTING A MOMENT" + String(repeating: ".", count: dotCount), keywords: nil, embedding: nil), time: "LIVE", isGreen: false) {}
-                         
-                         // Manifestation Rows (Dynamic & Staggered)
-                         VStack(alignment: .leading, spacing: 6) {
-                             ForEach(0..<appState.dynamicApiMetadata.count, id: \.self) { index in
-                                 let pair = appState.dynamicApiMetadata[index]
-                                 ManifestDataRow(
-                                     label: pair.label,
-                                     value: pair.value,
-                                     isVisible: manifestPhase > index
-                                 )
-                             }
-                         }
-                         .padding(.leading, 12)
-                         .padding(.top, -4)
-                     }
-                 } else if state.showingNoDataError {
-                     let _ = print("   - state showingNoDataError=true -> No Data Card")
-                     RecommendedCard(momentData: UnifiedMoment(text: "NO DATA AVAILABLE", keywords: nil, embedding: nil), time: "--:--", isGreen: false) {}
-                 } else if state.recommendedPlaces.isEmpty {
-                     let _ = print("   - recommendedPlaces EMPTY -> Custom Input Card")
-                     RecommendedCard(momentData: UnifiedMoment(text: "TAP + TO ADD YOUR OWN MOMENT", keywords: nil, embedding: nil), time: "--:--", isGreen: false) { showCustomInput = true }.opacity(0.5)
-                  } else {
-                      let _ = print("   - Rendering unified recommended cards...")
-                      recommendedMomentCards
-                  }
-                 if !state.isFetchingData && !state.showingNoDataError { addCustomMomentButton }
-             }
-             .padding(.horizontal, 16).padding(.bottom, 20)
-        }
-    }
-    
-
-    private var recommendedMomentCards: some View {
-        ForEach(Array(state.recommendedPlaces.enumerated()), id: \.1.id) { (index: Int, place: MicroSituationData) in
-            let _ = print("   🗂 [VIEW] Processing Place [\(index)]: '\(place.place_name ?? "nil")'")
-            recommendedMomentRow(place: place, placeIndex: index)
-        }
-    }
-
-    private func recommendedMomentRow(place: MicroSituationData, placeIndex: Int) -> some View {
-        let situations = place.micro_situations ?? []
-        let _ = print("      - Situations count for '\(place.place_name ?? "nil")': \(situations.count)")
+    private var v3BricksGrid: some View {
+        let pattern = state.activePattern
         
-        return ForEach(Array(situations.enumerated()), id: \.1.category) { (_, section: UnifiedMomentSection) in
-            let isSelected = section.category == state.selectedRecommendedCategory
-            let _ = print("      - Section category: '\(section.category)' (Selected: \(state.selectedRecommendedCategory ?? "nil") -> Matches: \(isSelected))")
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 12) {
+                // 01 VARIABLES
+                BrickColumn(
+                    label: "VARIABLES",
+                    items: pattern?.bricks?.variables ?? []
+                )
+                
+                // 02 CONSTANTS
+                BrickColumn(
+                    label: "CONSTANTS",
+                    items: pattern?.bricks?.constants ?? []
+                )
+                
+                // 03 STRUCTURE
+                BrickColumn(
+                    label: "STRUCTURE",
+                    items: pattern?.bricks?.structural ?? []
+                )
+            }
+            .padding(.horizontal, 5)
+        }
+    }
+
+    private var v3HistorySection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("PREVIOUSLY PRACTICED — \(state.activeRecommendation?.place_id.uppercased() ?? "N/A")")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(.black)
+                Spacer()
+                Text("HISTORY_STRENGTH")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(.black.opacity(0.8))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(ThemeColors.primaryAccent)
             
-            if state.selectedRecommendedCategory == nil || isSelected {
-                let _ = print("         -> Rendering \(section.moments.count) moments for category '\(section.category)'")
-                recommendedCardGenerator(place: place, category: section.category, moments: section.moments)
+            VStack(spacing: 1) {
+                HistoryRow(text: "COFFEE PLEASE.", strength: "100%")
+                HistoryRow(text: "CAN I SEE THE MENU?", strength: "87%")
+                HistoryRow(text: "TWO COFFEES PLEASE.", strength: "64%")
+            }
+            .padding(.bottom, 16)
+        }
+    }
+
+    private var v3AssemblyBar: some View {
+        VStack(spacing: 12) {
+            if !state.isTextInputMode {
+                HStack(spacing: 12) {
+                    AssemblyTag(type: "s_", text: "I WOULD LIKE", color: Color.cyan)
+                    AssemblyTag(type: "c_", text: "A", color: Color.white)
+                    AssemblyTag(type: "v_", text: "COFFEE", color: Color.blue)
+                }
             }
         }
-    }
-
-    private func recommendedCardGenerator(place: MicroSituationData, category: String, moments: [UnifiedMoment]) -> some View {
-        ForEach(Array(moments.enumerated()), id: \.1.text) { (_, moment: UnifiedMoment) in
-            RecommendedCard(momentData: moment, time: place.time ?? "--:--", isGreen: false) { state.generateSentence(for: moment.text, fromPlace: place.place_name) }
-        }
-    }
-
-    private func RecommendedCard(momentData: UnifiedMoment, time: String, isGreen: Bool, action: @escaping () -> Void) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            recommendedCardHeader(momentData: momentData, time: time, isGreen: isGreen)
-            Spacer()
-            recommendedCardContent(moment: momentData.text, isGreen: isGreen)
-            Spacer()
-            recommendedCardFooter(isGreen: isGreen, action: action)
-        }
-        .frame(minHeight: 120).frame(maxWidth: .infinity).background(isGreen ? ThemeColors.neonGreen : Color(white: 0.1))
-    }
-
-    private func recommendedCardHeader(momentData: UnifiedMoment, time: String, isGreen: Bool) -> some View {
-        HStack { 
-            Spacer() 
-            Text(time) 
-        }
-        .font(.system(size: 10, weight: .bold, design: .monospaced))
-        .foregroundColor(isGreen ? .black.opacity(0.6) : .gray)
-        .padding(.horizontal, 12)
-        .padding(.top, 12)
-    }
-
-    private func recommendedCardContent(moment: String, isGreen: Bool) -> some View {
-        Text(moment.uppercased()).font(.system(size: 24, weight: .black)).foregroundColor(isGreen ? .black : .white)
-            .multilineTextAlignment(.leading).lineLimit(3).minimumScaleFactor(0.7).padding(.horizontal, 12)
-    }
-
-    private func recommendedCardFooter(isGreen: Bool, action: @escaping () -> Void) -> some View {
-        HStack(alignment: .bottom, spacing: 0) {
-            VStack(alignment: .leading, spacing: 0) { Text("GENERATE"); Text("SENTENCE") }
-                .font(.system(size: 10, weight: .black)).foregroundColor(isGreen ? .black : .gray)
-            Spacer()
-            Button(action: { action() }) {
-                Image(systemName: "waveform").font(.system(size: 14, weight: .bold)).foregroundColor(.black)
-                    .frame(width: 32, height: 32).padding(8).background(ThemeColors.secondaryAccent)
-            }
-        }.padding(12)
     }
     
-    private var addCustomMomentButton: some View {
-        Button(action: { showCustomInput = true }) {
-            HStack {
-                Image(systemName: "plus.circle.fill").font(.system(size: 16))
-                Text("ADD YOUR OWN MOMENT").font(.system(size: 14, weight: .black))
-                Spacer()
-            }
-            .foregroundColor(.black).padding().frame(maxWidth: .infinity).background(ThemeColors.neonGreen)
+    private var v3LoadingState: some View {
+        VStack(spacing: 20) {
+            ProgressView()
+                .tint(.cyan)
+            Text("SCANNING REALITY...")
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.cyan)
         }
+        .frame(maxWidth: .infinity, minHeight: 400)
+    }
+    
+    private var v3EmptyState: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.system(size: 40))
+                .foregroundColor(.gray)
+            Text("NO REALITIES COHERENT")
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.gray)
+            Button("RE-SCAN") {
+                state.discover()
+            }
+            .font(.system(size: 12, weight: .black))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(Color.white)
+            .foregroundColor(.black)
+        }
+        .frame(maxWidth: .infinity, minHeight: 400)
     }
 
+    // MARK: - Subviews
+
+    private func BrickColumn(label: String, items: [RecommendationBrickItem]) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(label)
+                .font(.system(size: 10, weight: .black))
+                .foregroundColor(.black)
+                .frame(maxWidth: 140, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.white)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                if items.isEmpty {
+                    Text("---").foregroundColor(.gray).padding(12)
+                }
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.meaning)
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(.white)
+                        Text(item.word)
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(ThemeColors.neonGreen)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    
+                    if index < items.count - 1 {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 1)
+                            .padding(.horizontal, 12)
+                    }
+                }
+            }
+            .frame(width: 140, alignment: .leading)
+        }
+        .frame(width: 140, height: 220, alignment: .topLeading)
+        .background(Color(white: 0.05))
+        .border(Color.white.opacity(0.1), width: 1)
+    }
+
+    private func HistoryRow(text: String, strength: String) -> some View {
+        HStack {
+            Rectangle().fill(Color.yellow).frame(width: 6, height: 6)
+            Text(text)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+            Spacer()
+            Text(strength)
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(.white)
+        }
+        .padding(.vertical, 12)
+        .border(Color.white.opacity(0.05), width: 0.5)
+    }
+
+    private func AssemblyTag(type: String, text: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Text("[\(type)]")
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(color.opacity(0.8))
+            Text(text.uppercased())
+                .font(.system(size: 11, weight: .black, design: .monospaced))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.1))
+        .border(color.opacity(0.5), width: 1)
+    }
+    
+    private var scrollOffsetTracker: some View {
+        GeometryReader { geo in
+            Color.clear.preference(key: LearnViewOffsetKey.self, value: geo.frame(in: .named("learnPullToRefresh")).minY)
+        }.frame(height: 0)
+    }
+    
+    private func handleRefresh(offset: CGFloat) {
+        scrollOffset = offset
+        let threshold: CGFloat = 80 // Distance needed to trigger
+        
+        // Prevent triggering while already loading
+        guard pullRefreshState != .loading && pullRefreshState != .finishing else { return }
+        
+        if offset > threshold {
+            if pullRefreshState != .loading {
+                pullRefreshState = .loading
+                let generator = UIImpactFeedbackGenerator(style: .heavy)
+                generator.impactOccurred()
+                
+                // Trigger AI discovery manually
+                state.discover()
+                
+                // Custom reset delay mimicking the StatsTab behavior
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        pullRefreshState = .finishing
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        pullRefreshState = .idle
+                    }
+                }
+            }
+        } else if offset > 0 {
+            // Track pulling progress (0.0 to 1.0)
+            let progress = min(offset / threshold, 1.0)
+            pullRefreshState = .pulling(progress: progress)
+        } else {
+            pullRefreshState = .idle
+        }
+    }
+}
+
+struct LearnViewOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct FrenchStrings: AppStrings, LocalizedStrings {
     

@@ -2,12 +2,18 @@ import SwiftUI
 
 struct BrickVoiceView: View {
     @StateObject var logic: BrickVoiceLogic
-    var lessonDrillLogic: LessonDrillLogic?
-    var onComplete: (() -> Void)?
+    var onComplete: ((Bool) -> Void)?
+    @State private var isHintExpanded: Bool = false
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
-        _logic = StateObject(wrappedValue: BrickVoiceLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickVoiceLogic(
+            state: state, 
+            engine: engine, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
         self.onComplete = onComplete
     }
     
@@ -34,11 +40,21 @@ struct BrickVoiceView: View {
                         
                         // User Transcript (Keep below as it grows)
                         if !logic.recognizedText.isEmpty || logic.isRecording {
-                            Text("\"" + logic.recognizedText + "\"")
-                                .font(.system(size: 22, weight: .bold, design: .monospaced))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
+                            HStack(spacing: 12) {
+                                Text("\"" + logic.recognizedText + "\"")
+                                    .font(.system(size: 22, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.white)
+                                    .multilineTextAlignment(.center)
+                                
+                                if logic.isCorrect == nil && !logic.recognizedText.isEmpty {
+                                    Button(action: { logic.clearInput() }) {
+                                        Image(systemName: "arrow.counterclockwise.circle.fill")
+                                            .font(.system(size: 32)) // Slightly larger for touch target
+                                            .foregroundColor(.gray.opacity(0.8))
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
                         }
                         
                         // Show Correction if wrong
@@ -53,13 +69,8 @@ struct BrickVoiceView: View {
                 }
             }
             
-            // 3. Footer
-            // 3. Footer
-            // ✅ Only show shared wrapper POST-ANSWER (to get the "Continue" logic).
-            // During input, show local footer (for "Check" button).
-            if let wrapper = lessonDrillLogic, wrapper.isDrillAnswered {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            if logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil {
                 footer
             }
         }
@@ -79,8 +90,7 @@ struct BrickVoiceView: View {
                     label: "NEXT_STORY_STEP",
                     title: title,
                     color: color,
-                    systemImage: "arrow.right",
-                    isEnabled: !logic.isAudioPlaying
+                    systemImage: "arrow.right"
                 )
             } else {
                 CyberProceedButton(

@@ -27,23 +27,17 @@ struct HorizontalMasonryLayout<Data: RandomAccessCollection, Content: View>: Vie
         }()
         
         return ScrollView(.horizontal, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: constrainedHeight == nil ? spacing : 0) {
+            VStack(alignment: .leading, spacing: spacing) {
                 ForEach(0..<rows, id: \.self) { rowIndex in
                     HStack(spacing: spacing) {
                         ForEach(rowData[rowIndex], id: \.self) { item in
                             content(item)
                         }
                     }
-                    .diagnosticBorder(.white.opacity(0.1), width: 0.5)
-                    
-                    // If we have a constrained height, distribute rows with Spacers
-                    if let _ = constrainedHeight, rowIndex < rows - 1 {
-                        Spacer()
-                    }
+                    .frame(maxHeight: .infinity)
                 }
             }
             .frame(height: constrainedHeight) // Force height if provided
-            .diagnosticBorder(.pink.opacity(0.2), width: 1)
             .padding(.trailing, 16)
         }
     }

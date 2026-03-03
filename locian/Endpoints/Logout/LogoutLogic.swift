@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 /// Controller for Logout specific domain logic.
 /// Lives in the Logout domain.

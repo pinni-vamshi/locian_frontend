@@ -2,11 +2,18 @@ import SwiftUI
 
 struct PatternDictationView: View {
     @StateObject private var logic: PatternVoiceLogic
-    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: ((Bool) -> Void)?
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
-        _logic = StateObject(wrappedValue: PatternVoiceLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: PatternVoiceLogic(
+            state: state, 
+            engine: engine, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
+        self.onComplete = onComplete
     }
     
     var body: some View {
@@ -19,7 +26,7 @@ struct PatternDictationView: View {
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
                     textColor: .black,
-                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil,
+                    modeLabel: (logic.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil,
                     phonetic: logic.phonetic,
                     onReplay: { logic.playAudio() }
                 )
@@ -54,16 +61,19 @@ struct PatternDictationView: View {
                 }
             }
             
-            // 3. Footer
-            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
-            if let wrapper = lessonDrillLogic, logic.isCorrect != nil {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
-                // Otherwise show Local Footer (Check Button)
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            // 3. Footer (Suppressed when hosted by an orchestrator, UNLESS it's Ghost Mode needing a check button)
+            let isStandalone = logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil
+            let isGhostPreAnswer = logic.ghostLogic != nil && logic.isCorrect == nil
+            
+            if isStandalone || isGhostPreAnswer {
                 footer
             }
         }
         .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            logic.bindToParent()
+        }
     }
     
     private var footer: some View {
@@ -75,12 +85,11 @@ struct PatternDictationView: View {
                 let title = isCorrect ? "CORRECT!" : "INCORRECT"
                 
                 CyberProceedButton(
-                    action: { lessonDrillLogic?.continueToNext() },
+                    action: { logic.continueToNext() },
                     label: "NEXT_STORY_STEP",
                     title: title,
                     color: color,
-                    systemImage: "arrow.right",
-                    isEnabled: !logic.isAudioPlaying
+                    systemImage: "arrow.right"
                 )
             } else {
                 CyberProceedButton(

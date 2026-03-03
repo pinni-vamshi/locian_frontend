@@ -4,9 +4,10 @@ struct BrickModeSelector: View {
     let drill: DrillState
     @ObservedObject var engine: LessonEngine
     var forcedMode: DrillMode? = nil
-    var lessonDrillLogic: LessonDrillLogic? = nil // ✅ Wrapper logic for footers
     var patternIntroLogic: PatternIntroLogic? = nil // ✅ NEW: Reporting link
-    var onComplete: (() -> Void)? = nil // ✅ Added to resolve PatternIntroView call
+    var practiceLogic: PatternPracticeLogic? = nil  // ✅ NEW: Reporting link
+    var ghostLogic: GhostModeLogic? = nil           // ✅ NEW: Reporting link
+    var onComplete: ((Bool) -> Void)? = nil // ✅ Unified signature
     
     static func needsDrill(brickId: String, engine: LessonEngine) -> Bool {
         let score = engine.getDecayedMastery(for: brickId)
@@ -15,28 +16,42 @@ struct BrickModeSelector: View {
     }
     
     static func resolveMode(for drill: DrillState, engine: LessonEngine) -> DrillMode {
-        if let mode = drill.currentMode { return mode }
+        if let mode = drill.currentMode, mode != .ghostManager {
+            print("🧱 [BrickModeSelector] Using pre-set mode: \(mode) for \(drill.id)")
+            return mode
+        }
         
         let rawId = drill.id
         let brickId = rawId.replacingOccurrences(of: "INT-", with: "")
+            .replacingOccurrences(of: "PRACTICE-MISTAKE-", with: "") // Handle Practice IDs too
             .split(separator: "-").first.map(String.init) ?? rawId
             
         let score = engine.getDecayedMastery(for: brickId)
         
-        let result: DrillMode
-        if score >= 0.70 {
-            result = .speaking
-        } else if score >= 0.45 { 
-            result = .componentTyping 
-        } else if score >= 0.20 { 
-            result = .cloze 
-        } else { 
-            result = .componentMcq 
+        print("🧱 [BrickModeSelector] Resolving for Brick: '\(brickId)' (Raw: \(rawId))")
+        print("   - Mastery Score: \(String(format: "%.2f", score))")
+        
+        let mode: DrillMode
+        if score < 0.25 {
+            mode = .componentMcq
+        } else if score < 0.40 {
+            mode = .cloze
+        } else if score < 0.55 {
+            mode = .componentTyping
+        } else if score < 0.85 {
+            mode = .speaking
+        } else {
+            mode = .mastered
         }
         
-        print("   🎯 [BrickSelector] Mastery: \(String(format: "%.2f", score)) | Mode: \(result) | Brick: \(brickId) ('\(drill.drillData.target)')")
+        print("   - Selected Mode: \(mode) (Thresholds: <0.25=MCQ, <0.40=Cloze, <0.55=Type, <0.85=Speak, >=0.85=Mastered)")
         
-        return result
+        // Print Override if present
+        if let override = drill.overrideVoiceInstructions {
+            print("   - 🎙️ Override Detected: \"\(override)\"")
+        }
+        
+        return mode
     }
 
     @ViewBuilder
@@ -45,7 +60,9 @@ struct BrickModeSelector: View {
         engine: LessonEngine, 
         showPrompt: Bool = true, 
         patternIntroLogic: PatternIntroLogic? = nil, // ✅ NEW PARAMETER
-        onComplete: (() -> Void)? = nil
+        practiceLogic: PatternPracticeLogic? = nil,  // ✅ NEW PARAMETER
+        ghostLogic: GhostModeLogic? = nil,           // ✅ NEW PARAMETER
+        onComplete: ((Bool) -> Void)? = nil
     ) -> some View {
         let mode = resolveMode(for: drill, engine: engine)
         
@@ -56,30 +73,33 @@ struct BrickModeSelector: View {
             case .cloze:            BrickClozeInteraction(drill: drill, engine: engine, showPrompt: showPrompt, patternIntroLogic: introLogic, onComplete: onComplete)
             case .componentTyping:  BrickTypingInteraction(drill: drill, engine: engine, showPrompt: showPrompt, patternIntroLogic: introLogic, onComplete: onComplete)
             case .speaking:         BrickVoiceInteraction(drill: drill, engine: engine, showPrompt: showPrompt, patternIntroLogic: introLogic, onComplete: onComplete)
+            case .mastered:         DrillMasteryVictoryView(drill: drill, onComplete: onComplete)
             default:                BrickMCQInteraction(drill: drill, engine: engine, showPrompt: showPrompt, patternIntroLogic: introLogic, onComplete: onComplete)
             }
         } else {
             // ✅ Direction B: Ghost Mode (Practice) -> Full Dedicated Files
             switch mode {
-            case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: nil, onComplete: onComplete)
-            case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: nil, onComplete: onComplete)
-            case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: nil, onComplete: onComplete)
-            case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: nil, onComplete: onComplete)
-            default:                BrickMCQLogic.view(for: drill, mode: mode, engine: engine, lessonDrillLogic: nil, onComplete: onComplete)
+            case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, engine: engine, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, engine: engine, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, engine: engine, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, engine: engine, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            case .mastered:         DrillMasteryVictoryView(drill: drill, onComplete: onComplete)
+            default:                BrickMCQLogic.view(for: drill, mode: mode, engine: engine, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
             }
         }
     }
     
     var body: some View {
         let mode = forcedMode ?? drill.currentMode ?? BrickModeSelector.resolveMode(for: drill, engine: engine)
-        let completion = onComplete ?? { lessonDrillLogic?.continueToNext() }
+        let completion = onComplete // ?? { /* Default fallback? */ }
         
         switch mode {
-        case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, lessonDrillLogic: lessonDrillLogic, onComplete: completion)
-        case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, lessonDrillLogic: lessonDrillLogic, onComplete: completion)
-        case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, lessonDrillLogic: lessonDrillLogic, onComplete: completion)
-        case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, lessonDrillLogic: lessonDrillLogic, onComplete: completion)
-        default:                BrickMCQLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, lessonDrillLogic: lessonDrillLogic, onComplete: completion)
+        case .componentMcq:     BrickMCQLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: completion)
+        case .cloze:            BrickClozeLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: completion)
+        case .componentTyping:  BrickTypingLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: completion)
+        case .speaking:         BrickVoiceLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: completion)
+        case .mastered:         DrillMasteryVictoryView(drill: drill, onComplete: onComplete)
+        default:                BrickMCQLogic.view(for: drill, mode: mode, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: completion)
         }
     }
 }

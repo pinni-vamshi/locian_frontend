@@ -20,20 +20,10 @@ class AppStateManager: ObservableObject {
     
     // MARK: - Progress State
     /// Calculated study points based on practice streak and diversity of locations.
-    /// (Practice Days * 10) + (Unique Study Hours * 5)
+    /// (Practice Days * 10)
     var totalStudyPoints: Int {
         let practiceDaysCount = userLanguagePairs.first(where: { $0.is_default })?.practice_dates.count ?? 0
-        
-        var uniqueHours = Set<Int>()
-        if let places = timeline?.places {
-            for place in places {
-                if let hour = place.hour {
-                    uniqueHours.insert(hour)
-                }
-            }
-        }
-        
-        return (practiceDaysCount * 10) + (uniqueHours.count * 5)
+        return practiceDaysCount * 10
     }
     
     // MARK: - Universal Color (Computed from selectedTheme)
@@ -56,6 +46,8 @@ class AppStateManager: ObservableObject {
             UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding")
         }
     }
+    
+    @Published var minAnimationIntervalCompleted: Bool = false
     
     // MARK: - Auth State
     @Published var authToken: String? {
@@ -92,10 +84,26 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    @Published var userIntent: UserIntent? {
+    @Published var intentTimeline: [String: TimeSpanSnapshot]? {
         didSet {
-            if let intent = userIntent, let encoded = try? JSONEncoder().encode(intent) {
-                UserDefaults.standard.set(encoded, forKey: "userIntent")
+            if let timeline = intentTimeline, let encoded = try? JSONEncoder().encode(timeline) {
+                UserDefaults.standard.set(encoded, forKey: "intentTimeline")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "intentTimeline")
+            }
+        }
+    }
+    
+    @Published var currentTimeSpan: String? {
+        didSet {
+            UserDefaults.standard.set(currentTimeSpan, forKey: "currentTimeSpan")
+        }
+    }
+    
+    @Published var geoContexts: [String: GeoContextData] = [:] {
+        didSet {
+            if let encoded = try? JSONEncoder().encode(geoContexts) {
+                UserDefaults.standard.set(encoded, forKey: "geoContexts")
             }
         }
     }
@@ -128,15 +136,8 @@ class AppStateManager: ObservableObject {
     }
     
     
-    @Published var profileImageData: Data? {
-        didSet {
-            if let data = profileImageData {
-                UserDefaults.standard.set(data, forKey: "profileImage")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "profileImage")
-            }
-        }
-    }
+    // Removed profile image data as per request
+    
     
     // Removed legacy nearby places/location cache
     
@@ -154,10 +155,32 @@ class AppStateManager: ObservableObject {
         }
     }
     
+    // MARK: - Hume AI State
+    @Published var humeApiKey: String? = "RJZ4SSiSpDHDxGkueYCxxDyAwt4jor0PLIJPfv8qu8faHb6y" {
+        didSet { UserDefaults.standard.set(humeApiKey, forKey: "humeApiKey") }
+    }
+    @Published var humeSecretKey: String? = "vuHrqMNuAgwddTkLM4IDHNM3cizkkVpStOrHchJ3sLccv7HbEbcII2TltfBYGJiZ" {
+        didSet { UserDefaults.standard.set(humeSecretKey, forKey: "humeSecretKey") }
+    }
+    @Published var humeConfigId: String? {
+        didSet { UserDefaults.standard.set(humeConfigId, forKey: "humeConfigId") }
+    }
+    @Published var isHumeVoiceEnabled: Bool = true {
+        didSet { UserDefaults.standard.set(isHumeVoiceEnabled, forKey: "isHumeVoiceEnabled") }
+    }
+    
     // MARK: - Authentication State
     @Published var isAuthenticating: Bool = false
     @Published var authError: String?
     @Published var showAuthError: Bool = false
+    @Published var selectedProfession: String = ""
+    
+    // MARK: - Auth Status Management
+    func resetAuthStatus() {
+        authError = nil
+        showAuthError = false
+        isAuthenticating = false
+    }
     
     // MARK: - Language State
     @Published var shouldShowNativeLanguageModal: Bool = false
@@ -207,17 +230,7 @@ class AppStateManager: ObservableObject {
     // MARK: - Image Analysis State
     @Published var isAnalyzingImage: Bool = false
     
-    // MARK: - Studied Places (New)
-    // EPHEMERAL - DO NOT PERSIST (In-Memory Only)
-    @Published var timeline: TimelineData? = nil {
-        didSet {
-            if let data = timeline {
-                NotificationManager.shared.harvest(from: data)
-            }
-        }
-    }
-    @Published var isLoadingTimeline: Bool = false // Tracks if timeline request is in flight
-    @Published var hasInitialHistoryLoaded: Bool = false // Tracks if we've fetched initial history this session
+    @Published var isRefreshingContext: Bool = false
     
     // MARK: - Infer Interest State
     @Published var isInferringInterest: Bool = false
@@ -314,9 +327,10 @@ class AppStateManager: ObservableObject {
         
         // EARLY CACHE LOAD: Load language pairs immediately for streak display
         if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
-           let pairs = try? JSONDecoder().decode([LanguagePair].self, from: data) {
-            self.userLanguagePairs = pairs
-            print("📦 [AppStateManager] Loaded \(pairs.count) language pairs settings (init)")
+           let decoded = try? JSONDecoder().decode([LanguagePair].self, from: data) {
+            self.userLanguagePairs = decoded
+        } else {
+            self.userLanguagePairs = []
         }
         
         // Load app persistence toggles
@@ -328,12 +342,6 @@ class AppStateManager: ObservableObject {
             NotificationManager.shared.startMonitoring()
         }
         
-        // Load persistable intent
-        if let data = UserDefaults.standard.data(forKey: "userIntent"),
-           let intent = try? JSONDecoder().decode(UserIntent.self, from: data) {
-            self.userIntent = intent
-        }
-        
         if let fireInterval = UserDefaults.standard.object(forKey: "lastNotificationFireDate") as? TimeInterval {
             self.lastNotificationFireDate = Date(timeIntervalSince1970: fireInterval)
         }
@@ -341,6 +349,26 @@ class AppStateManager: ObservableObject {
         if let momentIDs = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
             self.notifiedMomentIDs = Set(momentIDs)
         }
+        
+        // Load persistable intent timeline
+        if let data = UserDefaults.standard.data(forKey: "intentTimeline"),
+           let decoded = try? JSONDecoder().decode([String: TimeSpanSnapshot].self, from: data) {
+            self.intentTimeline = decoded
+        }
+        self.currentTimeSpan = UserDefaults.standard.string(forKey: "currentTimeSpan")
+        
+        if let data = UserDefaults.standard.data(forKey: "geoContexts"),
+           let decoded = try? JSONDecoder().decode([String: GeoContextData].self, from: data) {
+            self.geoContexts = decoded
+        } else {
+            self.geoContexts = [:]
+        }
+        
+        // Load Hume AI settings
+        self.humeApiKey = UserDefaults.standard.string(forKey: "humeApiKey") ?? "RJZ4SSiSpDHDxGkueYCxxDyAwt4jor0PLIJPfv8qu8faHb6y"
+        self.humeSecretKey = UserDefaults.standard.string(forKey: "humeSecretKey") ?? "vuHrqMNuAgwddTkLM4IDHNM3cizkkVpStOrHchJ3sLccv7HbEbcII2TltfBYGJiZ"
+        self.humeConfigId = UserDefaults.standard.string(forKey: "humeConfigId")
+        self.isHumeVoiceEnabled = UserDefaults.standard.object(forKey: "isHumeVoiceEnabled") as? Bool ?? true
     }
     
     // MARK: - Load User Data (called after successful session validation)
@@ -358,6 +386,11 @@ class AppStateManager: ObservableObject {
         self.profession = UserDefaults.standard.string(forKey: "profession") ?? ""
         self.nativeLanguage = UserDefaults.standard.string(forKey: "userNativeLanguage") ?? ""
         
+        if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
+           let decoded = try? JSONDecoder().decode([LanguagePair].self, from: data) {
+            self.userLanguagePairs = decoded
+        }
+        
         print("   - Username: \(username)")
         print("   - Profession: \(profession)")
         print("   - Native Lang: \(nativeLanguage)")
@@ -371,14 +404,7 @@ class AppStateManager: ObservableObject {
         self.userLanguagePairs.forEach { proactiveCodes.insert($0.target_language) }
         EmbeddingService.prepareModels(for: proactiveCodes)
         
-        // Profile image and language pairs are now loaded in init() or via loadUserData()
-        // but loadUserData() still refreshes them to ensure consistency after login.
-        self.profileImageData = UserDefaults.standard.data(forKey: "profileImage")
-        
-        if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
-           let pairs = try? JSONDecoder().decode([LanguagePair].self, from: data) {
-            self.userLanguagePairs = pairs
-        }
+    
         
         // Engagement Tracking
         // Interaction state cleaned up
@@ -430,62 +456,33 @@ class AppStateManager: ObservableObject {
     
     /// Fetch studied places and initialize recommendations during app launch
     func loadInitialData() {
-        print("\n🚀 [AppStateManager] loadInitialData() sequence triggered")
+        print("\n🚀 [AppStateManager] Unified Discovery Sequence Started...")
         
-        guard let sessionToken = authToken, !sessionToken.isEmpty else {
-            print("   ⚠️ [AppStateManager] ABORT: No auth token available.")
-            // Don't set hasInitialHistoryLoaded = true here, wait for auth success
+        guard !isRefreshingContext else {
+            print("⚠️ [AppStateManager] Discovery already in progress. Skipping duplicate.")
             return
         }
         
-        guard !userLanguagePairs.isEmpty else {
-            print("   ⚠️ [AppStateManager] ABORT: No language pairs. Waiting for Setup Flow...")
-            // Don't set hasInitialHistoryLoaded = true here, Setup Flow will trigger this after selection
-            return
+        self.isRefreshingContext = true
+        
+        let group = DispatchGroup()
+        
+        // 1. Discover Daily Intent Map (Brain Profile / Study Points)
+        group.enter()
+        print("🧠 [AppStateManager] Phase 1: Fetching Daily Intent Map (Points/Timeline)...")
+        UserIntentContextLogic.shared.discoverDailyIntent { success in
+            print("🧠 [AppStateManager] Phase 1 Complete (Success: \(success))")
+            group.leave()
         }
         
-        guard !isLoadingTimeline else {
-            print("   ⏳ [AppStateManager] SKIP: Load already in progress")
-            return
-        }
+        // 2. Discover Moments (Handled by LearnTabState directly in V3)
+        // Legacy Phase 2 removed as per V3 requirement.
         
-        isLoadingTimeline = true
-        print("   📡 [AppStateManager] Requesting history from API...")
-        
-        GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: sessionToken) { [weak self] result in
+        // Finalize: Unlock UI
+        group.notify(queue: .main) { [weak self] in
             guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                switch result {
-                case .success(let response):
-                    if let data = response.data {
-                        print("   ✅ [AppStateManager] SUCCESS: Received \(data.places.count) moments. (Span: \(data.time_span ?? "nil"))")
-                        
-                        self.timeline = TimelineData(
-                            places: data.places,
-                            inputTime: data.input_time,
-                            timeSpan: data.time_span
-                        )
-                        self.userIntent = data.user_intent
-                        
-                        print("   🔄 [AppStateManager] Initializing Recommendation Engine...")
-                        LocalRecommendationService.shared.initialize(
-                            timeline: self.timeline,
-                            intent: data.user_intent
-                        )
-                    } else {
-                        print("   ⚠️ [AppStateManager] WARNING: API returned success but empty payload")
-                    }
-                    
-                case .failure(let error):
-                    print("   ❌ [AppStateManager] ERROR: API call failed: \(error.localizedDescription)")
-                }
-                
-                print("   🏁 [AppStateManager] Initialization Sequence COMPLETED. Unlocking UI.")
-                self.hasInitialHistoryLoaded = true
-                self.isLoadingTimeline = false
-            }
+            print("🏁 [AppStateManager] Unified Discovery Sequence COMPLETED.")
+            self.isRefreshingContext = false
         }
     }
 }
-

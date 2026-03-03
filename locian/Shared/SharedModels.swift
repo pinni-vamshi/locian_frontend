@@ -18,5 +18,4 @@ struct APIResponse<T: Codable>: Codable {
 }
 
 // MARK: - Backward Compatibility Aliases
-typealias StudiedPlaceWithSituations = MicroSituationData
 typealias GetUserDetailsData = UserDetailsData

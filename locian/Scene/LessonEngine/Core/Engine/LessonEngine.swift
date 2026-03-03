@@ -53,16 +53,41 @@ class LessonEngine: ObservableObject {
     }
     
     // ✅ NEW: All bricks across ALL groups (for MCQ distractor generation)
+    // ✅ DEDUPLICATION: Prevents same brick appearing multiple times across groups
     var allBricks: BricksData? {
+        var seenIDs: Set<String> = []
         var allConstants: [BrickItem] = []
         var allVariables: [BrickItem] = []
         var allStructural: [BrickItem] = []
         
         for group in groups {
             if let bricks = group.bricks {
-                allConstants += bricks.constants ?? []
-                allVariables += bricks.variables ?? []
-                allStructural += bricks.structural ?? []
+                // Process constants
+                for brick in bricks.constants ?? [] {
+                    let id = brick.safeID
+                    if !seenIDs.contains(id) {
+                        seenIDs.insert(id)
+                        allConstants.append(brick)
+                    }
+                }
+                
+                // Process variables
+                for brick in bricks.variables ?? [] {
+                    let id = brick.safeID
+                    if !seenIDs.contains(id) {
+                        seenIDs.insert(id)
+                        allVariables.append(brick)
+                    }
+                }
+                
+                // Process structural
+                for brick in bricks.structural ?? [] {
+                    let id = brick.safeID
+                    if !seenIDs.contains(id) {
+                        seenIDs.insert(id)
+                        allStructural.append(brick)
+                    }
+                }
             }
         }
         
@@ -107,25 +132,16 @@ class LessonEngine: ObservableObject {
         self.currentGroupIndex = 0
         self.groups = data.groups ?? []
         self.isSessionComplete = false
+        self.patternIntroMistakes = [] // ✅ FIX: Clear mistakes pool for new session
+        
+        print("\n⚖️⚖️⚖️ [GHOST COURT] LESSON INITIALIZED ⚖️⚖️⚖️")
+        print("   👨‍⚖️ MISTAKE POOL CLEARED.")
         
         let patternCount = groups.flatMap { $0.patterns ?? [] }.count
         print("� [LessonEngine] INITIALIZE: Received \(groups.count) groups with \(patternCount) total patterns.")
         
-        // Load Mastery from ALL groups (Forced to 0.0 as per memory removal)
-        for group in self.groups {
-
-            // patterns
-            for p in group.patterns ?? [] { 
-                componentMastery[p.id] = 0.0 
-                // print("   🔹 [Zero-Conf] Reset mastery for \(p.id)")
-            }
-            
-            // Bricks
-            if let bricks = group.bricks {
-                let allBricks = (bricks.constants ?? []) + (bricks.variables ?? []) + (bricks.structural ?? [])
-                for b in allBricks { componentMastery[b.safeID] = 0.0 }
-            }
-        }
+        // Mastery Reset (Clean Slate)
+        self.componentMastery = [:] 
         
         // KICKSTART THE LOOP (Empty History)
         if !rawPatterns.isEmpty {
@@ -155,11 +171,13 @@ class LessonEngine: ObservableObject {
         
         // 1. Update History
         recentPatternHistory.append(id)
-        if recentPatternHistory.count > 4 { recentPatternHistory.removeFirst() }
+        if recentPatternHistory.count > 3 { recentPatternHistory.removeFirst() }
         
         // 2. 🧼 Centralized Cleanup: Clear mistakes from the just-finished pattern
+        print("\n⚖️⚖️⚖️ [GHOST COURT] PATTERN COMPLETE: \(id) ⚖️⚖️⚖️")
+        print("   🧹 CLEARING MISTAKE POOL (\(patternIntroMistakes.count) items removed)")
         self.patternIntroMistakes = []
-        print("   🧹 [LessonEngine] Pattern \(id) complete. Mistake pool cleared for next loop.")
+        print("⚖️⚖️⚖️ [GHOST COURT] ========================= ⚖️⚖️⚖️\n")
         
         // 2. Advance Groups if needed (Simple version: if all patterns in group mastered or seen)
         // For now, let the Flow decide based on current rawPatterns.
@@ -174,25 +192,25 @@ class LessonEngine: ObservableObject {
     }
     
     // Advance to next group manually if we have logic for it
-    func advanceGroup() {
-        // Since we are now using a FLAT structure via rawPatterns (allPatterns),
-        // we advance the index mostly for metadata tracking, but the flow already sees everything.
-        if currentGroupIndex < groups.count - 1 {
-            currentGroupIndex += 1
-            // No need to re-trigger pickNextPattern here, as the flow will do it on completion
-        } else {
-            // Full session complete if all patterns mastered
-            isSessionComplete = true
-        }
+    // ✅ FINISH SESSION (Flat List Mode)
+    // There are no "groups" to advance. When the Flow says we are done, we are done.
+    func finishSession() {
+        print("✅ [LessonEngine] SESSION COMPLETE. All patterns mastered.")
+        isSessionComplete = true
     }
     
     // MARK: - Mastery Updates (Pure Data)
     func updateMastery(id: String, delta: Double) {
         
+        // IDs are now clean (no prefixes), so we can use them directly
+        let finalId = id
+        
         // 1. Update the Target ID
-        let current = componentMastery[id] ?? 0.0
+        let current = componentMastery[finalId] ?? 0.0
         let newValue = (current + delta).clamped(to: 0.0...1.0)
-        componentMastery[id] = newValue
+        componentMastery[finalId] = newValue
+        
+        print("   📊 [Mastery] Updated '\(id)' -> Score: \(newValue)")
         
         // 2. ✅ GLOBAL BRICK SYNC (The "Same Word" Rule)
         // If this ID belongs to a brick, find ALL other bricks with the SAME ID (word text) and update them too.
@@ -221,22 +239,6 @@ class LessonEngine: ObservableObject {
         // 3. ✅ Live Update Hook: Force SwiftUI to re-render ALL views
         DispatchQueue.main.async {
             self.objectWillChange.send()
-        }
-
-        
-        // 4. ✅ ID UNIFICATION (ASA Rule)
-        // If this is a mode-specific ID (e.g., "P1-typing"), also update the base ID ("P1")
-        // This ensures the structural anchor grows alongside the specific drill.
-        let modeSuffixes = ["-mcq", "-typing", "-speaking", "-sentenceBuilder", "-voiceMcq", "-auto", "-vocabIntro", "-ghostManager"]
-        for suffix in modeSuffixes {
-            if id.hasSuffix(suffix) {
-                let baseId = id.replacingOccurrences(of: suffix, with: "")
-                let baseCurrent = componentMastery[baseId] ?? 0.0
-                let baseNew = (baseCurrent + delta).clamped(to: 0.0...1.0)
-                componentMastery[baseId] = baseNew
-                print("   🔗 [MasteryLink] Syncing base ID '\(baseId)' with delta \(delta) (from \(id))")
-                break
-            }
         }
     }
     

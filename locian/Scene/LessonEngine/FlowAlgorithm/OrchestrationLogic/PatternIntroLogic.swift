@@ -7,16 +7,24 @@ class PatternIntroLogic: ObservableObject {
     @Published var currentBrickAnswered: Bool = false  // ✅ NEW: Tracks if current brick was answered
     @Published var currentBrickCorrect: Bool = false   // ✅ NEW: Tracks if answer was correct
     @Published var isAudioPlaying: Bool = false        // ✅ NEW: Synced with voice bricks
+    @Published var currentBrickHasInput: Bool = false  // ✅ NEW: Hoisted input state for Footer Check button
+    
+    // ✅ NEW: Action Bridging (Parent View -> Child Logic)
+    var requestCheckAnswer: (() -> Void)?
+    var requestClearInput: (() -> Void)?
     
     let state: DrillState
     let engine: LessonEngine
     
     // Skeleton DrillStates (Modes resolved JIT)
-    var brickDrills: [DrillState] // Renamed to drillStates in the instruction, but keeping original name for consistency with other parts of the class.
+    var brickDrills: [DrillState]
+    
+    @Published var isPlayingIntro: Bool = true // Blocks Bricks
     
     init(state: DrillState, engine: LessonEngine) {
         self.state = state
         self.engine = engine
+        
         
         // ========================================
         // BRICK FILTERING PIPELINE (V4.1)
@@ -60,7 +68,7 @@ class PatternIntroLogic: ObservableObject {
             )
             
             let drillState = DrillState(
-                id: "INT-\(brick.safeID)",
+                id: brick.safeID,
                 patternId: state.patternId,
                 drillIndex: -1,
                 drillData: brickDrill,
@@ -80,12 +88,12 @@ class PatternIntroLogic: ObservableObject {
         
         if drillStates.isEmpty {
             let introState = DrillState(
-                id: "FULL-\(state.patternId)",
+                id: state.patternId,
                 patternId: state.patternId,
                 drillIndex: state.drillIndex,
                 drillData: state.drillData,
                 isBrick: false,
-                currentMode: .vocabIntro
+                currentMode: nil  // Will be resolved JIT
             )
             drillStates = [introState]
         }
@@ -100,6 +108,8 @@ class PatternIntroLogic: ObservableObject {
         } else {
            print("   🧩 [PatternIntro] No bricks found!")
         }
+        
+        // UI Text is already static "Here are the core words."
     }
     
     var currentDrill: DrillState? {
@@ -120,23 +130,26 @@ class PatternIntroLogic: ObservableObject {
     }
     
     // ✅ NEW: Called by brick logic when answer is validated
-    func markBrickAnswered(isCorrect: Bool) {
-        print("   🧩 [PatternIntro] markBrickAnswered: Correct=\(isCorrect)")
-        
-        // DEBUG: Trace where this call came from!
-        let symbols = Thread.callStackSymbols
-        print("   🧩 [PatternIntro] Trace (Top 5):")
-        for i in 0..<min(5, symbols.count) {
-            print("      \(symbols[i])")
-        }
+    func markBrickAnswered(isCorrect: Bool, input: String? = nil) {
+        print("   🧩 [PatternIntro] markBrickAnswered: Correct=\(isCorrect) | Input: \(input ?? "nil")")
         
         currentBrickAnswered = true
         currentBrickCorrect = isCorrect
         
+        // --- 🎙️ SUPPORTIVE GUIDANCE SYSTEM ---
+        // MOVED TO INDIVIDUAL BRICK LOGIC (Decentralized)
+        
         // ✅ NEW: Collect mistake for Ghost Mode recycle
-        if !isCorrect, let brick = currentDrill {
-            print("   🧩 [PatternIntro] Capturing mistake: \(brick.id)")
-            engine.patternIntroMistakes.append(brick)
+        if !isCorrect {
+            // Only capture if we have the brick reference
+            if let brick = currentDrill {
+                print("\n⚖️⚖️⚖️ [GHOST COURT] EVIDENCE CAPTURED ⚖️⚖️⚖️")
+                print("   🕵️‍♂️ MISTAKE: [\(brick.id)] \"\(brick.drillData.target)\"")
+                print("   🕵️‍♂️ REASON: User provided incorrect answer.")
+                engine.patternIntroMistakes.append(brick)
+                print("   🕵️‍♂️ POOL SIZE: \(engine.patternIntroMistakes.count)")
+                print("⚖️⚖️⚖️ [GHOST COURT] ========================= ⚖️⚖️⚖️\n")
+            }
         }
     }
     
@@ -145,6 +158,12 @@ class PatternIntroLogic: ObservableObject {
     
     func advance() {
         print("   🧩 [PatternIntro] Advance called for index \(currentBrickIndex)")
+        
+        // Guard: Prevent advancing while audio is playing (avoid overlap)
+        guard !isAudioPlaying else {
+            print("   🧩 [PatternIntro] BLOCKED: Audio still playing!")
+            return
+        }
         
         // Guard: Only advance if this index isn't already marked done
         guard !completedIndices.contains(currentBrickIndex) else {
@@ -172,6 +191,23 @@ class PatternIntroLogic: ObservableObject {
             engine.orchestrator?.finishVocabIntro()
         }
     }
+    
+    private var hasStartedIntro: Bool = false
+    
+    // ✅ NEW: Triggered by PatternIntroAnimationView when voice finishes
+    func onIntroComplete() {
+        print("🏁 [PatternIntro] Animation & Voice Complete. Unblocking UI.")
+        withAnimation {
+            self.isPlayingIntro = false
+        }
+    }
+    
+    // Safety Fallback (called by View's onAppear)
+    func playIntroAudio() {
+        // We no longer trigger audio here because the View owns it.
+        // But we keep this as a trace point.
+        print("🧩 [PatternIntro] Start sequence initiated.")
+    }
 }
 
 struct PatternIntroManagerView: View {
@@ -182,18 +218,23 @@ struct PatternIntroManagerView: View {
     }
     
     var body: some View {
-        Group {
+        ZStack {
             if logic.shouldSkip {
                 Color.clear.onAppear {
                     logic.engine.orchestrator?.finishVocabIntro()
                 }
             } else {
+                // ✅ Always show View (logic.isPlayingIntro handles sub-view switching)
                 PatternIntroView(
                     drill: logic.state,
                     engine: logic.engine,
                     logic: logic
                 )
             }
+        }
+        .onAppear {
+            // ✅ Trigger Intro Delay (Injection happened in init)
+            logic.playIntroAudio()
         }
     }
 }

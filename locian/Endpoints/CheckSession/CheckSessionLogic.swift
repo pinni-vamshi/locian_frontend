@@ -33,7 +33,8 @@ class CheckSessionLogic {
         appState.loadUserData()
         // User context loaded from local cache.
         
-        // 4. Load initial data (studied places + recommendations)
+        // 4. Trigger REAL-TIME History & Recommendation Load (Discovery will handle live data)
+        print("🚀 [CheckSessionLogic] Triggering real-time initial data load...")
         appState.loadInitialData()
         // Initial data loading triggered...
 

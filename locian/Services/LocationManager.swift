@@ -31,7 +31,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var longitude: Double?
     @Published var locationError: Error?
     
-    private var locationCompletion: ((Result<CLLocation, Error>) -> Void)?
+    private var locationCompletions: [((Result<CLLocation, Error>) -> Void)] = []
+    private let locationLock = NSLock()
     
     override init() {
         super.init()
@@ -78,18 +79,26 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
             
             DispatchQueue.main.async {
-                self.locationCompletion = completion
+                self.locationLock.lock()
+                self.locationCompletions.append(completion)
+                self.locationLock.unlock()
                 
                 // Start updating location
                 self.locationManager.startUpdatingLocation()
                 
                 // Set timeout (10 seconds)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
-                    if self.locationCompletion != nil {
+                    self.locationLock.lock()
+                    if !self.locationCompletions.isEmpty {
+                        let completions = self.locationCompletions
+                        self.locationCompletions.removeAll()
+                        self.locationLock.unlock()
+                        
                         self.locationManager.stopUpdatingLocation()
                         let error = NSError(domain: "LocationManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Location request timed out"])
-                        self.locationCompletion?(.failure(error))
-                        self.locationCompletion = nil
+                        completions.forEach { $0(.failure(error)) }
+                    } else {
+                        self.locationLock.unlock()
                     }
                 }
             }
@@ -115,10 +124,14 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         longitude = location.coordinate.longitude
         
         
-        // Call completion if waiting
-        if let completion = locationCompletion {
-            completion(.success(location))
-            locationCompletion = nil
+        // Call completions if waiting
+        locationLock.lock()
+        let completions = locationCompletions
+        locationCompletions.removeAll()
+        locationLock.unlock()
+        
+        if !completions.isEmpty {
+            completions.forEach { $0(.success(location)) }
             locationManager.stopUpdatingLocation()
         }
     }
@@ -126,10 +139,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         locationError = error
         
-        if let completion = locationCompletion {
-            completion(.failure(error))
-            locationCompletion = nil
-        }
+        locationLock.lock()
+        let completions = locationCompletions
+        locationCompletions.removeAll()
+        locationLock.unlock()
+        
+        completions.forEach { $0(.failure(error)) }
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
@@ -305,7 +320,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // MARK: - API Helper
     func getNearbyPlacesForAPI() -> [NearbyPlaceData] {
-        return nearbyPlaceAmbience.prefix(5).map { 
+        return nearbyPlaceAmbience.prefix(10).map { 
             let enrichedName = $0.category != nil ? "\($0.name) (\($0.category!))" : $0.name
             return NearbyPlaceData(place_name: enrichedName, distance: $0.distance, type: $0.category)
         }

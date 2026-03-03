@@ -10,23 +10,12 @@ import Foundation
 // MARK: - Request Model
 
 struct GenerateSentenceRequest: Codable, Sendable {
-    let target_language: String
+    let moment_id: String
     let user_language: String
-    let place_name: String
-    let micro_situation: String
-    let user_intent: String?
-    let profession: String?
-    let level: String?
-    
-    let time: String?
-    let date: String?
-    
-    let nearby_places: [NearbyPlaceData]?
-    let previous_places: [String]?
-    let future_places: [String]?
-    let latitude: Double?
-    let longitude: Double?
-    let bypass_cache: Bool?
+    let target_language: String
+    let latitude: Double
+    let longitude: Double
+    let time: String
 }
 
 
@@ -35,9 +24,6 @@ struct GenerateSentenceRequest: Codable, Sendable {
 
 struct GenerateSentenceResponse: Codable, Sendable {
     let success: Bool
-    let lesson_id: String?
-    let moment_label: String?
-    let message: String?
     var data: GenerateSentenceData?
     let error: String?
     
@@ -46,21 +32,26 @@ struct GenerateSentenceResponse: Codable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         self.success = try container.decode(Bool.self, forKey: .success)
-        self.lesson_id = try container.decodeIfPresent(String.self, forKey: .lesson_id)
-        self.moment_label = try container.decodeIfPresent(String.self, forKey: .moment_label)
-        self.message = try container.decodeIfPresent(String.self, forKey: .message)
         self.error = try container.decodeIfPresent(String.self, forKey: .error)
         
-        // Handle nested data.data structure
-        if let outerData = try container.decodeIfPresent(OuterDataWrapper.self, forKey: .data) {
-            self.data = outerData.data
+        // Direct Decoding (No extended nesting)
+        if let directData = try? container.decodeIfPresent(GenerateSentenceData.self, forKey: .data) {
+             print("🔍 [GetPatternLesson] Decoding: Path DIRECT succeeded.")
+             self.data = directData
         } else {
-            self.data = nil
+             // Fallback for "data.data" if API reverts
+             if let outerData = try? container.decodeIfPresent(OuterDataWrapper.self, forKey: .data) {
+                 print("🔍 [GetPatternLesson] Decoding: Path NESTED (data.data) succeeded.")
+                 self.data = outerData.data
+             } else {
+                 print("❌ [GetPatternLesson] Decoding: Both DIRECT and NESTED paths failed.")
+                 self.data = nil
+             }
         }
     }
     
     private enum CodingKeys: String, CodingKey {
-        case success, lesson_id, moment_label, message, data, error
+        case success, data, error
     }
     
     // Wrapper to decode the outer "data" object which contains another "data" object
@@ -69,6 +60,9 @@ struct GenerateSentenceResponse: Codable, Sendable {
     }
 }
 
+// MARK: - Legacy Data Model Support
+// These fields are optional so the backend does not need to send them.
+// They are kept here purely because the Lesson Engine UI logic relies on their presence (even if nil).
 struct GenerateSentenceData: Codable, Sendable {
     let target_language: String?
     let user_language: String?

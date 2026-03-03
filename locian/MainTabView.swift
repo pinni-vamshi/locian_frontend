@@ -16,19 +16,16 @@ struct MainTabView: View {
     
     // Shared state for Tabs
     @StateObject private var learnTabState: LearnTabState
-    @StateObject private var addTabState: AddTabState
     @StateObject private var statsTabState: StatsTabState
 
     enum TabItem: Int, CaseIterable {
         case learn = 0
-        case add = 1
-        case progress = 2
-        case settings = 3
+        case progress = 1
+        case settings = 2
 
         var icon: String {
             switch self {
             case .learn: return "book.fill"
-            case .add: return "plus.square.fill"
             case .progress: return "chart.bar.fill"
             case .settings: return "gearshape.fill"
             }
@@ -37,7 +34,6 @@ struct MainTabView: View {
         var color: Color {
             switch self {
             case .learn: return Color(red: 0.6, green: 0.4, blue: 1.0)    // purple
-            case .add: return ThemeColors.primaryAccent
             case .progress: return Color(red: 1.0, green: 0.6, blue: 0.4) // orange
             case .settings: return Color(red: 0.7, green: 0.7, blue: 0.7) // grey
             }
@@ -48,7 +44,6 @@ struct MainTabView: View {
         self.appState = appState
         let learnState = LearnTabState(appState: appState)
         self._learnTabState = StateObject(wrappedValue: learnState)
-        self._addTabState = StateObject(wrappedValue: AddTabState(appState: appState, learnState: learnState))
         self._statsTabState = StateObject(wrappedValue: StatsTabState(appState: appState))
     }
 
@@ -60,8 +55,6 @@ struct MainTabView: View {
                     switch selectedTab {
                     case .learn:
                         LearnTabView(appState: appState, state: learnTabState, selectedTab: $selectedTab)
-                    case .add:
-                        AddTabView(appState: appState, state: addTabState, selectedTab: $selectedTab)
                     case .progress:
                         StatsTabView(appState: appState, state: statsTabState, selectedTab: $selectedTab)
                     case .settings:
@@ -88,25 +81,37 @@ struct MainTabView: View {
         }
         .diagnosticBorder(.cyan.opacity(0.2), width: 4)
         .onAppear {
-            // Load recommendations if data is already fetched during app launch
-            if appState.hasInitialHistoryLoaded {
-                learnTabState.loadRecommendations()
+            // Start the minimum animation timer
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation {
+                    appState.minAnimationIntervalCompleted = true
+                }
+            }
+            
+            // 🚨 SAFETY TIMEOUT: Force unlock after 7 seconds if data hangs (Prevents "Stuck" Bug)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
+                if isInitializing {
+                    print("⚠️ [MainTabView] SAFETY TIMEOUT REACHED. Force-unlocking UI...")
+                    withAnimation { isInitializing = false }
+                }
+            }
+            
+            // Initial routing set to Learn tab by default in V3
+            performInitialRouting()
+        }
+        .onChange(of: appState.minAnimationIntervalCompleted) { oldValue, completed in
+            if completed {
                 performInitialRouting()
             }
         }
-        .onChange(of: appState.hasInitialHistoryLoaded) { _, loaded in
-            if loaded {
-                performInitialRouting()
-            }
-        }
-        .onChange(of: appState.shouldShowSettingsView) { _, shouldShow in
+        .onChange(of: appState.shouldShowSettingsView) { old, shouldShow in
             if shouldShow {
                 selectedTab = .settings
                 // Reset the state immediately so it can be triggered again if needed
                 appState.shouldShowSettingsView = false
             }
         }
-        .onChange(of: appState.pendingDeepLinkPlace) { _, placeName in
+        .onChange(of: appState.pendingDeepLinkPlace) { old, placeName in
             if let placeName = placeName, let hour = appState.pendingDeepLinkHour {
                 print("📱 [MainTabView] Deep link detected: \(placeName). Switching to Learn tab.")
                 selectedTab = .learn
@@ -122,13 +127,15 @@ struct MainTabView: View {
     }
     
     private func performInitialRouting() {
-        print("🧠 [Routing] Starting initial routing decision...")
-        print("✅ [Routing] Navigating to LEARN tab.")
-        selectedTab = .learn
-        
-        withAnimation(.easeOut(duration: 0.5)) {
-            print("🎬 [Routing] Initializing overlay dismissed.")
-            isInitializing = false
+        if appState.minAnimationIntervalCompleted {
+            print("🧠 [Routing] Starting initial routing decision...")
+            print("✅ [Routing] Navigating to LEARN tab.")
+            selectedTab = .learn
+            
+            withAnimation(.easeOut(duration: 0.1)) {
+                print("🎬 [Routing] Initializing overlay dismissed.")
+                isInitializing = false
+            }
         }
     }
 
@@ -154,7 +161,6 @@ struct MainTabView: View {
     private func tabTitle(for tab: TabItem) -> String {
         switch tab {
         case .learn: return localizationManager.string(.learnTab)
-        case .add: return localizationManager.string(.addTab)
         case .progress: return localizationManager.string(.progressTab)
         case .settings: return localizationManager.string(.settings)
         }

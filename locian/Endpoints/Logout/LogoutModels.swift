@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 // MARK: - Logout Request
 struct LogoutRequest: Codable {

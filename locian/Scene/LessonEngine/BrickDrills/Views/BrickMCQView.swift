@@ -2,13 +2,18 @@ import SwiftUI
 
 struct BrickMCQView: View {
     @StateObject var logic: BrickMCQLogic
-    var lessonDrillLogic: LessonDrillLogic?
-    var onComplete: (() -> Void)?
+    var onComplete: ((Bool) -> Void)?
     @State private var isHintExpanded: Bool = false
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
-        _logic = StateObject(wrappedValue: BrickMCQLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: BrickMCQLogic(
+            state: state, 
+            engine: engine, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
         self.onComplete = onComplete
     }
     
@@ -37,7 +42,10 @@ struct BrickMCQView: View {
                             selectedOption: logic.selectedOption,
                             correctOption: (logic.isCorrect != nil) ? logic.correctOption : nil,
                             isAnswered: logic.isCorrect != nil,
-                            onSelect: { option in logic.selectOption(option) }
+                            onSelect: { option in 
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                logic.selectOption(option) 
+                            }
                         )
                     }
                     .padding(.top, 24)
@@ -45,10 +53,8 @@ struct BrickMCQView: View {
                 }
             }
             
-            // 3. Footer
-            if let wrapper = lessonDrillLogic {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            if logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil {
                 footer
             }
         }

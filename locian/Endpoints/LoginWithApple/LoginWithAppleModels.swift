@@ -5,6 +5,7 @@
 //
 
 import Foundation
+import Combine
 
 // MARK: - Apple Full Name Payload
 struct AppleFullNamePayload: Codable {

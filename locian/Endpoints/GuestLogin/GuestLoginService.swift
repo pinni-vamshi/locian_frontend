@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 class GuestLoginService {
     static let shared = GuestLoginService()

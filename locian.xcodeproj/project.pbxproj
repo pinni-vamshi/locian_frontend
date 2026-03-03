@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		EEE756202F4006DE007B2149 /* Hume in Frameworks */ = {isa = PBXBuildFile; productRef = EEE7561F2F4006DE007B2149 /* Hume */; };
+		EEE756222F4006DE007B2149 /* HumeTestingUtils in Frameworks */ = {isa = PBXBuildFile; productRef = EEE756212F4006DE007B2149 /* HumeTestingUtils */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		EEDDA61B2EAAAA5C00959DDB /* locian.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = locian.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +41,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EEE756222F4006DE007B2149 /* HumeTestingUtils in Frameworks */,
+				EEE756202F4006DE007B2149 /* Hume in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +85,8 @@
 			);
 			name = locian;
 			packageProductDependencies = (
+				EEE7561F2F4006DE007B2149 /* Hume */,
+				EEE756212F4006DE007B2149 /* HumeTestingUtils */,
 			);
 			productName = locian;
 			productReference = EEDDA61B2EAAAA5C00959DDB /* locian.app */;
@@ -110,6 +119,9 @@
 			);
 			mainGroup = EEDDA6122EAAAA5C00959DDB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EEDDA61C2EAAAA5C00959DDB /* Products */;
 			projectDirPath = "";
@@ -362,6 +374,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/HumeAI/hume-swift-sdk.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		EEE7561F2F4006DE007B2149 /* Hume */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */;
+			productName = Hume;
+		};
+		EEE756212F4006DE007B2149 /* HumeTestingUtils */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */;
+			productName = HumeTestingUtils;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EEDDA6132EAAAA5C00959DDB /* Project object */;
 }

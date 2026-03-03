@@ -13,15 +13,17 @@ class BrickMCQLogic: ObservableObject {
     
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
-    var onComplete: (() -> Void)?
-    weak var patternIntroLogic: PatternIntroLogic?  // ✅ Sync: Recap Phase reporting
-    weak var lessonDrillLogic: LessonDrillLogic?    // ✅ Sync: Practice Phase (Ghost) reporting
+    var onComplete: ((Bool) -> Void)?
+    weak var patternIntroLogic: PatternIntroLogic? 
+    weak var practiceLogic: PatternPracticeLogic?
+    weak var ghostLogic: GhostModeLogic?
     
-    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.state = state
         self.engine = engine
         self.patternIntroLogic = patternIntroLogic
-        self.lessonDrillLogic = lessonDrillLogic
+        self.practiceLogic = practiceLogic
+        self.ghostLogic = ghostLogic
         self.onComplete = onComplete
         let targetLanguageCode = engine.lessonData?.target_language ?? "es"
         
@@ -74,9 +76,6 @@ class BrickMCQLogic: ObservableObject {
     func selectOption(_ option: String) {
         print("   🧩 [BrickMCQLogic] selectOption called with: \(option)")
         
-        // ✅ ALWAYS Speak what the user JUST tapped (even if already answered)
-        let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(text: option, language: language)
         
         guard isCorrect == nil else { 
             print("   🧩 [BrickMCQLogic] selectOption - answer already recorded, replaying audio only")
@@ -108,41 +107,139 @@ class BrickMCQLogic: ObservableObject {
         self.isCorrect = isCorrect
         
         // ✅ UNIFIED REPORTING - Notify the active parent manager
-        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect)
-        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
+        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect, input: option)
+        practiceLogic?.markDrillAnswered(isCorrect: isCorrect)
+        ghostLogic?.markDrillAnswered(isCorrect: isCorrect)
         
         // Update Mastery (Only this brick)
         let brickId = state.id.replacingOccurrences(of: "INT-", with: "")
-        let delta = isCorrect ? 0.20 : -0.10
+            .replacingOccurrences(of: "PRACTICE-MISTAKE-", with: "")
+            .replacingOccurrences(of: "GHOST-", with: "")
+        
+        let delta = isCorrect ? 0.10 : -0.05
         engine.updateMastery(id: brickId, delta: delta)
+        
+        // ✅ Localized Feedback
+        playFeedback(isCorrect: isCorrect)
+    }
+    
+    // MARK: - 🎙️ Voice Assets (Decentralized)
+    
+    // 1. Full Context
+    private static let fullIntroVoices = [
+        "Select the correct meaning for \"%@\" in %@.",
+        "Which translation matches \"%@\" in %@?",
+        "Match the meaning of \"%@\" in %@.",
+        "Pick the correct way to say %@ in %@",
+        "How do we say %@ in %@"
+    ]
+    
+    private static let correctVoices = [
+        "You are right! \"%@\" in %@ is \"%@\"",
+        "Exactly. \"%@\" in %@ translates to \"%@\"",
+        "Spot on. In %@, \"%@\" matches \"%@\"",
+        "That's correct. We say \"%@\" for \"%@\" in %@",
+        "Perfect match. \"%@\" in %@ is \"%@\""
+    ]
+    
+    // 3. Concise Feedback
+    private static let wrongVoices = [
+        "Actually, \"%@\" in %@ is \"%@\"",
+        "The translation for \"%@\" in %@ is \"%@\"",
+        "Note the %@ word for \"%@\" is \"%@\"",
+        "The match for %@ in %@ is \"%@\"",
+        "Factual correction: \"%@\" in %@ is \"%@\""
+    ]
+    
+    private static var introIndex = 0
+    
+    static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
+        if let override = drill.overrideVoiceInstructions {
+            print("🎙️ [BrickMCQ] Using Voice Override: '\(override)'")
+            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            return
+        }
+        
+        guard !drill.suppressIntroAudio else { return }
+        
+        let languageCode = engine.lessonData?.target_language ?? "es"
+        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
+        let meaning = drill.drillData.meaning
+        
+        // Sequential Iteration (1-by-1)
+        let index = introIndex % fullIntroVoices.count
+        let template = fullIntroVoices[index]
+        introIndex += 1
+        
+        // Simple Interpolation
+        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
+        text = text.replacingOccurrences(of: "%@", with: languageName)
+        
+        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
+    }
+    
+    private func playFeedback(isCorrect: Bool) {
+        let answer = state.drillData.target
+        let meaning = state.drillData.meaning
+        let targetLang = targetLanguage
+        
+        let template = isCorrect ? 
+            (BrickMCQLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
+            (BrickMCQLogic.wrongVoices.randomElement() ?? "Actually, \"%@\" in %@ is \"%@\"")
+        
+        // Use robust interpolation for first N-1 placeholders
+        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
+        if let langRange = textToSpeak.range(of: "%@") {
+            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
+        }
+        
+        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
+        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
+        
+        if finalComponents.count >= 2 {
+            AudioManager.shared.speak(segments: [
+                .init(text: finalComponents[0], language: "en-US"),
+                .init(text: answer, language: langCode)
+            ])
+        } else {
+            AudioManager.shared.speak(segments: [
+                .init(text: isCorrect ? "Correct! " : "Actually, it is ", language: "en-US"),
+                .init(text: answer, language: langCode)
+            ])
+        }
     }
     
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(text: text, language: language)
+        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
     }
     
     func continueToNext() {
         print("   🧩 [BrickMCQLogic] continueToNext called")
-        if let onComplete = onComplete {
-            print("   🧩 [BrickMCQLogic] Calling onComplete closure")
-            onComplete()
-        } else {
-            print("   🧩 [BrickMCQLogic] Calling finishPattern (fallback)")
-            engine.orchestrator?.finishPattern()
-        }
+        onComplete?(isCorrect ?? true)
     }
     
     @ViewBuilder
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, lessonDrillLogic: LessonDrillLogic? = nil, onComplete: (() -> Void)? = nil) -> some View {
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) -> some View {
         if let introLogic = patternIntroLogic {
             // ✅ Direction A: Pattern Intro (Recap) -> Mini Interaction
             // Hiding Prompt because PatternIntroView Header + Tap Strip already shows Meaning.
             BrickMCQInteraction(drill: state, engine: engine, showPrompt: false, patternIntroLogic: introLogic, onComplete: onComplete)
+                .onAppear {
+                    // 🔊 Trigger Drill-Specific Intro with Context + Language
+                    BrickMCQLogic.playIntro(drill: state, engine: engine, mode: mode)
+                }
         } else {
             // ✅ Direction B: Ghost Mode (Practice) -> Full View
-            BrickMCQView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic, onComplete: onComplete)
+            BrickMCQView(state: state, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+                .onAppear {
+                     // 🔊 Trigger Drill specific intro for Ghost Mode too?
+                     // User said "MCQ starting point... should be different".
+                     // For now, let's enable it here too.
+                     BrickMCQLogic.playIntro(drill: state, engine: engine, mode: mode)
+                }
         }
     }
 }
+

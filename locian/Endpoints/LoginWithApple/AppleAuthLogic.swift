@@ -1,7 +1,7 @@
-import Foundation
 import AuthenticationServices
 import CryptoKit
 import Security
+import Combine
 
 struct ApplePendingUserDetails {
     var username: String?
@@ -48,12 +48,44 @@ class AppleAuthLogic {
     
     func handleAppleSignIn(result: Result<ASAuthorization, Error>) {
         let appState = AppStateManager.shared
+        print("🍎 [AppleAuthLogic] handleAppleSignIn result received")
         
         switch result {
         case .failure(let error):
             appState.isAuthenticating = false
-            appState.authError = error.localizedDescription
-            appState.showAuthError = true
+            
+            if let authError = error as? ASAuthorizationError {
+                switch authError.code {
+                case .canceled:
+                    print("🍎 [AppleAuthLogic] User cancelled Apple Sign-In")
+                    // If user cancelled, we just stop without showing a scary error alert
+                    appState.resetAuthStatus()
+                case .failed:
+                    print("🍎 [AppleAuthLogic] Apple Sign-In failed: \(error.localizedDescription)")
+                    appState.authError = "Apple Sign-In failed. Please try again."
+                    appState.showAuthError = true
+                case .invalidResponse:
+                    print("🍎 [AppleAuthLogic] Invalid response from Apple: \(error.localizedDescription)")
+                    appState.authError = "Invalid response from Apple."
+                    appState.showAuthError = true
+                case .notHandled:
+                    print("🍎 [AppleAuthLogic] Apple Sign-In not handled: \(error.localizedDescription)")
+                    appState.authError = "Apple Sign-In was not handled. Please try again."
+                    appState.showAuthError = true
+                case .unknown:
+                    print("🍎 [AppleAuthLogic] Unknown Apple Sign-In error: \(error.localizedDescription)")
+                    appState.authError = "An unknown error occurred during Apple Sign-In."
+                    appState.showAuthError = true
+                default:
+                    print("🍎 [AppleAuthLogic] Other Apple Sign-In error code: \(authError.code)")
+                    appState.authError = error.localizedDescription
+                    appState.showAuthError = true
+                }
+            } else {
+                print("🍎 [AppleAuthLogic] Non-Apple error during sign-in: \(error.localizedDescription)")
+                appState.authError = error.localizedDescription
+                appState.showAuthError = true
+            }
             clearAppleAuthState()
             
         case .success(let authorization):
@@ -109,19 +141,23 @@ class AppleAuthLogic {
                     
                     switch result {
                     case .failure(let error):
+                        print("🍎 [AppleAuthLogic] Backend API Failure: \(error.localizedDescription)")
                         appState.authError = error.localizedDescription
                         appState.showAuthError = true
                         self?.clearAppleAuthState()
                         
                     case .success(let response):
+                        print("🍎 [AppleAuthLogic] Backend API Success: \(response.success)")
                         guard response.success, let data = response.data, !data.session_token.isEmpty else {
                             let backendMessage = self?.sanitized(response.message) ?? self?.sanitized(response.error)
+                            print("🍎 [AppleAuthLogic] Backend API logic failure: \(backendMessage ?? "No message")")
                             appState.authError = backendMessage ?? "Apple login failed. Please try again."
                             appState.showAuthError = true
                             self?.clearAppleAuthState()
                             return
                         }
                         
+                        print("🍎 [AppleAuthLogic] Session obtained. Persisting...")
                         self?.persistAppleSession(
                             data: data,
                             fallbackUsername: requestBody.username,

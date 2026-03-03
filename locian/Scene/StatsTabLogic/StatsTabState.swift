@@ -34,59 +34,17 @@ class StatsTabState: ObservableObject {
                 self?.refreshData()
             }
             .store(in: &cancellables)
-            
-        appState.$timeline
-            .sink { [weak self] _ in
-                self?.updateStudiedHours()
-            }
-            .store(in: &cancellables)
     }
     
     func refreshData() {
-        if let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first {
-            updatePracticeDatesCache(practiceDates: pair.practice_dates)
-        }
+        let pair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
+        updatePracticeDatesCache(practiceDates: pair?.practice_dates ?? [])
         updateStudiedHours()
         updateChronotype()
     }
     
     private func updateStudiedHours() {
-        guard let places = appState.timeline?.places else { 
-            print("📊 [StatsState] No timeline places found for studiedHours.")
-            return 
-        }
-        
-        var hoursSet = Set<Int>()
-        for place in places {
-            if let h = extractHour(from: place) {
-                hoursSet.insert(h)
-            }
-        }
-        
-        print("📊 [StatsState] Extracted \(hoursSet.count) unique study hours: \(hoursSet.sorted())")
-        
-        DispatchQueue.main.async {
-            self.studiedHours = hoursSet
-            self.updateChronotype()
-        }
-    }
-    
-    private func extractHour(from place: MicroSituationData) -> Int? {
-        if let h = place.hour { return h }
-        guard let tStr = place.time else { return nil }
-        
-        let cleaned = tStr.replacingOccurrences(of: "\u{00A0}", with: " ").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        
-        let formats = ["h:mm a", "h:mma", "HH:mm", "h:mm"]
-        for format in formats {
-            formatter.dateFormat = format
-            if let date = formatter.date(from: cleaned) {
-                return Calendar.current.component(.hour, from: date)
-            }
-        }
-        return nil
+        // V3 cleanup: timelinePlaces no longer used for local stats calculation
     }
     
     func onAppear() {
@@ -94,38 +52,13 @@ class StatsTabState: ObservableObject {
             appState.loadAvailableLanguagePairs { [weak self] success in
                 if success {
                     DispatchQueue.main.async { self?.refreshData() }
-                    self?.fetchTimelineIfNeeded()
                 }
             }
         } else {
             refreshData()
-            fetchTimelineIfNeeded()
         }
     }
     
-    private func fetchTimelineIfNeeded() {
-        if (appState.timeline == nil || !appState.hasInitialHistoryLoaded) && !appState.isLoadingTimeline, let token = appState.authToken {
-            appState.isLoadingTimeline = true
-            GetStudiedPlacesService.shared.fetchStudiedPlaces(sessionToken: token) { [weak self] result in
-                DispatchQueue.main.async {
-                    switch result {
-                    case .success(let response):
-                        if let data = response.data {
-                            self?.appState.timeline = TimelineData(
-                                places: data.places,
-                                inputTime: data.input_time,
-                                timeSpan: data.time_span
-                            )
-                        }
-                    case .failure(let error):
-                        print("Failed to load stats history: \(error)")
-                    }
-                    self?.appState.isLoadingTimeline = false
-                    self?.appState.hasInitialHistoryLoaded = true
-                }
-            }
-        }
-    }
     
     private func updatePracticeDatesCache(practiceDates: [String]) {
         let calendar = Calendar.current
@@ -302,42 +235,8 @@ class StatsTabState: ObservableObject {
     }
     
     private func determineChronotype(practiceDates: [String]) -> String {
-        var hourCounts = [Int](repeating: 0, count: 24)
-        
-        // Count hours from timeline data
-        if let places = appState.timeline?.places {
-            for place in places {
-                if let h = extractHour(from: place) {
-                    hourCounts[h] += 1
-                }
-            }
-        }
-        
-        // Find peak 3-hour window
-        var maxWindowCount = 0
-        var bestWindowStart = 0
-        
-        for h in 0..<24 {
-            let c1 = hourCounts[h]
-            let c2 = hourCounts[(h+1)%24]
-            let c3 = hourCounts[(h+2)%24]
-            let total = c1 + c2 + c3
-            if total > maxWindowCount {
-                maxWindowCount = total
-                bestWindowStart = h
-            }
-        }
-        
-        let peakCenter = (bestWindowStart + 1) % 24
-        
-        switch peakCenter {
-        case 5..<12:
-            return "EARLY BIRD"
-        case 12..<17:
-            return "DAY WALKER"
-        default:
-            return "NIGHT OWL"
-        }
+        // V3 cleanup: timelinePlaces no longer used. Defaulting to Night Owl for now.
+        return "NIGHT OWL"
     }
     
     // MARK: - Local Orchestration

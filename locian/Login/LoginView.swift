@@ -12,7 +12,6 @@ struct LoginView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject private var localizationManager = LocalizationManager.shared
     @ObservedObject private var languageManager = LanguageManager.shared
-    @State private var profession: String = ""
     @State private var viewOpacity: Double = 0
     
     // Neon Colors
@@ -98,21 +97,21 @@ struct LoginView: View {
                         Button {
                             let generator = UIImpactFeedbackGenerator(style: .light)
                             generator.impactOccurred()
-                            profession = prof
+                            appState.selectedProfession = prof
                         } label: {
                             Text(getLocalizedProfession(prof))
                                 .font(.system(size: 13, weight: .bold, design: .monospaced))
-                                .foregroundColor(profession == prof ? .white : .gray)
+                                .foregroundColor(appState.selectedProfession == prof ? .white : .gray)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
                                 .frame(minWidth: 80)
                                 .background(
                                     Rectangle()
-                                        .fill(profession == prof ? neonPink : Color.white.opacity(0.03))
+                                        .fill(appState.selectedProfession == prof ? neonPink : Color.white.opacity(0.03))
                                 )
                                 .overlay(
                                     Rectangle()
-                                        .stroke(profession == prof ? neonPink : Color.white.opacity(0.1), lineWidth: 1)
+                                        .stroke(appState.selectedProfession == prof ? neonPink : Color.white.opacity(0.1), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -128,7 +127,7 @@ struct LoginView: View {
                 VStack(spacing: 20) {
                     // Apple Sign In
                     SignInWithAppleButton(.signIn) { request in
-                        appState.configureAppleSignIn(request, username: nil, profession: profession.isEmpty ? nil : profession, phoneNumber: nil, emailOverride: nil)
+                        appState.configureAppleSignIn(request, username: nil, profession: appState.selectedProfession.isEmpty ? nil : appState.selectedProfession, phoneNumber: nil, emailOverride: nil)
                     } onCompletion: { result in
                         appState.handleAppleSignIn(result: result)
                     }
@@ -141,8 +140,8 @@ struct LoginView: View {
                             .shadow(color: neonPink.opacity(0.3), radius: 10, x: 0, y: 0)
                     )
                     .padding(.horizontal, 24)
-                        .opacity(profession.isEmpty ? 0.4 : 1.0)
-                        .disabled(profession.isEmpty || appState.isAuthenticating)
+                        .opacity(appState.selectedProfession.isEmpty ? 0.4 : 1.0)
+                        .disabled(appState.selectedProfession.isEmpty || appState.isAuthenticating)
                 }
                 .padding(.bottom, 40)
             }
@@ -186,8 +185,19 @@ struct LoginView: View {
             withAnimation {
                 viewOpacity = 1.0
             }
+            // Reset any old auth errors when appearing
+            appState.resetAuthStatus()
         }
         .opacity(viewOpacity)
+        .alert(localizationManager.string(.error), isPresented: $appState.showAuthError) {
+            Button(localizationManager.string(.ok)) {
+                appState.resetAuthStatus()
+            }
+        } message: {
+            if let error = appState.authError {
+                Text(error)
+            }
+        }
     }
     
 }

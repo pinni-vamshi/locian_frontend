@@ -31,12 +31,12 @@ struct PatternProgressDisc: View {
 struct PatternProgressRow: View {
     let patterns: [String] // Pattern IDs
     let currentPatternId: String
-    let engine: LessonEngine
+    @ObservedObject var engine: LessonEngine
     
     var body: some View {
         HStack(spacing: 6) {
             ForEach(patterns, id: \.self) { patternId in
-                let mastery = engine.getBlendedMastery(for: "\(patternId)-d0")
+                let mastery = engine.getBlendedMastery(for: patternId)  // ✅ Use clean ID
                 let isActive = (patternId == currentPatternId)
                 
                 PatternProgressDisc(mastery: mastery, isActive: isActive)

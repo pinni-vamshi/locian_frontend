@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 protocol AppStrings {
     var settings: SettingsStrings { get }

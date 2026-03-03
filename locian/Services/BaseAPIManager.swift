@@ -93,7 +93,7 @@ extension BaseAPIManagerProtocol {
         method: String = "POST",
         body: Encodable? = nil,
         headers: [String: String] = [:],
-        timeoutInterval: TimeInterval = 8.0,
+        timeoutInterval: TimeInterval = 60.0,
         completion: @escaping (Result<Data, Error>) -> Void
     ) {
         guard let url = URL(string: "\(baseURL)\(endpoint)") else {
@@ -116,18 +116,47 @@ extension BaseAPIManagerProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
+        // 🚀 CENTRALIZED AUTH: Inject session token into headers
+        let token = AppStateManager.shared.authToken ?? ""
+        if !token.isEmpty {
+            if request.value(forHTTPHeaderField: "Authorization") == nil {
+                request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            }
+            if request.value(forHTTPHeaderField: "session_token") == nil {
+                request.setValue(token, forHTTPHeaderField: "session_token")
+            }
+        }
+        
         // Encode body if provided
         if let body = body {
             do {
                 let encoder = JSONEncoder()
-                let encodedData = try encoder.encode(AnyEncodable(body))
-                request.httpBody = encodedData
+                let initialData = try encoder.encode(AnyEncodable(body))
                 
-                // 🚀 TRACE: Log Request Body
-                if let bodyString = String(data: encodedData, encoding: .utf8) {
-                    print("\n📤 [API-REQUEST] \(method) \(endpoint)")
+                // 🚀 BODY INJECTION: Attempt to add session_token to JSON body automatically
+                var finalData = initialData
+                if !token.isEmpty {
+                    if var jsonObject = try? JSONSerialization.jsonObject(with: initialData, options: .mutableContainers) as? [String: Any] {
+                        // Only inject if missing or empty to avoid overwriting intentional overrides
+                        if jsonObject["session_token"] == nil || (jsonObject["session_token"] as? String)?.isEmpty == true {
+                            jsonObject["session_token"] = token
+                            if let modifiedData = try? JSONSerialization.data(withJSONObject: jsonObject, options: []) {
+                                finalData = modifiedData
+                            }
+                        }
+                    }
+                }
+                
+                request.httpBody = finalData
+                
+                // 🚀 DEBUG TRACE: Log Request Details
+                print("\n--------------------------------------------------")
+                print("📤 [API-OUT] \(method) \(url.absoluteString)")
+                print("   Headers: \(request.allHTTPHeaderFields ?? [:])")
+                if let bodyString = String(data: finalData, encoding: .utf8) {
                     print("   Body: \(bodyString)")
                 }
+                print("--------------------------------------------------")
             } catch {
                 print("❌ [API-ENCODING-ERROR] \(endpoint): \(error.localizedDescription)")
                 ErrorHandler.log(error, context: "Encoding request body for \(endpoint)")
@@ -140,6 +169,13 @@ extension BaseAPIManagerProtocol {
         
         // Perform request
         URLSession.shared.dataTask(with: request) { data, response, error in
+            print("\n🚨 [ROOT_API_CAPTURE] \(endpoint)")
+            print("   - Data: \(data?.count ?? 0) bytes")
+            print("   - Error: \(error?.localizedDescription ?? "None")")
+            if let http = response as? HTTPURLResponse {
+                print("   - HTTP Status: \(http.statusCode)")
+            }
+            
             DispatchQueue.main.async {
                 // Handle network errors
                 if let error = error {

@@ -10,7 +10,19 @@
 import SwiftUI
 import UIKit
 
+struct IsActionPressedKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var isActionPressed: Bool {
+        get { self[IsActionPressedKey.self] }
+        set { self[IsActionPressedKey.self] = newValue }
+    }
+}
+
 struct DoubleArrowButton: View {
+    @Environment(\.isActionPressed) var isActionPressed
     
     enum Direction {
         case up, down, left, right
@@ -49,10 +61,9 @@ struct DoubleArrowButton: View {
     @State private var isPressed: Bool = false
     @State private var dragCancelled: Bool = false
     
-    // Initializer for simple single color use
     init(direction: Direction, color: Color, size: CGFloat = 24, spacing: CGFloat = -4, hasSquareBackground: Bool = false, hasMixedSquareBackground: Bool = false, action: @escaping () -> Void) {
         self.direction = direction
-        self.arrow1Color = color.opacity(0.5)
+        self.arrow1Color = color
         self.arrow2Color = color
         self.size = size
         self.spacing = spacing
@@ -86,7 +97,7 @@ struct DoubleArrowButton: View {
              
              // The Double Arrow Content
              layoutContent
-                 .font(.system(size: size, weight: .bold)) // Bolder for background mode
+                 .font(.system(size: size, weight: .regular))
         }
         // Gesture Logic
         .gesture(
@@ -142,14 +153,18 @@ struct DoubleArrowButton: View {
         }
     }
     
+    private var activeIsPressed: Bool {
+        isPressed || isActionPressed
+    }
+    
     // The arrow that moves (FIRST ARROW)
     private var movableArrow: some View {
-        let moveDistance: CGFloat = isPressed ? 4 : 0
+        let moveDistance: CGFloat = activeIsPressed ? 4 : 0
         
         return arrowBox(
             image: direction.iconName,
             color: arrow1Color,
-            opacity: isPressed ? 1.0 : 0.6,
+            opacity: 1.0,
             isMovable: true
         )
         .offset(
@@ -164,7 +179,7 @@ struct DoubleArrowButton: View {
             image: direction.iconName,
             color: arrow2Color ?? arrow1Color,
             opacity: 1.0,
-            scale: isPressed ? 1.1 : 1.0
+            scale: activeIsPressed ? 1.1 : 1.0
         )
     }
     
@@ -189,5 +204,19 @@ struct DoubleArrowButton: View {
             // [Movable]
             VStack(spacing: spacing) { fixedArrow; movableArrow }
         }
+    }
+}
+
+struct ActionPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .environment(\.isActionPressed, configuration.isPressed)
+            .onChange(of: configuration.isPressed) { pressed in
+                if pressed {
+                    HapticFeedback.buttonPress()
+                } else {
+                    HapticFeedback.buttonRelease()
+                }
+            }
     }
 }

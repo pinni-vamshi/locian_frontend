@@ -4,11 +4,18 @@ struct PatternTypingView: View {
     @StateObject private var logic: PatternTypingLogic
     @EnvironmentObject var appState: AppStateManager
     @FocusState private var isFocused: Bool
-    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: ((Bool) -> Void)? // ✅ Direct closure reference
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
-        _logic = StateObject(wrappedValue: PatternTypingLogic(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: PatternTypingLogic(
+            state: state, 
+            engine: engine, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
+        self.onComplete = onComplete
     }
     
     var body: some View {
@@ -21,7 +28,7 @@ struct PatternTypingView: View {
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
                     textColor: .black,
-                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
+                    modeLabel: (logic.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
                 )
                 
                 // 2. Body
@@ -63,20 +70,19 @@ struct PatternTypingView: View {
                 }
             }
             
-            // 3. Footer
-            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
-            if let wrapper = lessonDrillLogic, logic.isCorrect != nil {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
-                // Otherwise show Local Footer (Check Button)
+            // 3. Footer (Suppressed when hosted by an orchestrator, UNLESS it's Ghost Mode needing a check button)
+            let isStandalone = logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil
+            let isGhostPreAnswer = logic.ghostLogic != nil && logic.isCorrect == nil
+            
+            if isStandalone || isGhostPreAnswer {
                 footer
             }
         }
         .background(Color.black.ignoresSafeArea())
-        .background(Color.black.ignoresSafeArea())
         .onAppear { 
             isFocused = true 
             logic.appState = appState
+            logic.bindToParent()
         }
     }
     
@@ -91,7 +97,7 @@ struct PatternTypingView: View {
                         let title = isCorrect ? "CORRECT!" : "INCORRECT"
                         
                         CyberProceedButton(
-                            action: { lessonDrillLogic?.continueToNext() },
+                            action: { onComplete?(isCorrect) },
                             label: "NEXT_STORY_STEP",
                             title: title,
                             color: color,

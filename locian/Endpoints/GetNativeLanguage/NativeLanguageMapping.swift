@@ -7,32 +7,22 @@ class NativeLanguageMapping {
     private init() {}
     
     // Supported native language codes
-    let availableCodes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "te", "ta", "ml", "ar", "tr", "pl", "nl", "sv", "no", "da", "fi", "el", "he"]
+    let availableCodes = ["en", "es", "fr", "ja", "de", "ko", "it", "zh", "pt", "ru", "nl", "ar", "tr"]
     
     private let names: [String: (english: String, native: String)] = [
         "en": ("English", "English"),
-        "te": ("Telugu", "తెలుగు"),
-        "ta": ("Tamil", "தமிழ்"),
-        "ml": ("Malayalam", "മലയാളം"),
         "es": ("Spanish", "Español"),
         "fr": ("French", "Français"),
+        "ja": ("Japanese", "日本語"),
         "de": ("German", "Deutsch"),
+        "ko": ("Korean", "한국어"),
         "it": ("Italian", "Italiano"),
+        "zh": ("Chinese", "中文"),
         "pt": ("Portuguese", "Português"),
         "ru": ("Russian", "Русский"),
-        "zh": ("Chinese", "中文"),
-        "ja": ("Japanese", "日本語"),
-        "ko": ("Korean", "한국어"),
-        "ar": ("Arabic", "العربية"),
-        "tr": ("Turkish", "Türkçe"),
-        "pl": ("Polish", "Polski"),
         "nl": ("Dutch", "Nederlands"),
-        "sv": ("Swedish", "Svenska"),
-        "no": ("Norwegian", "Norsk"),
-        "da": ("Danish", "Dansk"),
-        "fi": ("Finnish", "Suomi"),
-        "el": ("Greek", "Ελληνικά"),
-        "he": ("Hebrew", "עברית")
+        "ar": ("Arabic", "العربية"),
+        "tr": ("Turkish", "Türkçe")
     ]
     
     func getDisplayNames(for code: String) -> (english: String, native: String) {
@@ -41,8 +31,7 @@ class NativeLanguageMapping {
     }
     
     func normalizeAndValidate(_ input: String) -> String? {
-        let code = input.lowercased()
-        return availableCodes.contains(code) ? code : nil
+        return getCode(for: input)
     }
     
     /// Helper: Reverse lookup to find code from name (e.g., "Spanish" -> "es")

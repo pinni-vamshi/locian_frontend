@@ -29,9 +29,9 @@ class LessonFlow {
             let historyWeakSpots = candidates.filter { history.contains($0.id) && getBlendedScore(for: $0.id) < 0.85 }
             
             if historyWeakSpots.isEmpty {
-                // ALL PATTERNS IN CURRENT GROUP > 0.85 -> Advance or Stop
+                // ALL PATTERNS > 0.85 -> FINISH SESSION
                 DispatchQueue.main.async {
-                    self.orchestrator?.engine?.advanceGroup()
+                    self.orchestrator?.engine?.finishSession()
                 }
                 return
             } else {
@@ -44,52 +44,53 @@ class LessonFlow {
         }
         
         // 2. SELECTION LOGIC (Depth-First: Finish What You Started)
+        
+        // ✅ USER REQUEST: "First one be random"
+        // If this is the START of a session (no history), pick a random pattern to begin.
+        if history.isEmpty {
+            if let randomStart = candidates.randomElement() {
+                print("   🎲 [Flow] Session Start: Picking RANDOM first pattern: \(randomStart.id)")
+                orchestrator?.startPattern(randomStart)
+                return
+            }
+        }
+        
         var potential = candidates.filter { !history.contains($0.id) }
         
         if potential.isEmpty {
             potential = candidates // Fallback to avoid stall
         }
         
-        print("\n🌊 [Flow] PICK NEXT PATTERN TRIGGERED")
-        print("   - Non-History Candidates: \(potential.count)")
-        print("   - History Buffer: \(history)")
+        print("\n🌊 [Flow] SIMPLIFIED SELECTION LOGIC TRIGGERED")
+        print("   - Candidates Total: \(candidates.count)")
+        print("   - History Buffer (Last 3): \(history)")
+
+        // 1. FILTER: Exclude History
+        let availablePool = candidates.filter { !history.contains($0.id) }
         
-        // Split into "Active" (Started) and "New" (Untouched)
-        let active = potential.filter { getBlendedScore(for: $0.id) > 0.0 }
-        let new = potential.filter { getBlendedScore(for: $0.id) == 0.0 }
+        let pool = availablePool.isEmpty ? candidates : availablePool // Fallback if stuck
         
-        print("   - Active Pool (>0.0): \(active.count)")
-        print("   - New Pool (0.0): \(new.count)")
+        // 2. FIND MAX SCORE
+        // "Just pick the highest highest master... if everything is Zeero just pick a random one."
+        let maxScore = pool.map { getBlendedScore(for: $0.id) }.max() ?? 0.0
         
-        let selected: PatternData
+        // 3. GET ALL CANDIDATES WITH MAX SCORE
+        // This handles both the "Finish Best" case and the "Randomize Zeros" case automatically.
+        let bestCandidates = pool.filter { getBlendedScore(for: $0.id) == maxScore }
         
-        if !active.isEmpty {
-            // PRIORITY 1: Finish Active Patterns
-            // Pick the HIGHEST mastery (closest to 0.85 finish line)
-            print("   🌊 [Flow] Depth-First: Polishing Active (\(active.count) items)")
-            
-            // Log top active candidates
-            let sortedActive = active.sorted { getBlendedScore(for: $0.id) > getBlendedScore(for: $1.id) }
-            for (i, p) in sortedActive.prefix(5).enumerated() {
-                print("      \(i+1). [\(p.id)] Mastery: \(String(format: "%.2f", getBlendedScore(for: p.id))) - \"\(p.target)\"")
-            }
-            
-            selected = sortedActive.first ?? active[0]
-            print("   ✅ SELECTED: \(selected.id) (Mastery: \(String(format: "%.2f", getBlendedScore(for: selected.id))))")
-            
+        print("   📊 [Flow] Max Score Found: \(String(format: "%.2f", maxScore))")
+        print("   🎲 [Flow] Candidates with Max Score: \(bestCandidates.count)")
+        
+        // 4. RANDOM TIE-BREAKER
+        // If maxScore is 0.0, this picks a random new pattern.
+        // If maxScore is 0.84, this picks a random high-mastery pattern to finish.
+        if let winner = bestCandidates.randomElement() {
+            print("   ✅ [Flow] SELECTED: \(winner.id) - \"\(winner.target)\"")
+            orchestrator?.startPattern(winner)
         } else {
-            // PRIORITY 2: Start New Patterns
-            // Pick from New (Order is usually sequential from groups)
-            print("   🌊 [Flow] Depth-First: Starting New (\(new.count) items)")
-             if let firstNew = new.first {
-                print("   ✅ SELECTED NEW: \(firstNew.id) - \"\(firstNew.target)\"")
-                selected = firstNew
-             } else {
-                selected = candidates[0]
-             }
+            // Should be impossible given pool logic, but safe fallback
+            print("   ⚠️ [Flow] Fallback Safety Triggered")
+            orchestrator?.startPattern(pool[0])
         }
-        
-        // 3. HANDOFF: Flow -> Orchestrator
-        orchestrator?.startPattern(selected)
     }
 }

@@ -57,9 +57,21 @@ struct LessonView: View {
                         case .ghostManager:
                             GhostModeManagerView(targetPattern: state, engine: engine)
                                 .id("ghost-\(state.id)")
-                        default:
-                            FullDrillManagerView(state: state, engine: engine)
+                        case .patternPractice:
+                            PatternPracticeView(targetPattern: state, engine: engine)
                                 .id("practice-\(state.id)")
+                        default:
+                            if state.isBrick {
+                                BrickModeSelector(drill: state, engine: engine, onComplete: { _ in
+                                    engine.orchestrator?.finishPattern(for: state.patternId)
+                                })
+                                .id("drill-brick-\(state.id)")
+                            } else {
+                                PatternModeSelector(drill: state, engine: engine, onComplete: { _ in
+                                    engine.orchestrator?.finishPattern(for: state.patternId)
+                                })
+                                .id("drill-pattern-\(state.id)")
+                            }
                         }
                     } else if engine.isSessionComplete {
 LessonCompletionView(onFinish: {

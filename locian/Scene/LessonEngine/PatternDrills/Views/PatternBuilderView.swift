@@ -3,11 +3,19 @@ import SwiftUI
 struct PatternBuilderView: View {
     @StateObject private var logic: PatternBuilderLogic
     @EnvironmentObject var appState: AppStateManager
-    var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: ((Bool) -> Void)?
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
-        _logic = StateObject(wrappedValue: PatternBuilderLogic(state: state, engine: engine, appState: nil, lessonDrillLogic: lessonDrillLogic))
-        self.lessonDrillLogic = lessonDrillLogic
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
+        _logic = StateObject(wrappedValue: PatternBuilderLogic(
+            state: state, 
+            engine: engine, 
+            appState: nil, 
+            patternIntroLogic: patternIntroLogic, 
+            practiceLogic: practiceLogic, 
+            ghostLogic: ghostLogic, 
+            onComplete: onComplete
+        ))
+        self.onComplete = onComplete
     }
     
     var body: some View {
@@ -20,7 +28,7 @@ struct PatternBuilderView: View {
                     targetLanguage: logic.targetLanguage,
                     backgroundColor: .white,
                     textColor: .black,
-                    modeLabel: (lessonDrillLogic?.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
+                    modeLabel: (logic.state.id.contains("ghost") == true) ? "GHOST REHEARSAL" : nil
                 )
                 
                 // 2. Body (SCROLLABLE content)
@@ -37,7 +45,10 @@ struct PatternBuilderView: View {
                                 .padding(.trailing, 24)
                         
                         FlowLayout(data: Array(logic.selectedTokens.enumerated()), id: \.element.id, spacing: 8) { index, token in
-                            Button(action: { logic.removeToken(at: index) }) {
+                            Button(action: { 
+                                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                logic.removeToken(at: index) 
+                            }) {
                                 Text(token.text)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
@@ -60,7 +71,6 @@ struct PatternBuilderView: View {
                     
                     Color.clear.frame(height: 16) // Tightened gap
                     Divider().background(Color.white.opacity(0.2)) // Edge-to-edge divider
-
                     
                     // Available Area / Result Area
                     if !logic.checked {
@@ -74,7 +84,10 @@ struct PatternBuilderView: View {
                                 .padding(.trailing, 24)
                             
                             FlowLayout(data: Array(logic.availableTokens.enumerated()), id: \.element.id, spacing: 8) { index, token in
-                                Button(action: { logic.selectToken(at: index) }) {
+                                Button(action: { 
+                                    UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                                    logic.selectToken(at: index) 
+                                }) {
                                     Text(token.text)
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
@@ -94,27 +107,24 @@ struct PatternBuilderView: View {
                             ExploreSimilarWordsSection(logic: logic)
                         }
                     }
-
                     
                     Color.clear.frame(height: 200) // Huge bottom spacer for scroll safety
                 }
             }
             }
-
             
+            // 3. Footer (Suppressed when hosted by an orchestrator, UNLESS it's Ghost Mode needing a check button)
+            let isStandalone = logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil
+            let isGhostPreCheck = logic.ghostLogic != nil && !logic.checked
             
-            // 3. Footer (STAYS FIXED)
-            // ✅ Only use Wrapper (Continue) if we are in CHECK mode
-            if let wrapper = lessonDrillLogic, logic.checked {
-                DrillFooterWrapper(logic: wrapper)
-            } else {
-                // Otherwise show Local Footer (Check Button)
+            if isStandalone || isGhostPreCheck {
                 footer
             }
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {
             logic.appState = appState
+            logic.bindToParent()
         }
     }
     
@@ -131,7 +141,7 @@ struct PatternBuilderView: View {
                         let title = isCorrect ? "CORRECT!" : "INCORRECT"
                         
                         CyberProceedButton(
-                            action: { lessonDrillLogic?.continueToNext() },
+                            action: { onComplete?(isCorrect) },
                             label: "NEXT_STORY_STEP",
                             title: title,
                             color: color,

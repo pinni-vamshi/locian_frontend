@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 // MARK: - Update Native Language Request
 struct UpdateNativeLanguageRequest: Codable {

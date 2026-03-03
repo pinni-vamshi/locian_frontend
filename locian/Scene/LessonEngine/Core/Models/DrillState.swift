@@ -19,6 +19,8 @@ enum DrillMode: String, Codable {
     case speaking = "Speaking"
     case ghostManager = "Ghost-Manager"
     case prerequisites = "Prerequisites"
+    case patternPractice = "Pattern-Practice"
+    case mastered = "Mastery-Victory"
     
     var displayName: String {
         switch self {
@@ -37,6 +39,8 @@ enum DrillMode: String, Codable {
         case .vocabIntro: return "VOCAB INTRODUCTION"
         case .ghostManager: return "REHEARSAL"
         case .prerequisites: return "FOUNDATION"
+        case .patternPractice: return "PRACTICE LOOP"
+        case .mastered: return "MASTERED"
         }
     }
 }
@@ -100,6 +104,7 @@ struct DrillState: Identifiable, Codable {
     
     // Logic state (Transient)
     var currentMode: DrillMode?
+    var suppressIntroAudio: Bool = false // ✅ NEW: Allows Ghost Mode to take over audio
+    var overrideVoiceInstructions: String? = nil
+    var voiceLanguage: String? = nil
 }
-
-

@@ -63,6 +63,25 @@ extension AppStateManager {
         return userLanguagePairs.contains { ($0.target_language.trimmingCharacters(in: .whitespacesAndNewlines)).isEmpty == false }
     }
     
+    /// Returns the active language pair for display, or a placeholder if none exists.
+    /// Centralizes the fallback logic to avoid hardcoding in Views.
+    func getDisplayLanguagePair() -> LanguagePair {
+        if let pair = userLanguagePairs.first(where: { $0.is_default }) ?? userLanguagePairs.first {
+            return pair
+        }
+        
+        // Placeholder
+        let native = nativeLanguage.isEmpty ? "English" : nativeLanguage
+        // "ADD LANGUAGE" is a placeholder key. In a real app, this might be localized.
+        return LanguagePair(
+            native_language: native,
+            target_language: "ADD LANGUAGE",
+            is_default: true,
+            user_level: "Beginner",
+            practice_dates: []
+        )
+    }
+    
     // MARK: - API Wrappers (Delegated to Domain Logic)
     
     func loadAvailableLanguagePairs(completion: @escaping (Bool) -> Void) {

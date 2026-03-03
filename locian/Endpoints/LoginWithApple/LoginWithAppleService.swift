@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 class LoginWithAppleService {
     static let shared = LoginWithAppleService()

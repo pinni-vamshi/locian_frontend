@@ -40,29 +40,14 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     
     // Configuration
     
-    // Universal Memory (Date-Independent)
-    private struct UniversalStudyAnchor: Codable {
-        let id: String
-        let placeName: String
-        let hour: Int
-        var latitude: Double?
-        var longitude: Double?
-        var timeSpan: String?
-        var vector: [Double]?
-    }
-    
-    private var universalAnchors: [UniversalStudyAnchor] = []
-    private var latestIntentVector: [Double]?
-    
     private let anchorsKey = "notification_universal_anchors"
-    private let intentVectorKey = "notification_latest_intent_vector"
+    
+    @Published var intentTimeline: [String: TimeSpanSnapshot]? // Mirrors AppStateManager for local monitoring
     
     private override init() {
         self.isNotificationsEnabled = (UserDefaults.standard.object(forKey: "isNotificationsEnabled") as? Bool) ?? true
         super.init()
         UNUserNotificationCenter.current().delegate = self
-        loadUniversalAnchors()
-        loadContextualMemory()
     }
     
     private var currentLanguageCode: String {
@@ -70,83 +55,12 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         return NativeLanguageMapping.shared.getCode(for: nativeName) ?? "en"
     }
     
-    private func loadContextualMemory() {
-        if let data = UserDefaults.standard.data(forKey: intentVectorKey),
-           let decoded = try? JSONDecoder().decode([Double].self, from: data) {
-            self.latestIntentVector = decoded
-        }
-    }
     
-    private func saveContextualMemory() {
-        if let encoded = try? JSONEncoder().encode(latestIntentVector) {
-            UserDefaults.standard.set(encoded, forKey: intentVectorKey)
-        }
-    }
+    // MARK: - Harvesting (Retired)
+    // harvest(from timeline: TimelineData) removed as studied-places endpoint is retired.
     
-    private func loadUniversalAnchors() {
-        if let data = UserDefaults.standard.data(forKey: anchorsKey),
-           let decoded = try? JSONDecoder().decode([UniversalStudyAnchor].self, from: data) {
-            self.universalAnchors = decoded
-            print("🧠 [NotificationManager] Loaded \(decoded.count) universal anchors.")
-        }
-    }
+    // harvestIntent removed - using AppStateManager.intentTimeline for notifications now.
     
-    private func saveUniversalAnchors() {
-        if let encoded = try? JSONEncoder().encode(universalAnchors) {
-            UserDefaults.standard.set(encoded, forKey: anchorsKey)
-        }
-    }
-    
-    func harvest(from timeline: TimelineData) {
-        harvestPatterns(from: timeline)
-        harvestIntent(from: timeline)
-    }
-    
-    private func harvestPatterns(from timeline: TimelineData) {
-        var updated = false
-        for place in timeline.places {
-            guard let micro = place.micro_situations?.first, let hour = place.hour else { continue }
-            let lat = place.latitude ?? 0
-            let lon = place.longitude ?? 0
-            // Collision-Free ID: Coordinates + Hour
-            let compositeID = "\(String(format: "%.3f", lat))_\(String(format: "%.3f", lon))_\(hour)"
-            
-            if let index = universalAnchors.firstIndex(where: { $0.id == compositeID }) {
-                if lat != 0 && lon != 0 && (universalAnchors[index].latitude == 0 || universalAnchors[index].latitude == nil) {
-                    universalAnchors[index].latitude = lat
-                    universalAnchors[index].longitude = lon
-                    updated = true
-                }
-            } else {
-                let name = micro.name
-                let vector = EmbeddingService.getVector(for: name, languageCode: currentLanguageCode)
-                
-                let newAnchor = UniversalStudyAnchor(
-                    id: compositeID, placeName: name, hour: hour,
-                    latitude: lat, longitude: lon,
-                    timeSpan: timeline.timeSpan, vector: vector
-                )
-                universalAnchors.append(newAnchor)
-                updated = true
-                print("🧠 [NotificationManager] Harvested pattern: \(compositeID)")
-            }
-        }
-        if updated { saveUniversalAnchors() }
-    }
-    
-    private func harvestIntent(from timeline: TimelineData) {
-        guard let intent = AppStateManager.shared.userIntent else { return }
-        
-        // V11: Prioritize suggested_needs as the "Master Vibe"
-        let text = intent.suggested_needs ?? intent.movement ?? intent.waiting ?? ""
-        guard !text.isEmpty else { return }
-        
-        if let vector = EmbeddingService.getVector(for: text, languageCode: currentLanguageCode) {
-            latestIntentVector = vector
-            saveContextualMemory()
-            print("🧠 [NotificationManager] Harvested Utility Intent: \(text)")
-        }
-    }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
         let identifier = response.notification.request.identifier
@@ -226,11 +140,6 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     func startMonitoring() {
         print("🛰️ [NotificationManager] Starting smart monitoring...")
         
-        // Harvest from existing timeline cache if available on startup
-        if let currentTimeline = AppStateManager.shared.timeline {
-            harvest(from: currentTimeline)
-        }
-        
         // Initial Refresh
         refreshIfNecessary()
         
@@ -265,7 +174,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     }
     
     func executeSemanticDiscovery() {
-        guard isNotificationsEnabled, !universalAnchors.isEmpty, canScheduleNow() else { return }
+        guard isNotificationsEnabled, canScheduleNow() else { return }
         
         UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
             // Keep already pending smart notifications to avoid destructive churn.
@@ -286,181 +195,106 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     
     private func scheduleSmartNotification() {
         guard canScheduleNow() else { return }
-
+        
+        // 1. Get Intent Timeline from AppStateManager
+        guard let timeline = AppStateManager.shared.intentTimeline, !timeline.isEmpty else {
+            print("⚠️ [NotificationManager] No Intent Timeline available. Skipping scheduling.")
+            return
+        }
+        
+        // 2. Determine Best Time and Content from Timeline
+        // We look for the "current" or "next" most confident intent
+        
         let now = Date()
-        // Shift window by 20 mins to prevent "instant" notifications on app open
-        let nextAllowed = max(now.addingTimeInterval(1200), nextAllowedByGlobalGap())
-
-        // 1. STAGE 1: Time Discovery (Habit Only)
-        // Find the absolute best time to study based on history, ignoring current location.
-        // This ensures the alarm always goes off.
-        
-        var bestTime: Date = Date()
-        var maxHabitScore: Double = -1.0
-        
-        // Scan next 12 hours
-        for i in 0...12 {
-            let candidateDate = nextAllowed.addingTimeInterval(Double(i) * 1800)
-            let score = calculateHabitScore(at: candidateDate)
-            
-            if score > maxHabitScore {
-                maxHabitScore = score
-                bestTime = candidateDate
-            }
-        }
-        
-        // New User Fallback: If no habits yet (Score 0), schedule for 9 AM or 6 PM
-        if maxHabitScore == 0 {
-            let hour = Calendar.current.component(.hour, from: Date())
-            if hour < 9 {
-                bestTime = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date()) ?? Date().addingTimeInterval(3600)
-            } else if hour < 18 {
-                bestTime = Calendar.current.date(bySettingHour: 18, minute: 0, second: 0, of: Date()) ?? Date().addingTimeInterval(3600)
-            } else {
-                bestTime = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: Date().addingTimeInterval(86400)) ?? Date()
-            }
-            maxHabitScore = 0.5 // Artificially boost to pass threshold
-        }
-        
-        print("🧠 [NotificationManager] Best Time Found: \(bestTime) (Score: \(maxHabitScore))")
-        
-        // 2. STAGE 2: Context Resolution (Just-in-Time Context)
-        // We have the time. Now, what do we say?
-        // If Live Location is ON and valid -> Use it.
-        // If Live Location is OFF -> Use History (Place associated with this time).
-        
-        var contextName: String = "your usual spot"
-        var contextID: String = "home_base"
-        var isCurrentLocation = false
-        
-        // Check Live Match
-        let nearby = LocationManager.shared.nearbyPlaceAmbience
-        if !nearby.isEmpty {
-             // Find best match for Intent
-             let top5Vibes = getTopPersonalVibes(forTarget: latestIntentVector)
-             if let bestLive = findBestNearbyVibeMatch(from: nearby, comparingTo: top5Vibes, withTarget: latestIntentVector) {
-                 contextName = bestLive.name
-                 contextID = bestLive.id
-                 isCurrentLocation = true
-             }
-        }
-        
-        // Fallback: History (if no live match)
-        if !isCurrentLocation {
-             // Find the UniversalAnchor that matches this time hour
-            let hour = Calendar.current.component(.hour, from: bestTime)
-            if let historicalAnchor = universalAnchors.first(where: { $0.hour == hour }) {
-                contextName = historicalAnchor.placeName
-                contextID = historicalAnchor.id
-            } else {
-                // If completely new user and no history
-                contextName = "a quiet place"
-            }
-        }
-        
-        // 3. STAGE 3: Schedule
-        // Threshold eased to 0.4 to ensure firing
-        if maxHabitScore >= 0.1 { // Very low threshold to guarantee notifications for now
-            let delay = max(1, bestTime.timeIntervalSince(now))
-            
-            // Don't reschedule if we already have one very close (within 30 mins)
-            print("� [NotificationManager] Scheduling for \(contextName) in \(Int(delay))s")
-            self.performSurgicalSchedule(id: contextID, name: contextName, lat: 0, lon: 0, delay: delay)
-        }
-    }
-    
-        // Dead math removed
-    
-    private func calculateHabitScore(at date: Date) -> Double {
         let calendar = Calendar.current
-        let hour = Double(calendar.component(.hour, from: date))
-        let minute = Double(calendar.component(.minute, from: date))
-        let t = hour + (minute / 60.0)
+        let currentHour = calendar.component(.hour, from: now)
         
-        let sigma = 1.0 // 1 hour standard deviation for Gaussian smoothing
-        var totalContribution = 0.0
-        
-        for anchor in universalAnchors {
-            let h_i = Double(anchor.hour)
-            let diff = min(abs(t - h_i), 24 - abs(t - h_i)) // Circular hour difference
-            totalContribution += exp(-(diff * diff) / (2 * sigma * sigma))
+        // Helper to convert span string to hour range
+        func getStartHour(from span: String) -> Int? {
+            let parts = span.components(separatedBy: "-")
+            guard let first = parts.first else { return nil }
+            let hourStr = first.lowercased().replacingOccurrences(of: "am", with: "").replacingOccurrences(of: "pm", with: "").trimmingCharacters(in: .whitespaces)
+            guard var hour = Int(hourStr) else { return nil }
+            if first.lowercased().contains("pm") && hour != 12 { hour += 12 }
+            if first.lowercased().contains("am") && hour == 12 { hour = 0 }
+            return hour
         }
         
-        // Normalize against history size
-        return totalContribution / max(1.0, Double(universalAnchors.count / 2)) // Slight boost for visibility
+        // Find next relevant spans (current + future)
+        let sortedSpans = timeline.keys.sorted { (s1, s2) -> Bool in
+            let h1 = getStartHour(from: s1) ?? 0
+            let h2 = getStartHour(from: s2) ?? 0
+            return h1 < h2
+        }
+        
+        var bestSpan: String?
+        var bestTag: UserIntentTag?
+        
+        // First try to find current span
+        if let currentSpan = AppStateManager.shared.currentTimeSpan, let snapshot = timeline[currentSpan], let topTag = snapshot.active_context.first {
+             bestSpan = currentSpan
+             bestTag = topTag
+        } else {
+            // Fallback to next upcoming span
+            for span in sortedSpans {
+                let startHour = getStartHour(from: span) ?? 0
+                if startHour >= currentHour {
+                    if let snapshot = timeline[span], let topTag = snapshot.active_context.first {
+                        bestSpan = span
+                        bestTag = topTag
+                        break
+                    }
+                }
+            }
+        }
+        
+        guard let span = bestSpan, let tag = bestTag else {
+            print("⚠️ [NotificationManager] Could not find suitable span/tag in timeline.")
+            return
+        }
+        
+        // 3. Calculate Fire Time
+        // If current span, fire in 30 mins. If future span, fire at start of span.
+        var fireDate = now.addingTimeInterval(3600) // Default 1 hour
+        if let startHour = getStartHour(from: span) {
+            if startHour > currentHour {
+                fireDate = calendar.date(bySettingHour: startHour, minute: 0, second: 0, of: now) ?? now.addingTimeInterval(3600)
+            } else {
+                fireDate = now.addingTimeInterval(1800) // 30 mins from now if in current span
+            }
+        }
+        
+        // Ensure fireDate is in the future
+        if fireDate <= now { fireDate = now.addingTimeInterval(600) }
+        
+        let delay = fireDate.timeIntervalSince(now)
+        
+        print("🧠 [NotificationManager] Scheduling Intent Notification: '\(tag.tag)' for Span: \(span) in \(Int(delay))s")
+        
+        self.performSurgicalSchedule(
+            id: "intent_\(span)", 
+            name: tag.tag, 
+            lat: 0, 
+            lon: 0, 
+            delay: delay
+        )
     }
     
         // Dead math removed
     
-    private func calculateMatchScore(for place: LocationManager.NearbyAmbience, comparingTo topVibes: [PersonalVibe], withTarget target: [Double]?) -> Double {
-        var intentSimilarity: Double = 0.0
-        if let targetVec = target {
-            intentSimilarity = EmbeddingService.cosineSimilarity(v1: place.vector, v2: targetVec)
-        }
-        
-        var historySimilarity: Double = 0.0
-        for vibe in topVibes {
-            historySimilarity = max(historySimilarity, EmbeddingService.cosineSimilarity(v1: place.vector, v2: vibe.vector))
-        }
-        
-        return max(intentSimilarity, historySimilarity)
-    }
-    
-    private func getBestNearbyMatch(withTargetVector target: [Double]?) -> LocationManager.NearbyAmbience? {
-        let nearby = LocationManager.shared.nearbyPlaceAmbience
-        guard !nearby.isEmpty else { return nil }
-        
-        let top5Vibes = getTopPersonalVibes(forTarget: target)
-        return findBestNearbyVibeMatch(from: nearby, comparingTo: top5Vibes, withTarget: target)
-    }
-    
-    private struct PersonalVibe {
-        let vector: [Double]
-        let score: Double
-        let name: String
-    }
-    
-    private func getTopPersonalVibes(forTarget target: [Double]?) -> [PersonalVibe] {
-        guard let targetVec = target else { return [] }
-        
-        // --- Score All History anchors against Target Intent ---
-        var vibes: [PersonalVibe] = []
-        for item in universalAnchors {
-            guard let histVec = item.vector else { continue }
-            let score = EmbeddingService.cosineSimilarity(v1: histVec, v2: targetVec)
-            vibes.append(PersonalVibe(vector: histVec, score: score, name: item.placeName))
-        }
-        
-        // Take Top 5 Vibes
-        let top5 = Array(vibes.sorted(by: { $0.score > $1.score }).prefix(5))
-        return top5
-    }
-    
-    private func findBestNearbyVibeMatch(from nearby: [LocationManager.NearbyAmbience], comparingTo topVibes: [PersonalVibe], withTarget target: [Double]?) -> LocationManager.NearbyAmbience? {
-        var bestMatch: LocationManager.NearbyAmbience?
-        var bestScore: Double = -1.0
-        
-        for livePlace in nearby {
-            let currentScore = calculateMatchScore(for: livePlace, comparingTo: topVibes, withTarget: target)
-            
-            if currentScore > bestScore {
-                bestScore = currentScore
-                bestMatch = livePlace
-            }
-        }
-        
-        if let match = bestMatch, bestScore > 0.8 {
-            print("✨ [NotificationManager] Found Surgical Precision match '\(match.name)' (Score: \(bestScore))")
-            return match
-        }
-        return nil
-    }
     
     private func performSurgicalSchedule(id: String, name: String, lat: Double, lon: Double, delay: TimeInterval = 1) {
         let username = AppStateManager.shared.username.isEmpty ? "Learner" : AppStateManager.shared.username
         let content = UNMutableNotificationContent()
         content.title = "\(getGreeting()), \(username)! 👋"
-        content.body = "You are nearby \(name). Try to learn here!"
+        
+        if id.hasPrefix("global_") {
+            // Global recommendations are situational moments, not physical places
+            content.body = "Ready to practice: \"\(name)\"?"
+        } else {
+            content.body = "You are nearby \(name). Try to learn here!"
+        }
+        
         content.sound = .default
         content.userInfo = ["place_name": name, "place_id": id]
         

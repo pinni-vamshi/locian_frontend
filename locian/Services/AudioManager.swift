@@ -10,12 +10,27 @@ import Foundation
 import AVFoundation
 import Combine
 
+// MARK: - Enums
+enum AudioSessionMode: Sendable {
+    case playback
+    case recording
+}
+
+// MARK: - Models
+struct SpeechSegment: Sendable {
+    let text: String
+    let language: String
+}
+
 class AudioManager: NSObject, ObservableObject {
     
     // MARK: - Private Properties
     private let synthesizer = AVSpeechSynthesizer()
     private var onSpeechCompletion: (() -> Void)?
     private var currentCategory: AVAudioSession.Category?
+    
+    // ✅ Serial Queue for Audio Operations
+    private let audioQueue = DispatchQueue(label: "com.locian.audio", qos: .userInitiated)
     
     // MARK: - Singleton
     static let shared = AudioManager()
@@ -27,101 +42,145 @@ class AudioManager: NSObject, ObservableObject {
     
     // MARK: - Session Management
     
-    enum AudioSessionMode {
-        case playback
-        case recording
-    }
-    
     func configureSession(for mode: AudioSessionMode) {
-        let session = AVAudioSession.sharedInstance()
-        let targetCategory: AVAudioSession.Category = (mode == .recording) ? .playAndRecord : .playback
-        let targetMode: AVAudioSession.Mode = (mode == .recording) ? .spokenAudio : .spokenAudio
-        let targetOptions: AVAudioSession.CategoryOptions = (mode == .recording) ? [.duckOthers, .defaultToSpeaker] : [.duckOthers]
-        
-        // LOGIC CORRECT: Only touch the session if actually changing category OR options
-        // Adding options check to prevent redundant setActive calls which trigger Code -50
-        if session.category != targetCategory || session.categoryOptions != targetOptions {
-            do {
-                try session.setCategory(targetCategory, mode: targetMode, options: targetOptions)
-                try session.setActive(true, options: .notifyOthersOnDeactivation)
-                currentCategory = targetCategory
-            } catch {
-                print("🔊 [AudioManager] Failed to configure session for \(mode): \(error)")
+        audioQueue.async { [weak self] in
+            guard let self = self else { return }
+            let session = AVAudioSession.sharedInstance()
+            let targetCategory: AVAudioSession.Category
+            let targetMode: AVAudioSession.Mode
+            let targetOptions: AVAudioSession.CategoryOptions
+            
+            switch mode {
+            case .recording:
+                targetCategory = .playAndRecord
+                targetMode = .spokenAudio
+                targetOptions = [.duckOthers, .defaultToSpeaker]
+            case .playback:
+                targetCategory = .playback
+                targetMode = .default
+                targetOptions = [.duckOthers]
             }
+            
+            if session.category != targetCategory || session.categoryOptions != targetOptions {
+                do {
+                    try session.setCategory(targetCategory, mode: targetMode, options: targetOptions)
+                    try session.setActive(true, options: .notifyOthersOnDeactivation)
+                    self.currentCategory = targetCategory
+                } catch {
+                    print("🔊 [AudioManager] Session Config Warning for \(mode): \(error.localizedDescription)")
+                }
+            }
+            try? session.overrideOutputAudioPort(.speaker)
         }
-        
-        // Force speaker routing for both modes to ensure full volume
-        try? session.overrideOutputAudioPort(.speaker)
     }
     
-    // MARK: - Public Methods
+    // MARK: - THE ONE THING (Unified Multilingual Engine)
     
-    /// Speak text in specified language at given speed
-    func speak(text: String, language: String, speed: Float = 0.7, completion: (() -> Void)? = nil) {
-        guard !text.isEmpty else { 
+    /// ✅ ZERO-FLICKER: Queues multiple languages in a single cinematic breath.
+    func speak(segments: [SpeechSegment], completion: (() -> Void)? = nil) {
+        guard !segments.isEmpty else {
             completion?()
-            return 
+            return
         }
         
-        // LOGIC CORRECT: Complete previous callback BEFORE starting new one
-        // If we just overwrite, the previous screen's "Next" button might stay disabled forever
-        if let prevCompletion = onSpeechCompletion {
-            DispatchQueue.main.async {
-                prevCompletion()
-            }
-            onSpeechCompletion = nil
-        }
-        
-        // Store new completion
+        print("🔊 [AudioManager] Multilingual Engine: Queuing \(segments.count) segments.")
         self.onSpeechCompletion = completion
         
-        // Stop any current playback
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
+        audioQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            // 1. Stop existing
+            self.internalStop()
+            
+            // 2. Configure Session (Inlined for high-sync execution)
+            let session = AVAudioSession.sharedInstance()
+            do {
+                try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+                try session.setActive(true, options: .notifyOthersOnDeactivation)
+                try session.overrideOutputAudioPort(.speaker)
+                self.currentCategory = .playback
+            } catch {
+                print("🔊 [AudioManager] Unified Session Config Failed: \(error)")
+            }
+            
+            // 3. Hume Routing (Universal Full Context)
+            if AppStateManager.shared.isHumeVoiceEnabled {
+                 print("🎙️ [AudioManager] Routing to Hume (Global Context)")
+                 // Join all text for AI intelligence
+                 let fullText = segments.map { $0.text }.joined(separator: " ")
+                 HumeTTSService.shared.speak(text: fullText, completion: { [weak self] in
+                     self?.finishPlayback()
+                 }, onFailure: { [weak self] in
+                     print("⚠️ [AudioManager] Hume Failed. Falling back to Local Segments.")
+                     self?.audioQueue.async {
+                         self?.speakLocalSegments(segments)
+                     }
+                 })
+                 return
+            }
+            
+            // 4. Local High-Sync Reveal
+            self.speakLocalSegments(segments)
         }
-        
-        // Configure Session via central logic
-        configureSession(for: .playback)
-        
-        // Create utterance
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: language)
-        utterance.rate = speed * AVSpeechUtteranceDefaultSpeechRate
-        utterance.pitchMultiplier = 1.0
-        utterance.volume = 1.0
-        
-        // Speak
-        synthesizer.speak(utterance)
     }
     
-    /// Stop current playback
+    private func speakLocalSegments(_ segments: [SpeechSegment]) {
+        for (index, segment) in segments.enumerated() {
+            let u = AVSpeechUtterance(string: segment.text)
+            u.voice = AVSpeechSynthesisVoice(language: segment.language)
+            
+            // Speed control: Increased for clarity as requested
+            u.rate = 0.4 // 80% of default speed (0.5 × 0.8 = 0.4) — clear pace for language learning
+            
+            // Natural pacing between segments
+            if index > 0 {
+                u.preUtteranceDelay = 0.1 
+            }
+            
+            self.synthesizer.speak(u)
+        }
+    }
+    
+    // MARK: - Helpers
+    
     func stop() {
+        audioQueue.async { [weak self] in
+            self?.internalStop()
+            self?.finishPlayback()
+        }
+    }
+    
+    private func internalStop() {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
-        // Trigger completion if it exists and clear it
+        HumeTTSService.shared.stop()
+    }
+    
+    private func finishPlayback() {
         if let completion = onSpeechCompletion {
             DispatchQueue.main.async {
                 completion()
+                self.onSpeechCompletion = nil
             }
-            onSpeechCompletion = nil
         }
     }
 }
 
-// MARK: - AVSpeechSynthesizerDelegate
+// MARK: - Delegates
 extension AudioManager: AVSpeechSynthesizerDelegate {
+    
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
-            self.onSpeechCompletion?()
-            self.onSpeechCompletion = nil
+        // Debounce check on audio queue
+        audioQueue.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self = self else { return }
+            if !self.synthesizer.isSpeaking {
+                self.finishPlayback()
+            }
         }
     }
     
     func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        DispatchQueue.main.async {
-            self.onSpeechCompletion?()
-            self.onSpeechCompletion = nil
-        }
+        finishPlayback()
     }
 }

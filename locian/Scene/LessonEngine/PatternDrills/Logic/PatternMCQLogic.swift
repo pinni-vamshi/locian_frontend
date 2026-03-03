@@ -13,13 +13,20 @@ class PatternMCQLogic: ObservableObject {
     
     @Published var selectedOption: String?
     @Published var isCorrect: Bool?
+    var isAnswered: Bool { isCorrect != nil }
     
-    weak var lessonDrillLogic: LessonDrillLogic?
+    var onComplete: ((Bool) -> Void)?
+    weak var patternIntroLogic: PatternIntroLogic?
+    weak var practiceLogic: PatternPracticeLogic?
+    weak var ghostLogic: GhostModeLogic?
     
-    init(state: DrillState, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) {
+    init(state: DrillState, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) {
         self.state = state
         self.engine = engine
-        self.lessonDrillLogic = lessonDrillLogic
+        self.patternIntroLogic = patternIntroLogic
+        self.practiceLogic = practiceLogic
+        self.ghostLogic = ghostLogic
+        self.onComplete = onComplete
         self.prompt = state.drillData.target
         self.phonetic = state.drillData.phonetic
         self.targetLanguage = TargetLanguageMapping.shared.getDisplayNames(for: engine.lessonData?.target_language ?? "en").english
@@ -42,8 +49,8 @@ class PatternMCQLogic: ObservableObject {
     }
     
     func selectOption(_ option: String) {
-        // ✅ ALWAYS Speak the option (English meaning)
-        AudioManager.shared.speak(text: option, language: "en-US")
+        // ✅ CRITICAL: Do NOT speak the native language (English) meaning
+        // AudioManager.shared.speak(text: option, language: "en-US")
         
         guard isCorrect == nil else { 
             return 
@@ -67,50 +74,142 @@ class PatternMCQLogic: ObservableObject {
         let result = validator.validate(input: option, target: state.drillData.meaning, context: context)
         let isCorrect = (result == .correct || result == .meaningCorrect)
         
-        // 2. Perform Granular Analysis (The Ripple Effect)
-        // We find which bricks are in this pattern and evaluate them based on the user's choice
-        // ✅ NOW USING GROUP-SPECIFIC BRICKS ONLY
-        let brickMatches = ContentAnalyzer.findRelevantBricks(
-            in: state.drillData.target,
+        // 2. Perform Autonomous Granular Analysis (The Ripple Effect)
+        // This directly updates brick mastery in the engine (+0.10 / -0.05)
+        GranularAnalyzer.processGranularMastery(
+            engine: engine,
+            target: state.drillData.target,
             meaning: state.drillData.meaning,
-            bricks: engine.activeGroupBricks,
-            targetLanguage: engine.lessonData?.target_language ?? "es"
-        )
-        let bricks = MasteryFilterService.resolveBricks(ids: Set(brickMatches), from: engine.activeGroupBricks)
-        
-        let rippleResults = GranularAnalyzer.analyze(
-            input: option,
-            target: state.drillData.meaning,
-            requiredBricks: Array(bricks),
+            userInput: option,
             type: .multipleChoice,
             context: context
         )
         
-        // 3. Update Mastery Directly in Engine
-        let delta = isCorrect ? 0.20 : -0.10
-        engine.updateMastery(id: state.id, delta: delta)
-        
-        // Ripple Effect on Bricks
-        for res in rippleResults {
-            let brickDelta = res.isCorrect ? 0.10 : -0.05
-            engine.updateMastery(id: res.brickId, delta: brickDelta)
-        }
+        // Update Mastery (Only this pattern)
+        // REDUCED DELTA: 0.15 (Gradual progression)
+        let delta = isCorrect ? 0.15 : -0.05
+        engine.updateMastery(id: state.patternId, delta: delta)
         
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrect
         
+        // ✅ Localized Feedback
+        playFeedback(isCorrect: isCorrect)
+        
+        // Match standard behavior: Play target audio on correct
+        // REMOVED per user request to avoid redundancy (Feedback already speaks it)
+        /*
+        if isCorrect {
+            playAudio()
+        }
+        */
+        
         // ✅ Notify Wrapper
-        lessonDrillLogic?.markDrillAnswered(isCorrect: isCorrect)
+        patternIntroLogic?.markBrickAnswered(isCorrect: isCorrect, input: option)
+        practiceLogic?.markDrillAnswered(isCorrect: isCorrect)
+        ghostLogic?.markDrillAnswered(isCorrect: isCorrect)
+    }
+    
+    func continueToNext() {
+        onComplete?(isCorrect ?? true)
+    }
+    
+    // MARK: - 🎙️ Voice Assets (Decentralized)
+    
+    // 1. Full Context
+    private static let fullIntroVoices = [
+        "Select the correct meaning for \"%@\" in %@",
+        "Which translation matches \"%@\" in %@",
+        "Match the meaning of \"%@\" in %@",
+        "Choose the correct %@ answer for \"%@\"",
+        "Find the %@ sentence that means \"%@\""
+    ]
+    
+
+    private static let correctVoices = [
+        "You are right! \"%@\" in %@ is \"%@\"",
+        "Exactly. \"%@\" in %@ translates to \"%@\"",
+        "Spot on. In %@, \"%@\" matches \"%@\"",
+        "That's correct. We say \"%@\" for \"%@\" in %@",
+        "Perfect match. \"%@\" in %@ is \"%@\""
+    ]
+    
+    // 3. Concise Feedback
+    private static let wrongVoices = [
+        "Actually, the answer is \"%@\"",
+        "It translates to \"%@\"",
+        "The correct way is \"%@\"",
+        "It matches \"%@\"",
+        "Listen carefully: \"%@\""
+    ]
+    
+    static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
+        if let override = drill.overrideVoiceInstructions {
+            print("🎙️ [PatternMCQ] Using Voice Override: '\(override)'")
+            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            return
+        }
+        
+        guard !drill.suppressIntroAudio else { return }
+        
+        let userLanguageCode = engine.lessonData?.user_language ?? "en"
+        let targetText = drill.drillData.target  // ✅ French text (shown in UI)
+        let userLanguageName = TargetLanguageMapping.shared.getDisplayNames(for: userLanguageCode).english  // ✅ "English" (language of options)
+        
+        let template = fullIntroVoices.randomElement() ?? fullIntroVoices[0]  // ✅ KEEP SAME
+        
+        // ✅ Inject: targetText (French) and userLanguageName (English)
+        var text = template.replacingOccurrences(of: "%@", with: targetText, range: template.range(of: "%@"))
+        text = text.replacingOccurrences(of: "%@", with: userLanguageName)
+        
+        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
+    }
+    
+    private func playFeedback(isCorrect: Bool) {
+        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
+        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
+            print("🎙️ [PatternMCQ] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
+            return
+        }
+        
+        let target = state.drillData.target
+        let meaning = state.drillData.meaning
+        let targetLang = targetLanguage
+        
+        let template = isCorrect ? 
+            (PatternMCQLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
+            (PatternMCQLogic.wrongVoices.randomElement() ?? "Actually, \"%@\" in %@ translates to \"%@\"")
+        
+        // Split at the final target placeholder
+        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
+        if let langRange = textToSpeak.range(of: "%@") {
+            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
+        }
+        
+        // Split at the final placeholder
+        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
+        guard finalComponents.count >= 2 else { return }
+        
+        let introText = finalComponents[0]
+        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
+        
+        AudioManager.shared.speak(segments: [
+            .init(text: introText, language: "en-US"),
+            .init(text: target, language: langCode)
+        ])
     }
     
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(text: text, language: language)
+        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
     }
     
-    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, lessonDrillLogic: LessonDrillLogic? = nil) -> some View {
+    static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) -> some View {
         // View now owns the logic creation via StateObject
-        return PatternMCQView(state: state, engine: engine, lessonDrillLogic: lessonDrillLogic)
+        return PatternMCQView(state: state, engine: engine, patternIntroLogic: patternIntroLogic, practiceLogic: practiceLogic, ghostLogic: ghostLogic, onComplete: onComplete)
+            .onAppear {
+                PatternMCQLogic.playIntro(drill: state, engine: engine, mode: mode)
+            }
     }
 }

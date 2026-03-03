@@ -183,8 +183,11 @@ class TargetLanguageLogic {
         let targetLanguages = response.target_languages ?? response.data?.target_languages
         
         guard let targets = targetLanguages else {
+            print("❌ [TargetLanguageLogic] No target languages found in response")
             return false
         }
+        
+        print("📥 [TargetLanguageLogic] Processing \(targets.count) targets from record.")
         
         let pairs = targets.compactMap { targetLang -> LanguagePair? in
             let nativeLang = targetLang.native_language ?? appState.nativeLanguage
