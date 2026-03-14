@@ -13,13 +13,15 @@ struct StatsTabView: View {
     @Binding var selectedTab: MainTabView.TabItem
     @State private var showingStreakModal = false
     @State private var animateIn = false
+    
+    enum ExpandedSection { case none, current, longest, history }
+    @State private var expandedSection: ExpandedSection = .none
 
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 Color.black.ignoresSafeArea()
                 let pair = appState.getDisplayLanguagePair()
-                // If it's the "ADD LANGUAGE" placeholder, style it as EMPTY
                 if pair.target_language == "ADD LANGUAGE" {
                     mainContent(pair: pair, geometry: geometry)
                         .diagnosticBorder(.gray, width: 1, label: "EMPTY_PH")
@@ -30,14 +32,14 @@ struct StatsTabView: View {
             }
             .diagnosticBorder(.white, width: 2, label: "ROOT_ZSTACK")
         }
-        .onAppear { 
+        .onAppear {
             animateIn = false
             state.onAppear()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) { animateIn = true }
             }
         }
-        .onDisappear { 
+        .onDisappear {
             withAnimation(.none) { animateIn = false }
         }
         .fullScreenCover(isPresented: $showingStreakModal) { streakModal }
@@ -46,24 +48,54 @@ struct StatsTabView: View {
     @ViewBuilder
     private func mainContent(pair: LanguagePair, geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            StatsHeaderView(appState: appState, state: state, pair: pair, geometry: geometry, scrollOffset: state.scrollOffset)
-                .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10)
-                .diagnosticBorder(.orange, width: 1, label: "HEADER")
-            
+            // STICKY HEADER
+            StatsHeaderView(
+                appState: appState,
+                state: state,
+                pair: pair,
+                geometry: geometry,
+                scrollOffset: state.scrollOffset,
+                expandedSection: $expandedSection,
+                practiceSet: state.practiceDatesSet
+            )
+            .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10)
+            .animation(.spring().delay(0.0), value: animateIn)
+            .diagnosticBorder(.orange, width: 1, label: "HEADER")
+
             Divider().background(Color.white.opacity(0.1))
-            
+
             ZStack(alignment: .top) {
                 if state.pullRefreshState != .idle {
                     CyberRefreshIndicator(state: state.pullRefreshState, height: max(60, state.scrollOffset), accentColor: ThemeColors.primaryAccent).zIndex(0)
                 }
-                
+
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
-                        StatsCalendarSection(appState: appState, pair: pair, practiceSet: state.practiceDatesSet, cachedSortedMonths: $state.sortedMonths)
-                            .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                            .animation(.spring().delay(0.1), value: animateIn)
-                            .diagnosticBorder(.pink, width: 1, label: "CALENDAR")
+                        // Current Streak Expanded Details
+                        if expandedSection == .current {
+                            CurrentStreakDetailsView(state: state)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        }
                         
+                        // Longest Streak Expanded Details
+                        if expandedSection == .longest {
+                            LongestStreakDetailsView(state: state)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                        }
+
+                        // Calendar — hidden by default, shown when toggled
+                        if expandedSection == .history {
+                            StatsCalendarSection(
+                                appState: appState,
+                                pair: pair,
+                                practiceSet: state.practiceDatesSet,
+                                cachedSortedMonths: $state.sortedMonths
+                            )
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .opacity(animateIn ? 1 : 0)
+                            .animation(.spring().delay(0.1), value: animateIn)
+                        }
+
                         StatsChronotypeSection(appState: appState, pair: pair, chronotype: state.chronotype, cachedStudiedHours: $state.studiedHours)
                             .padding(.top, 20)
                             .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
@@ -103,9 +135,22 @@ struct StatsTabView: View {
     }
 }
 
-// MARK: - Subviews
+// MARK: - Header
 struct StatsHeaderView: View {
-    @ObservedObject var appState: AppStateManager; @ObservedObject var state: StatsTabState; let pair: LanguagePair; let geometry: GeometryProxy; var scrollOffset: CGFloat
+    @ObservedObject var appState: AppStateManager
+    @ObservedObject var state: StatsTabState
+    let pair: LanguagePair
+    let geometry: GeometryProxy
+    var scrollOffset: CGFloat
+    @Binding var expandedSection: StatsTabView.ExpandedSection
+    let practiceSet: Set<Date>
+
+    private var last8Days: [Date] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: Date())
+        return (0..<8).reversed().compactMap { cal.date(byAdding: .day, value: -$0, to: today) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 1. Streak Status Badge
@@ -122,142 +167,288 @@ struct StatsHeaderView: View {
             // 2. Giant Language Name
             let names = TargetLanguageMapping.shared.getDisplayNames(for: pair.target_language)
             Text(names.native.uppercased())
-                .font(.system(size: 80, weight: .black)) // Reduced from 90 to 80
+                .font(.system(size: 80, weight: .black))
                 .foregroundColor(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-                .padding(.bottom, -12) // Pushed slightly closer to streaks
+                .padding(.bottom, -12)
                 .diagnosticBorder(.white.opacity(0.3), width: 1, label: "HDR_80PT")
 
-            // 3. Streak Numbers
-            HStack(alignment: .center, spacing: 12) { // Tightened from 24 to 12
-                // Current Streak
-                HStack(alignment: .center, spacing: 10) {
-                    // Two Parallel Vertical Lines
-                    HStack(alignment: .center, spacing: 2) {
-                        Text(LocalizationManager.shared.string(.currentLabel))
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(2)
-                            .foregroundColor(.gray)
-                            .fixedSize()
-                            .rotationEffect(.degrees(-90))
-                            .frame(width: 14)
-                        
-                        Text(LocalizationManager.shared.string(.streakLabel))
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(2)
-                            .foregroundColor(.gray)
-                            .fixedSize()
-                            .rotationEffect(.degrees(-90))
-                            .frame(width: 14)
+            // 3. Single parallel row: Current | Longest | Calendar Preview
+            HStack(alignment: .top, spacing: 0) {
+
+                // Stack 1: Current Streak
+                VStack(alignment: .center, spacing: 6) {
+                    // Label (top)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            expandedSection = (expandedSection == .current) ? .none : .current
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Spacer()
+                            Text("CURRENT STREAK")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9, weight: .bold))
+                                .rotationEffect(.degrees(expandedSection == .current ? 180 : 0))
+                            Spacer()
+                        }
+                        .foregroundColor(expandedSection == .current ? .white : .gray)
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity)
+                        .background(expandedSection == .current ? Color.cyan : Color.white.opacity(0.08))
                     }
-                    .frame(height: 40) // Constrain height to prevent expansion
-                    .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
-                    
+                    .buttonStyle(.plain)
+
+                    // Number (below) - Centered
                     ZStack {
                         Text("\(state.currentStreak)")
-                            .font(.system(size: 120, weight: .black))
+                            .font(.system(size: 64, weight: .black))
                             .foregroundColor(Color(red: 1.0, green: 0.1, blue: 0.4))
-                            .offset(x: 4, y: 4)
-                            .diagnosticBorder(.red.opacity(0.3), width: 0.5, label: "BG_SHADOW")
+                            .offset(x: 3, y: 3)
                         Text("\(state.currentStreak)")
-                            .font(.system(size: 120, weight: .black))
+                            .font(.system(size: 64, weight: .black))
                             .foregroundColor(.cyan)
-                            .diagnosticBorder(.cyan.opacity(0.3), width: 0.5, label: "FG")
                     }
-                    .diagnosticBorder(.white.opacity(0.2), width: 1, label: "STREAK_NUM")
+                    .padding(.horizontal, 8)
                 }
-                .diagnosticBorder(.purple.opacity(0.3), width: 1, label: "CUR_HS_S:10")
+                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
-                // Longest Streak
-                HStack(alignment: .center, spacing: 10) {
-                    HStack(alignment: .center, spacing: 2) {
-                        Text(LocalizationManager.shared.string(.longestLabel))
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(2)
-                            .foregroundColor(.gray)
-                            .fixedSize()
-                            .rotationEffect(.degrees(-90))
-                            .frame(width: 14)
-                        
-                        Text(LocalizationManager.shared.string(.streakLabel))
-                            .font(.system(size: 10, weight: .bold))
-                            .tracking(2)
-                            .foregroundColor(.gray)
-                            .fixedSize()
-                            .rotationEffect(.degrees(-90))
-                            .frame(width: 14)
+                // Divider
+                Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1).padding(.vertical, 6)
+
+                // Stack 2: Longest Streak
+                VStack(alignment: .center, spacing: 6) {
+                    // Label (top)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            expandedSection = (expandedSection == .longest) ? .none : .longest
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Spacer()
+                            Text("LONGEST STREAK")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9, weight: .bold))
+                                .rotationEffect(.degrees(expandedSection == .longest ? 180 : 0))
+                            Spacer()
+                        }
+                        .foregroundColor(expandedSection == .longest ? .white : .gray)
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity)
+                        .background(expandedSection == .longest ? Color.cyan : Color.white.opacity(0.08))
                     }
-                    .frame(height: 40) // Constrain height
-                    .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "V_LABEL_HS")
+                    .buttonStyle(.plain)
+
+                    // Number (below) - Centered
                     Text("\(state.longestStreak)")
-                        .font(.system(size: 80, weight: .black))
+                        .font(.system(size: 64, weight: .black))
                         .foregroundColor(.white)
-                        // Removed .italic()
-                        .overlay(Rectangle().fill(Color.white).frame(height: 4).rotationEffect(.degrees(-45)).opacity(state.longestStreak == 0 ? 1 : 0))
-                        .diagnosticBorder(.white.opacity(0.5), width: 1, label: "LNG_NUM")
+                        .overlay(
+                            Rectangle().fill(Color.white).frame(height: 4)
+                                .rotationEffect(.degrees(-45))
+                                .opacity(state.longestStreak == 0 ? 1 : 0)
+                        )
+                        .padding(.horizontal, 8)
                 }
+                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                // Divider
+                Rectangle().fill(Color.white.opacity(0.12)).frame(width: 1).padding(.vertical, 6)
+
+                // Stack 3: Calendar Preview
+                VStack(alignment: .center, spacing: 6) {
+                    // Label + Arrow (top)
+                    Button(action: {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            expandedSection = (expandedSection == .history) ? .none : .history
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Spacer()
+                            Text("HISTORY LOG")
+                                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9, weight: .bold))
+                                .rotationEffect(.degrees(expandedSection == .history ? 180 : 0))
+                            Spacer()
+                        }
+                        .foregroundColor(expandedSection == .history ? .white : .gray)
+                        .padding(.vertical, 4)
+                        .frame(maxWidth: .infinity)
+                        .background(expandedSection == .history ? Color.cyan : Color.white.opacity(0.08))
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer(minLength: 0)
+
+                    // 2-row × 4-col mini grid (below) - Centered vertically & horizontally
+                    VStack(spacing: 4) {
+                        HStack(spacing: 4) {
+                            ForEach(Array(last8Days.prefix(4)), id: \.self) { day in
+                                miniDayCell(for: day)
+                            }
+                        }
+                        HStack(spacing: 4) {
+                            ForEach(Array(last8Days.suffix(4)), id: \.self) { day in
+                                miniDayCell(for: day)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    
+                    Spacer(minLength: 0)
+                }
+                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            .diagnosticBorder(.blue.opacity(0.5), width: 1, label: "STREAK_HS_S:12") // Updated Label
-        }.padding(.horizontal, 5).padding(.top, 20).padding(.bottom, 10) // Reduced top from 24 to 20
-            .diagnosticBorder(.white.opacity(0.1), width: 1.5, label: "HDR_P:H20,T20,B10")
-        .diagnosticBorder(.cyan, width: 1, label: "STATS_HDR")
+            .frame(height: 120)
+            .background(Color.white.opacity(0.04))
+            .border(Color.white.opacity(0.1), width: 1)
+            .padding(.top, 6)
+        }
+        .padding(.horizontal, 5).padding(.top, 20).padding(.bottom, 10)
+    }
+
+    @ViewBuilder
+    private func miniDayCell(for date: Date) -> some View {
+        let cal = Calendar.current
+        let hasPracticed = practiceSet.contains(cal.startOfDay(for: date))
+        let isToday = cal.isDateInToday(date)
+        let dayNum = cal.component(.day, from: date)
+
+        ZStack {
+            if isToday {
+                Rectangle().fill(Color.white)
+            } else if hasPracticed {
+                Rectangle().fill(ThemeColors.neonGreen)
+            } else {
+                Rectangle().fill(Color.white.opacity(0.08))
+            }
+            Text("\(dayNum)")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(isToday ? .black : (hasPracticed ? Color(red: 1.0, green: 0.1, blue: 0.4) : .gray))
+        }
+        .frame(width: 24, height: 24)
     }
 }
 
+// MARK: - Current Streak Details
+struct CurrentStreakDetailsView: View {
+    @ObservedObject var state: StatsTabState
+
+    var body: some View {
+        let diff = state.longestStreak - state.currentStreak
+        VStack(spacing: 12) {
+            if diff > 0 {
+                Text("\(diff) DAYS TO REACH YOUR LONGEST STREAK!")
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
+            } else if state.longestStreak > 0 {
+                Text("YOU ARE ON YOUR LONGEST STREAK!")
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(ThemeColors.neonGreen)
+            } else {
+                Text("START YOUR STREAK TODAY!")
+                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
+            }
+            
+            GeometryReader { geo in
+                let maxStreak = max(state.longestStreak, 1)
+                let progress = CGFloat(min(state.currentStreak, maxStreak)) / CGFloat(maxStreak)
+                 ZStack(alignment: .leading) {
+                     Rectangle().fill(Color.white.opacity(0.1))
+                     Rectangle()
+                         .fill(Color(red: 1.0, green: 0.1, blue: 0.4))
+                         .frame(width: progress * geo.size.width)
+                 }
+            }.frame(height: 8)
+        }
+        .padding(20)
+        .background(Color.white.opacity(0.04))
+        .border(Color.white.opacity(0.1), width: 1)
+        .padding(.horizontal, 5)
+        .padding(.top, 10)
+    }
+}
+
+// MARK: - Longest Streak Details
+struct LongestStreakDetailsView: View {
+    @ObservedObject var state: StatsTabState
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Text("YOUR ALL-TIME BEST!")
+                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .foregroundColor(.cyan)
+            
+            Text("Consistency is the key to mastering a language. Keep showing up!")
+                .font(.system(size: 12, weight: .regular))
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(20)
+        .background(Color.white.opacity(0.04))
+        .border(Color.white.opacity(0.1), width: 1)
+        .padding(.horizontal, 5)
+        .padding(.top, 10)
+    }
+}
+
+// MARK: - Calendar Section (in scroll, toggled)
 struct StatsCalendarSection: View {
-    @ObservedObject var appState: AppStateManager; let pair: LanguagePair; let practiceSet: Set<Date>; @Binding var cachedSortedMonths: [Date]
-    
+    @ObservedObject var appState: AppStateManager
+    let pair: LanguagePair
+    let practiceSet: Set<Date>
+    @Binding var cachedSortedMonths: [Date]
+
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // FIXED HEADER REMOVED - NOW SCROLLS INSIDE
-            
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 20) {
                     ForEach(cachedSortedMonths, id: \.self) { monthStart in
-                        // Pass isFirst to render the header in the first block
                         monthBlock(for: monthStart, isFirst: monthStart == cachedSortedMonths.first)
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 20) // Match ZStack top alignment
+                .padding(.top, 20)
             }
             .diagnosticBorder(.cyan.opacity(0.2), width: 1, label: "MONTH_SCROLL")
         }
         .diagnosticBorder(.white.opacity(0.3), width: 1, label: "CAL_SEC_Z")
     }
-    
+
     @ViewBuilder
     private func monthBlock(for monthStart: Date, isFirst: Bool) -> some View {
         let calendar = Calendar.current
         let range = calendar.range(of: .day, in: .month, for: monthStart)!
         let daysInMonth = range.count
-        
         let monthName = monthFormatter.string(from: monthStart).uppercased()
-        
+
         VStack(alignment: .leading, spacing: 12) {
-            // SCROLLING HEADER: Month Name (Parallel to History Log)
             HStack {
                 if isFirst {
-                    // HISTORY LOG Heading - Now Scrolls with First Month
                     Text(LocalizationManager.shared.string(.historyLog).uppercased())
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
                         .diagnosticBorder(.purple.opacity(0.3), width: 0.5, label: "SCROLL_HDR")
-                    Spacer() // Pushes Month Name to right
+                    Spacer()
                 } else {
-                    Spacer(minLength: 110) // Push month name past the virtual "HISTORY LOG" space (for alignment consistency)
+                    Spacer(minLength: 110)
                 }
-                
                 Text(monthName)
                     .font(.system(size: 12, weight: .bold, design: .monospaced))
                     .foregroundColor(.gray)
-                    .diagnosticBorder(.gray.opacity(0.3), width: 0.5, label: monthName)
             }
             .padding(.bottom, 4)
-            
+
             VStack(spacing: 4) {
-                // Days Header (M T W T F S S)
                 HStack(spacing: 0) {
                     ForEach([
                         LocalizationManager.shared.string(.monShort),
@@ -275,43 +466,38 @@ struct StatsCalendarSection: View {
                     }
                 }
                 .diagnosticBorder(.white.opacity(0.05), width: 0.5, label: "DAYS_HS")
-                
-                // Calendar Grid
+
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
-                    // Padding for the start of the month
                     let weekday = calendar.component(.weekday, from: monthStart)
-                    // adjust weekday (1=Sun, 2=Mon... -> 0=Mon, 6=Sun)
                     let offset = (weekday + 5) % 7
-                    
+
                     ForEach(0..<offset, id: \.self) { _ in
                         Color.clear.frame(height: 40)
                     }
-                    
+
                     ForEach(1...daysInMonth, id: \.self) { day in
                         let cellDate = calendar.date(byAdding: .day, value: day - 1, to: monthStart)!
                         let hasPracticed = practiceSet.contains(calendar.startOfDay(for: cellDate))
                         let isToday = calendar.isDateInToday(cellDate)
-                        
                         calendarCell(day: day, isToday: isToday, hasPracticed: hasPracticed)
                     }
                 }
                 .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "GRID")
             }
-            .frame(width: UIScreen.main.bounds.width - 40) // Match screen width minus padding
+            .frame(width: UIScreen.main.bounds.width - 40)
         }
     }
-    
+
     private var monthFormatter: DateFormatter {
         let f = DateFormatter()
         f.dateFormat = "MMMM_yyyy"
         return f
     }
-    
+
     private func calendarCell(day: Int, isToday: Bool, hasPracticed: Bool) -> some View {
         ZStack {
             if isToday {
-                ChamferedShape(chamferSize: 8, cornerRadius: 0)
-                    .fill(Color.white)
+                ChamferedShape(chamferSize: 16, cornerRadius: 0).fill(Color.white)
                 VStack {
                     HStack {
                         Spacer()
@@ -321,16 +507,11 @@ struct StatsCalendarSection: View {
                 }
                 Text("\(day)").font(.system(size: 14, weight: .bold)).foregroundColor(.black)
             } else if hasPracticed {
-                ChamferedShape(chamferSize: 8, cornerRadius: 0)
-                    .fill(ThemeColors.getColor(for: "Neon Green"))
-                Text("\(day)")
-                    .font(.system(size: 18, weight: .black))
-                    .foregroundColor(Color(red: 1.0, green: 0.1, blue: 0.4))
+                ChamferedShape(chamferSize: 16, cornerRadius: 0).fill(ThemeColors.getColor(for: "Neon Green"))
+                Text("\(day)").font(.system(size: 18, weight: .black)).foregroundColor(Color(red: 1.0, green: 0.1, blue: 0.4))
             } else {
-                ChamferedShape(chamferSize: 8, cornerRadius: 0)
-                    .fill(Color.white.opacity(0.05))
+                ChamferedShape(chamferSize: 16, cornerRadius: 0).fill(Color.white.opacity(0.05))
                 Text("\(day)").font(.system(size: 12, weight: .bold)).foregroundColor(.gray)
-                
                 Path { p in
                     p.move(to: CGPoint(x: 5, y: 5))
                     p.addLine(to: CGPoint(x: 35, y: 35))
@@ -342,11 +523,11 @@ struct StatsCalendarSection: View {
     }
 }
 
+// MARK: - Chronotype Section
 struct StatsChronotypeSection: View {
     @ObservedObject var appState: AppStateManager; let pair: LanguagePair; let chronotype: String; @Binding var cachedStudiedHours: Set<Int>
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            // Chronotype Header
             HStack(spacing: 8) {
                 Rectangle().fill(Color.yellow).frame(width: 8, height: 8)
                     .diagnosticBorder(.yellow.opacity(0.5), width: 0.5, label: "SQ")
@@ -355,10 +536,8 @@ struct StatsChronotypeSection: View {
             }.padding(.horizontal, 20)
                 .diagnosticBorder(.white.opacity(0.1), width: 0.5, label: "TIT_HS")
 
-            // Dynamic Chronotype Card
             let typeInfo = getChronotypeInfo(chronotype)
             HStack(spacing: 20) {
-                // Icon Box
                 Rectangle()
                     .fill(typeInfo.color)
                     .frame(width: 100, height: 100)
@@ -368,7 +547,7 @@ struct StatsChronotypeSection: View {
                             .foregroundColor(.white)
                     )
                     .diagnosticBorder(.white.opacity(0.3), width: 1, label: "ICON")
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text(typeInfo.title)
                         .font(.system(size: 20, weight: .black, design: .monospaced))
@@ -376,7 +555,7 @@ struct StatsChronotypeSection: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(Color.cyan)
-                    
+
                     Text(typeInfo.description)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.black)
@@ -387,29 +566,26 @@ struct StatsChronotypeSection: View {
             }.padding(.horizontal, 20)
                 .diagnosticBorder(.blue.opacity(0.3), width: 1, label: "CHRONO_HS_S:20")
 
-            // Activity Distribution
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(LocalizationManager.shared.string(.activityDistribution))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundColor(.cyan).padding(.horizontal, 20)
-                        .diagnosticBorder(.cyan.opacity(0.3), width: 0.5, label: "LBL")
-                    
-                    ZStack(alignment: .bottom) {
-                        // 24H Dot Line - Aligned perfectly with labels
-                        HStack(spacing: 0) {
-                            ForEach(0..<24) { hr in
-                                let isStudied = cachedStudiedHours.contains(hr)
-                                Circle()
-                                    .fill(isStudied ? Color(red: 1.0, green: 0.1, blue: 0.4) : Color.cyan.opacity(0.7)) // SOLID NO DIM
-                                    .frame(width: 8, height: 8)
-                                    .frame(maxWidth: .infinity)
-                                    .diagnosticBorder(isStudied ? .pink.opacity(0.3) : .clear, width: 0.5, label: "\(hr)")
-                            }
+            VStack(alignment: .leading, spacing: 12) {
+                Text(LocalizationManager.shared.string(.activityDistribution))
+                    .font(.system(size: 10, weight: .bold, design: .monospaced)).foregroundColor(.cyan).padding(.horizontal, 20)
+                    .diagnosticBorder(.cyan.opacity(0.3), width: 0.5, label: "LBL")
+
+                ZStack(alignment: .bottom) {
+                    HStack(spacing: 0) {
+                        ForEach(0..<24) { hr in
+                            let isStudied = cachedStudiedHours.contains(hr)
+                            Circle()
+                                .fill(isStudied ? Color(red: 1.0, green: 0.1, blue: 0.4) : Color.cyan.opacity(0.7))
+                                .frame(width: 8, height: 8)
+                                .frame(maxWidth: .infinity)
+                                .diagnosticBorder(isStudied ? .pink.opacity(0.3) : .clear, width: 0.5, label: "\(hr)")
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20) // MATCHES LABELS
-                        .diagnosticBorder(.blue.opacity(0.2), width: 1, label: "DOTS_P:H20")
-                    
-                    // Hour labels
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20)
+                    .diagnosticBorder(.blue.opacity(0.2), width: 1, label: "DOTS_P:H20")
+
                     HStack {
                         Text("0").font(.system(size: 8)).foregroundColor(.gray)
                             .diagnosticBorder(.white.opacity(0.1), width: 0.5)
@@ -437,23 +613,23 @@ struct StatsChronotypeSection: View {
             .diagnosticBorder(.pink.opacity(0.1), width: 1.5, label: "CHRONO_P:T20")
         .diagnosticBorder(.pink, width: 1, label: "CHRONO_SEC")
     }
-    
+
     private func getChronotypeInfo(_ type: String) -> (icon: String, title: String, description: String, color: Color) {
         switch type {
         case "EARLY BIRD":
-            return ("sun.max.fill", 
-                    LocalizationManager.shared.string(.earlyBird), 
-                    LocalizationManager.shared.string(.earlyBirdDesc), 
+            return ("sun.max.fill",
+                    LocalizationManager.shared.string(.earlyBird),
+                    LocalizationManager.shared.string(.earlyBirdDesc),
                     ThemeColors.secondaryAccent)
         case "DAY WALKER":
-            return ("sun.horizon.fill", 
-                    LocalizationManager.shared.string(.dayWalker), 
-                    LocalizationManager.shared.string(.dayWalkerDesc), 
+            return ("sun.horizon.fill",
+                    LocalizationManager.shared.string(.dayWalker),
+                    LocalizationManager.shared.string(.dayWalkerDesc),
                     ThemeColors.secondaryAccent)
-        default: // NIGHT OWL
-            return ("moon.stars.fill", 
-                    LocalizationManager.shared.string(.nightOwl), 
-                    LocalizationManager.shared.string(.nightOwlDesc), 
+        default:
+            return ("moon.stars.fill",
+                    LocalizationManager.shared.string(.nightOwl),
+                    LocalizationManager.shared.string(.nightOwlDesc),
                     ThemeColors.secondaryAccent)
         }
     }

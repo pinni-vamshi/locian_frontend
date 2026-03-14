@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct MalayalamStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             continueLearning: "പഠനം തുടരുക",
             noPastMoments: "കഴിഞ്ഞ നിമിഷങ്ങൾ ഇല്ല",
             useCamera: "ക്യാമറ ഉപയോഗിക്കുക",
-            previouslyLearning: "മുമ്പ് പഠിച്ചത്",
+            currentlyLearning: "ഇപ്പോൾ പഠിക്കുന്നത്",
             sunShort: "ഞാ",
             monShort: "തി",
             tueShort: "ചൊ",
@@ -77,9 +78,22 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             typeHere: "ഇവിടെ ടൈപ്പ് ചെയ്യുക",
             nearbyLabel: "സമീപത്ത്",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "ദിനചര്യ ചേർക്കുക",
             tapToSetup: "സജ്ജീകരിക്കാൻ ടാപ്പ് ചെയ്യുക",
-            tapToStartLearning: "പഠനം ആരംഭിക്കാൻ ടാപ്പ് ചെയ്യുക")
+            tapToStartLearning: "പഠനം ആരംഭിക്കാൻ ടാപ്പ് ചെയ്യുക",
+            
+            // V3 Learn Tab Keys
+            variables: "വേരിയബിളുകൾ",
+            constants: "സ്ഥിരാങ്കങ്ങൾ",
+            structure: "ഘടന",
+            previouslyPracticed: "മുമ്പ് പഠിച്ചത്",
+            historyStrength: "ചരിത്ര ശക്തി",
+            locationOff: "ലൊക്കേഷൻ ഓഫ്",
+            confidence: "ആത്മവിശ്വാസം",
+            locationAccessRequired: "ലൊക്കേഷൻ അനുമതി വേണം",
+            primary: "പ്രധാനപ്പെട്ടത്")
     }
 
     var settings: SettingsStrings {
@@ -403,7 +417,7 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

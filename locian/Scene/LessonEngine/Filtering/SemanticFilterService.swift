@@ -39,11 +39,11 @@ struct SemanticFilterService {
         for candidateId in candidateIds {
             // Find the brick in the data
             var brick: BrickItem?
-            if let found = bricks?.constants?.first(where: { ($0.id ?? $0.word) == candidateId }) {
+            if let found = bricks?.constants?.first(where: { $0.id == candidateId }) {
                 brick = found
-            } else if let found = bricks?.variables?.first(where: { ($0.id ?? $0.word) == candidateId }) {
+            } else if let found = bricks?.variables?.first(where: { $0.id == candidateId }) {
                 brick = found
-            } else if let found = bricks?.structural?.first(where: { ($0.id ?? $0.word) == candidateId }) {
+            } else if let found = bricks?.structural?.first(where: { $0.id == candidateId }) {
                 brick = found
             }
             

@@ -31,7 +31,7 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             continueLearning: "学習を続ける",
             noPastMoments: "過去の瞬間なし",
             useCamera: "カメラを使用",
-            previouslyLearning: "以前の学習",
+            currentlyLearning: "現在の学習",
             sunShort: "日",
             monShort: "月",
             tueShort: "火",
@@ -80,7 +80,18 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             noNearbyPlaces: "{noNearby}",
             addRoutine: "ルーチンを追加",
             tapToSetup: "タップして設定",
-            tapToStartLearning: "タップして学習を開始")
+            tapToStartLearning: "タップして学習を開始",
+            
+            // V3 Learn Tab Keys
+            variables: "変数",
+            constants: "定数",
+            structure: "構造",
+            previouslyPracticed: "以前の練習",
+            historyStrength: "履歴の強度",
+            locationOff: "位置情報オフ",
+            confidence: "信頼度",
+            locationAccessRequired: "位置情報アクセスが必要",
+            primary: "プライマリ")
     }
 
     var settings: SettingsStrings {
@@ -405,7 +416,7 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

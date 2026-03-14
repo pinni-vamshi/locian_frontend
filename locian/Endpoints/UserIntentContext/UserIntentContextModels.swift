@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 struct UserIntentContextResponse: Codable {
     let success: Bool
@@ -54,14 +55,8 @@ struct UserIntentTag: Codable {
 
 // MARK: - Unified Request (POST)
 struct UnifiedIntentRequest: Codable {
-    let latitude: Double
-    let longitude: Double
-    let time: String?
-    let overrides: [String: [String]]?
-    let geo_updates: [String: GeoUpdateData]?
-}
-
-struct GeoUpdateData: Codable {
-    let tags: [String: Double]
-    let nearby_places: [String]?
+    let lat: Double
+    let lng: Double
+    let time: String
+    let date: String
 }

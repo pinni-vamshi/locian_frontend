@@ -6,30 +6,39 @@
 //
 
 import Foundation
+import Combine
 
 class UserIntentContextService {
     static let shared = UserIntentContextService()
     private init() {}
     
     /// Unified Endpoint: POST /api/user/intent/context
-    /// Handles both fetching context (empty overrides) and updating routine/geo data.
+    /// Fetch habitual context (timeline/routine).
     func unifyIntentContext(
         lat: Double,
         lng: Double,
         time: String? = nil,
-        overrides: [String: [String]]? = nil,
-        geoUpdates: [String: GeoUpdateData]? = nil,
+        date: String? = nil,
         completion: @escaping (Result<UserIntentContextResponse, Error>) -> Void
     ) {
+        // 1. Capture Time/Date if not provided
+        let currentDate = Date()
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm"
+        let timeString = time ?? timeFormatter.string(from: currentDate)
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let dateString = date ?? dateFormatter.string(from: currentDate)
+        
         let requestPayload = UnifiedIntentRequest(
-            latitude: lat,
-            longitude: lng,
-            time: time,
-            overrides: overrides,
-            geo_updates: geoUpdates
+            lat: lat,
+            lng: lng,
+            time: timeString,
+            date: dateString
         )
         
-        print("🚀 [UserIntentContextService] POST /api/user/intent/context (Unified)")
+        print("🚀 [UserIntentContextService] POST /api/user/intent/context (V2 Unified)")
         
         // DEBUG: Print Raw Request
         if let requestData = try? JSONEncoder().encode(requestPayload),

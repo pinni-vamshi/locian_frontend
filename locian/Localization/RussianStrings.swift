@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct RussianStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct RussianStrings: AppStrings, LocalizedStrings {
             continueLearning: "Продолжить Учить",
             noPastMoments: "Нет Прошлых Моментов",
             useCamera: "Использовать Камеру",
-            previouslyLearning: "Ранее Изучал",
+            currentlyLearning: "Изучается сейчас",
             sunShort: "Вс",
             monShort: "Пн",
             tueShort: "Вт",
@@ -77,9 +78,22 @@ struct RussianStrings: AppStrings, LocalizedStrings {
             typeHere: "ПЕЧАТАЙТЕ ЗДЕСЬ",
             nearbyLabel: "РЯДОМ",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "Добавить Рутину",
             tapToSetup: "Нажмите для Настройки",
-            tapToStartLearning: "Нажмите, чтобы Начать Обучение")
+            tapToStartLearning: "Нажмите, чтобы Начать Обучение",
+            
+            // V3 Learn Tab Keys
+            variables: "ПЕРЕМЕННЫЕ",
+            constants: "КОНСТАНТЫ",
+            structure: "СТРУКТУРА",
+            previouslyPracticed: "ИЗУЧЕНО РАНЕЕ",
+            historyStrength: "СИЛА ИСТОРИИ",
+            locationOff: "ЛОКАЦИЯ ВЫКЛ",
+            confidence: "УВЕРЕННОСТЬ",
+            locationAccessRequired: "НУЖЕН ДОСТУП К ГЕО",
+            primary: "ОСНОВНОЙ")
     }
 
     var settings: SettingsStrings {
@@ -403,7 +417,7 @@ struct RussianStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

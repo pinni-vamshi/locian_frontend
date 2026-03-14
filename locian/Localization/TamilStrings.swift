@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct TamilStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             continueLearning: "கற்க தொடருங்கள்",
             noPastMoments: "கடந்த தருணங்கள் இல்லை",
             useCamera: "காம்ரா பயன்படுத்துக",
-            previouslyLearning: "முன்பு கற்று",
+            currentlyLearning: "தற்போது கற்று",
             sunShort: "ஞா",
             monShort: "தி",
             tueShort: "செ",
@@ -77,9 +78,22 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             typeHere: "இங்கே தட்டச்சு செய்யவும்",
             nearbyLabel: "அருகில்",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "வழக்கத்தைச் சேர்க்கவும்",
             tapToSetup: "அமைக்க தட்டவும்",
-            tapToStartLearning: "கற்றல் தொடங்க தட்டவும்")
+            tapToStartLearning: "கற்றல் தொடங்க தட்டவும்",
+            
+            // V3 Learn Tab Keys
+            variables: "மாறிகள்",
+            constants: "மாறிலிகள்",
+            structure: "அமைப்பு",
+            previouslyPracticed: "முன்பு கற்று",
+            historyStrength: "வரலாற்று வலிமை",
+            locationOff: "இருப்பிடம் அணைக்கப்பட்டுள்ளது",
+            confidence: "நம்பிக்கை",
+            locationAccessRequired: "இருப்பிட அனுமதி தேவை",
+            primary: "முதன்மை")
     }
 
     var settings: SettingsStrings {
@@ -403,7 +417,7 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

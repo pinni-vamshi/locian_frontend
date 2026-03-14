@@ -9,25 +9,26 @@ import Foundation
 
 // MARK: - Request
 struct DiscoverMomentsRequest: Codable {
-    let user_id: String?
+    let time: String
+    let date: String
     let latitude: Double?
     let longitude: Double?
+    let places: [DiscoverPlaceInput]?
+    let velocity: String?
+    let audio_db: Double?
+    let light_level: Double?
+    let altitude: Double?
+    let explicit_request: String?
+    let image_base64: String?
+    let weather: String?
     let user_language: String?
     let target_language: String?
-    let time: String?      // HH:MM
-    let date: String?      // YYYY-MM-DD
-    let places: [DiscoverPlaceInput]?
-    let image_base64: String?
-    let explicit_request: String?
-    let session_token: String?
-    let current_velocity: String?
-    let weather: String?
+    let wifi_ssid: String?
 }
 
 struct DiscoverPlaceInput: Codable {
     let name: String
     let category: String
-    let distance: Double
 }
 
 // MARK: - Response
@@ -49,14 +50,14 @@ struct PlaceRecommendation: Codable, Identifiable {
     var id: String { place_id }
     let place_id: String
     let confidence: Double
-    let grounding: String
-    let patterns: [RecommendationPattern]?
+    let grounding: String?
+    var patterns: [RecommendationPattern]?
 }
 
 struct RecommendationPattern: Codable, Identifiable {
-    var id: String { target }
-    let target: String
-    let meaning: String
+    var id: String { target ?? UUID().uuidString }
+    let target: String?
+    let meaning: String?
     let phonetic: String?
     let bricks: RecommendationBricks?
 }

@@ -3,12 +3,10 @@ import Combine
 
 struct AppLaunchLoadingView: View {
     @ObservedObject var appState: AppStateManager
-    @State private var dotDraw: CGFloat = 0.0
-    @State private var tailDraw: CGFloat = 0.0
-    @State private var dotFillOpacity: Double = 0.0
-    @State private var tailFillOpacity: Double = 0.0
-    @State private var dotScale: CGFloat = 0.0
-    @State private var tailScale: CGFloat = 0.0
+    @State private var logoOpacity: Double = 0.0
+    @State private var asteriskOpacity: Double = 0.0
+    @State private var logoScale: CGFloat = 0.82
+    @State private var asteriskScale: CGFloat = 0.82
     @State private var letterOpacities: [Double] = [0, 0, 0, 0, 0, 0]
     @State private var letterScales: [CGFloat] = [0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
     @State private var subtitleOpacity: Double = 0.0
@@ -28,14 +26,12 @@ struct AppLaunchLoadingView: View {
                 
                 // Massive Semicolon Logo
                 SemicolonLogoView(
-                    dotDraw: dotDraw,
-                    tailDraw: tailDraw,
-                    dotFillOpacity: dotFillOpacity,
-                    tailFillOpacity: tailFillOpacity,
-                    dotScale: dotScale,
-                    tailScale: tailScale
+                    logoOpacity: logoOpacity,
+                    asteriskOpacity: asteriskOpacity,
+                    logoScale: logoScale,
+                    asteriskScale: asteriskScale
                 )
-                .frame(width: 190, height: 140) // Updated frame for side-by-side layout
+                .frame(width: 190, height: 140)
                 
                 // Techy Logo Branding
                 VStack(spacing: 16) {
@@ -65,12 +61,12 @@ struct AppLaunchLoadingView: View {
                     
                     Text("GETTING YOUR MOMENTS" + String(repeating: ".", count: dotCount))
                         .font(.system(size: 14, weight: .bold, design: .monospaced))
-                        .foregroundColor(Color.cyan) // Requested Cyan color
+                        .foregroundColor(Color.cyan)
                         .onReceive(timer) { _ in
                             dotCount = (dotCount + 1) % 4
                         }
                 }
-                .opacity(subtitleOpacity >= 0.01 ? 1.0 : 0.0) // Show almost immediately
+                .opacity(subtitleOpacity >= 0.01 ? 1.0 : 0.0)
                 .padding(.bottom, 60)
             }
         }
@@ -80,89 +76,63 @@ struct AppLaunchLoadingView: View {
     }
     
     private func startAnimationSequence() {
-        // --- DOT SEQUENCE ---
-        // 1. Immediate visible start (Reduced duration for faster pick-up)
-        withAnimation(.easeIn(duration: 1.6)) {
-            dotDraw = 1.0
-            dotFillOpacity = 1.0
-        }
-        
-        // 2. Instant Scale Reveal (Removed delay for immediate feedback)
-        withAnimation(.easeInOut(duration: 0.9)) {
-            dotScale = 1.0
-            subtitleOpacity = 0.5 // Start revealing text immediately
-        }
-        
-        // --- TAIL SEQUENCE (Staggered) ---
-        // 1. Tightened stagger for continuous movement
-        withAnimation(.easeIn(duration: 1.8).delay(0.2)) {
-            tailDraw = 1.0
-            tailFillOpacity = 1.0
-        }
-        
-        // 2. Snappy Scaling
-        withAnimation(.easeInOut(duration: 1.1).delay(0.3)) {
-            tailScale = 1.0
-        }
-        
-        // --- BRANDING TEXT SEQUENCE ---
-        // Earlier start of branding reveal
-        for i in 0..<brandingLetters.count {
-            let delay = 0.7 + Double(i) * 0.12
-            withAnimation(.easeIn(duration: 1.2).delay(delay)) {
-                letterOpacities[i] = 1.0
+        // Small delay so the initial frame renders before animations begin
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            // COMMA — fade + subtle scale
+            withAnimation(.easeOut(duration: 0.7)) {
+                logoOpacity = 1.0
+                logoScale = 1.0
             }
-            withAnimation(.easeInOut(duration: 0.8).delay(delay)) {
-                letterScales[i] = 1.0
+            
+            // ASTERISK — staggered
+            withAnimation(.easeOut(duration: 0.7).delay(0.2)) {
+                asteriskOpacity = 1.0
+                asteriskScale = 1.0
             }
-        }
-        
-        // Final Subtitle Reveal
-        withAnimation(.easeOut(duration: 1.5).delay(1.0)) {
-            subtitleOpacity = 1.0
+            
+            // LOCIAN — per-letter stagger via asyncAfter (reliable under CPU load)
+            for i in 0..<6 {
+                let letterDelay = 0.9 + Double(i) * 0.08
+                DispatchQueue.main.asyncAfter(deadline: .now() + letterDelay) {
+                    withAnimation(.easeOut(duration: 0.4)) {
+                        letterOpacities[i] = 1.0
+                        letterScales[i] = 1.0
+                    }
+                }
+            }
+            
+            // Subtitle — after all letters done
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation(.easeOut(duration: 0.4)) {
+                    subtitleOpacity = 1.0
+                }
+            }
         }
     }
 }
 
 // MARK: - Massive Semicolon Logo Components
 struct SemicolonLogoView: View {
-    let dotDraw: CGFloat
-    let tailDraw: CGFloat
-    let dotFillOpacity: Double
-    let tailFillOpacity: Double
-    let dotScale: CGFloat
-    let tailScale: CGFloat
+    let logoOpacity: Double
+    let asteriskOpacity: Double
+    let logoScale: CGFloat
+    let asteriskScale: CGFloat
     
     var body: some View {
-        HStack(spacing: 20) {
-            // LEFT COMMA (White)
-            ZStack {
-                CommaShape()
-                    .trim(from: 0, to: dotDraw)
-                    .stroke(Color.white, lineWidth: 2.03)
-                    .frame(width: 80, height: 135)
-                
-                CommaShape()
-                    .fill(Color.white)
-                    .frame(width: 80, height: 135)
+        // COMMA — static fill, no trim animation (smooth)
+        CommaShape()
+            .fill(Color.white)
+            .frame(width: 80, height: 135)
+            .opacity(logoOpacity)
+            .scaleEffect(logoScale)
+            .overlay(alignment: .topTrailing) {
+                Text("*")
+                    .font(.system(size: 68, weight: .black))
+                    .foregroundColor(ThemeColors.secondaryAccent)
+                    .opacity(asteriskOpacity)
+                    .scaleEffect(asteriskScale)
+                    .offset(x: 46, y: -20)
             }
-            .opacity(dotFillOpacity)
-            .scaleEffect(dotScale)
-            
-            // RIGHT COMMA (Pink)
-            ZStack {
-                CommaShape()
-                    .trim(from: 0, to: tailDraw)
-                    .stroke(ThemeColors.secondaryAccent, lineWidth: 2.03)
-                    .frame(width: 80, height: 135)
-                
-                CommaShape()
-                    .fill(ThemeColors.secondaryAccent)
-                    .frame(width: 80, height: 135)
-            }
-            .opacity(tailFillOpacity)
-            .scaleEffect(tailScale)
-        }
     }
 }
 

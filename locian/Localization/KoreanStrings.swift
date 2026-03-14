@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct KoreanStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             continueLearning: "학습 계속",
             noPastMoments: "지난 순간 없음",
             useCamera: "카메라 사용",
-            previouslyLearning: "이전 학습",
+            currentlyLearning: "현재 학습 중",
             sunShort: "일",
             monShort: "월",
             tueShort: "화",
@@ -77,9 +78,22 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             typeHere: "여기에 입력",
             nearbyLabel: "가까운",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "루틴 추가",
             tapToSetup: "탭하여 설정",
-            tapToStartLearning: "탭하여 학습 시작")
+            tapToStartLearning: "탭하여 학습 시작",
+            
+            // V3 Learn Tab Keys
+            variables: "변수",
+            constants: "상수",
+            structure: "구조",
+            previouslyPracticed: "이전 학습",
+            historyStrength: "기록 강도",
+            locationOff: "위치 꺼짐",
+            confidence: "신뢰도",
+            locationAccessRequired: "위치 권한 필요",
+            primary: "주요")
     }
 
     var settings: SettingsStrings {
@@ -404,7 +418,7 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

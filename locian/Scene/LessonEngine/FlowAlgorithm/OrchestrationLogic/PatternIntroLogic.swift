@@ -68,7 +68,7 @@ class PatternIntroLogic: ObservableObject {
             )
             
             let drillState = DrillState(
-                id: brick.safeID,
+                id: brick.id,
                 patternId: state.patternId,
                 drillIndex: -1,
                 drillData: brickDrill,

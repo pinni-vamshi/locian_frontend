@@ -115,6 +115,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager.stopUpdatingLocation()
     }
     
+    // MARK: - MEMORY WIPE (Zero Persistence)
+    func clearLocationMemory() {
+        print("🚮 [LOCATION] Wiping all coordinates from memory.")
+        self.currentLocation = nil
+        self.latitude = nil
+        self.longitude = nil
+        self.stopUpdatingLocation()
+    }
+    
     // MARK: - CLLocationManagerDelegate
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
@@ -147,6 +156,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         completions.forEach { $0(.failure(error)) }
     }
     
+
+    
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         
@@ -172,10 +183,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         let latitude: Double
         let longitude: Double
         let distance: Double
-        let vector: [Double]
+        let vector: [Double]? // Made optional to prevent dropping places
     }
     
-    @Published var nearbyPlaceAmbience: [NearbyAmbience] = []
+    private var activeSearch: MKLocalSearch?
+    private let searchLock = NSLock()
     
     private var currentLanguageCode: String {
         let nativeName = AppStateManager.shared.nativeLanguage
@@ -183,45 +195,60 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func fetchNearbyPlaces(completion: @escaping ([NearbyAmbience]) -> Void) {
-        print("📍 [NEARBY] Starting fetchNearbyPlaces...")
+        print("📍 [NEARBY] Starting fresh fetchNearbyPlaces (on-demand)...")
         locationStatus = .searching
         
         // CRITICAL: Check if user has enabled location tracking in Settings
         guard AppStateManager.shared.isLocationTrackingEnabled else {
             locationStatus = .denied
-            print("⚠️ [NEARBY] Location tracking is DISABLED in Settings. Skipping location access.")
+            print("⚠️ [NEARBY] Location tracking is DISABLED. Blocking access.")
             completion([])
             return
         }
         
-        guard let location = currentLocation else {
-            print("📍 [NEARBY] Current location is NIL. Attempting to request location...")
-            // Try to get location first if not available
-            getCurrentLocation { [weak self] result in
-                switch result {
-                case .success(let loc):
-                    print("📍 [NEARBY] Success getting location: \(loc.coordinate)")
-                    self?.performLocalSearch(location: loc, completion: completion)
-                case .failure(let error):
-                    print("❌ [NEARBY] Failed to get location: \(error.localizedDescription)")
-                    self?.locationStatus = .error
-                    completion([])
-                }
+        // ALWAYS trigger a fresh fetch to ensure zero staleness/persistence
+        print("📍 [NEARBY] Requesting dynamic GPS update...")
+        getCurrentLocation { [weak self] result in
+            switch result {
+            case .success(let loc):
+                print("📍 [NEARBY] Success getting fresh location: \(loc.coordinate)")
+                self?.performLocalSearch(location: loc, completion: completion)
+            case .failure(let error):
+                print("❌ [NEARBY] Failed to get fresh location: \(error.localizedDescription)")
+                self?.locationStatus = .error
+                completion([])
             }
-            return
         }
-        print("📍 [NEARBY] Using existing location: \(location.coordinate)")
-        performLocalSearch(location: location, completion: completion)
+    }
+    
+    func cancelSearch() {
+        searchLock.lock()
+        defer { searchLock.unlock() }
+        
+        if let search = activeSearch {
+            print("🛑 [NEARBY] Explicitly canceling active MapKit search.")
+            search.cancel()
+            activeSearch = nil
+        }
     }
     
     private func performLocalSearch(location: CLLocation, completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Performing MKLocalPointsOfInterestRequest...")
         
-        let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 5000) // 5km radius
+        let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 10000) // Increased to 10km
         request.pointOfInterestFilter = .includingAll
         
+        searchLock.lock()
         let search = MKLocalSearch(request: request)
-        search.start { response, error in
+        self.activeSearch = search
+        searchLock.unlock()
+        
+        search.start { [weak self] response, error in
+            guard let self = self else { return }
+            
+            self.searchLock.lock()
+            self.activeSearch = nil
+            self.searchLock.unlock()
             if let error = error {
                 print("❌ [NEARBY] MapKit Search Error: \(error.localizedDescription)")
                 completion([]) // Skip fallback for now to focus on MKPOI structure
@@ -249,31 +276,28 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             for item in sortedItems {
                 guard let name = item.name, let loc = item.placemark.location else { continue }
                 
-                // Extract and clean category
-                var category: String? = nil
-                if let cat = item.pointOfInterestCategory {
-                    category = cat.rawValue.replacingOccurrences(of: "MKPointOfInterestCategory", with: "")
-                }
+                // 🧠 Semantic Snapping: Map raw Apple Category + Name to our supported list using separate service
+                let rawCat = item.pointOfInterestCategory?.rawValue
+                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: rawCat)
                 
-                if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
-                    // Use coordinate hash as stable identifier since itemIdentifier is not available
-                    let distance = loc.distance(from: location)
-                    let stableID = "\(loc.coordinate.latitude)_\(loc.coordinate.longitude)"
-                    ambience.append(NearbyAmbience(
-                        id: stableID,
-                        name: name,
-                        category: category,
-                        latitude: loc.coordinate.latitude,
-                        longitude: loc.coordinate.longitude,
-                        distance: distance,
-                        vector: vector
-                    ))
-                }
+                let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode)
+                
+                // Use coordinate hash as stable identifier
+                let distance = loc.distance(from: location)
+                let stableID = "\(loc.coordinate.latitude)_\(loc.coordinate.longitude)"
+                ambience.append(NearbyAmbience(
+                    id: stableID,
+                    name: name,
+                    category: snappedCategory,
+                    latitude: loc.coordinate.latitude,
+                    longitude: loc.coordinate.longitude,
+                    distance: distance,
+                    vector: vector
+                ))
             }
             
             DispatchQueue.main.async {
                 self.locationStatus = .found
-                self.nearbyPlaceAmbience = ambience
                 print("🎨 [NEARBY] Generated ambience for \(ambience.count) places.")
                 completion(ambience)
             }
@@ -302,11 +326,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             var ambience: [NearbyAmbience] = []
             for name in Array(Set(results)).prefix(8) {
+                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: nil)
                 if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
                     ambience.append(NearbyAmbience(
                         id: "\(location.coordinate.latitude)_\(location.coordinate.longitude)_\(name)",
                         name: name,
-                        category: nil,
+                        category: snappedCategory,
                         latitude: location.coordinate.latitude,
                         longitude: location.coordinate.longitude,
                         distance: 0,
@@ -318,11 +343,4 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
-    // MARK: - API Helper
-    func getNearbyPlacesForAPI() -> [NearbyPlaceData] {
-        return nearbyPlaceAmbience.prefix(10).map { 
-            let enrichedName = $0.category != nil ? "\($0.name) (\($0.category!))" : $0.name
-            return NearbyPlaceData(place_name: enrichedName, distance: $0.distance, type: $0.category)
-        }
-    }
 }

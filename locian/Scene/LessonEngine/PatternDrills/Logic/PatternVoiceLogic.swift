@@ -110,6 +110,12 @@ class PatternVoiceLogic: ObservableObject {
         let delta = isCorrectResult ? 0.15 : -0.05
         engine.updateMastery(id: state.patternId, delta: delta)
         
+        // 3.5 ✅ PATTERN COMPLETION TRIGGER (Competitive Decay Loop)
+        // If correct and the final score is now >= 0.85, trigger the completion endpoint for architectural persistence.
+        if isCorrectResult && engine.getBlendedMastery(for: state.patternId) >= 0.85 {
+            CompletePatternLogic.shared.reportCompletion(patternId: state.patternId, engine: engine)
+        }
+        
         // 4. Trigger UI Side Effects
         self.isCorrect = isCorrectResult
         
@@ -142,91 +148,24 @@ class PatternVoiceLogic: ObservableObject {
     
     // MARK: - 🎙️ Voice Assets
     
-    private static let fullIntroVoices = [
-        "Say \"%@\" in %@",
-        "How do you pronounce the %@ word for \"%@\"?",
-        "Speak the word for \"%@\" in %@",
-        "Your turn: Say \"%@\" in %@",
-        "Let's hear \"%@\" in %@"
-    ]
     
-    private static let correctVoices = [
-        "You are right! \"%@\" in %@ is \"%@\"",
-        "Exactly. \"%@\" in %@ translates to \"%@\"",
-        "Spot on. In %@, \"%@\" matches \"%@\"",
-        "That's correct. We say \"%@\" for \"%@\" in %@",
-        "Perfect match. \"%@\" in %@ is \"%@\""
-    ]
     
-    private static let wrongVoices = [
-        "Actually, we say \"%@\"",
-        "The correct word is \"%@\"",
-        "Note the pronunciation: \"%@\"",
-        "Listen to the word: \"%@\"",
-        "It sounds like this: \"%@\""
-    ]
+    
+    
+    
     
     private static var introIndex = 0
     
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
+            print("🎙️ Using Voice Override: '\(override)'")
             AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
-            return
         }
-        
-        guard !drill.suppressIntroAudio else { return }
-        
-        let languageCode = engine.lessonData?.target_language ?? "es"
-        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
-        let meaning = drill.drillData.meaning
-        
-        let index = introIndex % fullIntroVoices.count
-        let template = fullIntroVoices[index]
-        introIndex += 1
-        
-        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        text = text.replacingOccurrences(of: "%@", with: languageName)
-        
-        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
     }
     
     private func playFeedback(isCorrect: Bool) {
-        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
-        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
-            print("🎙️ [PatternVoice] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
-            return
-        }
-        
-        let target = state.drillData.target
-        let meaning = state.drillData.meaning
-        let targetLang = targetLanguage
-        
-        let template = isCorrect ? 
-            (PatternVoiceLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
-            (PatternVoiceLogic.wrongVoices.randomElement() ?? "Actually, we say \"%@\"")
-        
-        // Split at potential target placeholder
-        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        if let langRange = textToSpeak.range(of: "%@") {
-            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
-        }
-        
-        // Split at the final placeholder
-        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
-        
-        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
-        
-        if finalComponents.count >= 2 {
-            AudioManager.shared.speak(segments: [
-                .init(text: finalComponents[0], language: "en-US"),
-                .init(text: target, language: langCode)
-            ])
-        } else {
-            // Fallback
-            AudioManager.shared.speak(segments: [
-                .init(text: isCorrect ? "That's correct. " : "Actually, we say ", language: "en-US"),
-                .init(text: target, language: langCode)
-            ])
+        if isCorrect {
+            playAudio()
         }
     }
     

@@ -9,6 +9,7 @@ struct SettingsView: View {
     @ObservedObject var appState: AppStateManager
     @ObservedObject var languageManager = LanguageManager.shared
     @ObservedObject var localizationManager = LocalizationManager.shared
+    // Voice management removed (VoiceDownloadManager deleted)
     @StateObject var state: SettingsTabState
     @Binding var selectedTab: MainTabView.TabItem
     @State private var animateIn = false
@@ -189,18 +190,34 @@ struct SettingsView: View {
     }
 
     private var scrollableContent: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 60) {
-                languageSection
-                personalizationSection
-                interfaceLanguageSection
-                notificationSection
-                locationSection
-                accountSection
-                Spacer(minLength: 100)
+        ZStack(alignment: .top) {
+            if state.pullRefreshState != .idle {
+                CyberRefreshIndicator(state: state.pullRefreshState, height: max(60, state.scrollOffset), accentColor: ThemeColors.primaryAccent).zIndex(0)
             }
-            .padding(.top, 20)
+            
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 60) {
+                    languageSection
+                    personalizationSection
+                    interfaceLanguageSection
+                    notificationSection
+                    locationSection
+                    accountSection
+                    Spacer(minLength: 100)
+                }
+                .padding(.top, 40)
+                .background(Color.black)
+                .overlay(scrollOffsetTracker, alignment: .top)
+            }
+            .coordinateSpace(name: "settingsPullToRefresh")
+            .onPreferenceChange(SettingsViewOffsetKey.self) { state.handleRefresh(offset: $0) }
         }
+    }
+    
+    private var scrollOffsetTracker: some View {
+        GeometryReader { geo in
+            Color.clear.preference(key: SettingsViewOffsetKey.self, value: geo.frame(in: .named("settingsPullToRefresh")).minY)
+        }.frame(height: 0)
     }
 
     // MARK: - Language Pair Section
@@ -330,81 +347,8 @@ struct SettingsView: View {
     
     // MARK: - Personalization Refresh
     
-    private var personalizationSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: 0) {
-                // 1. Vertical Heading
-                HStack(alignment: .top, spacing: 0) {
-                    VerticalHeading(
-                        text: languageManager.settings.refreshHeading.uppercased(),
-                        textColor: .black,
-                        backgroundColor: .white,
-                        width: 24,
-                        height: 140
-                    )
-                    
-                    Rectangle()
-                        .fill(ThemeColors.secondaryAccent)
-                        .frame(width: 4, height: 140)
-                }
-                .fixedSize()
-                
-                // 2. Content
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(languageManager.settings.refreshSubheading.uppercased())
-                        .font(.system(size: 10, weight: .black, design: .monospaced))
-                        .foregroundColor(.gray)
-                        .padding(.bottom, 4)
+    
 
-                    Text(languageManager.settings.refreshDescription)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineSpacing(4)
-                    
-                    Button(action: {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                        state.refreshPersonalization { success in
-                            let generator = UINotificationFeedbackGenerator()
-                            generator.notificationOccurred(success ? .success : .error)
-                        }
-                    }) {
-                        HStack(spacing: 8) {
-                            if state.isRefreshingPersonalization {
-                                ProgressView()
-                                    .controlSize(.small)
-                                    .tint(.black)
-                            } else {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                            }
-                            
-                            Text(languageManager.settings.refreshButton.uppercased())
-                            
-                            if state.showRefreshSuccess {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
-                        .font(.system(size: 12, weight: .bold, design: .monospaced))
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color.white)
-                        .cornerRadius(0)
-                    }
-                    .padding(.top, 4)
-                }
-                .padding(.leading, 20)
-                .padding(.vertical, 10)
-            }
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 5)
-        .opacity(animateIn ? 1 : 0)
-        .offset(y: animateIn ? 0 : 20)
-        .animation(.spring().delay(0.18), value: animateIn)
-        .diagnosticBorder(.white.opacity(0.3), width: 1, label: "PERS_SEC")
-    }
     
 
 
@@ -492,7 +436,7 @@ struct SettingsView: View {
     
     private var accountSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .top, spacing: 0) {
+            HStack(alignment: .top, spacing: 5) {
                 HStack(alignment: .top, spacing: 0) {
                     VerticalHeading(
                         text: languageManager.settings.account.uppercased(),
@@ -571,6 +515,13 @@ struct SettingsView: View {
             }
             .diagnosticBorder(.white.opacity(0.1), width: 1)
         }
+    }
+}
+
+struct SettingsViewOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

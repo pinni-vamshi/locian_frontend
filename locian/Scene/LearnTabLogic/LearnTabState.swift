@@ -62,6 +62,25 @@ class LearnTabState: ObservableObject {
         return DiscoverMomentsService.shared.isLoading
     }
     
+    var activeBricks: [RecommendationBrickItem] {
+        guard let pattern = activePattern, let bricks = pattern.bricks else { return [] }
+        var all: [RecommendationBrickItem] = []
+        all.append(contentsOf: bricks.variables ?? [])
+        all.append(contentsOf: bricks.constants ?? [])
+        all.append(contentsOf: bricks.structural ?? [])
+        
+        let targetSentence = pattern.target?.lowercased() ?? ""
+        
+        // Sort by first occurrence in the target sentence
+        return all.sorted { a, b in
+            let indexA = targetSentence.range(of: a.word.lowercased())?.lowerBound ?? targetSentence.endIndex
+            let indexB = targetSentence.range(of: b.word.lowercased())?.lowerBound ?? targetSentence.endIndex
+            return indexA < indexB
+        }
+    }
+    
+    @Published var isRecordingVoice: Bool = false
+    
     let appState: AppStateManager
     var cancellables = Set<AnyCancellable>()
     
@@ -76,12 +95,51 @@ class LearnTabState: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
+            
+        SpeechRecognizer.shared.$recognizedText
+            .receive(on: RunLoop.main)
+            .sink { [weak self] text in
+                guard let self = self, self.isTextInputMode else { return }
+                self.manualInputText = text.uppercased()
+            }
+            .store(in: &cancellables)
+            
+        // ✅ Sync Recording Status
+        SpeechRecognizer.shared.$isRecording
+            .receive(on: RunLoop.main)
+            .assign(to: &$isRecordingVoice)
+    }
+    
+    func toggleVoiceInput() {
+        print("🔘 [LearnTabState] toggleVoiceInput called. isRecordingVoice: \(isRecordingVoice)")
+        if isRecordingVoice {
+            SpeechRecognizer.shared.stopRecording()
+        } else {
+            PermissionsService.shared.ensureMicrophoneAccess { granted in
+                print("🎤 [LearnTabState] Mic access granted: \(granted)")
+                guard granted else { return }
+                do {
+                    print("🎤 [LearnTabState] Triggering SpeechRecognizer.startRecording()")
+                    try SpeechRecognizer.shared.startRecording()
+                } catch {
+                    print("❌ [LearnTabState] Failed to start voice input: \(error)")
+                }
+            }
+        }
     }
 
     // MARK: - Discovery (Unified Endpoint)
     
     func discover(explicitText: String? = nil, image: UIImage? = nil) {
         print("🔍 [LearnTabState] discover() V3 called")
+        
+        // 🧹 COMPLETE REFRESH: Clear existing data immediately to ensure on-demand feel
+        DispatchQueue.main.async {
+            self.recommendations = []
+            self.nearbyPlaces = []
+            self.selectedRecommendationIndex = 0
+            self.selectedPatternIndex = 0
+        }
         
         DiscoverMomentsService.shared.discoverMoments(explicitRequest: explicitText, image: image) { [weak self] result in
             guard let self = self else { return }
@@ -90,11 +148,21 @@ class LearnTabState: ObservableObject {
             case .success(let response):
                 DispatchQueue.main.async {
                     if let rawRecs = response.data?.recommendations {
-                        // V3.45: Filter out fallback "unknown" places and places with zero patterns
-                        let validRecs = rawRecs.filter { rec in
-                            let isNotUnknown = rec.place_id.lowercased() != "unknown"
-                            let hasPatterns = !(rec.patterns ?? []).isEmpty
-                            return isNotUnknown && hasPatterns
+                        // V3.46: Deep Filter - Clean patterns first, then filter recommendations
+                        let validRecs = rawRecs.compactMap { rec -> PlaceRecommendation? in
+                            // 1. Only keep patterns that have a valid target
+                            let cleanPatterns = (rec.patterns ?? []).filter { $0.target != nil }
+                            
+                            // 2. Reject if no valid patterns remain
+                            guard !cleanPatterns.isEmpty else { return nil }
+                            
+                            // 3. Reject if place is "unknown"
+                            guard rec.place_id.lowercased() != "unknown" else { return nil }
+                            
+                            // 4. Return new recommendation with clean patterns
+                            var cleanRec = rec
+                            cleanRec.patterns = cleanPatterns
+                            return cleanRec
                         }
                         
                         if !validRecs.isEmpty {
@@ -127,6 +195,24 @@ class LearnTabState: ObservableObject {
             print("⚠️ [LearnTabState] startPractice BLOCKED: Recommendation has no patterns.")
             return
         }
+        
+        // --- 🚀 NEW: INTEREST TAP (Unified API V2) ---
+        // Report spatial context to backend immediately upon clicking 'Start'
+        let structuredPlaces: [DiscoverPlaceInput] = self.nearbyPlaces.prefix(10).map { place in
+            return DiscoverPlaceInput(
+                name: place.name,
+                category: place.category ?? "unknown"
+            )
+        }
+        
+        CompletePatternService.shared.completePattern(
+            patternId: nil, // Strict requirement: Do not send pattern on start button
+            placeId: recommendation.place_id,
+            places: structuredPlaces
+        ) { result in
+            // Background reporting (Success/Failure logs handled in Service)
+        }
+        // ---------------------------------------------
         
         print("🚀 [LearnTabState] START PRACTICE: '\(recommendation.place_id)' — routing through GenerateSentenceLogic.hydrateFromV3()")
         

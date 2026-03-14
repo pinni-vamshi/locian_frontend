@@ -30,7 +30,7 @@ struct MasteryFilterService {
     static func getBrick(id: String, from data: BricksData?) -> BrickItem? {
         guard let data = data else { return nil }
         let all = (data.constants ?? []) + (data.variables ?? []) + (data.structural ?? [])
-        return all.first(where: { ($0.id ?? $0.word) == id })
+        return all.first(where: { $0.id == id })
     }
     
     // MARK: - SEMANTIC CLIFF DETECTION (V4.1)

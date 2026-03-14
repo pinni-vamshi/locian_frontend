@@ -64,7 +64,7 @@ class LessonEngine: ObservableObject {
             if let bricks = group.bricks {
                 // Process constants
                 for brick in bricks.constants ?? [] {
-                    let id = brick.safeID
+                    let id = brick.id
                     if !seenIDs.contains(id) {
                         seenIDs.insert(id)
                         allConstants.append(brick)
@@ -73,7 +73,7 @@ class LessonEngine: ObservableObject {
                 
                 // Process variables
                 for brick in bricks.variables ?? [] {
-                    let id = brick.safeID
+                    let id = brick.id
                     if !seenIDs.contains(id) {
                         seenIDs.insert(id)
                         allVariables.append(brick)
@@ -82,7 +82,7 @@ class LessonEngine: ObservableObject {
                 
                 // Process structural
                 for brick in bricks.structural ?? [] {
-                    let id = brick.safeID
+                    let id = brick.id
                     if !seenIDs.contains(id) {
                         seenIDs.insert(id)
                         allStructural.append(brick)
@@ -219,17 +219,17 @@ class LessonEngine: ObservableObject {
             // Find the word text for this ID
             let flatList = (allBricks.constants ?? []) + (allBricks.variables ?? []) + (allBricks.structural ?? [])
             
-            if let sourceBrick = flatList.first(where: { ($0.id ?? $0.word) == id }) {
+            if let sourceBrick = flatList.first(where: { ($0.id) == id }) {
                 let sourceWord = sourceBrick.word.lowercased()
                 
                 // Find all OTHER bricks with the exact same word
                 let duplicates = flatList.filter {
-                    let brickId = $0.id ?? $0.word
+                    let brickId = $0.id
                     return brickId != id && $0.word.lowercased() == sourceWord
                 }
                 
                 for dup in duplicates {
-                    let dupId = dup.id ?? dup.word
+                    let dupId = dup.id
                     componentMastery[dupId] = newValue
                     print("   🔄 [GlobalSync] Synced Duplicate Brick '\(dup.word)' (ID: \(dupId)) to \(newValue)")
                 }

@@ -13,8 +13,6 @@ struct PatternIntroAnimationView: View {
 
     
     @State private var currentHeaderText: String = "CORE COMPONENTS"
-    @State private var voiceIntroText: String = ""
-    
     private var targetLanguageName: String {
         TargetLanguageMapping.shared.getDisplayNames(for: targetLanguage).english
     }
@@ -66,17 +64,6 @@ struct PatternIntroAnimationView: View {
     }
     
     private func setupUI() {
-        // 1. Voice Variants (No more listing words at the end)
-        let voiceVariants = [
-            "Let's learn \"\(patternMeaning)\"! First, we'll check these words.",
-            "Ready for \"\(patternMeaning)\"? These are the words we'll use.",
-            "Let's build \"\(patternMeaning)\" together. First, we need these.",
-            "To say \"\(patternMeaning)\" correctly, we should check these components.",
-            "Time for \"\(patternMeaning)\"! Let's start with these basics."
-        ]
-        voiceIntroText = voiceVariants.randomElement() ?? voiceVariants[0]
-        
-        // 2. Visual Header (Keeping original variants exactly)
         let visualVariants = [
             "LET'S CHECK OUT THESE WORDS",
             "HERE ARE YOUR CORE WORDS",
@@ -88,17 +75,14 @@ struct PatternIntroAnimationView: View {
         currentHeaderText = visualVariants.randomElement() ?? visualVariants[0]
     }
     
-    /// ✅ VOICE AS MASTER CLOCK
+    /// ✅ Simplified Voice Chain - skips conversational intro entirely
     private func startVoiceChain() {
         visibleIndexSet.removeAll()
         
-        // Voice plays the natural intro
-        print("🔊 [PatternIntro] Phase 1: Intro Speech: '\(voiceIntroText)' in \(userLanguage)")
+        print("🔊 [PatternIntro] Skipping conversational intro, revealing immediately.")
         
-        AudioManager.shared.speak(segments: [.init(text: voiceIntroText, language: userLanguage)]) {
-            DispatchQueue.main.async {
-                revealWordsSequentially(at: 0)
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.revealWordsSequentially(at: 0)
         }
     }
     
@@ -121,42 +105,13 @@ struct PatternIntroAnimationView: View {
             return
         }
         
-        // 1. Determine if we should say "and" (Only before the VERY LAST word)
-        let isLast = index == (maxBricks - 1)
-        let shouldSayAnd = isLast && maxBricks > 1
+        // Normal Reveal -> No Voice, purely visual timing
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            _ = visibleIndexSet.insert(index)
+        }
         
-        if shouldSayAnd {
-            // "and" -> Reveal -> Speak Word
-            print("🔊 [PatternIntro] Connector: 'and' (Voice Only)")
-            AudioManager.shared.speak(segments: [.init(text: "and", language: userLanguage)]) {
-                DispatchQueue.main.async {
-                    // Reveal visually AFTER 'and'
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                        _ = visibleIndexSet.insert(index)
-                    }
-                    
-                    let meaning = bricks[index].drillData.meaning
-                    print("✨ [PatternIntro] Speaking last word: \(meaning)")
-                    AudioManager.shared.speak(segments: [.init(text: meaning, language: userLanguage)]) {
-                        DispatchQueue.main.async {
-                            revealWordsSequentially(at: index + 1)
-                        }
-                    }
-                }
-            }
-        } else {
-            // Normal Reveal -> Speak Word
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                _ = visibleIndexSet.insert(index)
-            }
-            
-            let meaning = bricks[index].drillData.meaning
-            print("✨ [PatternIntro] Speaking word #\(index + 1): \(meaning)")
-            AudioManager.shared.speak(segments: [.init(text: meaning, language: userLanguage)]) {
-                DispatchQueue.main.async {
-                    revealWordsSequentially(at: index + 1)
-                }
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            revealWordsSequentially(at: index + 1)
         }
     }
 }

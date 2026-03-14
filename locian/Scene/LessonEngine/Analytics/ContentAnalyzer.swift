@@ -27,7 +27,7 @@ class ContentAnalyzer {
         func findMatchingBricks(list: [BrickItem]?) {
             guard let list = list else { return }
             for brick in list {
-                let id = brick.id ?? brick.word
+                let id = brick.id
                 let brickWord = brick.word.lowercased().trimmingCharacters(in: .punctuationCharacters)
                 
                 // Strict Match: Only check if the brick's word is in the target text
@@ -48,7 +48,7 @@ class ContentAnalyzer {
         let result = foundBricks.compactMap { id -> (id: String, score: Double)? in
             // Resolve the brick item to get its word for comparison
             let all = (bricks?.constants ?? []) + (bricks?.variables ?? []) + (bricks?.structural ?? [])
-            guard let brick = all.first(where: { ($0.id ?? $0.word) == id }) else { return nil }
+            guard let brick = all.first(where: { $0.id == id }) else { return nil }
             
             // Calculate real neural similarity between the pattern text and this specific brick
             let score = EmbeddingService.compare(

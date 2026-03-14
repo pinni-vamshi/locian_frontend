@@ -84,15 +84,7 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    @Published var intentTimeline: [String: TimeSpanSnapshot]? {
-        didSet {
-            if let timeline = intentTimeline, let encoded = try? JSONEncoder().encode(timeline) {
-                UserDefaults.standard.set(encoded, forKey: "intentTimeline")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "intentTimeline")
-            }
-        }
-    }
+    @Published var intentTimeline: [String: TimeSpanSnapshot]?
     
     @Published var currentTimeSpan: String? {
         didSet {
@@ -100,13 +92,7 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    @Published var geoContexts: [String: GeoContextData] = [:] {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(geoContexts) {
-                UserDefaults.standard.set(encoded, forKey: "geoContexts")
-            }
-        }
-    }
+    @Published var geoContexts: [String: GeoContextData] = [:]
     
     // MARK: - Notifications State
     // Simplified state: tracking is now derived from NotificationManager history
@@ -146,6 +132,13 @@ class AppStateManager: ObservableObject {
     @Published var isLocationTrackingEnabled: Bool = true {
         didSet {
             UserDefaults.standard.set(isLocationTrackingEnabled, forKey: "isLocationTrackingEnabled")
+            if !isLocationTrackingEnabled {
+                // IMMEDIATELY wipe memory in LocationManager
+                LocationManager.shared.clearLocationMemory()
+                self.geoContexts = [:]
+                self.intentTimeline = nil
+                print("🧹 [AppStateManager] Location Disabled. Memory wiped.")
+            }
         }
     }
     
@@ -155,19 +148,7 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    // MARK: - Hume AI State
-    @Published var humeApiKey: String? = "RJZ4SSiSpDHDxGkueYCxxDyAwt4jor0PLIJPfv8qu8faHb6y" {
-        didSet { UserDefaults.standard.set(humeApiKey, forKey: "humeApiKey") }
-    }
-    @Published var humeSecretKey: String? = "vuHrqMNuAgwddTkLM4IDHNM3cizkkVpStOrHchJ3sLccv7HbEbcII2TltfBYGJiZ" {
-        didSet { UserDefaults.standard.set(humeSecretKey, forKey: "humeSecretKey") }
-    }
-    @Published var humeConfigId: String? {
-        didSet { UserDefaults.standard.set(humeConfigId, forKey: "humeConfigId") }
-    }
-    @Published var isHumeVoiceEnabled: Bool = true {
-        didSet { UserDefaults.standard.set(isHumeVoiceEnabled, forKey: "isHumeVoiceEnabled") }
-    }
+
     
     // MARK: - Authentication State
     @Published var isAuthenticating: Bool = false
@@ -350,25 +331,17 @@ class AppStateManager: ObservableObject {
             self.notifiedMomentIDs = Set(momentIDs)
         }
         
-        // Load persistable intent timeline
-        if let data = UserDefaults.standard.data(forKey: "intentTimeline"),
-           let decoded = try? JSONDecoder().decode([String: TimeSpanSnapshot].self, from: data) {
-            self.intentTimeline = decoded
-        }
-        self.currentTimeSpan = UserDefaults.standard.string(forKey: "currentTimeSpan")
+        // Ephemeral only - never load from disk
+        self.intentTimeline = nil
+        self.geoContexts = [:]
+        self.currentTimeSpan = nil
         
-        if let data = UserDefaults.standard.data(forKey: "geoContexts"),
-           let decoded = try? JSONDecoder().decode([String: GeoContextData].self, from: data) {
-            self.geoContexts = decoded
-        } else {
-            self.geoContexts = [:]
-        }
+
         
-        // Load Hume AI settings
-        self.humeApiKey = UserDefaults.standard.string(forKey: "humeApiKey") ?? "RJZ4SSiSpDHDxGkueYCxxDyAwt4jor0PLIJPfv8qu8faHb6y"
-        self.humeSecretKey = UserDefaults.standard.string(forKey: "humeSecretKey") ?? "vuHrqMNuAgwddTkLM4IDHNM3cizkkVpStOrHchJ3sLccv7HbEbcII2TltfBYGJiZ"
-        self.humeConfigId = UserDefaults.standard.string(forKey: "humeConfigId")
-        self.isHumeVoiceEnabled = UserDefaults.standard.object(forKey: "isHumeVoiceEnabled") as? Bool ?? true
+        // 🚀 PURE ON-DEMAND CLEANSE: Clear persistent audio cache to ensure fresh synthesis logs
+        AudioManager.shared.clearVoiceCache()
+        
+
     }
     
     // MARK: - Load User Data (called after successful session validation)

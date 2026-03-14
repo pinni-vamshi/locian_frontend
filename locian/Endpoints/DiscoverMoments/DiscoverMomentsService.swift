@@ -31,9 +31,10 @@ class DiscoverMomentsService: ObservableObject {
         
         // 2. Gather App Data
         let appState = AppStateManager.shared
-        // Use active pair or fallback
         let activePair = appState.userLanguagePairs.first(where: { $0.is_default }) ?? appState.userLanguagePairs.first
-        let userLanguage = activePair?.native_language ?? "en" // Default to 'en'
+        let userLanguage = activePair?.native_language ?? "en"
+        let targetLanguage = activePair?.target_language ?? "es"
+        
         
         // 3. Gather Time
         let currentDate = Date()
@@ -49,7 +50,7 @@ class DiscoverMomentsService: ObservableObject {
         var didProceed = false
         let lock = NSLock()
         
-        func proceed() {
+        func proceed(with nearbyResults: [LocationManager.NearbyAmbience] = []) {
             lock.lock()
             guard !didProceed else {
                 lock.unlock()
@@ -61,13 +62,11 @@ class DiscoverMomentsService: ObservableObject {
             // 5. Gather Location Data (Snapshot)
             let location = LocationManager.shared.currentLocation
             
-            // Get nearby places for context (Structured for V3)
-            let nearbyData = LocationManager.shared.getNearbyPlacesForAPI()
-            let structuredPlaces: [DiscoverPlaceInput] = nearbyData.map { place in
+            // Map results passed directly from the search (Stateless)
+            let structuredPlaces: [DiscoverPlaceInput] = nearbyResults.prefix(10).map { place in
                 return DiscoverPlaceInput(
-                    name: place.place_name,
-                    category: place.type ?? "unknown",
-                    distance: place.distance
+                    name: place.name,
+                    category: place.category ?? "unknown"
                 )
             }
             
@@ -79,6 +78,7 @@ class DiscoverMomentsService: ObservableObject {
                 imageBase64 = "data:image/jpeg;base64," + items.base64EncodedString()
             }
             
+            
             // 7. Motion Data (Mapped to V3 Standard)
             MotionService.shared.fetchCurrentMotionState { motionString in
                 let velocity = motionString.lowercased().contains("walk") ? "walking" : 
@@ -86,27 +86,35 @@ class DiscoverMomentsService: ObservableObject {
                 
                 // 8. Weather Data (Async/Await bridge)
                 Task {
-                    var weatherString = "clear" // Fallback to clear as per requirement
+                    var weatherString = "clear"
                     if let loc = location {
                         weatherString = await WeatherServiceManager.shared.fetchCurrentWeather(for: loc)
                     }
                     
-                    // 9. Build Request safely on Main Thread
+                // 9. Fetch Telemetry On-Demand (Each sensor triggers, reads, then stops)
+                let ambientDb = await AmbientSoundService.shared.fetchDecibels()
+                let ambientLight = AmbientLightService.shared.fetchLightLevel()
+                let wifi = WiFiService.shared.currentSSID
+                
+                AltitudeService.shared.fetchAltitude { altitude in
+                    // 10. Build Request safely on Main Thread
                     DispatchQueue.main.async {
                         let request = DiscoverMomentsRequest(
-                            user_id: appState.username, // Ensure user identity is sent
-                            latitude: location?.coordinate.latitude,
-                            longitude: location?.coordinate.longitude,
-                            user_language: userLanguage,
-                            target_language: activePair?.target_language,
                             time: timeString,
                             date: dateString,
+                            latitude: location?.coordinate.latitude,
+                            longitude: location?.coordinate.longitude,
                             places: structuredPlaces,
-                            image_base64: imageBase64,
+                            velocity: velocity,
+                            audio_db: Double(ambientDb),
+                            light_level: ambientLight,
+                            altitude: altitude,
                             explicit_request: explicitRequest,
-                            session_token: appState.authToken,
-                            current_velocity: velocity,
-                            weather: weatherString
+                            image_base64: imageBase64,
+                            weather: weatherString,
+                            user_language: userLanguage,
+                            target_language: targetLanguage,
+                            wifi_ssid: wifi
                         )
                         
                         // 📡 [DEBUG] Log exact JSON Payload
@@ -143,6 +151,7 @@ class DiscoverMomentsService: ObservableObject {
                                     do {
                                         let response = try JSONDecoder().decode(DiscoverMomentsResponse.self, from: data)
                                         print("✅ [DiscoverMomentsService] V3 Success. Recommendations: \(response.data?.recommendations?.count ?? 0)")
+                                        
                                         completion(.success(response))
                                     } catch {
                                         print("❌ [DiscoverMomentsService] V3 Decoding Error: \(error)")
@@ -158,26 +167,28 @@ class DiscoverMomentsService: ObservableObject {
                 }
             }
         }
-        
-        // 11. Location & Nearby Places Strategy (Wait for MapKit)
-        let group = DispatchGroup()
-        group.enter()
-        
-        print("🗺️ [DiscoverMomentsService] Fetching fresh MapKit data...")
-        LocationManager.shared.fetchNearbyPlaces { _ in
-            group.leave()
         }
         
-        // Trigger proceed on group completion
-        group.notify(queue: .main) {
-            proceed()
+        // 11. Location & Nearby Places Strategy (Wait for MapKit)
+        print("🗺️ [DiscoverMomentsService] Fetching fresh MapKit data...")
+        LocationManager.shared.fetchNearbyPlaces { results in
+            proceed(with: results)
         }
         
         // Safety Timeout (5.0s max wait for GPS/MapKit)
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
             if !didProceed {
-                print("⚠️ [DiscoverMomentsService] MapKit fetch timed out. Proceeding with available data.")
-                proceed()
+                print("🚨 [DiscoverMomentsService] MapKit fetch TIMED OUT (5.0s). Stopping everything.")
+                LocationManager.shared.cancelSearch() // KILL the search immediately
+                
+                self.isLoading = false
+                let timeoutError = NSError(domain: "DiscoverMomentsService", code: 408, userInfo: [NSLocalizedDescriptionKey: "Location discovery timed out (5.0s). Please try again."])
+                completion(.failure(timeoutError))
+                
+                // Ensure we don't proceed later
+                lock.lock()
+                didProceed = true
+                lock.unlock()
             }
         }
     }

@@ -31,7 +31,7 @@ struct SpanishStrings: AppStrings, LocalizedStrings {
             continueLearning: "Continuar Aprendiendo",
             noPastMoments: "Sin Momentos Pasados",
             useCamera: "Usar Cámara",
-            previouslyLearning: "Aprendiendo Anteriormente",
+            currentlyLearning: "Aprendiendo Actualmente",
             sunShort: "Dom",
             monShort: "Lun",
             tueShort: "Mar",
@@ -78,9 +78,22 @@ struct SpanishStrings: AppStrings, LocalizedStrings {
             typeHere: "ESCRIBE AQUÍ",
             nearbyLabel: "CERCANO",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "Agregar Rutina",
             tapToSetup: "Toca para Configurar",
-            tapToStartLearning: "Toca para Comenzar a Aprender")
+            tapToStartLearning: "Toca para Comenzar a Aprender",
+            
+            // V3 Learn Tab Keys
+            variables: "VARIABLES",
+            constants: "CONSTANTES",
+            structure: "ESTRUCTURA",
+            previouslyPracticed: "PRACTICADO PREVIAMENTE",
+            historyStrength: "FORTALEZA DEL HISTORIAL",
+            locationOff: "UBICACIÓN DESACTIVADA",
+            confidence: "CONFIANZA",
+            locationAccessRequired: "ACCESO A UBICACIÓN REQUERIDO",
+            primary: "PRIMARIO")
     }
 
     var settings: SettingsStrings {
@@ -404,7 +417,7 @@ struct SpanishStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

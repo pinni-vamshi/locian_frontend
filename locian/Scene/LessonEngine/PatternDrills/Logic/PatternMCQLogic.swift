@@ -117,86 +117,25 @@ class PatternMCQLogic: ObservableObject {
     // MARK: - 🎙️ Voice Assets (Decentralized)
     
     // 1. Full Context
-    private static let fullIntroVoices = [
-        "Select the correct meaning for \"%@\" in %@",
-        "Which translation matches \"%@\" in %@",
-        "Match the meaning of \"%@\" in %@",
-        "Choose the correct %@ answer for \"%@\"",
-        "Find the %@ sentence that means \"%@\""
-    ]
+    
     
 
-    private static let correctVoices = [
-        "You are right! \"%@\" in %@ is \"%@\"",
-        "Exactly. \"%@\" in %@ translates to \"%@\"",
-        "Spot on. In %@, \"%@\" matches \"%@\"",
-        "That's correct. We say \"%@\" for \"%@\" in %@",
-        "Perfect match. \"%@\" in %@ is \"%@\""
-    ]
+    
     
     // 3. Concise Feedback
-    private static let wrongVoices = [
-        "Actually, the answer is \"%@\"",
-        "It translates to \"%@\"",
-        "The correct way is \"%@\"",
-        "It matches \"%@\"",
-        "Listen carefully: \"%@\""
-    ]
+    
     
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
-            print("🎙️ [PatternMCQ] Using Voice Override: '\(override)'")
+            print("🎙️ Using Voice Override: '\(override)'")
             AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
-            return
         }
-        
-        guard !drill.suppressIntroAudio else { return }
-        
-        let userLanguageCode = engine.lessonData?.user_language ?? "en"
-        let targetText = drill.drillData.target  // ✅ French text (shown in UI)
-        let userLanguageName = TargetLanguageMapping.shared.getDisplayNames(for: userLanguageCode).english  // ✅ "English" (language of options)
-        
-        let template = fullIntroVoices.randomElement() ?? fullIntroVoices[0]  // ✅ KEEP SAME
-        
-        // ✅ Inject: targetText (French) and userLanguageName (English)
-        var text = template.replacingOccurrences(of: "%@", with: targetText, range: template.range(of: "%@"))
-        text = text.replacingOccurrences(of: "%@", with: userLanguageName)
-        
-        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
     }
     
     private func playFeedback(isCorrect: Bool) {
-        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
-        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
-            print("🎙️ [PatternMCQ] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
-            return
+        if isCorrect {
+            playAudio()
         }
-        
-        let target = state.drillData.target
-        let meaning = state.drillData.meaning
-        let targetLang = targetLanguage
-        
-        let template = isCorrect ? 
-            (PatternMCQLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
-            (PatternMCQLogic.wrongVoices.randomElement() ?? "Actually, \"%@\" in %@ translates to \"%@\"")
-        
-        // Split at the final target placeholder
-        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        if let langRange = textToSpeak.range(of: "%@") {
-            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
-        }
-        
-        // Split at the final placeholder
-        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
-        guard finalComponents.count >= 2 else { return }
-        
-        let introText = finalComponents[0]
-        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
-        
-        AudioManager.shared.speak(segments: [
-            .init(text: introText, language: "en-US"),
-            .init(text: target, language: langCode)
-        ])
     }
     
     func playAudio() {

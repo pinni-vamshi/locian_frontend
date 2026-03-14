@@ -19,14 +19,7 @@ struct GhostModeHistoryAnimationView: View {
         "RECALL PHASE"
     ]
     
-    // AI Voice Templates (Internal)
-    private let historyIntro = [
-        "Now, let's review older patterns.",
-        "Let's bring back past words.",
-        "Time to review older stuff.",
-        "Reviewing your past lessons.",
-        "Let's keep the old words fresh."
-    ]
+    // Removed AI Voice Templates (Internal) to prevent conversational speech.
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -54,24 +47,16 @@ struct GhostModeHistoryAnimationView: View {
                 isVisible = true
             }
             
-            // ✅ Trigger "Stack" voice (Layer 1) from internal templates
-            let speechText = historyIntro.randomElement() ?? headingText
-            print("🔊 [GhostHistoryAnimation] Playing Stack Voice: '\(speechText)'")
+            // ✅ Conversational voice removed. Just animate and advance.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeOut(duration: 1.0)) {
+                    viewOpacity = 0.0
+                }
+            }
             
-            AudioManager.shared.speak(segments: [.init(text: speechText, language: "en-US")]) {
-                print("⏳ [GhostHistory] Speech Complete. Fading out...")
-                
-                // Start fading 1s into the 2s pause
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(.easeOut(duration: 1.0)) {
-                        viewOpacity = 0.0
-                    }
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    print("🏁 [GhostHistory] Animation Loop Finished.")
-                    onComplete()
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                print("🏁 [GhostHistory] Animation Loop Finished.")
+                onComplete()
             }
         }
     }

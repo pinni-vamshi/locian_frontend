@@ -8,107 +8,65 @@
 
 import Foundation
 
+// MARK: - Lesson Models
+// These models represent the final hydrated "Lesson" format expected by the LessonEngine
+// Since the network endpoint was deleted, these live here purely for the local hydration step.
+
+struct GenerateSentenceData: Codable, Sendable {
+    let target_language: String?
+    let user_language: String?
+    let place_name: String?
+    let micro_situation: String?
+    let conversation_context: String?
+    let lesson_id: String?
+    let moment_label: String?
+    let sentence: String?
+    let native_sentence: String?
+    
+    // New Structure (Groups contain patterns & bricks)
+    var groups: [LessonGroup]?
+    
+    // Legacy support (Flat arrays)
+    var bricks: BricksData?
+    var patterns: [PatternData]?
+}
+
+struct LessonGroup: Codable, Sendable {
+    let group_id: String
+    var patterns: [PatternData]?
+    var bricks: BricksData?
+}
+
+struct BricksData: Codable, Sendable {
+    var constants: [BrickItem]?
+    var variables: [BrickItem]?
+    var structural: [BrickItem]?
+}
+
+struct BrickItem: Codable, Sendable, Identifiable {
+    var id: String
+    let word: String
+    let meaning: String
+    let phonetic: String?
+    let type: String?
+    var vector: [Double]?
+    var mastery: Int?
+}
+
+struct PatternData: Codable, Sendable, Identifiable {
+    var id: String
+    let target: String
+    let meaning: String
+    let phonetic: String?
+    var vector: [Double]?
+    var mastery: Int?
+}
+
 @MainActor
 class GenerateSentenceLogic {
     static let shared = GenerateSentenceLogic()
     
     private init() {}
-    
-    // MARK: - Response Parsing
-    
-    /// Parse raw JSON data into structured response
-    func parseResponse(
-        data: Data,
-        completion: @escaping (Result<GenerateSentenceResponse, Error>) -> Void
-    ) {
-        do {
-            var response = try JSONDecoder().decode(GenerateSentenceResponse.self, from: data)
-            
-            // ---------------------------------------------------------
-            // ⚡️ ENRICHMENT PIPELINE: GENERATE VECTORS
-            // ---------------------------------------------------------
-            // We generate vectors NOW so the Lesson Engine receives rich data.
-            
-            let defaultPair = AppStateManager.shared.userLanguagePairs.first(where: { $0.is_default })
-            let code = defaultPair?.target_language ?? "es" // Fallback to "es" if missing
-            // Starting Enrichment Pipeline for: \(code)
-                
-                // Process Groups (New LEGO Structure)
-                if var groups = response.data?.groups {
-                    for i in 0..<groups.count {
-                        // Enriching components...
-                        
-
-                        
-                        // 2. Patterns
-                        if var patterns = groups[i].patterns {
-                            for j in 0..<patterns.count {
-                                patterns[j].vector = EmbeddingService.getVector(for: patterns[j].meaning, languageCode: code)
-                            }
-                            groups[i].patterns = patterns
-                        }
-                        
-                        // 3. Bricks (Constants, Variables, Structural)
-                        if var bricks = groups[i].bricks {
-                            // Constants
-                            if var constants = bricks.constants {
-                                for j in 0..<constants.count {
-                                    constants[j].vector = EmbeddingService.getVector(for: constants[j].meaning, languageCode: code)
-                                }
-                                bricks.constants = constants
-                            }
-                            // Variables
-                            if var variables = bricks.variables {
-                                for j in 0..<variables.count {
-                                    variables[j].vector = EmbeddingService.getVector(for: variables[j].meaning, languageCode: code)
-                                }
-                                bricks.variables = variables
-                            }
-                            // Structural
-                            if var structural = bricks.structural {
-                                for j in 0..<structural.count {
-                                    structural[j].vector = EmbeddingService.getVector(for: structural[j].meaning, languageCode: code)
-                                }
-                                bricks.structural = structural
-                            }
-                            groups[i].bricks = bricks
-                        }
-                    }
-                    response.data?.groups = groups
-                }
-                
-                // Legacy / Legacy Support (Patterns/Bricks at Top Level)
-                if var patterns = response.data?.patterns {
-                    for i in 0..<patterns.count {
-                        patterns[i].vector = EmbeddingService.getVector(for: patterns[i].meaning, languageCode: code)
-                    }
-                    response.data?.patterns = patterns
-                }
-                
-                if var bricks = response.data?.bricks {
-                    if var constants = bricks.constants {
-                        for i in 0..<constants.count { constants[i].vector = EmbeddingService.getVector(for: constants[i].meaning, languageCode: code) }
-                        bricks.constants = constants
-                    }
-                    if var variables = bricks.variables {
-                        for i in 0..<variables.count { variables[i].vector = EmbeddingService.getVector(for: variables[i].meaning, languageCode: code) }
-                        bricks.variables = variables
-                    }
-                    if var structural = bricks.structural {
-                        for i in 0..<structural.count { structural[i].vector = EmbeddingService.getVector(for: structural[i].meaning, languageCode: code) }
-                        bricks.structural = structural
-                    }
-                    response.data?.bricks = bricks
-                }
-                
-                // Enrichment COMPLETE
-             
-            DispatchQueue.main.async { completion(.success(response)) }
-        } catch {
-            // Parse Error
-            DispatchQueue.main.async { completion(.failure(error)) }
-        }
-    }
     
     // MARK: - Centralized Writer
     
@@ -141,13 +99,17 @@ class GenerateSentenceLogic {
             // Create ONE LessonGroup per RecommendationPattern,
             // each carrying its OWN brick set so ContentAnalyzer word-matching works correctly.
             for (idx, rp) in (recommendation.patterns ?? []).enumerated() {
+                // ✅ V3.46: Skip patterns that are missing target or meaning (empty objects from API)
+                guard let target = rp.target, let meaning = rp.meaning else {
+                    continue
+                }
                 
                 // 1. Convert pattern → PatternData with vector
-                let patternVector = EmbeddingService.getVector(for: rp.target, languageCode: langCode)
+                let patternVector = EmbeddingService.getVector(for: target, languageCode: langCode)
                 let patternData = PatternData(
                     id: "v3-\(recommendation.place_id)-\(idx)",
-                    target: rp.target,
-                    meaning: rp.meaning,
+                    target: target,
+                    meaning: meaning,
                     phonetic: rp.phonetic,
                     vector: patternVector,
                     mastery: 0
@@ -200,11 +162,10 @@ class GenerateSentenceLogic {
                 )
                 groups.append(group)
                 
-                print("   🧩 Pattern \(idx): '\(rp.target)' | bricks: \(constants.count)c / \(variables.count)v / \(structural.count)s")
+                print("   🧩 Pattern \(idx): '\(target)' | bricks: \(constants.count)c / \(variables.count)v / \(structural.count)s")
             }
             
             // 4. Assemble final GenerateSentenceData
-            let firstPattern = recommendation.patterns?.first
             let lessonData = GenerateSentenceData(
                 target_language: langCode,
                 user_language: userLang,
@@ -213,14 +174,23 @@ class GenerateSentenceLogic {
                 conversation_context: nil,
                 lesson_id: "v3-\(UUID().uuidString)",
                 moment_label: recommendation.place_id,
-                sentence: firstPattern?.target,
-                native_sentence: firstPattern?.meaning,
+                sentence: allPatterns.first?.target,
+                native_sentence: allPatterns.first?.meaning,
                 groups: groups,
                 bricks: nil,
                 patterns: allPatterns
             )
             
             print("✅ [GenerateSentenceLogic] hydrateFromV3 COMPLETE. \(groups.count) groups, \(allPatterns.count) patterns, all vectorized.")
+            
+            // ✅ PRE-GENERATE voice audio for all pattern sentences into in-memory cache.
+            // Fires in background so audio is ready by the time PatternIntro plays.
+            // Session-only — cleared when lesson ends.
+            AudioPreloadCache.shared.clear()  // Fresh session
+            for pattern in allPatterns {
+                AudioPreloadCache.shared.pregenerate(text: pattern.meaning, language: userLang)
+                AudioPreloadCache.shared.pregenerate(text: pattern.target, language: langCode)
+            }
             
             DispatchQueue.main.async {
                 completion(lessonData)

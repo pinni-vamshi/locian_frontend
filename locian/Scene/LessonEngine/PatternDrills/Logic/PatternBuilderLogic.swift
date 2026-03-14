@@ -159,103 +159,26 @@ class PatternBuilderLogic: ObservableObject {
     // MARK: - 🎙️ Voice Assets (Decentralized)
     
     // 1. Full Context
-    private static let fullIntroVoices = [
-        "Build the sentence for \"%@\" in %@",
-        "Put the words in order for \"%@\" in %@",
-        "Arrange the %@ phrase: \"%@\"",
-        "Construct the %@ sentence meaning \"%@\"",
-        "What is the correct order for \"%@\" in %@"
-    ]
+    
     
 
-    private static let correctVoices = [
-        "You are right! \"%@\" in %@ is \"%@\"",
-        "Exactly. \"%@\" in %@ translates to \"%@\"",
-        "Spot on. In %@, \"%@\" matches \"%@\"",
-        "That's correct. We say \"%@\" for \"%@\" in %@",
-        "Perfect. \"%@\" in %@ is \"%@\""
-    ]
+    
     
     // 3. Concise Feedback
-    private static let wrongVoices = [
-        "Actually, it's \"%@\"",
-        "The correct way is \"%@\"",
-        "Note the order: \"%@\"",
-        "The sentence is \"%@\"",
-        "Listen carefully: \"%@\""
-    ]
+    
     
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
-            print("🎙️ [PatternBuilder] Using Voice Override: '\(override)'")
+            print("🎙️ Using Voice Override: '\(override)'")
             AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
-            return
         }
-        
-        guard !drill.suppressIntroAudio else { return }
-        
-        let languageCode = engine.lessonData?.target_language ?? "es"
-        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
-        let meaning = drill.drillData.meaning
-        
-        let template = fullIntroVoices.randomElement() ?? fullIntroVoices[0]
-        
-        // Simple Interpolation
-        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        text = text.replacingOccurrences(of: "%@", with: languageName)
-        
-        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
     }
     
     private func playFeedback(isCorrect: Bool) {
-        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
-        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
-            print("🎙️ [PatternBuilder] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
-            return
+        if isCorrect {
+            let language = engine.lessonData?.target_language ?? "es-ES"
+            AudioManager.shared.speak(segments: [.init(text: state.drillData.target, language: language)])
         }
-        
-        let target = state.drillData.target
-        let meaning = state.drillData.meaning
-        let targetLang = targetLanguage
-        
-        let template = isCorrect ? 
-            (PatternBuilderLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
-            (PatternBuilderLogic.wrongVoices.randomElement() ?? "Actually, \"%@\" in %@ is \"%@\"")
-        
-        // 1. Generate the Bilingual sentence components
-        // We split at the last placeholder to speak the final word in the target language.
-        let components = template.components(separatedBy: "\"%@\"")
-        guard components.count >= 2 else { return }
-        
-        // Reconstruct the English part
-        // We assume 3 placeholders: Meaning, Language, Target
-        // If template has 3 placeholders, we need to handle them carefully.
-        // Actually, let's look at the templates.
-        // "You are right! \"%@\" (meaning) in %@ (lang) is \"%@\" (target)"
-        
-        var englishPart = components[0].replacingOccurrences(of: "%@", with: meaning)
-        englishPart = englishPart.replacingOccurrences(of: "%@", with: targetLang)
-        
-        // Final construction of English segment
-        // If there's an intermediate part between 1st and 2nd or 2nd and 3rd...
-        // Let's simplify and just do a robust interpolation for the first N-1 parts.
-        
-        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        if let langRange = textToSpeak.range(of: "%@") {
-            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
-        }
-        
-        // Now split at the final placeholder
-        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
-        guard finalComponents.count >= 2 else { return }
-        
-        let introText = finalComponents[0]
-        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
-        
-        AudioManager.shared.speak(segments: [
-            .init(text: introText, language: "en-US"),
-            .init(text: target, language: langCode)
-        ])
     }
     
     func selectExploreWord(_ word: String) {
@@ -313,7 +236,7 @@ class PatternBuilderLogic: ObservableObject {
                            (groupBricks.structural ?? [])
             
             for brickId in brickIds {
-                if let brick = allBricks.first(where: { ($0.id ?? $0.word) == brickId }) {
+                if let brick = allBricks.first(where: { $0.id == brickId }) {
                     validBrickWords.insert(brick.word.lowercased())
                 }
             }
@@ -327,7 +250,7 @@ class PatternBuilderLogic: ObservableObject {
 
             // Map results to scoring
             let scoredExplore = brickMatches.compactMap { match -> (String, String, Double)? in
-                if let brick = allBricks.first(where: { ($0.id ?? $0.word) == match.brickId }) {
+                if let brick = allBricks.first(where: { $0.id == match.brickId }) {
                     // Only include if it's a noun or a verb
                     if TokenTaggerService.isNoun(brick.word, in: tags) || TokenTaggerService.isVerb(brick.word, in: tags) {
                         return (brick.word, brick.meaning, match.similarityScore)

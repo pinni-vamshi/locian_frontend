@@ -63,9 +63,9 @@ struct TargetLanguageSelectionModal: View {
                 VStack(spacing: 0) {
                     continueButton()
                         .padding(.top, 10)
-                        .padding(.bottom, 10)
                 }
                 .padding(.horizontal, 5)
+                .padding(.bottom, 0) // Explicitly remove arbitrary bottom padding
             }
         }
         .onAppear {
@@ -90,14 +90,20 @@ struct TargetLanguageSelectionModal: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(names.english.uppercased())
                     .font(.system(size: 55, weight: .black))
-                    .foregroundColor(.white)
-                    .padding(.leading, 5)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundColor(ThemeColors.secondaryAccent)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white)
                 
                 Text(names.native)
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white.opacity(0.6))
-                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(ThemeColors.secondaryAccent)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -134,12 +140,14 @@ struct TargetLanguageSelectionModal: View {
                 .cornerRadius(0)
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.top, 12) // Remove vertical padding to let it hit the bottom
         .disabled(isLoading)
     }
     
     private func languageCard(code: String) -> some View {
-        let name = TargetLanguageMapping.shared.getDisplayNames(for: code).english.uppercased()
+        let names = TargetLanguageMapping.shared.getDisplayNames(for: code)
+        let name = names.english.uppercased()
+        let nativeName = names.native
         let isSelected = (previewCode ?? "") == code
         
         return Button(action: { withAnimation { previewCode = code } }) {
@@ -149,7 +157,10 @@ struct TargetLanguageSelectionModal: View {
                     Rectangle().stroke(Color.cyan.opacity(0.3), lineWidth: 1).padding(2)
                 }
                 cardMarkings(isSelected: isSelected)
-                Text(name).font(.system(size: 14, weight: .black)).foregroundColor(isSelected ? .white : .white.opacity(0.4))
+                VStack(spacing: 4) {
+                    Text(name).font(.system(size: 14, weight: .black)).foregroundColor(isSelected ? .white : .white.opacity(0.4))
+                    Text("[\(nativeName)]").font(.system(size: 11, weight: .bold)).foregroundColor(isSelected ? .white.opacity(0.8) : .white.opacity(0.3))
+                }
             }
             .frame(width: 120, height: 120)
             .background(isSelected ? Color.white.opacity(0.05) : Color.clear)

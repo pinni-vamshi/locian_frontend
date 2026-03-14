@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct EnglishStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             continueLearning: "Continue Learning",
             noPastMoments: "No Past Moments",
             useCamera: "Use Camera",
-            previouslyLearning: "Previously Learning",
+            currentlyLearning: "Currently Learning",
             sunShort: "Sun",
             monShort: "Mon",
             tueShort: "Tue",
@@ -70,6 +71,8 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             addNewPlaceInstruction: "Add a new place to get moments",
             start: "Start",
             typeYourMoment: "Type your moment...",
+            
+            // Add Tab
             imagesLabel: "IMAGES",
             routinesLabel: "ROUTINES",
             whatAreYouDoing: "What are you doing now?",
@@ -77,9 +80,22 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             typeHere: "TYPE HERE",
             nearbyLabel: "NEARBY",
             noNearbyPlaces: "No nearby places found",
+            
+            // Routine
             addRoutine: "Add Routine",
             tapToSetup: "Tap to Setup",
-            tapToStartLearning: "Tap to Start Learning")
+            tapToStartLearning: "Tap to Start Learning",
+            
+            // V3 Learn Tab Keys
+            variables: "VARIABLES",
+            constants: "CONSTANTS",
+            structure: "STRUCTURE",
+            previouslyPracticed: "PREVIOUSLY PRACTICED",
+            historyStrength: "HISTORY STRENGTH",
+            locationOff: "LOCATION OFF",
+            confidence: "CONFIDENCE",
+            locationAccessRequired: "LOCATION ACCESS REQUIRED",
+            primary: "PRIMARY")
     }
 
     var settings: SettingsStrings {
@@ -406,7 +422,7 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

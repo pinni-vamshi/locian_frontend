@@ -62,11 +62,9 @@ struct PatternPracticeMistakesAnimationView: View {
     }
     private func setupUI() {
         let variations = [
-            "Let's fix the mistakes you just made.",
-            "Let's retry the words you missed.",
-            "Time to practice the tricky ones.",
-            "Let's clear up those mistakes.",
-            "Let's go over what we missed."
+            "Let's review some mistakes.",
+            "Here are the words you missed.",
+            "Let's practice these again."
         ]
         currentHeaderText = variations.randomElement() ?? variations[0]
     }
@@ -74,18 +72,16 @@ struct PatternPracticeMistakesAnimationView: View {
     private func startVoiceChain() {
         visibleIndexSet.removeAll()
         
-        // Voice plays the SAME intro text shown on screen
-        print("🔊 [MistakeIntro] Phase 0: Intro Speech: '\(currentHeaderText)'")
+        print("🔊 [MistakeIntro] Skipping Intro Speech, starting sequence directly.")
         
-        AudioManager.shared.speak(segments: [.init(text: currentHeaderText, language: "en-US")]) {
-            DispatchQueue.main.async {
-                speakMistakeSequentially(at: 0)
-            }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            speakMistakeSequentially(at: 0)
         }
     }
     
     private func speakMistakeSequentially(at index: Int) {
         guard index < min(mistakes.count, 3) else {
+            // ... (fade out logic)
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 withAnimation(.easeOut(duration: 1.0)) {
                     viewOpacity = 0.0
@@ -98,57 +94,15 @@ struct PatternPracticeMistakesAnimationView: View {
             return
         }
         
-        let brick = mistakes[index]
-        let meaning = brick.drillData.meaning
-        let target = brick.drillData.target
-        
-        // Full bilingual sentences for one-shot speech
-        let audioVariants = [
-            "In \(targetLanguageName), \(meaning) means \(target)",
-            "For \(meaning), use the word \(target) in \(targetLanguageName)",
-            "The \(targetLanguageName) word for \(meaning) is \(target)",
-            "\(meaning) translates to \(target) in \(targetLanguageName)",
-            "In \(targetLanguageName), we say \(target) for \(meaning)"
-        ]
-        
-        let introSentence = audioVariants.randomElement() ?? audioVariants[0]
-        print("🔊 [MistakeIntro] Phase \(index + 1): \(introSentence)")
         
         // 1. Reveal Mistake instantly
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             _ = visibleIndexSet.insert(index)
         }
         
-        // 2. Speak Full Multi-Segment Sentence (High Fidelity)
-        // We split the template to give the target word the NATIVE accent
-        let prefix: String
-        let suffix: String
-        
-        // Match the logic found in audioVariants above (Line 105)
-        // Simple heuristic for this specific view's templates
-        if introSentence.contains(" translates to ") {
-            prefix = introSentence.components(separatedBy: target)[0]
-            suffix = introSentence.components(separatedBy: target).count > 1 ? introSentence.components(separatedBy: target)[1] : ""
-        } else if introSentence.contains(" word for ") {
-            prefix = introSentence.components(separatedBy: target)[0]
-            suffix = introSentence.components(separatedBy: target).count > 1 ? introSentence.components(separatedBy: target)[1] : ""
-        } else if introSentence.contains(" means ") {
-            prefix = introSentence.components(separatedBy: target)[0]
-            suffix = introSentence.components(separatedBy: target).count > 1 ? introSentence.components(separatedBy: target)[1] : ""
-        } else {
-            prefix = introSentence.replacingOccurrences(of: target, with: "")
-            suffix = ""
-        }
-        
-        AudioManager.shared.speak(segments: [
-            .init(text: prefix, language: "en-US"),
-            .init(text: target, language: targetLanguage),
-            .init(text: suffix, language: "en-US")
-        ].filter { !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-            // 3. Wait a beat then proceed to next mistake
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                speakMistakeSequentially(at: index + 1)
-            }
+        // 2. Wait a beat then proceed to next mistake
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            speakMistakeSequentially(at: index + 1)
         }
     }
 }

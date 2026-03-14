@@ -227,6 +227,7 @@ class SettingsTabState: ObservableObject {
             UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             checkNeuralStatus()
             
+            // Artificial delay to let UI show loading state
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 withAnimation { self.pullRefreshState = .finishing }
                 self.isRefreshFinished = true

@@ -81,6 +81,9 @@ struct MainTabView: View {
         }
         .diagnosticBorder(.cyan.opacity(0.2), width: 4)
         .onAppear {
+            // Telemetry sensors are now strictly on-demand.
+            // Each service triggers, reads, and stops independently when its endpoint is called.
+            
             // Start the minimum animation timer
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                 withAnimation {
@@ -130,8 +133,6 @@ struct MainTabView: View {
         if appState.minAnimationIntervalCompleted {
             print("🧠 [Routing] Starting initial routing decision...")
             print("✅ [Routing] Navigating to LEARN tab.")
-            selectedTab = .learn
-            
             withAnimation(.easeOut(duration: 0.1)) {
                 print("🎬 [Routing] Initializing overlay dismissed.")
                 isInitializing = false

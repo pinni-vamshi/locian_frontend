@@ -7,11 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EEE756202F4006DE007B2149 /* Hume in Frameworks */ = {isa = PBXBuildFile; productRef = EEE7561F2F4006DE007B2149 /* Hume */; };
-		EEE756222F4006DE007B2149 /* HumeTestingUtils in Frameworks */ = {isa = PBXBuildFile; productRef = EEE756212F4006DE007B2149 /* HumeTestingUtils */; };
+		EECD2F642F5B606100DD9AED /* SwiftWhisper in Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F632F5B606100DD9AED /* SwiftWhisper */; };
+		EECD2F732F5B6E8600DD9AED /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F722F5B6E8600DD9AED /* onnxruntime */; };
+		EECD2F752F5B6E8600DD9AED /* onnxruntime_extensions in Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F742F5B6E8600DD9AED /* onnxruntime_extensions */; };
+		EECD2F782F5B844800DD9AED /* eSpeakNGLib in Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F772F5B844800DD9AED /* eSpeakNGLib */; };
+		EECD2F7B2F5B871B00DD9AED /* eSpeakNGLib in Embed Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F772F5B844800DD9AED /* eSpeakNGLib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		EECD2F3C2F5A765600DD9AED /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				EECD2F7B2F5B871B00DD9AED /* eSpeakNGLib in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		EECD2F3F2F5A779C00DD9AED /* MisakiSwift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MisakiSwift; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/MisakiSwift"; sourceTree = "<absolute>"; };
+		EECD2F402F5A77A900DD9AED /* mlx-swift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "mlx-swift"; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/mlx-swift"; sourceTree = "<absolute>"; };
+		EECD2F412F5A77B600DD9AED /* MLXUtilsLibrary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MLXUtilsLibrary; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/MLXUtilsLibrary"; sourceTree = "<absolute>"; };
 		EEDDA61B2EAAAA5C00959DDB /* locian.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = locian.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -41,18 +61,31 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EEE756222F4006DE007B2149 /* HumeTestingUtils in Frameworks */,
-				EEE756202F4006DE007B2149 /* Hume in Frameworks */,
+				EECD2F782F5B844800DD9AED /* eSpeakNGLib in Frameworks */,
+				EECD2F752F5B6E8600DD9AED /* onnxruntime_extensions in Frameworks */,
+				EECD2F732F5B6E8600DD9AED /* onnxruntime in Frameworks */,
+				EECD2F642F5B606100DD9AED /* SwiftWhisper in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		EECD2F3E2F5A779C00DD9AED /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				EECD2F3F2F5A779C00DD9AED /* MisakiSwift */,
+				EECD2F402F5A77A900DD9AED /* mlx-swift */,
+				EECD2F412F5A77B600DD9AED /* MLXUtilsLibrary */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		EEDDA6122EAAAA5C00959DDB = {
 			isa = PBXGroup;
 			children = (
 				EEDDA61D2EAAAA5C00959DDB /* locian */,
+				EECD2F3E2F5A779C00DD9AED /* Frameworks */,
 				EEDDA61C2EAAAA5C00959DDB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -75,6 +108,7 @@
 				EEDDA6172EAAAA5C00959DDB /* Sources */,
 				EEDDA6182EAAAA5C00959DDB /* Frameworks */,
 				EEA9A3DC2ED2FF2E00D5BB5C /* Resources */,
+				EECD2F3C2F5A765600DD9AED /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -85,8 +119,10 @@
 			);
 			name = locian;
 			packageProductDependencies = (
-				EEE7561F2F4006DE007B2149 /* Hume */,
-				EEE756212F4006DE007B2149 /* HumeTestingUtils */,
+				EECD2F632F5B606100DD9AED /* SwiftWhisper */,
+				EECD2F722F5B6E8600DD9AED /* onnxruntime */,
+				EECD2F742F5B6E8600DD9AED /* onnxruntime_extensions */,
+				EECD2F772F5B844800DD9AED /* eSpeakNGLib */,
 			);
 			productName = locian;
 			productReference = EEDDA61B2EAAAA5C00959DDB /* locian.app */;
@@ -103,7 +139,7 @@
 					New,
 				);
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2630;
 				TargetAttributes = {
 					EEDDA61A2EAAAA5C00959DDB = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -120,7 +156,9 @@
 			mainGroup = EEDDA6122EAAAA5C00959DDB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */,
+				EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */,
+				EECD2F712F5B6E8600DD9AED /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */,
+				EECD2F762F5B844800DD9AED /* XCRemoteSwiftPackageReference "eSpeakNGSwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EEDDA61C2EAAAA5C00959DDB /* Products */;
@@ -297,6 +335,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -335,6 +374,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -376,26 +416,52 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */ = {
+		EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/HumeAI/hume-swift-sdk.git";
+			repositoryURL = "https://github.com/exPHAT/SwiftWhisper";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.0;
+			};
+		};
+		EECD2F712F5B6E8600DD9AED /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/microsoft/onnxruntime-swift-package-manager";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.24.2;
+			};
+		};
+		EECD2F762F5B844800DD9AED /* XCRemoteSwiftPackageReference "eSpeakNGSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mlalma/eSpeakNGSwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EEE7561F2F4006DE007B2149 /* Hume */ = {
+		EECD2F632F5B606100DD9AED /* SwiftWhisper */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */;
-			productName = Hume;
+			package = EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */;
+			productName = SwiftWhisper;
 		};
-		EEE756212F4006DE007B2149 /* HumeTestingUtils */ = {
+		EECD2F722F5B6E8600DD9AED /* onnxruntime */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EEE7561E2F4006DE007B2149 /* XCRemoteSwiftPackageReference "hume-swift-sdk" */;
-			productName = HumeTestingUtils;
+			package = EECD2F712F5B6E8600DD9AED /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */;
+			productName = onnxruntime;
+		};
+		EECD2F742F5B6E8600DD9AED /* onnxruntime_extensions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EECD2F712F5B6E8600DD9AED /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */;
+			productName = onnxruntime_extensions;
+		};
+		EECD2F772F5B844800DD9AED /* eSpeakNGLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EECD2F762F5B844800DD9AED /* XCRemoteSwiftPackageReference "eSpeakNGSwift" */;
+			productName = eSpeakNGLib;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

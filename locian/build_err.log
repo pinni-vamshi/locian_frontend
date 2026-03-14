@@ -1,0 +1,8 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme locian -project locian.xcodeproj -configuration Debug -sdk iphonesimulator -destination "generic/platform=iOS Simulator" build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.2
+
+2026-03-10 06:04:17.611 xcodebuild[95718:1041287] Writing error result bundle to /var/folders/r1/h90d7chd12bfhdcdnh87zwth0000gn/T/ResultBundle_2026-10-03_06-04-0017.xcresult
+xcodebuild: error: 'locian.xcodeproj' does not exist.

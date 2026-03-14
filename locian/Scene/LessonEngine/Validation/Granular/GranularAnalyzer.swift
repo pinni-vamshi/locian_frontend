@@ -75,7 +75,7 @@ struct GranularAnalyzer {
             
             // 5. Direct Engine Connection: +10% success / -5% failure
             let delta = isCorrect ? 0.10 : -0.05
-            engine.updateMastery(id: brick.id ?? brick.word, delta: delta)
+            engine.updateMastery(id: brick.id, delta: delta)
             
             print("⚓ Anchor Analysis [\(brick.word)]: \(isCorrect ? "✅ +0.10" : "❌ -0.05") (Anchor: '\(bestAnchorToken)' -> User Match: \(String(format: "%.2f", userSim)))")
         }

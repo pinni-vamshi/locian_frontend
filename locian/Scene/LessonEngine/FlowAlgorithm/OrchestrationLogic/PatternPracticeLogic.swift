@@ -96,29 +96,7 @@ class PatternPracticeLogic: ObservableObject {
     }
     
     private func generateMasteryInstruction() -> String {
-        let brickIds = ContentAnalyzer.findRelevantBricks(
-            in: targetPattern.drillData.target,
-            meaning: targetPattern.drillData.meaning,
-            bricks: engine.activeGroupBricks,
-            targetLanguage: engine.lessonData?.target_language ?? "es"
-        )
-        
-        let resolvedBricks = MasteryFilterService.resolveBricks(ids: Set(brickIds), from: engine.activeGroupBricks)
-        // ✅ USER REQUEST: Dynamic Full List (No artificial limit)
-        // Use ListFormatter to join naturally (e.g., "A, B, and C")
-        let words = resolvedBricks.map { $0.word }
-        let masteredText = ListFormatter.localizedString(byJoining: words)
-        
-        let variations = [
-            "Since you've mastered %@, let's try the whole phrase!",
-            "Now that you've got %@ down, let's put it all together!",
-            "You have practiced %@ perfectly. Time for the full sentence!",
-            "With %@ in your pocket, let's try the complete pattern!",
-            "Great job on %@. Now, can you say the whole phrase?"
-        ]
-        
-        let template = variations.randomElement() ?? variations[0]
-        return template.replacingOccurrences(of: "%@", with: masteredText)
+        return ""
     }
     
     // MARK: - Navigation Control
@@ -129,29 +107,10 @@ class PatternPracticeLogic: ObservableObject {
         self.isCorrect = isCorrect
         self.isAnswered = true
         
-        // ✅ USER REQUEST: If it's the final pattern, show the meaningful bilingual sentence in the header
+        // ✅ USER REQUEST: Duplicative audio trigger removed to prevent stuttering.
+        // The child drill already handles speaking the target word for correct answers.
         if currentIndex == mistakes.count {
-            let langCode = engine.lessonData?.target_language ?? "es"
-            let langName = TargetLanguageMapping.shared.getDisplayNames(for: langCode).english
-            let target = targetPattern.drillData.target
-            let meaning = targetPattern.drillData.meaning
-            
-            // Play natural bilingual audio (English preamble -> Native target -> English meaning)
-            let preamble = "In \(langName), "
-            let separator = " means "
-            
-            print("🔊 [PracticeLoop] Bilingual Speech: \(preamble)[\(target)]\(separator)\(meaning)")
-            
-            self.isAudioPlaying = true
-            AudioManager.shared.speak(segments: [
-                .init(text: preamble, language: "en-US"),
-                .init(text: target, language: langCode),
-                .init(text: separator + meaning, language: "en-US")
-            ]) { [weak self] in
-                DispatchQueue.main.async {
-                    self?.isAudioPlaying = false
-                }
-            }
+             print("🔁 [PracticeLoop] Final Drill Answered. Child drill handles audio.")
         }
     }
     

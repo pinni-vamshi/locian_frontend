@@ -17,9 +17,7 @@ class UserIntentContextLogic: ObservableObject {
     private init() {}
     
     /// Main entry point to discover or update the daily intent map
-    /// - Parameters:
-    ///   - overrides: Optional manual overrides to update the routine (Unified Pattern)
-    func discoverDailyIntent(overrides: [String: [String]]? = nil, completion: @escaping (Bool) -> Void = { _ in }) {
+    func discoverDailyIntent(completion: @escaping (Bool) -> Void = { _ in }) {
         guard !isLoading else {
             print("⚠️ [UserIntentContextLogic] Already loading intent context. Skipping.")
             completion(false)
@@ -54,16 +52,20 @@ class UserIntentContextLogic: ObservableObject {
             let lat = loc.coordinate.latitude
             let lng = loc.coordinate.longitude
             
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm"
-            let timeString = formatter.string(from: Date())
+            let timeFormatter = DateFormatter()
+            timeFormatter.dateFormat = "HH:mm"
+            let timeString = timeFormatter.string(from: Date())
             
-            // 3. Call Unified Service
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let dateString = dateFormatter.string(from: Date())
+            
+            // 3. Call Unified Service (V2 Spec: lat, lng, time, date)
             UserIntentContextService.shared.unifyIntentContext(
                 lat: lat,
                 lng: lng,
                 time: timeString,
-                overrides: overrides
+                date: dateString
             ) { [weak self] result in
                 DispatchQueue.main.async {
                     self?.isLoading = false

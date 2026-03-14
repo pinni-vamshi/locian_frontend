@@ -126,86 +126,25 @@ class BrickMCQLogic: ObservableObject {
     // MARK: - 🎙️ Voice Assets (Decentralized)
     
     // 1. Full Context
-    private static let fullIntroVoices = [
-        "Select the correct meaning for \"%@\" in %@.",
-        "Which translation matches \"%@\" in %@?",
-        "Match the meaning of \"%@\" in %@.",
-        "Pick the correct way to say %@ in %@",
-        "How do we say %@ in %@"
-    ]
     
-    private static let correctVoices = [
-        "You are right! \"%@\" in %@ is \"%@\"",
-        "Exactly. \"%@\" in %@ translates to \"%@\"",
-        "Spot on. In %@, \"%@\" matches \"%@\"",
-        "That's correct. We say \"%@\" for \"%@\" in %@",
-        "Perfect match. \"%@\" in %@ is \"%@\""
-    ]
+    
+    
     
     // 3. Concise Feedback
-    private static let wrongVoices = [
-        "Actually, \"%@\" in %@ is \"%@\"",
-        "The translation for \"%@\" in %@ is \"%@\"",
-        "Note the %@ word for \"%@\" is \"%@\"",
-        "The match for %@ in %@ is \"%@\"",
-        "Factual correction: \"%@\" in %@ is \"%@\""
-    ]
+    
     
     private static var introIndex = 0
     
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
-            print("🎙️ [BrickMCQ] Using Voice Override: '\(override)'")
+            print("🎙️ Using Voice Override: '\(override)'")
             AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
-            return
         }
-        
-        guard !drill.suppressIntroAudio else { return }
-        
-        let languageCode = engine.lessonData?.target_language ?? "es"
-        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
-        let meaning = drill.drillData.meaning
-        
-        // Sequential Iteration (1-by-1)
-        let index = introIndex % fullIntroVoices.count
-        let template = fullIntroVoices[index]
-        introIndex += 1
-        
-        // Simple Interpolation
-        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        text = text.replacingOccurrences(of: "%@", with: languageName)
-        
-        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
     }
     
     private func playFeedback(isCorrect: Bool) {
-        let answer = state.drillData.target
-        let meaning = state.drillData.meaning
-        let targetLang = targetLanguage
-        
-        let template = isCorrect ? 
-            (BrickMCQLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
-            (BrickMCQLogic.wrongVoices.randomElement() ?? "Actually, \"%@\" in %@ is \"%@\"")
-        
-        // Use robust interpolation for first N-1 placeholders
-        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        if let langRange = textToSpeak.range(of: "%@") {
-            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
-        }
-        
-        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
-        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
-        
-        if finalComponents.count >= 2 {
-            AudioManager.shared.speak(segments: [
-                .init(text: finalComponents[0], language: "en-US"),
-                .init(text: answer, language: langCode)
-            ])
-        } else {
-            AudioManager.shared.speak(segments: [
-                .init(text: isCorrect ? "Correct! " : "Actually, it is ", language: "en-US"),
-                .init(text: answer, language: langCode)
-            ])
+        if isCorrect {
+            playAudio()
         }
     }
     

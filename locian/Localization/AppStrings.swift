@@ -42,7 +42,7 @@ struct UIStrings {
     let continueLearning: String
     let noPastMoments: String
     let useCamera: String
-    let previouslyLearning: String
+    let currentlyLearning: String
     let sunShort: String
     let monShort: String
     let tueShort: String
@@ -102,7 +102,18 @@ struct UIStrings {
     let addRoutine: String
     let tapToSetup: String
     let tapToStartLearning: String
-    }
+    
+    // V3 Learn Tab Keys
+    let variables: String
+    let constants: String
+    let structure: String
+    let previouslyPracticed: String
+    let historyStrength: String
+    let locationOff: String
+    let confidence: String
+    let locationAccessRequired: String
+    let primary: String
+}
 
 struct SettingsStrings {
     let systemLanguage: String

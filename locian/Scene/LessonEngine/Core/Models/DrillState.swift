@@ -80,9 +80,17 @@ struct BrickAnalysisResult: Codable {
     let masteryChange: Double
 }
 
+// MARK: - Legacy DrillItem (Carrier for specific drills)
+
+struct DrillItem: Codable, Sendable {
+    let target: String
+    let meaning: String
+    let phonetic: String?
+}
+
 // MARK: - DrillState (Purified Carrier)
 
-struct DrillState: Identifiable, Codable {
+struct DrillState: Identifiable, Codable, Sendable {
     let id: String
     let patternId: String
     let drillIndex: Int

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 struct TeluguStrings: AppStrings, LocalizedStrings {
     
@@ -30,7 +31,7 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             continueLearning: "నేర్చుకోవడం కొనసాగించండి",
             noPastMoments: "గత క్షణాలు లేవు",
             useCamera: "కెమెరా ఉపయోగించండి",
-            previouslyLearning: "గతంలో నేర్చుకున్నారు",
+            currentlyLearning: "ప్రస్తుతం నేర్చుకుంటున్నారు",
             sunShort: "ఆది",
             monShort: "సోమ",
             tueShort: "మంగళ",
@@ -77,9 +78,22 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             typeHere: "ఇక్కడ టైప్ చేయండి",
             nearbyLabel: "దగ్గరలో",
             noNearbyPlaces: "{noNearby}",
+            
+            // Routine
             addRoutine: "రొటీన్ జోడించండి",
             tapToSetup: "సెటప్ చేయడానికి ట్యాప్ చేయండి",
-            tapToStartLearning: "నేర్చుకోవడం ప్రారంభించడానికి ట్యాప్ చేయండి")
+            tapToStartLearning: "నేర్చుకోవడం ప్రారంభించడానికి ట్యాప్ చేయండి",
+            
+            // V3 Learn Tab Keys
+            variables: "వేరియబుల్స్",
+            constants: "స్థిరాంకాలు",
+            structure: "నిర్మాణం",
+            previouslyPracticed: "గతంలో నేర్చుకున్నారు",
+            historyStrength: "చరిత్ర బలం",
+            locationOff: "లొకేషన్ ఆఫ్",
+            confidence: "నమ్మకం",
+            locationAccessRequired: "లొకేషన్ యాక్సెస్ అవసరం",
+            primary: "ప్రాథమిక")
     }
 
     var settings: SettingsStrings {
@@ -403,7 +417,7 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

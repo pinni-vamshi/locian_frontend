@@ -116,91 +116,24 @@ class PatternTypingLogic: ObservableObject {
     // MARK: - 🎙️ Voice Assets (Decentralized)
     
     // 1. Full Context
-    private static let fullIntroVoices = [
-        "Type the full sentence for \"%@\" in %@",
-        "Write out the %@ translation for \"%@\"",
-        "Can you type the %@ for \"%@\"",
-        "Keyboard practice: \"%@\" in %@",
-        "Let's write this sentence: \"%@\" in %@"
-    ]
+    
     
 
-    private static let correctVoices = [
-        "You are right! \"%@\" in %@ is \"%@\"",
-        "Exactly. \"%@\" in %@ translates to \"%@\"",
-        "Spot on. In %@, \"%@\" matches \"%@\"",
-        "That's correct. We say \"%@\" for \"%@\" in %@",
-        "Perfect match. \"%@\" in %@ is \"%@\""
-    ]
+    
     
     // 3. Concise Feedback
-    private static let wrongVoices = [
-        "Actually, we write \"%@\"",
-        "The correct sentence is \"%@\"",
-        "Note the spelling: \"%@\"",
-        "Listen to the phrase: \"%@\"",
-        "It should be \"%@\""
-    ]
+    
     
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
-            print("🎙️ [PatternTyping] Using Voice Override: '\(override)'")
+            print("🎙️ Using Voice Override: '\(override)'")
             AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
-            return
         }
-        
-        guard !drill.suppressIntroAudio else { return }
-        
-        let meaning = drill.drillData.meaning
-        let languageCode = engine.lessonData?.target_language ?? "es"
-        let languageName = TargetLanguageMapping.shared.getDisplayNames(for: languageCode).english
-        
-        let template = fullIntroVoices.randomElement() ?? fullIntroVoices[0]
-        
-        // Simple Interpolation
-        var text = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        text = text.replacingOccurrences(of: "%@", with: languageName)
-        
-        AudioManager.shared.speak(segments: [.init(text: text, language: "en-US")])
     }
     
     private func playFeedback(isCorrect: Bool) {
-        // ✅ USER REQUEST: Silence local feedback if practiceLogic is handling the meaningful bilingual feedback
-        if let practiceLogic = practiceLogic, practiceLogic.currentIndex == practiceLogic.mistakes.count {
-            print("🎙️ [PatternTyping] Silencing local feedback. practiceLogic will handle bilingual confirmation.")
-            return
-        }
-        
-        let target = state.drillData.target
-        let meaning = state.drillData.meaning
-        let targetLang = targetLanguage
-        
-        let template = isCorrect ? 
-            (PatternTypingLogic.correctVoices.randomElement() ?? "Correct! \"%@\" in %@ is \"%@\"") :
-            (PatternTypingLogic.wrongVoices.randomElement() ?? "Actually, we write \"%@\"")
-        
-        // Split at potential target placeholder
-        var textToSpeak = template.replacingOccurrences(of: "%@", with: meaning, range: template.range(of: "%@"))
-        if let langRange = textToSpeak.range(of: "%@") {
-            textToSpeak = textToSpeak.replacingOccurrences(of: "%@", with: targetLang, range: langRange)
-        }
-        
-        // Split at the final placeholder
-        let finalComponents = textToSpeak.components(separatedBy: "\"%@\"")
-        
-        let langCode = self.engine.lessonData?.target_language ?? "es-ES"
-        
-        if finalComponents.count >= 2 {
-            AudioManager.shared.speak(segments: [
-                .init(text: finalComponents[0], language: "en-US"),
-                .init(text: target, language: langCode)
-            ])
-        } else {
-            // Fallback for simple templates
-            AudioManager.shared.speak(segments: [
-                .init(text: "That is correct. ", language: "en-US"),
-                .init(text: target, language: langCode)
-            ])
+        if isCorrect {
+            playAudio()
         }
     }
     
@@ -251,7 +184,7 @@ class PatternTypingLogic: ObservableObject {
                            (groupBricks.structural ?? [])
             
             for brickId in brickIds {
-                if let brick = allBricks.first(where: { ($0.id ?? $0.word) == brickId }) {
+                if let brick = allBricks.first(where: { $0.id == brickId }) {
                     validBrickWords.insert(brick.word.lowercased())
                 }
             }
@@ -265,7 +198,7 @@ class PatternTypingLogic: ObservableObject {
 
             // Map results to scoring
             let scoredExplore = brickMatches.compactMap { match -> (String, String, Double)? in
-                if let brick = allBricks.first(where: { ($0.id ?? $0.word) == match.brickId }) {
+                if let brick = allBricks.first(where: { $0.id == match.brickId }) {
                     // Only include if it's a noun or a verb
                     if TokenTaggerService.isNoun(brick.word, in: tags) || TokenTaggerService.isVerb(brick.word, in: tags) {
                         return (brick.word, brick.meaning, match.similarityScore)

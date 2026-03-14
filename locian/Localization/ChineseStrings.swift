@@ -31,7 +31,7 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             continueLearning: "继续学习",
             noPastMoments: "无过去场景",
             useCamera: "使用相机",
-            previouslyLearning: "以前学习",
+            currentlyLearning: "正在学习",
             sunShort: "日",
             monShort: "一",
             tueShort: "二",
@@ -80,7 +80,18 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             noNearbyPlaces: "{noNearby}",
             addRoutine: "添加例程",
             tapToSetup: "点击设置",
-            tapToStartLearning: "点击开始学习")
+            tapToStartLearning: "点击开始学习",
+            
+            // V3 Learn Tab Keys
+            variables: "变量",
+            constants: "常量",
+            structure: "结构",
+            previouslyPracticed: "以前练习",
+            historyStrength: "历史强度",
+            locationOff: "位置关闭",
+            confidence: "置信度",
+            locationAccessRequired: "需要位置权限",
+            primary: "主要")
     }
 
     var settings: SettingsStrings {
@@ -404,7 +415,7 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .continueLearningLabel: return ui.continueLearning
         case .noPastMomentsFor: return ui.noPastMoments
         case .useCameraToStartLearning: return ui.useCamera
-        case .previouslyLearning: return ui.previouslyLearning
+        case .previouslyLearning: return ui.currentlyLearning
         case .noHistoryRecorded: return ui.noHistory
         case .tapNextUpToGenerate: return ui.tapNextUpToGenerate
         case .generatingHistory: return ui.generatingHistory

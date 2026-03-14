@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 class LogoutService {
     static let shared = LogoutService()

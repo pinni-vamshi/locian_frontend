@@ -1,13 +1,31 @@
 {
-  "originHash" : "25ec7533d817ee410338d269295c4cd7a99c33dd60aecc606b85356fb5a4492a",
+  "originHash" : "b0e1dee93e00ad68b1881d818c94491932dabe97c822864f8ca8cb9c49c64881",
   "pins" : [
     {
-      "identity" : "hume-swift-sdk",
+      "identity" : "espeakngswift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/HumeAI/hume-swift-sdk.git",
+      "location" : "https://github.com/mlalma/eSpeakNGSwift",
       "state" : {
-        "branch" : "main",
-        "revision" : "5326ad2308a59cfae082c192cf5ea31463ff6d79"
+        "revision" : "abcdb0da7cd31a1f09c7a6830ba4447289685833",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "onnxruntime-swift-package-manager",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/microsoft/onnxruntime-swift-package-manager",
+      "state" : {
+        "revision" : "b7fb7f7dea8a2469e6335d95a61b8f36d0dc83b2",
+        "version" : "1.24.2"
+      }
+    },
+    {
+      "identity" : "swiftwhisper",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/exPHAT/SwiftWhisper",
+      "state" : {
+        "revision" : "a192004db08de7c6eaa169eede77f1625e7d23fb",
+        "version" : "1.2.0"
       }
     }
   ],
