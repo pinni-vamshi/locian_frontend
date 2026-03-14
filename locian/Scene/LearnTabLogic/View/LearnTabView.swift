@@ -80,6 +80,11 @@ struct LearnTabView: View {
                     v3Header
                         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                         .animation(.spring().delay(0.0), value: animateIn)
+                    
+                    v3EnvironmentStatusBar
+                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
+                        .animation(.spring().delay(0.05), value: animateIn)
+                        
                     v3RecommendationSelector
                         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                         .animation(.spring().delay(0.1), value: animateIn)
@@ -165,6 +170,78 @@ struct LearnTabView: View {
     }
 
     // MARK: - V3 Components
+
+    private var v3EnvironmentStatusBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // GPS Button
+                environmentStatusButton(
+                    type: .gps,
+                    icon: "location.fill",
+                    label: "GPS",
+                    value: state.telemetry.activeSensors.contains(.gps) ? 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!))" : "SEARCHING...") : 
+                           "OFF"
+                )
+                
+                // MOTION Button
+                environmentStatusButton(
+                    type: .motion,
+                    icon: "figure.walk",
+                    label: "MOTION",
+                    value: state.telemetry.activeSensors.contains(.motion) ? state.telemetry.motionState : "OFF"
+                )
+                
+                // LIGHT Button
+                environmentStatusButton(
+                    type: .light,
+                    icon: "sun.max.fill",
+                    label: "LIGHT",
+                    value: state.telemetry.activeSensors.contains(.light) ? state.telemetry.lightLevel : "OFF"
+                )
+                
+                // SOUND Button
+                environmentStatusButton(
+                    type: .sound,
+                    icon: "waveform",
+                    label: "SOUND",
+                    value: state.telemetry.activeSensors.contains(.sound) ? "\(Int(state.telemetry.decibels))dB" : "OFF"
+                )
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+    
+    private func environmentStatusButton(type: SensorType, icon: String, label: String, value: String) -> some View {
+        let isActive = state.telemetry.activeSensors.contains(type)
+        
+        return Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                state.toggleEnvironmentSensor(type)
+            }
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 8))
+                    .foregroundColor(isActive ? ThemeColors.neonGreen : .gray)
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(label)
+                        .font(.system(size: 7, weight: .bold, design: .monospaced))
+                        .foregroundColor(.gray)
+                    Text(value)
+                        .font(.system(size: 9, weight: .black, design: .monospaced))
+                        .foregroundColor(isActive ? .white : .gray.opacity(0.5))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(isActive ? Color.white.opacity(0.05) : Color.white.opacity(0.02))
+            .border(isActive ? ThemeColors.neonGreen.opacity(0.3) : Color.white.opacity(0.1), width: 1)
+        }
+        .buttonStyle(.plain)
+    }
 
     private var v3Header: some View {
         HStack {

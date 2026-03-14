@@ -41,6 +41,9 @@ class LearnTabState: ObservableObject {
     @Published var currentLesson: GenerateSentenceData? = nil
     @Published var showLessonView: Bool = false
     
+    // Environment Telemetry (Developer Mode)
+    @Published var telemetry = EnvironmentTelemetry()
+    
     // Nearby Section State
     @Published var nearbyPlaces: [LocationManager.NearbyAmbience] = []
     @Published var isNearbyLoading: Bool = false
@@ -108,6 +111,15 @@ class LearnTabState: ObservableObject {
         SpeechRecognizer.shared.$isRecording
             .receive(on: RunLoop.main)
             .assign(to: &$isRecordingVoice)
+            
+        // ✅ Environment Telemetry
+        EnvironmentService.shared.$telemetry
+            .receive(on: RunLoop.main)
+            .assign(to: &$telemetry)
+    }
+    
+    func toggleEnvironmentSensor(_ sensor: SensorType) {
+        EnvironmentService.shared.toggleSensor(sensor)
     }
     
     func toggleVoiceInput() {
