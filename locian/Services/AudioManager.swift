@@ -205,7 +205,7 @@ class AudioManager: NSObject, ObservableObject {
                     }
                 } else {
                     // meaning/target → handled via fallback logic
-                    let language = (key == "target") ? (values["languageCode"] ?? "en-US") : "en-US"
+                    _ = (key == "target") ? (values["languageCode"] ?? "en-US") : "en-US"
                     
                     if let pcmData = session.getOrWait(for: key, waiter: { [weak self] data in
                         guard let self = self else { return }
@@ -261,8 +261,7 @@ class AudioManager: NSObject, ObservableObject {
     /// Generates a static text segment inline (no stop() call — safe inside sequence chain).
     /// Saves to disk on success so next time it's an instant cache hit.
     private func generateAndPlayInline(text: String, saveAt fileURL: URL, completion: @escaping () -> Void) {
-        let segment = SpeechSegment(text: text, language: "en-US")
-        print("🔇 [AudioManager] Inline fallback. Calling completion directly.")
+        print("🔇 [AudioManager] Inline fallback for '\(text)'. Calling completion directly.")
         completion()
     }
     
@@ -293,8 +292,7 @@ class AudioManager: NSObject, ObservableObject {
             return
         }
         
-        let voiceCode = AppStateManager.shared.selectedKokoroVoice
-        let finalCacheID = cacheIdentifier ?? generateCacheID(for: segments, voice: voiceCode)
+        let finalCacheID = cacheIdentifier ?? generateCacheID(for: segments, voice: "system")
         
         print("🔊 [AudioManager] Multilingual Engine: Queuing \(segments.count) segments. CacheID: \(finalCacheID)")
         self.onSpeechCompletion = completion

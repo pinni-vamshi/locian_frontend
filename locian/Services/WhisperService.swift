@@ -7,6 +7,7 @@ class WhisperService: ObservableObject {
     
     private var whisper: Whisper?
     @Published var isReady = false
+    @Published var isInitializing = false
     private init() {
         print("🎙️ [WhisperService] Singleton initialized")
         setup()
