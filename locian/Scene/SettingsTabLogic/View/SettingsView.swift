@@ -198,7 +198,6 @@ struct SettingsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 60) {
                     languageSection
-                    personalizationSection
                     interfaceLanguageSection
                     notificationSection
                     locationSection
