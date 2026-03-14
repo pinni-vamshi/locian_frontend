@@ -80,10 +80,6 @@ struct LearnTabView: View {
                     v3Header
                         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
                         .animation(.spring().delay(0.0), value: animateIn)
-                    
-                    v3EnvironmentStatusBar
-                        .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
-                        .animation(.spring().delay(0.05), value: animateIn)
                         
                     v3RecommendationSelector
                         .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 20)
@@ -218,7 +214,6 @@ struct LearnTabView: View {
                            "OFF"
                 )
             }
-            .padding(.horizontal, 16)
         }
     }
     
@@ -254,14 +249,16 @@ struct LearnTabView: View {
     }
 
     private var v3Header: some View {
-        HStack {
+        HStack(spacing: 0) {
             Text(appState.username.uppercased())
                 .font(.system(size: 14, weight: .black, design: .monospaced))
                 .foregroundColor(.black)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(ThemeColors.secondaryAccent)
-            Spacer()
+            
+            v3EnvironmentStatusBar
+                .padding(.leading, 8)
         }
         .padding(.horizontal, 5)
         .padding(.top, 10)
