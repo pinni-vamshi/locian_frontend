@@ -145,6 +145,8 @@ class EnvironmentService: ObservableObject {
                 self?.telemetry.lightLevel = status
             }
         }
+    }
+    
     private func startWeatherTimer() {
         timers[.weather]?.invalidate()
         timers[.weather] = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
