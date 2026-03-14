@@ -127,7 +127,7 @@ class AudioManager: NSObject, ObservableObject {
     /// ✅ TRUE STREAMING with 3-folder routing:
     /// - Static segments → Voices/drills/[contextPath]/[file].wav
     /// - dynamic("language") → Voices/languages/[name].wav
-    /// - dynamic("meaning"/"target") → AudioPreloadCache (session RAM)
+    /// - dynamic("meaning"/"target") → Generated via System TTS inline
     func speak(recipe: [AudioSegment], dynamicValues: [String: String], contextPath: String, completion: (() -> Void)? = nil) {
 
         print("🔊 [AudioManager] Recipe[\(contextPath)]: \(recipe.count) segments.")
@@ -204,7 +204,7 @@ class AudioManager: NSObject, ObservableObject {
                         self.generateAndPlayInline(text: text, saveAt: fileURL) { playNext() }
                     }
                 } else {
-                    // meaning/target → session buffer (AudioPreloadCache)
+                    // meaning/target → handled via fallback logic
                     let language = (key == "target") ? (values["languageCode"] ?? "en-US") : "en-US"
                     
                     if let pcmData = session.getOrWait(for: key, waiter: { [weak self] data in

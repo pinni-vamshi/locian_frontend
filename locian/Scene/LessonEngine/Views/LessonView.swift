@@ -99,7 +99,6 @@ LessonCompletionView(onFinish: {
         }
         .onDisappear {
             appState.isLessonActive = false
-            AudioPreloadCache.shared.clear()
         }
     }
 }

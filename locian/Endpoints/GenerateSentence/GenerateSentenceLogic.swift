@@ -183,15 +183,6 @@ class GenerateSentenceLogic {
             
             print("✅ [GenerateSentenceLogic] hydrateFromV3 COMPLETE. \(groups.count) groups, \(allPatterns.count) patterns, all vectorized.")
             
-            // ✅ PRE-GENERATE voice audio for all pattern sentences into in-memory cache.
-            // Fires in background so audio is ready by the time PatternIntro plays.
-            // Session-only — cleared when lesson ends.
-            AudioPreloadCache.shared.clear()  // Fresh session
-            for pattern in allPatterns {
-                AudioPreloadCache.shared.pregenerate(text: pattern.meaning, language: userLang)
-                AudioPreloadCache.shared.pregenerate(text: pattern.target, language: langCode)
-            }
-            
             DispatchQueue.main.async {
                 completion(lessonData)
             }
