@@ -23,7 +23,7 @@ struct EnvironmentTelemetry {
     var decibels: Float = -160.0
     var weather: String = "OFF"
     var temperature: Double?
-    var humidity: Double?
+    var pressure: Double?
     var envScore: Double?
     
     var activeSensors: Set<SensorType> = []
@@ -155,24 +155,18 @@ class EnvironmentService: ObservableObject {
     private func fetchWeatherInternal() {
         guard let location = LocationManager.shared.currentLocation else { return }
         Task {
-            do {
-                let weather = try await WeatherService.shared.weather(for: location)
-                let condition = mapConditionToString(condition: weather.currentWeather.condition)
-                let temp = weather.currentWeather.temperature.converted(to: .celsius).value
-                let hum = weather.currentWeather.humidity
-                
-                // MULTI-FACTOR SCORE (V5.2)
-                // Combined Temperature & Humidity influence
-                let score = temp + (hum * 10.0)
-                
-                DispatchQueue.main.async {
-                    self.telemetry.weather = condition.uppercased()
-                    self.telemetry.temperature = temp
-                    self.telemetry.humidity = hum
-                    self.telemetry.envScore = score
-                }
-            } catch {
-                print("❌ [EnvironmentService] Weather error: \(error)")
+            let (condition, temp, pressure) = await WeatherServiceManager.shared.fetchWeatherData(for: location)
+            
+            // MULTI-FACTOR SCORE (V5.3)
+            // Combine Temperature (°C) and Barometric Pressure (hPa)
+            // Formula: temp + (pressure / 100) -> Custom Environmental Value
+            let score = temp + (pressure / 100.0)
+            
+            DispatchQueue.main.async {
+                self.telemetry.weather = condition.uppercased()
+                self.telemetry.temperature = temp
+                self.telemetry.pressure = pressure
+                self.telemetry.envScore = score
             }
         }
     }

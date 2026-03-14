@@ -9,20 +9,28 @@ class WeatherServiceManager {
     
     private init() {}
     
-    /// Fetches the current weather condition for a given location.
-    /// Returns a string corresponding to the backend API requirements (e.g., "rain", "clear", "cloudy").
-    func fetchCurrentWeather(for location: CLLocation) async -> String {
+    /// Fetches the current weather data (Condition, Temperature, Pressure) for a given location.
+    func fetchWeatherData(for location: CLLocation) async -> (condition: String, temperature: Double, pressure: Double) {
         print("🌤️ [WeatherService] Initiating request for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         do {
             let weather = try await WeatherService.shared.weather(for: location)
             let condition = weather.currentWeather.condition
             let mappedString = mapConditionToString(condition: condition)
-            print("✅ [WeatherService] Response received. Condition: \(condition), Mapped: \(mappedString)")
-            return mappedString
+            let temp = weather.currentWeather.temperature.converted(to: .celsius).value
+            let pressure = weather.currentWeather.pressure.converted(to: .hectopascals).value
+            
+            print("✅ [WeatherService] Response received. Temp: \(temp), Pressure: \(pressure)")
+            return (mappedString, temp, pressure)
         } catch {
             print("❌ [WeatherService] Error fetching weather: \(error)")
-            return "unknown"
+            return ("unknown", 0.0, 0.0)
         }
+    }
+    
+    /// Fetches the current weather condition for a given location.
+    func fetchCurrentWeather(for location: CLLocation) async -> String {
+        let (condition, _, _) = await fetchWeatherData(for: location)
+        return condition
     }
     
     /// Maps WeatherKit's exact condition enum to a normalized string for the backend payload
