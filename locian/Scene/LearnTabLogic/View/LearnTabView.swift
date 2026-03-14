@@ -26,7 +26,7 @@ struct LearnTabView: View {
     @State private var shimmerPhase: Bool = false
     @State private var loadingStatusIndex: Int = 0
     @State private var loadingTimer: Timer? = nil
-    @State private var showEnvironmentStatus = true
+    @State private var showEnvironmentStatus = false
     
     private var loadingMessages: [String] {
         [
