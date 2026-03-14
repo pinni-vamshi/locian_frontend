@@ -207,6 +207,14 @@ struct LearnTabView: View {
                     label: "SOUND",
                     value: state.telemetry.activeSensors.contains(.sound) ? "\(Int(state.telemetry.decibels))dB" : "OFF"
                 )
+                
+                // WEATHER Button
+                environmentStatusButton(
+                    type: .weather,
+                    icon: "cloud.sun.fill",
+                    label: "WEATHER",
+                    value: state.telemetry.activeSensors.contains(.weather) ? state.telemetry.weather : "OFF"
+                )
             }
             .padding(.horizontal, 16)
         }

@@ -2,12 +2,14 @@ import Foundation
 import Combine
 import CoreLocation
 import CoreMotion
+import UIKit
 
 enum SensorType: String, CaseIterable {
     case gps = "GPS"
     case motion = "MOTION"
     case light = "LIGHT"
     case sound = "SOUND"
+    case weather = "WEATHER"
 }
 
 struct EnvironmentTelemetry {
@@ -18,6 +20,7 @@ struct EnvironmentTelemetry {
     var lightLevel: String = "OFF"
     var lightValue: Double = 0.0
     var decibels: Float = -160.0
+    var weather: String = "OFF"
     
     var activeSensors: Set<SensorType> = []
 }
@@ -78,6 +81,8 @@ class EnvironmentService: ObservableObject {
             startLightTimer()
         case .sound:
             AmbientSoundService.shared.startListening()
+        case .weather:
+            startWeatherTimer()
         }
     }
     
@@ -98,6 +103,8 @@ class EnvironmentService: ObservableObject {
         case .sound:
             AmbientSoundService.shared.stopListening()
             telemetry.decibels = -160.0
+        case .weather:
+            telemetry.weather = "OFF"
         }
     }
     
@@ -136,6 +143,27 @@ class EnvironmentService: ObservableObject {
             DispatchQueue.main.async {
                 self?.telemetry.lightValue = mappedValue
                 self?.telemetry.lightLevel = status
+            }
+        }
+    private func startWeatherTimer() {
+        timers[.weather]?.invalidate()
+        timers[.weather] = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            guard let location = LocationManager.shared.currentLocation else { return }
+            Task {
+                let weather = await WeatherServiceManager.shared.fetchCurrentWeather(for: location)
+                DispatchQueue.main.async {
+                    self?.telemetry.weather = weather.uppercased()
+                }
+            }
+        }
+        
+        // Initial trigger
+        if let location = LocationManager.shared.currentLocation {
+            Task {
+                let weather = await WeatherServiceManager.shared.fetchCurrentWeather(for: location)
+                DispatchQueue.main.async {
+                    self.telemetry.weather = weather.uppercased()
+                }
             }
         }
     }
