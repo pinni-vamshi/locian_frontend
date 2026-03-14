@@ -16,6 +16,23 @@ enum AudioSessionMode: Sendable {
     case recording
 }
 
+enum AudioSegment: Sendable {
+    case `static`(String)
+    case dynamic(String)
+    
+    var computedPath: String {
+        switch self {
+        case .static(let text):
+            return text.lowercased()
+                .components(separatedBy: CharacterSet.alphanumerics.inverted)
+                .filter { !$0.isEmpty }
+                .joined(separator: "_") + ".wav"
+        case .dynamic(let key):
+            return key
+        }
+    }
+}
+
 // MARK: - Models
 struct SpeechSegment: Sendable {
     let text: String
@@ -125,15 +142,6 @@ class AudioManager: NSObject, ObservableObject {
         
         for key in Array(Set(dynamicKeys)) where sessionKeys.contains(key) {
             guard let text = dynamicValues[key], !text.isEmpty else { continue }
-            let language = (key == "target") ? (dynamicValues["languageCode"] ?? "en-US") : "en-US"
-            
-            // Session preload cache hit → instantly in session buffer
-            if let preloaded = AudioPreloadCache.shared.get(text: text, language: language) {
-                print("⚡️ [AudioManager] Preload hit '\(key)': '\(text)'")
-                session.provide(preloaded, for: key)
-                continue
-            }
-            
             // Not preloaded — use fallback or ignore depending on logic
             print("🚀 [AudioManager] Skipping Kokoro generation for '\(text)'")
         }
