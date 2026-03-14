@@ -189,7 +189,7 @@ struct LearnTabView: View {
                     type: .motion,
                     icon: "figure.walk",
                     label: "MOTION",
-                    value: state.telemetry.activeSensors.contains(.motion) ? state.telemetry.motionState : "OFF"
+                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.stepCount)s)" : "OFF"
                 )
                 
                 // LIGHT Button
@@ -197,7 +197,7 @@ struct LearnTabView: View {
                     type: .light,
                     icon: "sun.max.fill",
                     label: "LIGHT",
-                    value: state.telemetry.activeSensors.contains(.light) ? state.telemetry.lightLevel : "OFF"
+                    value: state.telemetry.activeSensors.contains(.light) ? "\(state.telemetry.lightLevel) (\(String(format: "%.1f", state.telemetry.lightValue)))" : "OFF"
                 )
                 
                 // SOUND Button

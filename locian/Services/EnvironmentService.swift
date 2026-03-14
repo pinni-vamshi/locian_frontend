@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import CoreLocation
+import CoreMotion
 
 enum SensorType: String, CaseIterable {
     case gps = "GPS"
@@ -13,7 +14,9 @@ struct EnvironmentTelemetry {
     var latitude: Double?
     var longitude: Double?
     var motionState: String = "OFF"
+    var stepCount: Int = 0
     var lightLevel: String = "OFF"
+    var lightValue: Double = 0.0
     var decibels: Float = -160.0
     
     var activeSensors: Set<SensorType> = []
@@ -26,6 +29,7 @@ class EnvironmentService: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var timers: [SensorType: Timer] = [:]
+    private let pedometer = CMPedometer()
     
     private init() {
         setupLocationObserver()
@@ -87,8 +91,10 @@ class EnvironmentService: ObservableObject {
             telemetry.longitude = nil
         case .motion:
             telemetry.motionState = "OFF"
+            telemetry.stepCount = 0
         case .light:
             telemetry.lightLevel = "OFF"
+            telemetry.lightValue = 0.0
         case .sound:
             AmbientSoundService.shared.stopListening()
             telemetry.decibels = -160.0
@@ -98,9 +104,22 @@ class EnvironmentService: ObservableObject {
     private func startMotionTimer() {
         timers[.motion]?.invalidate()
         timers[.motion] = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
-            MotionService.shared.fetchCurrentMotionState { motion in
+            let toDate = Date()
+            let fromDate = toDate.addingTimeInterval(-10)
+            
+            self?.pedometer.queryPedometerData(from: fromDate, to: toDate) { data, error in
+                guard let pedData = data else { return }
+                let steps = pedData.numberOfSteps.intValue
+                
                 DispatchQueue.main.async {
-                    self?.telemetry.motionState = motion.uppercased()
+                    self?.telemetry.stepCount = steps
+                    if steps > 15 {
+                        self?.telemetry.motionState = "RUNNING"
+                    } else if steps > 2 {
+                        self?.telemetry.motionState = "WALKING"
+                    } else {
+                        self?.telemetry.motionState = "STATIONARY"
+                    }
                 }
             }
         }
@@ -109,9 +128,13 @@ class EnvironmentService: ObservableObject {
     private func startLightTimer() {
         timers[.light]?.invalidate()
         timers[.light] = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            let level = AmbientLightService.shared.fetchLightLevel()
-            let status = level < 2 ? "DARK" : (level < 8 ? "INDOOR" : "BRIGHT")
+            // DUPLICATED FORMULA (V4.2 EXP)
+            let rawBrightness = UIScreen.main.brightness
+            let mappedValue = -5.0 + (Double(rawBrightness) * 19.0)
+            
+            let status = mappedValue < 2 ? "DARK" : (mappedValue < 8 ? "INDOOR" : "BRIGHT")
             DispatchQueue.main.async {
+                self?.telemetry.lightValue = mappedValue
                 self?.telemetry.lightLevel = status
             }
         }
