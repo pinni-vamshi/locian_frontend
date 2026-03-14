@@ -14,61 +14,102 @@ class SemanticSnappingService {
         "shopping_mall", "supermarket", "travelling", "university"
     ]
     
-    /// V4.1: Resolves a raw MapKit place/name to a backend supported category.
-    /// Confidence Score = (Name Similarity * 0.6) + (Apple Category Similarity * 0.4)
-    /// Threshold: 0.90
-    func resolveSemanticCategory(name: String, rawCategory: String?) -> String {
-        // Aggressive Prefix Stripping
-        let cleanedRaw = rawCategory?
-            .replacingOccurrences(of: "MKPointOfInterestCategory", with: "")
+    // MARK: - Semantic Clusters (Expanding the vector target)
+    private let semanticClusters = [
+        "airport": "international airport terminal departures arrivals flight gate air travel",
+        "bank": "bank financial institution atm vault finance branch banking",
+        "barbershop": "barbershop hair salon haircut stylist grooming barber beauty parlor",
+        "bus_stop": "bus stop transit station shelter commuting public transport",
+        "cafe": "cafe coffee shop espresso bakery breakfast bistro starbucks",
+        "food_market": "food market grocery store convenience mart bodega market",
+        "gym": "gym fitness center health club workout exercise weightlifting crossfit yoga studio",
+        "home": "home residence apartment house dwelling residential building",
+        "hospital": "hospital medical center clinic emergency room healthcare doctor",
+        "hotel": "hotel resort lodging inn accommodation stay suite",
+        "local_shop": "local shop retail store boutique showroom outlet merchant dealer repair center",
+        "museum": "museum art gallery exhibition heritage cultural center",
+        "office": "office workplace business headquarter corporate agency",
+        "park": "park garden green space playground meadow nature reserve national park",
+        "petrol_bunk": "petrol bunk gas station fuel station ev charger filling station",
+        "pharmacy": "pharmacy drugstore medical supplies chemist apothecary",
+        "railway_station": "railway station train platform metro tube subway rail transit",
+        "restaurant": "restaurant dining eatery bistro buffet grill steakhouse pizzeria",
+        "school": "school elementary middle high school academy education",
+        "shopping_mall": "shopping mall plaza center complex retail hub department store",
+        "supermarket": "supermarket hypermarket big box store grocer wholesale",
+        "travelling": "travelling travel tourism sightseeing landmark attraction viewpoint",
+        "university": "university college campus academy institute higher education"
+    ]
+    
+    // MARK: - Keyword Anchors (High Signal Boosters)
+    private let keywordAnchors: [String: [String]] = [
+        "food_market": ["market", "grocery", "mart", "bodega", "convenience"],
+        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail"],
+        "gym": ["gym", "fitness", "workout", "club", "studio", "yoga"],
+        "railway_station": ["station", "platform", "railway", "train", "metro"],
+        "petrol_bunk": ["gas", "petrol", "fuel", "bunk"],
+        "cafe": ["coffee", "cafe", "espresso", "bakery"],
+        "restaurant": ["restaurant", "dining", "eatery", "food court", "grill", "pizzeria"],
+        "airport": ["airport", "terminal", "gate", "flight"]
+    ]
+
+    /// V4.2: Advanced Multi-Vector Semantic Fusion
+    /// Uses clusters for target expansion and anchors/metadata for signal boosting.
+    func resolveSemanticCategory(name: String, rawCategory: String?, url: String?, tags: [String]?) -> String {
+        let cleanName = name.lowercased()
+        let cleanedRaw = rawCategory?.replacingOccurrences(of: "MKPointOfInterestCategory", with: "")
             .replacingOccurrences(of: "MKPOICategory", with: "")
             .lowercased() ?? ""
-            
-        var bestMatch = "unknown"
-        var highestConfidence = 0.0
-        let cleanName = name.lowercased()
         
-        print("🧠 [SemanticSnapping] Resolving: '\(name)' | RawCategory: '\(cleanedRaw)'")
+        let urlClean = url?.lowercased() ?? ""
+        let combinedTags = (tags ?? []).map { $0.lowercased() }.joined(separator: " ")
+        
+        print("🧠 [SemanticSnapping] Resolving V4.2: '\(name)' | Raw: '\(cleanedRaw)'")
         
         var matches: [(target: String, score: Double)] = []
         
         for target in targetCategories {
+            let clusterText = semanticClusters[target] ?? target
+            
+            // 1. Base Embedding Signal (Name vs Cluster)
+            var score = EmbeddingService.compare(textA: cleanName, textB: clusterText, languageCode: "en")
+            
+            // 2. Apple Category Signal (Weighted Priority)
+            if !cleanedRaw.isEmpty {
+                let catScore = EmbeddingService.compare(textA: cleanedRaw, textB: clusterText, languageCode: "en")
+                score = (score * 0.6) + (catScore * 0.4)
+            }
+            
+            // 3. Keyword Anchoring (The Multiplier)
+            if let anchors = keywordAnchors[target] {
+                for anchor in anchors {
+                    // Check Name
+                    if cleanName.contains(anchor) { score += 0.15 }
+                    // Check URL
+                    if urlClean.contains(anchor) { score += 0.20 }
+                    // Check Tags
+                    if combinedTags.contains(anchor) { score += 0.15 }
+                }
+            }
+            
+            // 4. Exact Match Protection (Force high score for direct hits)
             let normalizedTarget = target.replacingOccurrences(of: "_", with: " ")
-            
-            // --- SIGNAL A: Literal Name Match (Force 1.0) ---
-            if cleanName.contains(normalizedTarget) {
-                print("✨ [SemanticSnapping] Literal Name Match: '\(target)' in '\(name)'")
-                return target 
+            if cleanName.contains(normalizedTarget) || cleanedRaw == normalizedTarget || cleanedRaw == target {
+                score = max(score, 1.0)
             }
             
-            // --- SIGNAL B: Literal Category Match (Force 1.0) ---
-            if cleanedRaw == normalizedTarget || cleanedRaw == target {
-                print("🎯 [SemanticSnapping] Literal Category Match: '\(target)' == '\(cleanedRaw)'")
-                return target
-            }
-            
-            // --- SIGNAL C: Fuzzy Semantic Similarity ---
-            let nameScore = EmbeddingService.compare(textA: cleanName, textB: normalizedTarget, languageCode: "en")
-            let rawScore = !cleanedRaw.isEmpty ? EmbeddingService.compare(textA: cleanedRaw, textB: normalizedTarget, languageCode: "en") : 0.0
-            
-            let confidence = (nameScore * 0.6) + (rawScore * 0.4)
-            matches.append((target: target, score: confidence))
+            matches.append((target: target, score: score))
         }
         
         matches.sort { $0.score > $1.score }
-        let topMatch = matches.first!
-        bestMatch = topMatch.target
-        highestConfidence = topMatch.score
+        guard let topMatch = matches.first else { return "unknown" }
         
-        // Logs removed for cleanliness
-        
-        // Strict 90% Threshold
-        if highestConfidence >= 0.90 {
-            return bestMatch
+        // Strict threshold check with boosting applied
+        if topMatch.score >= 0.92 {
+            return topMatch.target
         } else {
-            // Fallback to cleaned raw category if no match is certain enough
             let fallback = cleanedRaw.isEmpty ? "unknown" : cleanedRaw
-            print("⚠️ [SemanticSnapping] Low confidence (\(String(format: "%.2f", highestConfidence))). Falling back to raw: '\(fallback)'")
+            print("⚠️ [SemanticSnapping] Low confidence (\(String(format: "%.2f", topMatch.score))). Falling back to raw: '\(fallback)'")
             return fallback
         }
     }

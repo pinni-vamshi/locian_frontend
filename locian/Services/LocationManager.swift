@@ -183,7 +183,9 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         let latitude: Double
         let longitude: Double
         let distance: Double
-        let vector: [Double]? // Made optional to prevent dropping places
+        let vector: [Double]?
+        let url: String?
+        let tags: [String]?
     }
     
     private var activeSearch: MKLocalSearch?
@@ -276,9 +278,17 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             for item in sortedItems {
                 guard let name = item.name, let loc = item.placemark.location else { continue }
                 
-                // 🧠 Semantic Snapping: Map raw Apple Category + Name to our supported list using separate service
+                // 🧠 Semantic Snapping: Harvest URL and Tags for anchoring
                 let rawCat = item.pointOfInterestCategory?.rawValue
-                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: rawCat)
+                let itemURL = item.url?.absoluteString
+                let itemTags = item.placemark.areasOfInterest
+                
+                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(
+                    name: name,
+                    rawCategory: rawCat,
+                    url: itemURL,
+                    tags: itemTags
+                )
                 
                 let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode)
                 
@@ -292,7 +302,9 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     latitude: loc.coordinate.latitude,
                     longitude: loc.coordinate.longitude,
                     distance: distance,
-                    vector: vector
+                    vector: vector,
+                    url: itemURL,
+                    tags: itemTags
                 ))
             }
             
@@ -335,7 +347,9 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         latitude: location.coordinate.latitude,
                         longitude: location.coordinate.longitude,
                         distance: 0,
-                        vector: vector
+                        vector: vector,
+                        url: nil,
+                        tags: nil
                     ))
                 }
             }
