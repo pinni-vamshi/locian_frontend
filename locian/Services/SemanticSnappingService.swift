@@ -116,8 +116,8 @@ class SemanticSnappingService {
         matches.sort { $0.score > $1.score }
         guard let topMatch = matches.first else { return "unknown" }
         
-        // Strict threshold check with boosting applied
-        if topMatch.score >= 0.92 {
+        // Lowered threshold to 0.75 (V4.2a)
+        if topMatch.score >= 0.75 {
             print("✅ [SemanticSnapping] MATCH: '\(topMatch.target)' (\(String(format: "%.2f", topMatch.score)))")
             return topMatch.target
         } else {
