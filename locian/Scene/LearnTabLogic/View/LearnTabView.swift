@@ -269,6 +269,8 @@ struct LearnTabView: View {
                     .padding(.leading, 8)
                     .transition(.move(edge: .trailing).combined(with: .opacity))
             }
+            
+            Spacer() // Anchor to left
         }
         .padding(.horizontal, 5)
         .padding(.top, 10)
