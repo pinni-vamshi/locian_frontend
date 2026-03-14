@@ -82,17 +82,12 @@ class DiscoverMomentsService: ObservableObject {
             // 7. Motion Data (Numeric Velocity via GPS)
             MotionService.shared.fetchCurrentMotionState { velocity in
                 
-                // 8. Weather Data (Raw Numeric Bridge)
+                // 8. Weather Data (Pure Numeric Temperature)
                 Task {
                     var weatherString = "unknown"
-                    var currentTemp: Double = 0.0
-                    var currentPressure: Double = 0.0
-                    
                     if let loc = location {
-                        let result = await WeatherServiceManager.shared.fetchWeatherData(for: loc)
-                        weatherString = result.condition
-                        currentTemp = result.temperature
-                        currentPressure = result.pressure
+                        let temp = await WeatherServiceManager.shared.fetchCurrentTemperature(for: loc)
+                        weatherString = "\(Int(temp))C"
                     }
                     
                 // 9. Fetch Telemetry On-Demand
@@ -115,8 +110,7 @@ class DiscoverMomentsService: ObservableObject {
                             altitude: altitude,
                             explicit_request: explicitRequest,
                             image_base64: imageBase64,
-                            weather: "\(Int(currentTemp))C", // Send temperature as primary weather identifier
-                            pressure: currentPressure,
+                            weather: weatherString,
                             user_language: userLanguage,
                             target_language: targetLanguage,
                             wifi_ssid: wifi

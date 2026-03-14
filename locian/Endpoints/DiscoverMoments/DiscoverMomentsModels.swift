@@ -21,7 +21,6 @@ struct DiscoverMomentsRequest: Codable {
     let explicit_request: String?
     let image_base64: String?
     let weather: String?
-    let pressure: Double?
     let user_language: String?
     let target_language: String?
     let wifi_ssid: String?

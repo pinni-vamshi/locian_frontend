@@ -210,10 +210,8 @@ struct LearnTabView: View {
                 environmentStatusButton(
                     type: .weather,
                     icon: "cloud.sun.fill",
-                    label: "ENV SCORE",
-                    value: state.telemetry.activeSensors.contains(.weather) ? 
-                           "\(state.telemetry.weather) (\(Int(state.telemetry.envScore ?? 0)))" : 
-                           "OFF"
+                    label: "WEATHER",
+                    value: state.telemetry.activeSensors.contains(.weather) ? state.telemetry.weather : "OFF"
                 )
             }
         }

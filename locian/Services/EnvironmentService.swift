@@ -23,8 +23,6 @@ struct EnvironmentTelemetry {
     var decibels: Float = -160.0
     var weather: String = "OFF"
     var temperature: Double?
-    var pressure: Double?
-    var envScore: Double?
     
     var activeSensors: Set<SensorType> = []
 }
@@ -126,8 +124,6 @@ class EnvironmentService: ObservableObject {
         case .weather:
             telemetry.weather = "OFF"
             telemetry.temperature = nil
-            telemetry.humidity = nil
-            telemetry.envScore = nil
         }
     }
     
@@ -155,31 +151,13 @@ class EnvironmentService: ObservableObject {
     private func fetchWeatherInternal() {
         guard let location = LocationManager.shared.currentLocation else { return }
         Task {
-            let (condition, temp, pressure) = await WeatherServiceManager.shared.fetchWeatherData(for: location)
-            
-            // MULTI-FACTOR SCORE (V5.3)
-            // Combine Temperature (°C) and Barometric Pressure (hPa)
-            // Formula: temp + (pressure / 100) -> Custom Environmental Value
-            let score = temp + (pressure / 100.0)
+            let temp = await WeatherServiceManager.shared.fetchCurrentTemperature(for: location)
             
             DispatchQueue.main.async {
-                self.telemetry.weather = condition.uppercased()
+                self.telemetry.weather = "\(Int(temp))°C"
                 self.telemetry.temperature = temp
-                self.telemetry.pressure = pressure
-                self.telemetry.envScore = score
             }
         }
     }
     
-    private func mapConditionToString(condition: WeatherCondition) -> String {
-        switch condition {
-        case .clear, .mostlyClear, .hot: return "clear"
-        case .cloudy, .mostlyCloudy, .partlyCloudy: return "cloudy"
-        case .drizzle, .rain, .sunShowers, .heavyRain, .isolatedThunderstorms, .scatteredThunderstorms, .strongStorms, .thunderstorms: return "rain"
-        case .snow, .flurries, .heavySnow, .blizzard, .freezingDrizzle, .freezingRain, .sleet, .sunFlurries, .wintryMix: return "snow"
-        case .hail: return "hail"
-        case .foggy, .haze, .smoky, .breezy, .windy, .hurricane, .tropicalStorm: return "adverse"
-        default: return "unknown"
-        }
-    }
 }
