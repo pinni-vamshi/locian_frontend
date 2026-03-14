@@ -29,6 +29,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var currentLocation: CLLocation?
     @Published var latitude: Double?
     @Published var longitude: Double?
+    @Published var altitude: Double?
+    @Published var speed: Double?
     @Published var locationError: Error?
     
     private var locationCompletions: [((Result<CLLocation, Error>) -> Void)] = []
@@ -131,6 +133,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         currentLocation = location
         latitude = location.coordinate.latitude
         longitude = location.coordinate.longitude
+        altitude = location.altitude
+        speed = location.speed // m/s
         
         
         // Call completions if waiting

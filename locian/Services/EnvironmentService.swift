@@ -16,14 +16,19 @@ enum SensorType: String, CaseIterable {
 struct EnvironmentTelemetry {
     var latitude: Double?
     var longitude: Double?
+    var altitude: Double?
+    var speed: Double?
     var motionState: String = "OFF"
     var activityType: String = "OFF"
     var stepCount: Int = 0
+    var floorsAscended: Int = 0
     var lightLevel: String = "OFF"
     var lightValue: Double = 0.0
     var decibels: Float = -160.0
     var weather: String = "OFF"
     var temperature: Double?
+    var humidity: Double?
+    var pressure: Double?
     
     var activeSensors: Set<SensorType> = []
 }
@@ -45,11 +50,13 @@ class EnvironmentService: ObservableObject {
     
     private func setupLocationObserver() {
         LocationManager.shared.$latitude
-            .combineLatest(LocationManager.shared.$longitude)
-            .sink { [weak self] lat, lng in
+            .combineLatest(LocationManager.shared.$longitude, LocationManager.shared.$altitude, LocationManager.shared.$speed)
+            .sink { [weak self] lat, lng, alt, spd in
                 guard let self = self, self.telemetry.activeSensors.contains(.gps) else { return }
                 self.telemetry.latitude = lat
                 self.telemetry.longitude = lng
+                self.telemetry.altitude = alt
+                self.telemetry.speed = spd
             }
             .store(in: &cancellables)
     }
@@ -124,9 +131,11 @@ class EnvironmentService: ObservableObject {
             self?.pedometer.queryPedometerData(from: fromDate, to: toDate) { data, error in
                 guard let pedData = data else { return }
                 let steps = pedData.numberOfSteps.intValue
+                let floors = pedData.floorsAscended?.intValue ?? 0
                 
                 DispatchQueue.main.async {
                     self?.telemetry.stepCount = steps
+                    self?.telemetry.floorsAscended = floors
                     if steps > 15 {
                         self?.telemetry.motionState = "RUNNING"
                     } else if steps > 2 {
@@ -185,10 +194,14 @@ class EnvironmentService: ObservableObject {
                 let weather = try await WeatherService.shared.weather(for: location)
                 let condition = mapConditionToString(condition: weather.currentWeather.condition)
                 let temp = weather.currentWeather.temperature.converted(to: .celsius).value
+                let hum = weather.currentWeather.humidity
+                let press = weather.currentWeather.pressure.converted(to: .hectopascals).value
                 
                 DispatchQueue.main.async {
                     self.telemetry.weather = condition.uppercased()
                     self.telemetry.temperature = temp
+                    self.telemetry.humidity = hum
+                    self.telemetry.pressure = press
                 }
             } catch {
                 print("❌ [EnvironmentService] Weather error: \(error)")

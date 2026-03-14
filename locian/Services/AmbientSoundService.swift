@@ -71,6 +71,12 @@ class AmbientSoundService: ObservableObject {
         timer = nil
         audioRecorder?.stop()
         audioRecorder = nil
+        
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("⚠️ [AmbientSound] Failed to deactivate audio session: \(error)")
+        }
     }
     
     /// 🎙️ On-Demand Sampling: Starts mic, waits 800ms for a stable reading, then stops.
