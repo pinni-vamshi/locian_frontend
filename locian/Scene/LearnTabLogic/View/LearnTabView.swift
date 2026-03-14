@@ -26,6 +26,7 @@ struct LearnTabView: View {
     @State private var shimmerPhase: Bool = false
     @State private var loadingStatusIndex: Int = 0
     @State private var loadingTimer: Timer? = nil
+    @State private var showEnvironmentStatus = true
     
     private var loadingMessages: [String] {
         [
@@ -248,15 +249,26 @@ struct LearnTabView: View {
 
     private var v3Header: some View {
         HStack(spacing: 0) {
-            Text(appState.username.uppercased())
-                .font(.system(size: 14, weight: .black, design: .monospaced))
-                .foregroundColor(.black)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(ThemeColors.secondaryAccent)
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showEnvironmentStatus.toggle()
+                }
+            }) {
+                Text(appState.username.uppercased())
+                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(ThemeColors.secondaryAccent)
+            }
+            .buttonStyle(.plain)
             
-            v3EnvironmentStatusBar
-                .padding(.leading, 8)
+            if showEnvironmentStatus {
+                v3EnvironmentStatusBar
+                    .padding(.leading, 8)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
         .padding(.horizontal, 5)
         .padding(.top, 10)
