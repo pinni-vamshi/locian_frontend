@@ -338,7 +338,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             var ambience: [NearbyAmbience] = []
             for name in Array(Set(results)).prefix(8) {
-                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: nil)
+                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: nil, url: nil, tags: nil)
                 if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
                     ambience.append(NearbyAmbience(
                         id: "\(location.coordinate.latitude)_\(location.coordinate.longitude)_\(name)",
