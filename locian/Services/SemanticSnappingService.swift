@@ -84,11 +84,20 @@ class SemanticSnappingService {
             if let anchors = keywordAnchors[target] {
                 for anchor in anchors {
                     // Check Name
-                    if cleanName.contains(anchor) { score += 0.15 }
+                    if cleanName.contains(anchor) { 
+                        score += 0.15 
+                        print("⚓️ [SemanticSnapping] Name Anchor: '\(anchor)' -> \(target) (+0.15)")
+                    }
                     // Check URL
-                    if urlClean.contains(anchor) { score += 0.20 }
+                    if urlClean.contains(anchor) { 
+                        score += 0.20 
+                        print("🔗 [SemanticSnapping] URL Anchor: '\(anchor)' -> \(target) (+0.20)")
+                    }
                     // Check Tags
-                    if combinedTags.contains(anchor) { score += 0.15 }
+                    if combinedTags.contains(anchor) { 
+                        score += 0.15 
+                        print("🏷️ [SemanticSnapping] Tag Anchor: '\(anchor)' -> \(target) (+0.15)")
+                    }
                 }
             }
             
@@ -96,6 +105,7 @@ class SemanticSnappingService {
             let normalizedTarget = target.replacingOccurrences(of: "_", with: " ")
             if cleanName.contains(normalizedTarget) || cleanedRaw == normalizedTarget || cleanedRaw == target {
                 score = max(score, 1.0)
+                print("🎯 [SemanticSnapping] Direct Match: '\(target)' (1.0)")
             }
             
             matches.append((target: target, score: score))
@@ -106,10 +116,11 @@ class SemanticSnappingService {
         
         // Strict threshold check with boosting applied
         if topMatch.score >= 0.92 {
+            print("✅ [SemanticSnapping] MATCH: '\(topMatch.target)' (\(String(format: "%.2f", topMatch.score)))")
             return topMatch.target
         } else {
             let fallback = cleanedRaw.isEmpty ? "unknown" : cleanedRaw
-            print("⚠️ [SemanticSnapping] Low confidence (\(String(format: "%.2f", topMatch.score))). Falling back to raw: '\(fallback)'")
+            print("⚠️ [SemanticSnapping] LOW CONFIDENCE (\(String(format: "%.2f", topMatch.score))). Fallback: '\(fallback)'")
             return fallback
         }
     }

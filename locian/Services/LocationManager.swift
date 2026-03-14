@@ -283,6 +283,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 let itemURL = item.url?.absoluteString
                 let itemTags = item.placemark.areasOfInterest
                 
+                print("🌾 [LocationManager] Harvested for '\(name)': URL: \(itemURL != nil), Tags: \(itemTags?.count ?? 0)")
+                
                 let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(
                     name: name,
                     rawCategory: rawCat,
