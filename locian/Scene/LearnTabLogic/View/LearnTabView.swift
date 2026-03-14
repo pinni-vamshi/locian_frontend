@@ -176,7 +176,7 @@ struct LearnTabView: View {
                     icon: "location.fill",
                     label: "GPS (LIVE)",
                     value: state.telemetry.activeSensors.contains(.gps) ? 
-                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!))\nALT: \(Int(state.telemetry.altitude ?? 0))m | SPD: \(Int((state.telemetry.speed ?? 0) * 3.6))kmh" : "INITIALIZING...") : 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int((state.telemetry.speed ?? 0) * 3.6))kmh)" : "INITIALIZING...") : 
                            "OFF"
                 )
                 
@@ -185,7 +185,7 @@ struct LearnTabView: View {
                     type: .motion,
                     icon: "figure.walk",
                     label: "MOTION",
-                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.activityType))\nSTEPS: \(state.telemetry.stepCount) | FLOORS: \(state.telemetry.floorsAscended)" : "OFF"
+                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.stepCount)s)" : "OFF"
                 )
                 
                 // LIGHT Button
@@ -193,7 +193,7 @@ struct LearnTabView: View {
                     type: .light,
                     icon: "sun.max.fill",
                     label: "LIGHT",
-                    value: state.telemetry.activeSensors.contains(.light) ? "\(state.telemetry.lightLevel)\nRAW: \(String(format: "%.1f", state.telemetry.lightValue))" : "OFF"
+                    value: state.telemetry.activeSensors.contains(.light) ? "\(state.telemetry.lightLevel) (\(String(format: "%.1f", state.telemetry.lightValue)))" : "OFF"
                 )
                 
                 // SOUND Button
@@ -201,7 +201,7 @@ struct LearnTabView: View {
                     type: .sound,
                     icon: "waveform",
                     label: "SOUND",
-                    value: state.telemetry.activeSensors.contains(.sound) ? "\(Int(state.telemetry.decibels))dB\nL/R: ACTIVE" : "OFF"
+                    value: state.telemetry.activeSensors.contains(.sound) ? "\(Int(state.telemetry.decibels))dB" : "OFF"
                 )
                 
                 // WEATHER Button
@@ -210,7 +210,7 @@ struct LearnTabView: View {
                     icon: "cloud.sun.fill",
                     label: "WEATHER",
                     value: state.telemetry.activeSensors.contains(.weather) ? 
-                           "\(state.telemetry.weather)\(state.telemetry.temperature != nil ? " (\(Int(state.telemetry.temperature!))°C)" : "")\nHUM: \(Int((state.telemetry.humidity ?? 0) * 100))% | PRS: \(Int(state.telemetry.pressure ?? 0))hpa" : 
+                           "\(state.telemetry.weather)\(state.telemetry.temperature != nil ? " (\(Int(state.telemetry.temperature!))°C)" : "")" : 
                            "OFF"
                 )
             }
