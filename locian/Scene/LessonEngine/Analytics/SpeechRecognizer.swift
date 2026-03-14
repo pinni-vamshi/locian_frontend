@@ -109,7 +109,7 @@ class SpeechRecognizer: ObservableObject {
             self?.recognitionRequest?.append(buffer)
             
             // 2. Accumulate for Whisper (Offline High-Accuracy)
-            if let downsampled = AudioDownsampler.convertTo16kHz(buffer: buffer) {
+            if let downsampled = self?.convertTo16kHz(buffer: buffer) {
                 self?.whisperSamples.append(contentsOf: downsampled)
                 if (self?.whisperSamples.count ?? 0) % 50000 == 0 {
                     print("🎙️ [SpeechRecognizer] Captured \(self?.whisperSamples.count ?? 0) samples...")
@@ -200,5 +200,31 @@ class SpeechRecognizer: ObservableObject {
     private func stopSilenceTimer() {
         silenceTimer?.invalidate()
         silenceTimer = nil
+    }
+    
+    // MARK: - Audio Utilities
+    
+    private func convertTo16kHz(buffer: AVAudioPCMBuffer) -> [Float]? {
+        let targetFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
+        guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else { return nil }
+        
+        let ratio = buffer.format.sampleRate / targetFormat.sampleRate
+        let targetFrameCapacity = AVAudioFrameCount(Double(buffer.frameLength) / ratio) + 1
+        
+        guard let outputBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: targetFrameCapacity) else { return nil }
+        
+        var error: NSError?
+        let status = converter.convert(to: outputBuffer, error: &error) { (frameCount, outStatus) -> AVAudioBuffer? in
+            outStatus.pointee = .haveData
+            return buffer
+        }
+        
+        if status == .error || error != nil {
+            print("❌ [SpeechRecognizer] Conversion failed: \(error?.localizedDescription ?? "Unknown error")")
+            return nil
+        }
+        
+        guard let floatData = outputBuffer.floatChannelData else { return nil }
+        return Array(UnsafeBufferPointer(start: floatData[0], count: Int(outputBuffer.frameLength)))
     }
 }
