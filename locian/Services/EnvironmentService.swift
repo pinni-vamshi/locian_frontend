@@ -57,8 +57,8 @@ class EnvironmentService: ObservableObject {
                 // Update Velocity (Bridged from GPS Speed)
                 // Always update velocity if motion sensor is "active" (even though it's just GPS)
                 if self.telemetry.activeSensors.contains(.motion) {
-                    let currentSpeedKMH = max(0, (spd ?? 0) * 3.6)
-                    self.telemetry.velocity = currentSpeedKMH
+                    let currentSpeedMS = max(0, (spd ?? 0)) // CLLocationspeed is already m/s
+                    self.telemetry.velocity = currentSpeedMS
                 }
             }
             .store(in: &cancellables)
@@ -151,10 +151,11 @@ class EnvironmentService: ObservableObject {
     private func fetchWeatherInternal() {
         guard let location = LocationManager.shared.currentLocation else { return }
         Task {
-            let temp = await WeatherServiceManager.shared.fetchCurrentTemperature(for: location)
+            let (temp, condition) = await WeatherServiceManager.shared.fetchWeatherData(for: location)
             
             DispatchQueue.main.async {
-                self.telemetry.weather = "\(Int(temp))°C"
+                // Format: 25*C|CLEAR
+                self.telemetry.weather = "\(Int(temp))*C|\(condition.uppercased())"
                 self.telemetry.temperature = temp
             }
         }

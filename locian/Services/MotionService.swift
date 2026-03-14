@@ -9,14 +9,13 @@ class MotionService {
     private init() {}
     
     /// Determines the current velocity of the user as a numeric string for the backend.
-    /// Returns a string like "0 km/h", "5 km/h", etc.
+    /// Returns a string like "0 m/s", "5 m/s", etc.
     func fetchCurrentMotionState(completion: @escaping (String) -> Void) {
         // Use the instantaneous speed from LocationManager
-        // Speed is in m/s, convert to km/h
-        let speedMS = LocationManager.shared.currentLocation?.speed ?? 0.0
-        let speedKMH = max(0, speedMS * 3.6)
+        // Speed is already in m/s
+        let speedMS = max(0, LocationManager.shared.currentLocation?.speed ?? 0.0)
         
-        let velocityString = "\(Int(speedKMH)) km/h"
+        let velocityString = "\(Int(speedMS)) m/s"
         
         print("🚲 [MotionService] GPS Velocity: \(velocityString)")
         completion(velocityString)

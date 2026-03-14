@@ -177,7 +177,7 @@ struct LearnTabView: View {
                     icon: "location.fill",
                     label: "GPS (LIVE)",
                     value: state.telemetry.activeSensors.contains(.gps) ? 
-                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int(state.telemetry.velocity))kmh)" : "INITIALIZING...") : 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int(state.telemetry.velocity))m/s)" : "INITIALIZING...") : 
                            "OFF"
                 )
                 
@@ -186,7 +186,7 @@ struct LearnTabView: View {
                     type: .motion,
                     icon: "figure.walk",
                     label: "VELOCITY",
-                    value: state.telemetry.activeSensors.contains(.motion) ? "\(Int(state.telemetry.velocity)) km/h" : "OFF"
+                    value: state.telemetry.activeSensors.contains(.motion) ? "\(Int(state.telemetry.velocity)) m/s" : "OFF"
                 )
                 
                 // LIGHT Button
