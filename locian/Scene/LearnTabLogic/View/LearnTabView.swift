@@ -172,8 +172,6 @@ struct LearnTabView: View {
             HStack(spacing: 8) {
                 // GPS Button
                 environmentStatusButton(
-                // GPS Button
-                environmentStatusButton(
                     type: .gps,
                     icon: "location.fill",
                     label: "GPS (LIVE)",
