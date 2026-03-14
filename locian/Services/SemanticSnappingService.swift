@@ -8,11 +8,10 @@ class SemanticSnappingService {
     
     // MARK: - Supported Backend Categories
     private let targetCategories = [
-        "airport", "bakery", "bar_pub", "beach", "bus_stop", "cafe", "clinic",
-        "coaching_center", "fast_food_outlet", "food_court", "gym", "home",
-        "hospital", "library", "metro_station", "movie_theatre", "office",
-        "park", "pharmacy", "railway_station", "restaurant", "school",
-        "shopping_mall", "supermarket", "university", "yoga_studio"
+        "airport", "bank", "barbershop", "bus_stop", "cafe", "food_market", "gym",
+        "home", "hospital", "hotel", "local_shop", "museum", "office", "park",
+        "petrol_bunk", "pharmacy", "railway_station", "restaurant", "school",
+        "shopping_mall", "supermarket", "travelling", "university"
     ]
     
     /// V4.1: Resolves a raw MapKit place/name to a backend supported category.
