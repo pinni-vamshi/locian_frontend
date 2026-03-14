@@ -178,9 +178,9 @@ struct LearnTabView: View {
                 environmentStatusButton(
                     type: .gps,
                     icon: "location.fill",
-                    label: "GPS",
+                    label: "GPS (LIVE)",
                     value: state.telemetry.activeSensors.contains(.gps) ? 
-                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!))" : "SEARCHING...") : 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!))" : "INITIALIZING...") : 
                            "OFF"
                 )
                 
@@ -189,7 +189,7 @@ struct LearnTabView: View {
                     type: .motion,
                     icon: "figure.walk",
                     label: "MOTION",
-                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.stepCount)s)" : "OFF"
+                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.activityType))" : "OFF"
                 )
                 
                 // LIGHT Button
@@ -213,7 +213,9 @@ struct LearnTabView: View {
                     type: .weather,
                     icon: "cloud.sun.fill",
                     label: "WEATHER",
-                    value: state.telemetry.activeSensors.contains(.weather) ? state.telemetry.weather : "OFF"
+                    value: state.telemetry.activeSensors.contains(.weather) ? 
+                           "\(state.telemetry.weather)\(state.telemetry.temperature != nil ? " (\(Int(state.telemetry.temperature!))°C)" : "")" : 
+                           "OFF"
                 )
             }
             .padding(.horizontal, 16)

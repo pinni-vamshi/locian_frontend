@@ -3,6 +3,7 @@ import Combine
 import CoreLocation
 import CoreMotion
 import UIKit
+import WeatherKit
 
 enum SensorType: String, CaseIterable {
     case gps = "GPS"
@@ -16,11 +17,13 @@ struct EnvironmentTelemetry {
     var latitude: Double?
     var longitude: Double?
     var motionState: String = "OFF"
+    var activityType: String = "OFF"
     var stepCount: Int = 0
     var lightLevel: String = "OFF"
     var lightValue: Double = 0.0
     var decibels: Float = -160.0
     var weather: String = "OFF"
+    var temperature: Double?
     
     var activeSensors: Set<SensorType> = []
 }
@@ -33,6 +36,7 @@ class EnvironmentService: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var timers: [SensorType: Timer] = [:]
     private let pedometer = CMPedometer()
+    private let activityManager = CMMotionActivityManager()
     
     private init() {
         setupLocationObserver()
@@ -72,11 +76,10 @@ class EnvironmentService: ObservableObject {
     private func startSensorInternal(_ sensor: SensorType) {
         switch sensor {
         case .gps:
-            // LocationManager is already active or triggered by demand
-            // We just let the observer catch it.
-            break
+            LocationManager.shared.startContinuousTracking()
         case .motion:
             startMotionTimer()
+            startActivityMonitoring()
         case .light:
             startLightTimer()
         case .sound:
@@ -92,10 +95,13 @@ class EnvironmentService: ObservableObject {
         
         switch sensor {
         case .gps:
+            LocationManager.shared.stopUpdatingLocation()
             telemetry.latitude = nil
             telemetry.longitude = nil
         case .motion:
+            activityManager.stopActivityUpdates()
             telemetry.motionState = "OFF"
+            telemetry.activityType = "OFF"
             telemetry.stepCount = 0
         case .light:
             telemetry.lightLevel = "OFF"
@@ -105,6 +111,7 @@ class EnvironmentService: ObservableObject {
             telemetry.decibels = -160.0
         case .weather:
             telemetry.weather = "OFF"
+            telemetry.temperature = nil
         }
     }
     
@@ -147,26 +154,57 @@ class EnvironmentService: ObservableObject {
         }
     }
     
+    private func startActivityMonitoring() {
+        guard CMMotionActivityManager.isActivityAvailable() else { return }
+        activityManager.startActivityUpdates(to: .main) { [weak self] activity in
+            guard let activity = activity else { return }
+            var type = "STATIONARY"
+            if activity.walking { type = "WALKING" }
+            else if activity.running { type = "RUNNING" }
+            else if activity.automotive { type = "DRIVING" }
+            else if activity.cycling { type = "CYCLING" }
+            
+            DispatchQueue.main.async {
+                self?.telemetry.activityType = type
+            }
+        }
+    }
+    
     private func startWeatherTimer() {
         timers[.weather]?.invalidate()
         timers[.weather] = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-            guard let location = LocationManager.shared.currentLocation else { return }
-            Task {
-                let weather = await WeatherServiceManager.shared.fetchCurrentWeather(for: location)
+            self?.fetchWeatherInternal()
+        }
+        fetchWeatherInternal()
+    }
+    
+    private func fetchWeatherInternal() {
+        guard let location = LocationManager.shared.currentLocation else { return }
+        Task {
+            do {
+                let weather = try await WeatherService.shared.weather(for: location)
+                let condition = mapConditionToString(condition: weather.currentWeather.condition)
+                let temp = weather.currentWeather.temperature.converted(to: .celsius).value
+                
                 DispatchQueue.main.async {
-                    self?.telemetry.weather = weather.uppercased()
+                    self.telemetry.weather = condition.uppercased()
+                    self.telemetry.temperature = temp
                 }
+            } catch {
+                print("❌ [EnvironmentService] Weather error: \(error)")
             }
         }
-        
-        // Initial trigger
-        if let location = LocationManager.shared.currentLocation {
-            Task {
-                let weather = await WeatherServiceManager.shared.fetchCurrentWeather(for: location)
-                DispatchQueue.main.async {
-                    self.telemetry.weather = weather.uppercased()
-                }
-            }
+    }
+    
+    private func mapConditionToString(condition: WeatherCondition) -> String {
+        switch condition {
+        case .clear, .mostlyClear, .hot: return "clear"
+        case .cloudy, .mostlyCloudy, .partlyCloudy: return "cloudy"
+        case .drizzle, .rain, .sunShowers, .heavyRain, .isolatedThunderstorms, .scatteredThunderstorms, .strongStorms, .thunderstorms: return "rain"
+        case .snow, .flurries, .heavySnow, .blizzard, .freezingDrizzle, .freezingRain, .sleet, .sunFlurries, .wintryMix: return "snow"
+        case .hail: return "hail"
+        case .foggy, .haze, .smoky, .breezy, .windy, .hurricane, .tropicalStorm: return "adverse"
+        default: return "unknown"
         }
     }
 }
