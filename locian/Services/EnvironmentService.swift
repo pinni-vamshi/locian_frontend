@@ -1,7 +1,6 @@
 import Foundation
 import Combine
 import CoreLocation
-import CoreMotion
 import UIKit
 import WeatherKit
 
@@ -18,17 +17,14 @@ struct EnvironmentTelemetry {
     var longitude: Double?
     var altitude: Double?
     var speed: Double?
-    var motionState: String = "OFF"
-    var activityType: String = "OFF"
-    var stepCount: Int = 0
-    var floorsAscended: Int = 0
+    var velocity: Double = 0.0
     var lightLevel: String = "OFF"
     var lightValue: Double = 0.0
     var decibels: Float = -160.0
     var weather: String = "OFF"
     var temperature: Double?
     var humidity: Double?
-    var pressure: Double?
+    var envScore: Double?
     
     var activeSensors: Set<SensorType> = []
 }
@@ -40,8 +36,6 @@ class EnvironmentService: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private var timers: [SensorType: Timer] = [:]
-    private let pedometer = CMPedometer()
-    private let activityManager = CMMotionActivityManager()
     
     private init() {
         setupLocationObserver()
@@ -52,11 +46,22 @@ class EnvironmentService: ObservableObject {
         LocationManager.shared.$latitude
             .combineLatest(LocationManager.shared.$longitude, LocationManager.shared.$altitude, LocationManager.shared.$speed)
             .sink { [weak self] lat, lng, alt, spd in
-                guard let self = self, self.telemetry.activeSensors.contains(.gps) else { return }
-                self.telemetry.latitude = lat
-                self.telemetry.longitude = lng
-                self.telemetry.altitude = alt
-                self.telemetry.speed = spd
+                guard let self = self else { return }
+                
+                // Update GPS Telemetry
+                if self.telemetry.activeSensors.contains(.gps) {
+                    self.telemetry.latitude = lat
+                    self.telemetry.longitude = lng
+                    self.telemetry.altitude = alt
+                    self.telemetry.speed = spd
+                }
+                
+                // Update Velocity (Bridged from GPS Speed)
+                // Always update velocity if motion sensor is "active" (even though it's just GPS)
+                if self.telemetry.activeSensors.contains(.motion) {
+                    let currentSpeedKMH = max(0, (spd ?? 0) * 3.6)
+                    self.telemetry.velocity = currentSpeedKMH
+                }
             }
             .store(in: &cancellables)
     }
@@ -82,11 +87,9 @@ class EnvironmentService: ObservableObject {
     
     private func startSensorInternal(_ sensor: SensorType) {
         switch sensor {
-        case .gps:
+        case .gps, .motion:
+            // Both now rely on LocationManager continuous tracking
             LocationManager.shared.startContinuousTracking()
-        case .motion:
-            startMotionTimer()
-            startActivityMonitoring()
         case .light:
             startLightTimer()
         case .sound:
@@ -102,14 +105,18 @@ class EnvironmentService: ObservableObject {
         
         switch sensor {
         case .gps:
-            LocationManager.shared.stopUpdatingLocation()
+            // Only stop coordinates if Motion is ALSO off
+            if !telemetry.activeSensors.contains(.motion) {
+                LocationManager.shared.stopUpdatingLocation()
+            }
             telemetry.latitude = nil
             telemetry.longitude = nil
         case .motion:
-            activityManager.stopActivityUpdates()
-            telemetry.motionState = "OFF"
-            telemetry.activityType = "OFF"
-            telemetry.stepCount = 0
+            // Only stop speed tracking if GPS is ALSO off
+            if !telemetry.activeSensors.contains(.gps) {
+                LocationManager.shared.stopUpdatingLocation()
+            }
+            telemetry.velocity = 0.0
         case .light:
             telemetry.lightLevel = "OFF"
             telemetry.lightValue = 0.0
@@ -119,62 +126,20 @@ class EnvironmentService: ObservableObject {
         case .weather:
             telemetry.weather = "OFF"
             telemetry.temperature = nil
-        }
-    }
-    
-    private func startMotionTimer() {
-        timers[.motion]?.invalidate()
-        timers[.motion] = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
-            let toDate = Date()
-            let fromDate = toDate.addingTimeInterval(-10)
-            
-            self?.pedometer.queryPedometerData(from: fromDate, to: toDate) { data, error in
-                guard let pedData = data else { return }
-                let steps = pedData.numberOfSteps.intValue
-                let floors = pedData.floorsAscended?.intValue ?? 0
-                
-                DispatchQueue.main.async {
-                    self?.telemetry.stepCount = steps
-                    self?.telemetry.floorsAscended = floors
-                    if steps > 15 {
-                        self?.telemetry.motionState = "RUNNING"
-                    } else if steps > 2 {
-                        self?.telemetry.motionState = "WALKING"
-                    } else {
-                        self?.telemetry.motionState = "STATIONARY"
-                    }
-                }
-            }
+            telemetry.humidity = nil
+            telemetry.envScore = nil
         }
     }
     
     private func startLightTimer() {
         timers[.light]?.invalidate()
         timers[.light] = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            // DUPLICATED FORMULA (V4.2 EXP)
             let rawBrightness = UIScreen.main.brightness
             let mappedValue = -5.0 + (Double(rawBrightness) * 19.0)
-            
             let status = mappedValue < 2 ? "DARK" : (mappedValue < 8 ? "INDOOR" : "BRIGHT")
             DispatchQueue.main.async {
                 self?.telemetry.lightValue = mappedValue
                 self?.telemetry.lightLevel = status
-            }
-        }
-    }
-    
-    private func startActivityMonitoring() {
-        guard CMMotionActivityManager.isActivityAvailable() else { return }
-        activityManager.startActivityUpdates(to: .main) { [weak self] activity in
-            guard let activity = activity else { return }
-            var type = "STATIONARY"
-            if activity.walking { type = "WALKING" }
-            else if activity.running { type = "RUNNING" }
-            else if activity.automotive { type = "DRIVING" }
-            else if activity.cycling { type = "CYCLING" }
-            
-            DispatchQueue.main.async {
-                self?.telemetry.activityType = type
             }
         }
     }
@@ -195,13 +160,16 @@ class EnvironmentService: ObservableObject {
                 let condition = mapConditionToString(condition: weather.currentWeather.condition)
                 let temp = weather.currentWeather.temperature.converted(to: .celsius).value
                 let hum = weather.currentWeather.humidity
-                let press = weather.currentWeather.pressure.converted(to: .hectopascals).value
+                
+                // MULTI-FACTOR SCORE (V5.2)
+                // Combined Temperature & Humidity influence
+                let score = temp + (hum * 10.0)
                 
                 DispatchQueue.main.async {
                     self.telemetry.weather = condition.uppercased()
                     self.telemetry.temperature = temp
                     self.telemetry.humidity = hum
-                    self.telemetry.pressure = press
+                    self.telemetry.envScore = score
                 }
             } catch {
                 print("❌ [EnvironmentService] Weather error: \(error)")

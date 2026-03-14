@@ -172,11 +172,13 @@ struct LearnTabView: View {
             HStack(spacing: 8) {
                 // GPS Button
                 environmentStatusButton(
+                // GPS Button
+                environmentStatusButton(
                     type: .gps,
                     icon: "location.fill",
                     label: "GPS (LIVE)",
                     value: state.telemetry.activeSensors.contains(.gps) ? 
-                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int((state.telemetry.speed ?? 0) * 3.6))kmh)" : "INITIALIZING...") : 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int(state.telemetry.velocity))kmh)" : "INITIALIZING...") : 
                            "OFF"
                 )
                 
@@ -184,8 +186,8 @@ struct LearnTabView: View {
                 environmentStatusButton(
                     type: .motion,
                     icon: "figure.walk",
-                    label: "MOTION",
-                    value: state.telemetry.activeSensors.contains(.motion) ? "\(state.telemetry.motionState) (\(state.telemetry.stepCount)s)" : "OFF"
+                    label: "VELOCITY",
+                    value: state.telemetry.activeSensors.contains(.motion) ? "\(Int(state.telemetry.velocity)) km/h" : "OFF"
                 )
                 
                 // LIGHT Button
@@ -208,9 +210,9 @@ struct LearnTabView: View {
                 environmentStatusButton(
                     type: .weather,
                     icon: "cloud.sun.fill",
-                    label: "WEATHER",
+                    label: "ENV SCORE",
                     value: state.telemetry.activeSensors.contains(.weather) ? 
-                           "\(state.telemetry.weather)\(state.telemetry.temperature != nil ? " (\(Int(state.telemetry.temperature!))°C)" : "")" : 
+                           "\(state.telemetry.weather) (\(Int(state.telemetry.envScore ?? 0)))" : 
                            "OFF"
                 )
             }

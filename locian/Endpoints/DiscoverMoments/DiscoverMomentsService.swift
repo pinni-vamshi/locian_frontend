@@ -79,10 +79,8 @@ class DiscoverMomentsService: ObservableObject {
             }
             
             
-            // 7. Motion Data (Mapped to V3 Standard)
-            MotionService.shared.fetchCurrentMotionState { motionString in
-                let velocity = motionString.lowercased().contains("walk") ? "walking" : 
-                              (motionString.lowercased().contains("auto") ? "automotive" : "stationary")
+            // 7. Motion Data (Numeric Velocity via GPS)
+            MotionService.shared.fetchCurrentMotionState { velocity in
                 
                 // 8. Weather Data (Async/Await bridge)
                 Task {

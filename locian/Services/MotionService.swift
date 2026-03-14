@@ -1,44 +1,24 @@
 import Foundation
-import CoreMotion
+import CoreLocation
 
 /// Service to handle retrieving the user's current motion state.
-/// This utilizes the device's pedometer to determine whether the user is stationary or moving.
+/// This utilizes GPS speed from LocationManager to avoid requiring Motion & Fitness permissions.
 class MotionService {
     static let shared = MotionService()
     
-    // Pedometer gives much better instantaneous data than ActivityManager
-    private let pedometer = CMPedometer()
-    
     private init() {}
     
-    /// Determines the current motion activity of the user as a string matching the backend API requirements.
-    /// Possible return values: "stationary", "walking", "running", or "unknown".
+    /// Determines the current velocity of the user as a numeric string for the backend.
+    /// Returns a string like "0 km/h", "5 km/h", etc.
     func fetchCurrentMotionState(completion: @escaping (String) -> Void) {
+        // Use the instantaneous speed from LocationManager
+        // Speed is in m/s, convert to km/h
+        let speedMS = LocationManager.shared.currentLocation?.speed ?? 0.0
+        let speedKMH = max(0, speedMS * 3.6)
         
-        guard CMPedometer.isPedometerEventTrackingAvailable() else {
-            completion("unknown")
-            return
-        }
+        let velocityString = "\(Int(speedKMH)) km/h"
         
-        let toDate = Date()
-        let fromDate = toDate.addingTimeInterval(-10) // Look at the last 10 seconds
-        
-        pedometer.queryPedometerData(from: fromDate, to: toDate) { data, error in
-            guard error == nil, let pedometerData = data else {
-                completion("unknown")
-                return
-            }
-            
-            // If they have taken more than 2 steps in the last 10 seconds, they are moving.
-            let steps = pedometerData.numberOfSteps.intValue
-            
-            if steps > 15 {
-                completion("running")
-            } else if steps > 2 {
-                completion("walking")
-            } else {
-                completion("stationary")
-            }
-        }
+        print("🚲 [MotionService] GPS Velocity: \(velocityString)")
+        completion(velocityString)
     }
 }
