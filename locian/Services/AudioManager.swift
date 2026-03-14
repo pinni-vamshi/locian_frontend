@@ -112,12 +112,7 @@ class AudioManager: NSObject, ObservableObject {
     /// - dynamic("language") → Voices/languages/[name].wav
     /// - dynamic("meaning"/"target") → AudioPreloadCache (session RAM)
     func speak(recipe: [AudioSegment], dynamicValues: [String: String], contextPath: String, completion: (() -> Void)? = nil) {
-        guard AppStateManager.shared.isKokoroVoiceEnabled else {
-            print("🔇 [AudioManager] Voice disabled globally. Skipping playback.")
-            completion?()
-            return
-        }
-        
+
         print("🔊 [AudioManager] Recipe[\(contextPath)]: \(recipe.count) segments.")
         self.stop()
         
@@ -139,13 +134,8 @@ class AudioManager: NSObject, ObservableObject {
                 continue
             }
             
-            // Not preloaded — fire Kokoro now
-            guard AppStateManager.shared.isKokoroVoiceEnabled && KokoroTTSService.shared.isReady else { continue }
-            print("🚀 [AudioManager] Generating '\(key)': '\(text)' (\(language))")
-            KokoroTTSService.shared.speak(segments: [SpeechSegment(text: text, language: language)]) { [weak session] result in
-                guard let session = session, case .success(let data) = result else { return }
-                session.provide(data, for: key)
-            }
+            // Not preloaded — use fallback or ignore depending on logic
+            print("🚀 [AudioManager] Skipping Kokoro generation for '\(text)'")
         }
         
         // 2. Pre-cache language file if needed (async, non-blocking)
@@ -218,9 +208,6 @@ class AudioManager: NSObject, ObservableObject {
                         playPCMBuffer(pcmData) { playNext() }
                     } else {
                         print("⏳ [AudioManager] Waiting for '\(key)'...")
-                        if !AppStateManager.shared.isKokoroVoiceEnabled || !KokoroTTSService.shared.isReady {
-                            self.speak(segments: [SpeechSegment(text: text, language: language)]) { playNext() }
-                        }
                     }
                 }
             }
@@ -238,16 +225,8 @@ class AudioManager: NSObject, ObservableObject {
         let fileURL = documents.appendingPathComponent("Voices/languages/\(sanitized).wav")
         
         guard !FileManager.default.fileExists(atPath: fileURL.path) else { return }
-        guard AppStateManager.shared.isKokoroVoiceEnabled && KokoroTTSService.shared.isReady else { return }
         
-        print("🌍 [AudioManager] Pre-caching language name: '\(name)'")
-        KokoroTTSService.shared.speak(segments: [SpeechSegment(text: name, language: "en-US")]) { [weak self] result in
-            guard let self = self, case .success(let pcmData) = result else { return }
-            let wavData = self.addWavHeader(to: pcmData, sampleRate: 24000)
-            try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try? wavData.write(to: fileURL)
-            print("💾 [AudioManager] Language cached: '\(name)' → \(sanitized).wav")
-        }
+        print("🌍 [AudioManager] Cannot generate language name offline without Kokoro.")
     }
     
     /// Plays raw PCM data (with WAV header added) via AVAudioPlayer.
@@ -275,31 +254,8 @@ class AudioManager: NSObject, ObservableObject {
     /// Saves to disk on success so next time it's an instant cache hit.
     private func generateAndPlayInline(text: String, saveAt fileURL: URL, completion: @escaping () -> Void) {
         let segment = SpeechSegment(text: text, language: "en-US")
-        
-        if AppStateManager.shared.isKokoroVoiceEnabled && KokoroTTSService.shared.isReady {
-            KokoroTTSService.shared.speak(segments: [segment]) { [weak self] result in
-                guard let self = self else { return }
-                switch result {
-                case .success(let pcmData):
-                    // Save to disk for future cache hits
-                    let wavData = self.addWavHeader(to: pcmData, sampleRate: 24000)
-                    try? FileManager.default.createDirectory(
-                        at: fileURL.deletingLastPathComponent(),
-                        withIntermediateDirectories: true
-                    )
-                    try? wavData.write(to: fileURL)
-                    print("💾 [AudioManager] Cached static: '\(text)'")
-                    self.playPCMBuffer(pcmData) { completion() }
-                case .failure:
-                    // Kokoro failed
-                    print("🔇 [AudioManager] Inline TTS Failed. Skipping playback.")
-                    completion()
-                }
-            }
-        } else {
-            print("🔇 [AudioManager] Voice disabled globally. Skipping inline fallback.")
-            completion()
-        }
+        print("🔇 [AudioManager] Inline fallback. Calling completion directly.")
+        completion()
     }
     
     /// Speaks text using AVSpeechSynthesizer inline (no stop() called).
@@ -357,26 +313,7 @@ class AudioManager: NSObject, ObservableObject {
                 print("🔊 [AudioManager] Unified Session Config Failed: \(error)")
             }
             
-            // 4. Kokoro TTS (Neural Local) - Priority 1 if enabled & ready
-            print("🎙️ [AudioManager] Checking Kokoro: enabled=\(AppStateManager.shared.isKokoroVoiceEnabled), ready=\(KokoroTTSService.shared.isReady)")
-            
-            if AppStateManager.shared.isKokoroVoiceEnabled && KokoroTTSService.shared.isReady {
-                print("🎙️ [AudioManager] Routing to Kokoro (Neural Local)")
-                KokoroTTSService.shared.speak(segments: segments) { [weak self] result in
-                    guard let self = self else { return }
-                    switch result {
-                    case .success(let pcmData):
-                        self.playPCMData(pcmData, cacheIdentifier: finalCacheID)
-                    case .failure(let error):
-                        print("⚠️ [AudioManager] Kokoro Failed: \(error.localizedDescription). Skipping branch.")
-                        self.audioQueue.async {
-                            self.speakFallbacks(segments: segments)
-                        }
-                    }
-                }
-            } else {
-                self.speakFallbacks(segments: segments)
-            }
+            self.speakFallbacks(segments: segments)
         }
     }
     
@@ -392,12 +329,6 @@ class AudioManager: NSObject, ObservableObject {
     }
     
     private func speakFallbacks(segments: [SpeechSegment]) {
-        guard AppStateManager.shared.isKokoroVoiceEnabled else {
-            print("🔇 [AudioManager] Voice disabled globally. Refusing to fallback to system voice.")
-            self.onSpeechCompletion?()
-            return
-        }
-        
         // 5. Local High-Sync Reveal (Fallback to System)
         print("🔊 [AudioManager] Fallback: Using AVSpeechSynthesizer for \(segments.count) segments.")
         self.speakLocalSegments(segments)

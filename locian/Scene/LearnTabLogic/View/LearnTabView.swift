@@ -604,8 +604,7 @@ struct LearnTabView: View {
             .frame(height: 38) // Fixed row height for consistency
         }
         .padding(.horizontal, 8)
-        .frame(maxWidth: .infinity)
-        .background(Color.black)
+        .background(Color.black)
         .border(Color.white.opacity(0.1), width: 1)
     }
 

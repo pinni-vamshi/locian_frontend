@@ -1,24 +1,6 @@
 {
-  "originHash" : "b0e1dee93e00ad68b1881d818c94491932dabe97c822864f8ca8cb9c49c64881",
+  "originHash" : "0c8f7928bb5915ea501e320d123d303a229aee544eb8debac4fdf864b5c28499",
   "pins" : [
-    {
-      "identity" : "espeakngswift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mlalma/eSpeakNGSwift",
-      "state" : {
-        "revision" : "abcdb0da7cd31a1f09c7a6830ba4447289685833",
-        "version" : "1.0.1"
-      }
-    },
-    {
-      "identity" : "onnxruntime-swift-package-manager",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/microsoft/onnxruntime-swift-package-manager",
-      "state" : {
-        "revision" : "b7fb7f7dea8a2469e6335d95a61b8f36d0dc83b2",
-        "version" : "1.24.2"
-      }
-    },
     {
       "identity" : "swiftwhisper",
       "kind" : "remoteSourceControl",
