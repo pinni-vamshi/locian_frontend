@@ -44,7 +44,9 @@ class SemanticSnappingService {
     // MARK: - Keyword Anchors (High Signal Boosters)
     private let keywordAnchors: [String: [String]] = [
         "food_market": ["market", "grocery", "mart", "bodega", "convenience"],
-        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail"],
+        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail", "decor", "interior", "depot", "tailor"],
+        "office": ["associates", "consultancy", "systems", "tech", "office", "agency"],
+        "home": ["nilayam", "residenc", "apart", "villa", "home", "house"],
         "gym": ["gym", "fitness", "workout", "club", "studio", "yoga"],
         "railway_station": ["station", "platform", "railway", "train", "metro"],
         "petrol_bunk": ["gas", "petrol", "fuel", "bunk"],
@@ -120,7 +122,7 @@ class SemanticSnappingService {
             return topMatch.target
         } else {
             let fallback = cleanedRaw.isEmpty ? "unknown" : cleanedRaw
-            print("⚠️ [SemanticSnapping] LOW CONFIDENCE (\(String(format: "%.2f", topMatch.score))). Fallback: '\(fallback)'")
+            print("⚠️ [SemanticSnapping] LOW CONFIDENCE (\(String(format: "%.2f", topMatch.score))). Tentative: '\(topMatch.target)'. Fallback: '\(fallback)'")
             return fallback
         }
     }
