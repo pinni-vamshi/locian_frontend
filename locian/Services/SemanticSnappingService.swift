@@ -26,7 +26,7 @@ class SemanticSnappingService {
         "home": "home residence apartment house dwelling residential building",
         "hospital": "hospital medical center clinic emergency room healthcare doctor",
         "hotel": "hotel resort lodging inn accommodation stay suite",
-        "local_shop": "local shop retail store boutique showroom outlet merchant dealer repair center",
+        "local_shop": "local shop retail store boutique showroom outlet merchant dealer repair center electrician plumber hardware technician electronics automotive mechanic",
         "museum": "museum art gallery exhibition heritage cultural center",
         "office": "office workplace business headquarter corporate agency",
         "park": "park garden green space playground meadow nature reserve national park",
@@ -43,16 +43,29 @@ class SemanticSnappingService {
     
     // MARK: - Keyword Anchors (High Signal Boosters)
     private let keywordAnchors: [String: [String]] = [
-        "food_market": ["market", "grocery", "mart", "bodega", "convenience"],
-        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail", "decor", "interior", "depot", "tailor"],
-        "office": ["associates", "consultancy", "systems", "tech", "office", "agency"],
-        "home": ["nilayam", "residenc", "apart", "villa", "home", "house"],
-        "gym": ["gym", "fitness", "workout", "club", "studio", "yoga"],
-        "railway_station": ["station", "platform", "railway", "train", "metro"],
-        "petrol_bunk": ["gas", "petrol", "fuel", "bunk"],
+        "airport": ["airport", "terminal", "gate", "flight"],
+        "bank": ["bank", "atm", "financial", "vault", "finance"],
+        "barbershop": ["barber", "salon", "hair", "grooming", "stylist", "beauty parlor"],
+        "bus_stop": ["bus stop", "transit", "shelter"],
         "cafe": ["coffee", "cafe", "espresso", "bakery"],
-        "restaurant": ["restaurant", "dining", "eatery", "food court", "grill", "pizzeria"],
-        "airport": ["airport", "terminal", "gate", "flight"]
+        "food_market": ["market", "grocery", "mart", "bodega", "convenience"],
+        "gym": ["gym", "fitness", "workout", "club", "studio", "yoga"],
+        "home": ["nilayam", "residenc", "apart", "villa", "home", "house"],
+        "hospital": ["hospital", "medical", "clinic", "emergency", "health center"],
+        "hotel": ["hotel", "resort", "inn", "stay", "suite", "lodge"],
+        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail", "decor", "interior", "depot", "tailor", "electrician", "plumber", "repair", "service", "hardware", "furniture", "electronics", "technician", "automotive", "mechanic", "dry clean", "laundry"],
+        "museum": ["museum", "gallery", "exhibition", "heritage", "cultural"],
+        "office": ["associates", "consult", "systems", "tech", "office", "agency", "solution", "technologies", "enterprise", "group"],
+        "park": ["park", "garden", "playground", "meadow", "nature reserve"],
+        "petrol_bunk": ["gas", "petrol", "fuel", "bunk", "filling station", "ev charger"],
+        "pharmacy": ["pharmacy", "drugstore", "medical supplies", "chemist", "apothecary"],
+        "railway_station": ["station", "platform", "railway", "train", "metro", "tube", "subway"],
+        "restaurant": ["restaurant", "dining", "eatery", "food court", "grill", "pizzeria", "bistro", "buffet"],
+        "school": ["school", "elementary", "middle", "high school", "academy"],
+        "shopping_mall": ["mall", "plaza", "center", "complex", "retail hub"],
+        "supermarket": ["supermarket", "hypermarket", "big box store"],
+        "travelling": ["landmark", "sightseeing", "tourist", "attraction", "viewpoint", "heritage site"],
+        "university": ["university", "college", "campus", "institute", "higher education"]
     ]
 
     /// V4.2: Advanced Multi-Vector Semantic Fusion
