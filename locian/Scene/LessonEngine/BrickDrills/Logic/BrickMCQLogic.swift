@@ -138,7 +138,7 @@ class BrickMCQLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
@@ -151,7 +151,7 @@ class BrickMCQLogic: ObservableObject {
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
+        AudioManager.shared.speak(text: text, language: language)
     }
     
     func continueToNext() {

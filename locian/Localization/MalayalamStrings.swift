@@ -187,7 +187,6 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "ഉപയോക്തൃനാമം",
             phoneNumber: "ഫോൺ നമ്പർ",
-            guestLogin: "അതിഥി ലോഗിൻ",
             selectProfessionInstruction: "തുടങ്ങാൻ നിങ്ങളുടെ ജോലി തിരഞ്ഞെടുക്കുക",
             showMore: "കൂടുതल കാണുക",
             showLess: "കുരച്ചു കാണുക",
@@ -503,7 +502,6 @@ struct MalayalamStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

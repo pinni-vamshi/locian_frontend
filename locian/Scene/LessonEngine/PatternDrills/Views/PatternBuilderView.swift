@@ -113,11 +113,8 @@ struct PatternBuilderView: View {
             }
             }
             
-            // 3. Footer (Suppressed when hosted by an orchestrator, UNLESS it's Ghost Mode needing a check button)
-            let isStandalone = logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil
-            let isGhostPreCheck = logic.ghostLogic != nil && !logic.checked
-            
-            if isStandalone || isGhostPreCheck {
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            if logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil {
                 footer
             }
         }

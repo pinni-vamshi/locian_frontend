@@ -70,11 +70,8 @@ struct PatternTypingView: View {
                 }
             }
             
-            // 3. Footer (Suppressed when hosted by an orchestrator, UNLESS it's Ghost Mode needing a check button)
-            let isStandalone = logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil
-            let isGhostPreAnswer = logic.ghostLogic != nil && logic.isCorrect == nil
-            
-            if isStandalone || isGhostPreAnswer {
+            // 3. Footer (Suppressed when hosted by an orchestrator)
+            if logic.patternIntroLogic == nil && logic.practiceLogic == nil && logic.ghostLogic == nil {
                 footer
             }
         }

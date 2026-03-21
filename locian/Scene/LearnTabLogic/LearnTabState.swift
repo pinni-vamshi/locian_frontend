@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import AVFoundation
 
 // MARK: - Enums
 enum SentenceGenerationState {
@@ -14,6 +15,13 @@ enum SentenceGenerationState {
     case callingAI      
     case generating     
     case preparing      
+}
+
+// ✅ NEW: Scored Brick for UI display
+struct ScoredBrick: Identifiable {
+    var id: String { brick.word }
+    let brick: RecommendationBrickItem
+    let score: Double
 }
 
 // MARK: - Main State
@@ -65,21 +73,87 @@ class LearnTabState: ObservableObject {
         return DiscoverMomentsService.shared.isLoading
     }
     
-    var activeBricks: [RecommendationBrickItem] {
-        guard let pattern = activePattern, let bricks = pattern.bricks else { return [] }
-        var all: [RecommendationBrickItem] = []
-        all.append(contentsOf: bricks.variables ?? [])
-        all.append(contentsOf: bricks.constants ?? [])
-        all.append(contentsOf: bricks.structural ?? [])
+    var activeBricks: [ScoredBrick] {
+        guard let pattern = activePattern, let target = pattern.target else { return [] }
         
-        let targetSentence = pattern.target?.lowercased() ?? ""
+        let langCode = appState.userLanguagePairs.first(where: { $0.is_default })?.target_language ?? "es"
         
-        // Sort by first occurrence in the target sentence
-        return all.sorted { a, b in
-            let indexA = targetSentence.range(of: a.word.lowercased())?.lowerBound ?? targetSentence.endIndex
-            let indexB = targetSentence.range(of: b.word.lowercased())?.lowerBound ?? targetSentence.endIndex
-            return indexA < indexB
+        // 1. Get the aggregate pool of all bricks the AI considered in this session
+        let pool = aggregatedBricksPool
+        
+        // 2. Use the "Construction Laser" (ContentAnalyzer) to scan the sentence against the pool
+        // This finds words/phrases locally and assigns neural similarity scores.
+        let matches = ContentAnalyzer.findRelevantBricksWithSimilarity(
+            in: target,
+            meaning: pattern.meaning ?? "",
+            bricks: pool,
+            targetLanguage: langCode
+        )
+        
+        // 3. Map matches to ScoredBrick for UI, sorting by similarity
+        return matches.compactMap { match -> ScoredBrick? in
+            // Find the original RecommendationBrickItem in the aggregate pool
+            if let brick = findBrickInPool(id: match.id) {
+                return ScoredBrick(brick: brick, score: match.score)
+            }
+            return nil
         }
+        .sorted(by: { $0.score > $1.score })
+    }
+    
+    // MARK: - Laser Helpers
+    
+    /// Aggregates every unique brick from across all recommendations/patterns in the response
+    /// to create a temporary "Local Dictionary" for the ContentAnalyzer to scan.
+    private var aggregatedBricksPool: BricksData? {
+        var allConstants: [BrickItem] = []
+        var allVariables: [BrickItem] = []
+        var allStructural: [BrickItem] = []
+        var seenWords = Set<String>()
+        
+        for rec in recommendations {
+            for pattern in rec.patterns ?? [] {
+                guard let rb = pattern.bricks else { continue }
+                
+                func process(_ list: [RecommendationBrickItem]?, into target: inout [BrickItem], type: String) {
+                    for item in list ?? [] {
+                        let lowerWord = item.word.lowercased()
+                        if !seenWords.contains(lowerWord) {
+                            seenWords.insert(lowerWord)
+                            target.append(BrickItem(
+                                id: item.word, // In this context, word serves as ID
+                                word: item.word,
+                                meaning: item.meaning,
+                                phonetic: item.phonetic,
+                                type: type,
+                                vector: nil,
+                                mastery: nil
+                            ))
+                        }
+                    }
+                }
+                
+                process(rb.constants, into: &allConstants, type: "constant")
+                process(rb.variables, into: &allVariables, type: "variable")
+                process(rb.structural, into: &allStructural, type: "structural")
+            }
+        }
+        
+        if allConstants.isEmpty && allVariables.isEmpty && allStructural.isEmpty { return nil }
+        return BricksData(constants: allConstants, variables: allVariables, structural: allStructural)
+    }
+    
+    private func findBrickInPool(id: String) -> RecommendationBrickItem? {
+        for rec in recommendations {
+            for pattern in rec.patterns ?? [] {
+                guard let rb = pattern.bricks else { continue }
+                let all = (rb.constants ?? []) + (rb.variables ?? []) + (rb.structural ?? [])
+                if let found = all.first(where: { $0.word == id }) {
+                    return found
+                }
+            }
+        }
+        return nil
     }
     
     @Published var isRecordingVoice: Bool = false
@@ -127,7 +201,7 @@ class LearnTabState: ObservableObject {
         if isRecordingVoice {
             SpeechRecognizer.shared.stopRecording()
         } else {
-            PermissionsService.shared.ensureMicrophoneAccess { granted in
+            AmbientSoundService.shared.ensureMicrophoneAccess { granted in
                 print("🎤 [LearnTabState] Mic access granted: \(granted)")
                 guard granted else { return }
                 do {
@@ -137,6 +211,55 @@ class LearnTabState: ObservableObject {
                     print("❌ [LearnTabState] Failed to start voice input: \(error)")
                 }
             }
+        }
+    }
+
+    // MARK: - Camera & Alerts
+    private func showSettingsAlert(for feature: String) {
+        DispatchQueue.main.async {
+            guard let topVC = self.getTopViewController() else { return }
+            
+            let alert = UIAlertController(title: "\(feature) Access Required", message: "Please enable \(feature.lowercased()) access in Settings.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+            
+            topVC.present(alert, animated: true)
+        }
+    }
+    
+    private func getTopViewController() -> UIViewController? {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
+        
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
+    func requestCameraAccess() {
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        switch status {
+        case .authorized:
+            DispatchQueue.main.async { self.showingCamera = true }
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted { self.showingCamera = true }
+                }
+            }
+        case .denied, .restricted:
+            self.showSettingsAlert(for: "Camera")
+        @unknown default:
+            break
         }
     }
 

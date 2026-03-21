@@ -9,6 +9,8 @@ import Foundation
 import CoreLocation
 import Combine
 import MapKit
+import UIKit
+import SwiftUI
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = LocationManager()
@@ -46,9 +48,60 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         authorizationStatus = locationManager.authorizationStatus
     }
     
+    // MARK: - Autonomous Alert Bridge (UIKit)
+    private func showSettingsAlert() {
+        DispatchQueue.main.async {
+            guard let topVC = self.getTopViewController() else { return }
+            
+            let alert = UIAlertController(title: "Location Access Required", message: "Please enable location access in Settings to find nearby places.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+            
+            topVC.present(alert, animated: true)
+        }
+    }
+    
+    private func getTopViewController() -> UIViewController? {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
+        
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
     // MARK: - Permissions
     func requestPermission() {
         locationManager.requestWhenInUseAuthorization()
+    }
+
+    func ensureLocationAccess(completion: @escaping (Bool) -> Void) {
+        let status = self.authorizationStatus
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            completion(true)
+        case .notDetermined:
+            self.locationManager.requestWhenInUseAuthorization()
+            // Polling for a brief moment to catch the sync update if user clicks "Allow" immediately
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                let newStatus = self.authorizationStatus
+                completion(newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways)
+            }
+        case .denied, .restricted:
+            self.showSettingsAlert()
+            completion(false)
+        @unknown default:
+            completion(false)
+        }
     }
     
     // MARK: - Get Current Location
@@ -214,15 +267,22 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         
         // ALWAYS trigger a fresh fetch to ensure zero staleness/persistence
         print("📍 [NEARBY] Requesting dynamic GPS update...")
-        getCurrentLocation { [weak self] result in
-            switch result {
-            case .success(let loc):
-                print("📍 [NEARBY] Success getting fresh location: \(loc.coordinate)")
-                self?.performLocalSearch(location: loc, completion: completion)
-            case .failure(let error):
-                print("❌ [NEARBY] Failed to get fresh location: \(error.localizedDescription)")
-                self?.locationStatus = .error
+        self.ensureLocationAccess { [weak self] granted in
+            guard granted else {
+                print("⚠️ [NEARBY] Location permission denied. Cannot fetch nearby places.")
                 completion([])
+                return
+            }
+            self?.getCurrentLocation { result in
+                switch result {
+                case .success(let loc):
+                    print("📍 [NEARBY] Success getting fresh location: \(loc.coordinate)")
+                    self?.performLocalSearch(location: loc, completion: completion)
+                case .failure(let error):
+                    print("❌ [NEARBY] Failed to get fresh location: \(error.localizedDescription)")
+                    self?.locationStatus = .error
+                    completion([])
+                }
             }
         }
     }

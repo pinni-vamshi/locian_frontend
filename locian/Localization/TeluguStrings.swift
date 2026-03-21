@@ -187,7 +187,6 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "వినియోగదారు పేరు",
             phoneNumber: "ఫోన్ నంబర్",
-            guestLogin: "అతిథి లాగిన్",
             selectProfessionInstruction: "ప్రారంభించడానికి మీ వృత్తిని ఎంచుకోండి",
             showMore: "మరిన్ని చూపించు",
             showLess: "తక్కువ చూపించు",
@@ -503,7 +502,6 @@ struct TeluguStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

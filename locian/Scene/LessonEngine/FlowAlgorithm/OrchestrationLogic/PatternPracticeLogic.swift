@@ -10,6 +10,11 @@ class PatternPracticeLogic: ObservableObject {
     @Published var isAnswered: Bool = false
     @Published var isCorrect: Bool = false
     @Published var isAudioPlaying: Bool = false
+    @Published var hasInput: Bool = false
+    
+    // ✅ Action Bridging (Parent View -> Child Logic)
+    var requestCheckAnswer: (() -> Void)?
+    var requestClearInput: (() -> Void)?
     
     // Data Sources
     var mistakes: [DrillState]
@@ -53,6 +58,9 @@ class PatternPracticeLogic: ObservableObject {
         // Reset Footer State
         self.isAnswered = false
         self.isCorrect = false
+        self.hasInput = false
+        self.requestCheckAnswer = nil
+        self.requestClearInput = nil
         
         // 1. Check if we are in the Mistakes Phase
         if currentIndex < mistakes.count {
@@ -180,11 +188,9 @@ struct PatternPracticeView: View {
             }
             
             // 2. FOOTER LAYER (Overlay)
-            if logic.isAnswered {
-                footer
-                    .transition(.move(edge: .bottom))
-                    .zIndex(10)
-            }
+            footer
+                .transition(.move(edge: .bottom))
+                .zIndex(10)
         }
         .background(Color.black.ignoresSafeArea())
     }
@@ -194,20 +200,33 @@ struct PatternPracticeView: View {
         VStack(spacing: 0) {
             Divider().background(Color.white.opacity(0.1))
             
-            let color: Color = logic.isCorrect ? CyberColors.neonPink : .red
-            let title = logic.isCorrect ? "CORRECT!" : "INCORRECT"
-            
-            CyberProceedButton(
-                action: { logic.advance() },
-                label: "CONTINUE",
-                title: title,
-                color: color,
-                systemImage: "arrow.right"
-            )
-            .padding(.horizontal)
-            .padding(.top, 16)
-            .padding(.bottom, 8)
-            .background(Color.black)
+            if logic.isAnswered {
+                let color: Color = logic.isCorrect ? CyberColors.neonPink : .red
+                let title = logic.isCorrect ? "CORRECT!" : "INCORRECT"
+                
+                CyberProceedButton(
+                    action: { logic.advance() },
+                    label: "CONTINUE",
+                    title: title,
+                    color: color,
+                    systemImage: "arrow.right",
+                    isEnabled: !logic.isAudioPlaying
+                )
+            } else {
+                // ✅ Active Answering State (Synced with Child)
+                CyberProceedButton(
+                    action: { logic.requestCheckAnswer?() },
+                    label: "READY?",
+                    title: "CHECK",
+                    color: CyberColors.neonCyan,
+                    systemImage: "checkmark",
+                    isEnabled: logic.hasInput && !logic.isAudioPlaying
+                )
+            }
         }
+        .padding(.horizontal)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
+        .background(Color.black)
     }
 }

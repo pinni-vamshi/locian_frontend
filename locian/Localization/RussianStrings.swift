@@ -187,7 +187,6 @@ struct RussianStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "Имя Пользователя",
             phoneNumber: "Номер Телефона",
-            guestLogin: "Гостевой Вход",
             selectProfessionInstruction: "Выберите профессию для начала",
             showMore: "Показать больше",
             showLess: "Показать меньше",
@@ -503,7 +502,6 @@ struct RussianStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

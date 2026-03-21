@@ -9,6 +9,8 @@ import Foundation
 import UserNotifications
 import CoreLocation
 import Combine
+import UIKit
+import SwiftUI
 
 class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
@@ -125,7 +127,61 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
         // natural triggers (App Open/Location Change) will handle planning.
     }
     
+    // MARK: - Autonomous Alert Bridge (UIKit)
+    private func showSettingsAlert() {
+        DispatchQueue.main.async {
+            guard let topVC = self.getTopViewController() else { return }
+            
+            let alert = UIAlertController(title: "Notifications Required", message: "Please enable notifications in Settings to receive study reminders.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+            
+            topVC.present(alert, animated: true)
+        }
+    }
+    
+    private func getTopViewController() -> UIViewController? {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
+        
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
     // MARK: - Permissions
+    
+    func ensureNotificationAccess(completion: @escaping (Bool) -> Void) {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            DispatchQueue.main.async {
+                switch settings.authorizationStatus {
+                case .authorized, .provisional, .ephemeral:
+                    completion(true)
+                case .notDetermined:
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
+                        DispatchQueue.main.async { 
+                            self.isNotificationsEnabled = granted
+                            completion(granted) 
+                        }
+                    }
+                case .denied:
+                    self.showSettingsAlert()
+                    completion(false)
+                @unknown default:
+                    completion(false)
+                }
+            }
+        }
+    }
     
     func checkPermission(completion: @escaping (Bool) -> Void) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in

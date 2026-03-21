@@ -75,6 +75,9 @@ struct BrickVoiceView: View {
             }
         }
         .background(Color.black.ignoresSafeArea())
+        .onAppear {
+            logic.bindToParent()
+        }
     }
     
     private var footer: some View {

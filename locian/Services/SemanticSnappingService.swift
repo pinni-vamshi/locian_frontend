@@ -1,5 +1,6 @@
 import Foundation
 import MapKit
+import NaturalLanguage
 
 class SemanticSnappingService {
     static let shared = SemanticSnappingService()
@@ -8,135 +9,153 @@ class SemanticSnappingService {
     
     // MARK: - Supported Backend Categories
     private let targetCategories = [
-        "airport", "bank", "barbershop", "bus_stop", "cafe", "food_market", "gym",
-        "home", "hospital", "hotel", "local_shop", "museum", "office", "park",
-        "petrol_bunk", "pharmacy", "railway_station", "restaurant", "school",
-        "shopping_mall", "supermarket", "travelling", "university"
+        "airport", "bakery", "bank", "barbershop", "beach", "bus_stop", "cafe", "clinic",
+        "coaching_center", "fast_food_outlet", "food_court", "general_store", "gym",
+        "home", "hospital", "hotel", "library", "metro_station",
+        "movie_theatre", "museum", "office", "park", "petrol_bunk", "pharmacy",
+        "police", "railway_station", "religious_site", "restaurant", "school", "shopping_mall",
+        "supermarket", "university", "yoga_studio"
     ]
     
-    // MARK: - Semantic Clusters (Expanding the vector target)
-    private let semanticClusters = [
-        "airport": "international airport terminal departures arrivals flight gate air travel",
-        "bank": "bank financial institution atm vault finance branch banking",
-        "barbershop": "barbershop hair salon haircut stylist grooming barber beauty parlor",
-        "bus_stop": "bus stop transit station shelter commuting public transport",
-        "cafe": "cafe coffee shop espresso bakery breakfast bistro starbucks",
-        "food_market": "food market grocery store convenience mart bodega market",
-        "gym": "gym fitness center health club workout exercise weightlifting crossfit yoga studio",
-        "home": "home residence apartment house dwelling residential building",
-        "hospital": "hospital medical center clinic emergency room healthcare doctor",
-        "hotel": "hotel resort lodging inn accommodation stay suite",
-        "local_shop": "local shop retail store boutique showroom outlet merchant dealer repair center electrician plumber hardware technician electronics automotive mechanic",
-        "museum": "museum art gallery exhibition heritage cultural center",
-        "office": "office workplace business headquarter corporate agency",
-        "park": "park garden green space playground meadow nature reserve national park",
-        "petrol_bunk": "petrol bunk gas station fuel station ev charger filling station",
-        "pharmacy": "pharmacy drugstore medical supplies chemist apothecary",
-        "railway_station": "railway station train platform metro tube subway rail transit",
-        "restaurant": "restaurant dining eatery bistro buffet grill steakhouse pizzeria",
-        "school": "school elementary middle high school academy education",
-        "shopping_mall": "shopping mall plaza center complex retail hub department store",
-        "supermarket": "supermarket hypermarket big box store grocer wholesale",
-        "travelling": "travelling travel tourism sightseeing landmark attraction viewpoint",
-        "university": "university college campus academy institute higher education"
-    ]
-    
-    // MARK: - Keyword Anchors (High Signal Boosters)
-    private let keywordAnchors: [String: [String]] = [
+    // MARK: - Category Definitions (Keyword Anchors)
+    private let categoryDefinitions: [String: [String]] = [
         "airport": ["airport", "terminal", "gate", "flight"],
+        "bakery": ["bakery", "bake", "bread", "pastry", "cake", "puff"],
         "bank": ["bank", "atm", "financial", "vault", "finance"],
-        "barbershop": ["barber", "salon", "hair", "grooming", "stylist", "beauty parlor"],
-        "bus_stop": ["bus stop", "transit", "shelter"],
-        "cafe": ["coffee", "cafe", "espresso", "bakery"],
-        "food_market": ["market", "grocery", "mart", "bodega", "convenience"],
-        "gym": ["gym", "fitness", "workout", "club", "studio", "yoga"],
-        "home": ["nilayam", "residenc", "apart", "villa", "home", "house"],
-        "hospital": ["hospital", "medical", "clinic", "emergency", "health center"],
+        "barbershop": ["barber", "salon", "hair", "grooming", "stylist", "parlour", "beard"],
+        "beach": ["beach", "coast", "sea", "shore", "ocean"],
+        "bus_stop": ["bus stop", "bus stand", "transit", "shelter", "depot", "terminal", "rtc", "stage", "bus point"],
+        "cafe": ["coffee", "cafe", "espresso", "tea cafe", "tea stall", "chai", "sip", "brew"],
+        "clinic": ["clinic", "medical center", "dental", "eye care", "physio"],
+        "coaching_center": ["coaching", "tuition", "institute", "classes", "academy", "training", "study"],
+        "fast_food_outlet": ["fast food", "burger", "pizza", "snack", "takeaway", "shawarma", "curry point"],
+        "food_court": ["food court", "dining plaza", "food hall", "dhaba", "tiffin"],
+        "general_store": ["kirana", "provisions", "general store", "grocery", "mart", "shop", "store", "hardware", "electrician", "mechanic", "technician", "decor", "interior", "timber", "depot", "aluminium", "materials", "furniture", "plywood", "electrical", "paint", "complex", "malls", "ladies tailors", "fancy", "mobile point", "service center"],
+        "gym": ["gym", "fitness", "workout", "club", "studio", "yoga", "crossfit"],
+        "home": ["nilayam", "residenc", "apart", "villa", "home", "house", "bhavan", "residency", "enclave", "gardens", "complex", "sovereign", "vilas"],
+        "hospital": ["hospital", "medical", "emergency", "health center"],
         "hotel": ["hotel", "resort", "inn", "stay", "suite", "lodge"],
-        "local_shop": ["store", "shop", "boutique", "showroom", "outlet", "dealer", "retail", "decor", "interior", "depot", "tailor", "electrician", "plumber", "repair", "service", "hardware", "furniture", "electronics", "technician", "automotive", "mechanic", "dry clean", "laundry"],
-        "museum": ["museum", "gallery", "exhibition", "heritage", "cultural"],
-        "office": ["associates", "consult", "systems", "tech", "office", "agency", "solution", "technologies", "enterprise", "group"],
-        "park": ["park", "garden", "playground", "meadow", "nature reserve"],
+        "library": ["library", "books", "reading room"],
+        "metro_station": ["metro", "underground"],
+        "movie_theatre": ["cinema", "theatre", "multiplex", "movies", "imax"],
+        "museum": ["museum", "gallery", "exhibition", "heritage"],
+        "office": ["associates", "consult", "systems", "tech", "office", "agency", "solution", "technologies", "enterprise", "group", "hq", "corp", "infra", "infotech", "engineering", "technopolis"],
+        "park": ["park", "garden", "playground", "nature reserve"],
         "petrol_bunk": ["gas", "petrol", "fuel", "bunk", "filling station", "ev charger"],
-        "pharmacy": ["pharmacy", "drugstore", "medical supplies", "chemist", "apothecary"],
-        "railway_station": ["station", "platform", "railway", "train", "metro", "tube", "subway"],
-        "restaurant": ["restaurant", "dining", "eatery", "food court", "grill", "pizzeria", "bistro", "buffet"],
+        "pharmacy": ["pharmacy", "medical store", "chemist", "apothecary", "medicals"],
+        "police": ["police", "station", "thana", "chowki"],
+        "railway_station": ["railway", "train"],
+        "religious_site": ["temple", "church", "mosque", "shrine", "gurudwara", "cathedral", "chapel", "mandir", "masjid", "ashram", "statu", "monument"],
+        "restaurant": ["restaurant", "dining", "eatery", "bistro", "buffet", "kitchen", "caterer"],
         "school": ["school", "elementary", "middle", "high school", "academy"],
         "shopping_mall": ["mall", "plaza", "center", "complex", "retail hub"],
-        "supermarket": ["supermarket", "hypermarket", "big box store"],
-        "travelling": ["landmark", "sightseeing", "tourist", "attraction", "viewpoint", "heritage site"],
-        "university": ["university", "college", "campus", "institute", "higher education"]
+        "supermarket": ["supermarket", "hypermarket", "wholesale"],
+        "university": ["university", "college", "campus"],
+        "yoga_studio": ["yoga", "meditation"]
     ]
 
-    /// V4.2: Advanced Multi-Vector Semantic Fusion
-    /// Uses clusters for target expansion and anchors/metadata for signal boosting.
+    private let categoryExclusions: [String: [String]] = [
+        "petrol_bunk": ["church", "temple", "school", "nilayam", "residenc"],
+        "shopping_mall": ["kirana", "medical", "general store", "tiffin"],
+        "fast_food_outlet": ["tailors", "engineering", "technopolis"],
+        "railway_station": ["wave", "infra", "tech"]
+    ]
+
     func resolveSemanticCategory(name: String, rawCategory: String?, url: String?, tags: [String]?) -> String {
-        let cleanName = name.lowercased()
+        let cleanName = sanitize(name)
+        let nlpFeatures = extractNLPFeatures(from: name)
+        
         let cleanedRaw = rawCategory?.replacingOccurrences(of: "MKPointOfInterestCategory", with: "")
             .replacingOccurrences(of: "MKPOICategory", with: "")
+            .replacingOccurrences(of: "_", with: " ")
             .lowercased() ?? ""
         
-        let urlClean = url?.lowercased() ?? ""
         let combinedTags = (tags ?? []).map { $0.lowercased() }.joined(separator: " ")
+        let primaryText = "\(cleanName) \(cleanedRaw)".lowercased()
         
-        print("🧠 [SemanticSnapping] Resolving V4.2: '\(name)' | Raw: '\(cleanedRaw)'")
-        
-        var matches: [(target: String, score: Double)] = []
+        print("🧠 [SemanticSnapping v8.0] Resolving with NLP Intelligence: '\(name)'")
+        print("📝 [NLP] Nouns: \(nlpFeatures.nouns), Lemmas: \(nlpFeatures.lemmas)")
+
+        var bestMatch: (target: String, score: Double) = ("unknown", -1.0)
         
         for target in targetCategories {
-            let clusterText = semanticClusters[target] ?? target
+            let anchors = categoryDefinitions[target] ?? [target]
+            let exclusions = categoryExclusions[target] ?? []
             
-            // 1. Base Embedding Signal (Name vs Cluster)
-            var score = EmbeddingService.compare(textA: cleanName, textB: clusterText, languageCode: "en")
-            
-            // 2. Apple Category Signal (Weighted Priority)
-            if !cleanedRaw.isEmpty {
-                let catScore = EmbeddingService.compare(textA: cleanedRaw, textB: clusterText, languageCode: "en")
-                score = (score * 0.6) + (catScore * 0.4)
+            // Hard Exclusion Guard
+            if exclusions.contains(where: { primaryText.contains($0) }) {
+                continue
             }
+
+            var categoryMaxScore: Double = 0
             
-            // 3. Keyword Anchoring (The Multiplier)
-            if let anchors = keywordAnchors[target] {
-                for anchor in anchors {
-                    // Check Name
-                    if cleanName.contains(anchor) { 
-                        score += 0.15 
-                        print("⚓️ [SemanticSnapping] Name Anchor: '\(anchor)' -> \(target) (+0.15)")
-                    }
-                    // Check URL
-                    if urlClean.contains(anchor) { 
-                        score += 0.20 
-                        print("🔗 [SemanticSnapping] URL Anchor: '\(anchor)' -> \(target) (+0.20)")
-                    }
-                    // Check Tags
-                    if combinedTags.contains(anchor) { 
-                        score += 0.15 
-                        print("🏷️ [SemanticSnapping] Tag Anchor: '\(anchor)' -> \(target) (+0.15)")
-                    }
+            for anchor in anchors {
+                let anchorLower = anchor.lowercased()
+                let isLiteralMatch = primaryText.contains(anchorLower)
+                
+                // Base Scores via Embedding
+                let sName = EmbeddingService.compare(textA: cleanName, textB: anchor, languageCode: "en") * 1.0
+                let sRaw = (cleanedRaw.isEmpty) ? 0 : (EmbeddingService.compare(textA: cleanedRaw, textB: anchor, languageCode: "en") * 0.7)
+                let sTags = (combinedTags.isEmpty) ? 0 : (EmbeddingService.compare(textA: combinedTags, textB: anchor, languageCode: "en") * 0.3)
+                
+                var peakSignal = max(sName, sRaw, sTags)
+                
+                // NLP Boost (1.5x for Noun or Lemma matches)
+                if nlpFeatures.nouns.contains(anchorLower) || nlpFeatures.lemmas.contains(anchorLower) {
+                    peakSignal *= 1.5
+                    print("⭐ [NLP Boost] Anchor '\(anchor)' matches Core Noun/Lemma!")
                 }
+                
+                // Literal Guard logic
+                if isLiteralMatch {
+                    peakSignal *= 1.2
+                } else {
+                    peakSignal *= 0.4
+                }
+                
+                categoryMaxScore = max(categoryMaxScore, peakSignal)
             }
             
-            // 4. Exact Match Protection (Force high score for direct hits)
-            let normalizedTarget = target.replacingOccurrences(of: "_", with: " ")
-            if cleanName.contains(normalizedTarget) || cleanedRaw == normalizedTarget || cleanedRaw == target {
-                score = max(score, 1.0)
-                print("🎯 [SemanticSnapping] Direct Match: '\(target)' (1.0)")
+            if categoryMaxScore > bestMatch.score {
+                bestMatch = (target: target, score: categoryMaxScore)
             }
-            
-            matches.append((target: target, score: score))
         }
         
-        matches.sort { $0.score > $1.score }
-        guard let topMatch = matches.first else { return "unknown" }
+        print("✅ [SemanticSnapping] SNAP: '\(bestMatch.target)' (Final Conf: \(String(format: "%.2f", bestMatch.score)))")
+        return bestMatch.target
+    }
+    
+    private func extractNLPFeatures(from text: String) -> (nouns: Set<String>, lemmas: Set<String>) {
+        let tagger = NLTagger(tagSchemes: [.lexicalClass, .lemma])
+        tagger.string = text
         
-        // Lowered threshold to 0.75 (V4.2a)
-        if topMatch.score >= 0.75 {
-            print("✅ [SemanticSnapping] MATCH: '\(topMatch.target)' (\(String(format: "%.2f", topMatch.score)))")
-            return topMatch.target
-        } else {
-            let fallback = cleanedRaw.isEmpty ? "unknown" : cleanedRaw
-            print("⚠️ [SemanticSnapping] LOW CONFIDENCE (\(String(format: "%.2f", topMatch.score))). Tentative: '\(topMatch.target)'. Fallback: '\(fallback)'")
-            return fallback
+        var nouns = Set<String>()
+        var lemmas = Set<String>()
+        
+        let options: NLTagger.Options = [.omitPunctuation, .omitWhitespace, .joinNames]
+        
+        tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .lexicalClass, options: options) { tag, range in
+            let token = String(text[range]).lowercased()
+            if tag == .noun {
+                nouns.insert(token)
+            }
+            return true
         }
+        
+        tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .lemma, options: options) { tag, range in
+            if let lemma = tag?.rawValue.lowercased() {
+                lemmas.insert(lemma)
+            }
+            return true
+        }
+        
+        return (nouns, lemmas)
+    }
+    
+    private func sanitize(_ text: String) -> String {
+        let stopWords = ["the", "and", "limited", "ltd", "inc", "of", "station", "building", "center", "centre", "tower"]
+        var words = text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted)
+        words = words.filter { !stopWords.contains($0) && !$0.isEmpty }
+        return words.joined(separator: " ")
     }
 }

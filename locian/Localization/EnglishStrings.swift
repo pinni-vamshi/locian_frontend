@@ -189,7 +189,6 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT USER PROFESSION",
             username: "Username",
             phoneNumber: "Phone Number",
-            guestLogin: "Guest Login",
             selectProfessionInstruction: "Select your profession to get started",
             showMore: "Show more",
             showLess: "Show less",
@@ -515,7 +514,6 @@ struct EnglishStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

@@ -187,7 +187,6 @@ struct TamilStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "பயனர் தொழிலைத் தேர்ந்தெடுக்கவும்",
             username: "பயனர் பெயர்",
             phoneNumber: "தொலைபேசி எண்",
-            guestLogin: "விருந்தினர் உள்நுழைவு",
             selectProfessionInstruction: "தொடங்க உங்கள் தொழிலைத் தேர்ந்தெடுக்கவும்",
             showMore: "மேலும் காண்பி",
             showLess: "குறைவாக காண்பி",
@@ -503,7 +502,6 @@ struct TamilStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

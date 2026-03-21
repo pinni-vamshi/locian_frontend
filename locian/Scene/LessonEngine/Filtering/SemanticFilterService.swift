@@ -39,28 +39,34 @@ struct SemanticFilterService {
         for candidateId in candidateIds {
             // Find the brick in the data
             var brick: BrickItem?
+            var brickCategory: BrickCategory = .constant
+            
             if let found = bricks?.constants?.first(where: { $0.id == candidateId }) {
                 brick = found
+                brickCategory = .constant
             } else if let found = bricks?.variables?.first(where: { $0.id == candidateId }) {
                 brick = found
+                brickCategory = .variable
             } else if let found = bricks?.structural?.first(where: { $0.id == candidateId }) {
                 brick = found
+                brickCategory = .structural
             }
             
             guard let brick = brick else { continue }
             
-            var maxScore = 0.0
+            // ✅ Dual JNS: both L2 (target) and L1 (meaning), averaged
+            // Each side uses its own language-specific embeddings + tagging
+            let combinedScore = WordSimilarityService.calculateDualJointScore(
+                word: brick.word,
+                sentence: text,
+                targetLanguage: targetLanguage,
+                wordMeaning: brick.meaning,
+                meaningContext: meaning,
+                nativeLanguage: nativeLanguage,
+                category: brickCategory
+            )
             
-            // Calculate similarity against target text (L2)
-            // Use targetLanguage code passed in params
-            let targetScore = EmbeddingService.compare(textA: text, textB: brick.word, languageCode: targetLanguage)
-            maxScore = max(maxScore, targetScore)
-            
-            // Calculate similarity against meaning text (L1)
-            let meaningScore = EmbeddingService.compare(textA: meaning, textB: brick.meaning, languageCode: nativeLanguage)
-            maxScore = max(maxScore, meaningScore)
-            
-            scoredBricks.append((brickId: candidateId, score: maxScore))
+            scoredBricks.append((brickId: candidateId, score: combinedScore))
         }
 
         

@@ -116,12 +116,8 @@ struct LearnTabView: View {
                                         .transition(.move(edge: .bottom).combined(with: .opacity))
                                 } else {
                                     VStack(spacing: 0) {
-                                        HStack(spacing: 16) {
-                                            v3PatternProgressionModule
-                                                .padding(.vertical, 5)
-                                                
-                                            v3ActionModule
-                                        }
+                                        v3PatternProgressionModule
+                                            .padding(.vertical, 5)
                                         
                                         v3GradientDivider // Bottom Divider
                                     }
@@ -142,11 +138,11 @@ struct LearnTabView: View {
                                     .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
                         } // closes VStack
-                        .padding(.top, 12)
-                        .padding(.bottom, 40)
-                        .padding(.horizontal, 5)
-                        .background(Color.black) // Ensure opaque background over the indicator
-                        .overlay(scrollOffsetTracker, alignment: .top)
+                         .padding(.top, 12)
+                         .padding(.bottom, 40)
+                         .padding(.trailing, 5) // Kept right padding
+                         .background(Color.black) // Ensure opaque background over the indicator
+                         .overlay(scrollOffsetTracker, alignment: .top)
                     } // closes ScrollView
                     .coordinateSpace(name: "learnPullToRefresh")
                     .onPreferenceChange(LearnViewOffsetKey.self) { handleRefresh(offset: $0) }
@@ -177,7 +173,7 @@ struct LearnTabView: View {
                     icon: "location.fill",
                     label: "GPS (LIVE)",
                     value: state.telemetry.activeSensors.contains(.gps) ? 
-                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int(state.telemetry.velocity))m/s)" : "INITIALIZING...") : 
+                           (state.telemetry.latitude != nil ? "\(String(format: "%.4f", state.telemetry.latitude!)), \(String(format: "%.4f", state.telemetry.longitude!)) (\(Int(state.telemetry.velocity * 3.6))km/h)" : "INITIALIZING...") : 
                            "OFF"
                 )
                 
@@ -420,7 +416,7 @@ struct LearnTabView: View {
 
     private var cameraActionCard: some View {
         Button(action: {
-            PermissionsService.shared.ensureCameraAccess { if $0 { state.showingCamera = true } }
+            state.requestCameraAccess()
         }) {
             VStack(alignment: .leading, spacing: 12) {
                 Image(systemName: "camera.fill")
@@ -610,8 +606,8 @@ struct LearnTabView: View {
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(state.activeBricks) { brick in
-                            v3UnifiedBrickCard(brick: brick)
+                        ForEach(state.activeBricks) { scored in
+                            v3UnifiedBrickCard(scored: scored)
                         }
                     }
                 }
@@ -722,19 +718,39 @@ struct LearnTabView: View {
     }
 
     private var v3PatternProgressionModule: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(LanguageManager.shared.ui.currentlyLearning.uppercased())
-                .font(.system(size: 25, weight: .black))
-                .foregroundColor(.gray.opacity(0.2))
+        VStack(alignment: .leading, spacing: 12) {
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                state.startPractice()
+            }) {
+                Text("START LEARNING")
+                    .font(.system(size: 25, weight: .black))
+                    .foregroundColor(.white)
+                    .padding(.leading, 16)
+                    .padding(.trailing, 32)
+                    .padding(.vertical, 12)
+                    .background(
+                        PointerShape()
+                            .fill(ThemeColors.secondaryAccent)
+                    )
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 0)
             
-            VStack(alignment: .leading, spacing: 8) {
-                if state.isFetchingData || (state.activeRecommendation?.patterns ?? []).isEmpty {
-                    v3PatternProgressionSkeletons
-                } else {
-                    v3PatternProgressionList
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    if state.isFetchingData || (state.activeRecommendation?.patterns ?? []).isEmpty {
+                        v3PatternProgressionSkeletons
+                    } else {
+                        v3PatternProgressionList
+                    }
+                }
+                .padding(.vertical, 8)
+                
+                if !state.isFetchingData && !(state.activeRecommendation?.patterns ?? []).isEmpty {
+                    v3PatternSideRail
                 }
             }
-            .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -804,67 +820,61 @@ struct LearnTabView: View {
         }
     }
 
-    private var v3ActionModule: some View {
-        Button(action: {
-            state.startPractice()
-        }) {
-            ZStack {
-                if state.isFetchingData || state.recommendations.isEmpty {
-                    CyberSkeleton(width: 60, height: 110)
-                        .opacity(shimmerPhase ? 0.6 : 0.3)
-                } else {
-                    // TEXT centered in the column
-                    Text("START PRACTICE")
-                        .font(.system(size: 20, weight: .black))
-                        .foregroundColor(.white)
-                        .fixedSize()
-                        .rotationEffect(.degrees(-90))
-                        .frame(width: 60, height: 110)
-                }
-                
-                // ARROWS pinned to top and bottom edges
-                VStack {
-                    DoubleArrowButton(
-                        direction: .down,
-                        color: .white,
-                        size: 16,
-                        spacing: -4,
-                        action: {}
-                    )
-                    .foregroundColor(.white)
-                    .tint(.white)
-                    .allowsHitTesting(false)
-                    .padding(.vertical, -12)
-                    
-                    Spacer()
-                    
-                    DoubleArrowButton(
-                        direction: .up,
-                        color: .white,
-                        size: 16,
-                        spacing: -4,
-                        action: {}
-                    )
-                    .foregroundColor(.white)
-                    .tint(.white)
-                    .allowsHitTesting(false)
-                    .padding(.vertical, -12)
-                }
+    private var v3PatternSideRail: some View {
+        let patterns = state.activeRecommendation?.patterns ?? []
+        let currentIndex = state.selectedPatternIndex
+        
+        let p = (currentIndex < patterns.count) ? patterns[currentIndex] : nil
+        let moment = p?.moment ?? "MOMENT"
+        let position = p?.position ?? (currentIndex + 1)
+        let total = p?.chain?.count ?? patterns.count
+        
+        return VStack(spacing: 0) {
+            // Position Badge
+            VStack(spacing: 2) {
+                Text("\(position)")
+                    .font(.system(size: 14, weight: .black, design: .monospaced))
+                    .foregroundColor(.black)
+                Rectangle()
+                    .fill(Color.black.opacity(0.3))
+                    .frame(height: 1)
+                    .padding(.horizontal, 4)
+                Text("\(total)")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(.black.opacity(0.6))
             }
-            .frame(width: 60)
+            .frame(width: 30, height: 45)
+            .background(ThemeColors.primaryAccent)
+            
+            // Moment Vertical Heading
+            VerticalHeading(
+                text: moment.uppercased(),
+                textColor: .white,
+                backgroundColor: Color.white.opacity(0.1),
+                width: 30
+            )
             .frame(maxHeight: .infinity)
-            .background(ThemeColors.secondaryAccent)
             .border(Color.white.opacity(0.1), width: 1)
-            .clipped() // Prevents components from ever bleeding outside the pink area
         }
-        .buttonStyle(ActionPressStyle())
+        .fixedSize(horizontal: true, vertical: false)
     }
 
-    private func v3UnifiedBrickCard(brick: RecommendationBrickItem) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(brick.meaning.uppercased())
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .foregroundColor(.gray)
+
+    private func v3UnifiedBrickCard(scored: ScoredBrick) -> some View {
+        let brick = scored.brick
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(brick.meaning.uppercased())
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundColor(.gray)
+                
+                Spacer()
+                
+                // ✅ V4.2 SCORE BADGE (The "Laser" precision indicator)
+                Text(String(format: "[%.2f]", scored.score))
+                    .font(.system(size: 7, weight: .black, design: .monospaced))
+                    .foregroundColor(ThemeColors.secondaryAccent.opacity(0.8))
+            }
             
             Text(brick.word.uppercased())
                 .font(.system(size: 14, weight: .black))
@@ -898,8 +908,8 @@ struct LearnTabView: View {
                     CyberSkeleton(width: 50, height: 8)
                         .opacity(shimmerPhase ? 0.6 : 0.3)
                 } else {
-                    Text(LanguageManager.shared.ui.historyStrength)
-                        .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    Text(LanguageManager.shared.ui.previouslyPracticed.uppercased())
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundColor(.black.opacity(0.8))
                 }
             }
@@ -920,9 +930,17 @@ struct LearnTabView: View {
                         .opacity(shimmerPhase ? 0.8 : 0.4)
                     }
                 } else {
-                    HistoryRow(text: "COFFEE PLEASE.", strength: "100%")
-                    HistoryRow(text: "CAN I SEE THE MENU?", strength: "87%")
-                    HistoryRow(text: "TWO COFFEES PLEASE.", strength: "64%")
+                    let practiced = state.activeRecommendation?.practiced_patterns ?? []
+                    if practiced.isEmpty {
+                        Text("NO HISTORY AT THIS LOCATION")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(.white.opacity(0.3))
+                            .padding(.vertical, 20)
+                    } else {
+                        ForEach(practiced) { p in
+                            HistoryRow(text: p.meaning?.uppercased() ?? "---", date: p.date ?? "---")
+                        }
+                    }
                 }
             }
             .padding(.bottom, 16)
@@ -965,16 +983,20 @@ struct LearnTabView: View {
         }
     }
 
-    private func HistoryRow(text: String, strength: String) -> some View {
-        HStack {
-            Rectangle().fill(Color.yellow).frame(width: 6, height: 6)
+    private func HistoryRow(text: String, date: String) -> some View {
+        HStack(spacing: 12) {
+            Text(date)
+                .font(.system(size: 9, weight: .black, design: .monospaced))
+                .foregroundColor(.black)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.white)
+            
             Text(text)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white)
+            
             Spacer()
-            Text(strength)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(.white)
         }
         .padding(.vertical, 12)
         .border(Color.white.opacity(0.05), width: 0.5)
@@ -1034,5 +1056,19 @@ struct LearnViewOffsetKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
+    }
+}
+
+// MARK: - Custom Shapes
+struct PointerShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - 15, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX - 15, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }

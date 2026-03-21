@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
 import Combine
+import UIKit
+import SwiftUI
 
 class AmbientSoundService: ObservableObject {
     static let shared = AmbientSoundService()
@@ -12,15 +14,64 @@ class AmbientSoundService: ObservableObject {
     
     private init() {}
     
+    // MARK: - Autonomous Alert Bridge (UIKit)
+    private func showSettingsAlert() {
+        DispatchQueue.main.async {
+            guard let topVC = self.getTopViewController() else { return }
+            
+            let alert = UIAlertController(title: "Microphone Access Required", message: "Please enable microphone access in Settings for speaking drills.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+            
+            topVC.present(alert, animated: true)
+        }
+    }
+    
+    private func getTopViewController() -> UIViewController? {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
+        
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
+    func ensureMicrophoneAccess(completion: @escaping (Bool) -> Void) {
+        let status = AVAudioApplication.shared.recordPermission
+        switch status {
+        case .granted:
+            completion(true)
+        case .undetermined:
+            AVAudioApplication.requestRecordPermission { granted in
+                DispatchQueue.main.async { completion(granted) }
+            }
+        case .denied:
+            self.showSettingsAlert()
+            completion(false)
+        @unknown default:
+            completion(false)
+        }
+    }
+
     func startListening() {
         if #available(iOS 17.0, *) {
             AVAudioApplication.requestRecordPermission { [weak self] granted in
                 guard granted else {
                     print("⚠️ [AmbientSound] Microphone permission denied.")
+                    self?.showSettingsAlert()
                     return
                 }
                 DispatchQueue.main.async {
-                    self?.setupRecording(audioSession: AVAudioSession.sharedInstance())
+                    self?.requestMicAccess()
                 }
             }
         } else {
@@ -28,20 +79,27 @@ class AmbientSoundService: ObservableObject {
             AVAudioSession.sharedInstance().requestRecordPermission { [weak self] granted in
                 guard granted else {
                     print("⚠️ [AmbientSound] Microphone permission denied.")
+                    self?.showSettingsAlert()
                     return
                 }
                 DispatchQueue.main.async {
-                    self?.setupRecording(audioSession: AVAudioSession.sharedInstance())
+                    self?.requestMicAccess()
                 }
             }
         }
     }
     
-    private func setupRecording(audioSession: AVAudioSession) {
+    private func requestMicAccess() {
+        AudioManager.shared.requestMic(owner: .ambient, onDetach: { [weak self] in
+            print("⚠️ [AmbientSound] FORCED DETACH by AudioManager")
+            self?.stopListening()
+        }) { [weak self] in
+            self?.setupRecording()
+        }
+    }
+    
+    private func setupRecording() {
         do {
-            try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
-            try audioSession.setActive(true)
-            
             let url = URL(fileURLWithPath: "/dev/null")
             let settings: [String: Any] = [
                 AVFormatIDKey: Int(kAudioFormatAppleLossless),
@@ -72,11 +130,7 @@ class AmbientSoundService: ObservableObject {
         audioRecorder?.stop()
         audioRecorder = nil
         
-        do {
-            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("⚠️ [AmbientSound] Failed to deactivate audio session: \(error)")
-        }
+        AudioManager.shared.releaseMic(owner: .ambient)
     }
     
     /// 🎙️ On-Demand Sampling: Starts mic, waits 800ms for a stable reading, then stops.

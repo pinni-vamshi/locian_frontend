@@ -258,12 +258,6 @@ class AppStateManager: ObservableObject {
     
     // MARK: - Conversation Quiz State
     
-    // MARK: - Guest Login State
-    @Published var isGuestLoginLoading: Bool = false
-    @Published var showGuestLoginButton: Bool = false
-    @Published var hasCheckedGuestLoginVisibility: Bool = false
-    @Published var shouldCheckGuestLoginVisibility: Bool = false
-    
     // MARK: - Deep Link State
     @Published var pendingDeepLinkPlace: String?
     @Published var pendingDeepLinkHour: Int?
@@ -338,9 +332,7 @@ class AppStateManager: ObservableObject {
         
 
         
-        // 🚀 PURE ON-DEMAND CLEANSE: Clear persistent audio cache to ensure fresh synthesis logs
-        AudioManager.shared.clearVoiceCache()
-        
+        // 🚀 PURE ON-DEMAND CLEANSE: Removed persistent audio caching
 
     }
     

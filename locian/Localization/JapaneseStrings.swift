@@ -185,7 +185,6 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "ユーザー名",
             phoneNumber: "電話番号",
-            guestLogin: "ゲストログイン",
             selectProfessionInstruction: "開始するには職業を選択してください",
             showMore: "もっと見る",
             showLess: "少なく表示",
@@ -502,7 +501,6 @@ struct JapaneseStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

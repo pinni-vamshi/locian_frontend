@@ -381,7 +381,7 @@ User Answer
 Any code that needs speech
         │
         ▼
-AudioManager.shared.speak(segments: [SpeechSegment])
+AudioManager.shared.speak(text: "¿Cómo estás?", language: "es-ES")
         │
         ├─ isHumeVoiceEnabled == true?
         │       │ YES
@@ -392,31 +392,12 @@ AudioManager.shared.speak(segments: [SpeechSegment])
         │                       │ success
         │                       └─ base64 audio → AVAudioPlayer.play()
         │                       │ failure (network/API error)
-        │                       └─ FALLBACK → speakLocalSegments()
+        │                       └─ FALLBACK → AVSpeechSynthesizer
         │
         └─ isHumeVoiceEnabled == false
-                └─ speakLocalSegments(segments)
-                        └─ AVSpeechSynthesizer
-                            ├─ rate: 0.4 (80% of normal speed 0.5)
-                            ├─ preUtteranceDelay: 0.1 between segments
-                            └─ voice: AVSpeechSynthesisVoice(language: segment.language)
-```
-
-### SpeechSegment Model
-
-```swift
-struct SpeechSegment: Sendable {
-    let text: String
-    let language: String  // e.g. "es-ES", "en-US"
-}
-```
-
-**Typical multilingual call (VocabIntro):**
-```swift
-AudioManager.shared.speak(segments: [
-    SpeechSegment(text: "¿Cómo estás?", language: "es-ES"),
-    SpeechSegment(text: "How are you?",  language: "en-US")
-])
+                └─ AVSpeechSynthesizer
+                    ├─ rate: 0.4 (80% of normal speed 0.5)
+                    └─ voice: AVSpeechSynthesisVoice(language: language)
 ```
 
 ### AudioManager Threading Model

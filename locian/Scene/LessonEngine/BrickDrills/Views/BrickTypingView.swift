@@ -62,6 +62,7 @@ struct BrickTypingView: View {
         .background(Color.black.ignoresSafeArea())
         .onAppear {
             isFocused = true
+            logic.bindToParent()
         }
     }
     

@@ -2,6 +2,8 @@ import Foundation
 import Speech
 import AVFoundation
 import Combine
+import UIKit
+import SwiftUI
 
 class SpeechRecognizer: ObservableObject {
     
@@ -49,98 +51,199 @@ class SpeechRecognizer: ObservableObject {
         }
     }
     
-    // MARK: - Public Control
-    
-    func startRecording() throws {
-        print("🎤 [SpeechRecognizer] startRecording() called")
-        isStopping = false
-        if isRecording {
-            stopRecording()
-        }
-        
-        recognitionTask?.cancel()
-        self.recognitionTask = nil
-        whisperSamples.removeAll()
-        currentSessionId = UUID()
-        
-        // LOGIC CORRECT: Use central traffic controller for session
-        AudioManager.shared.configureSession(for: .recording)
-        
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        
-        let inputNode = audioEngine.inputNode
-        guard let recognitionRequest = recognitionRequest else { return }
-        
-        recognitionRequest.shouldReportPartialResults = true
-        
-        if #available(iOS 13, *) {
-            recognitionRequest.requiresOnDeviceRecognition = false // Allow network for accuracy
-        }
-        
-        self.recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
-            var isFinal = false
-            
-            if let result = result {
-                DispatchQueue.main.async {
-                    // Update UI with partial results from Apple STT (fast)
-                    let text = result.bestTranscription.formattedString
-                    print("🍏 [SpeechRecognizer] Apple STT Partial: \"\(text)\"")
-                    self?.recognizedText = text
-                    
-                    // 🕒 AUTO-STOP: Reset silence timer whenever we get a new result
-                    self?.resetSilenceTimer()
-                }
-                isFinal = result.isFinal
-            }
-            
-            // LOGIC CORRECT: Stop if error or final, but don't force cancel here
-            if error != nil || isFinal {
-                self?.stopRecording()
-            }
-        }
-        
-        let recordingFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.removeTap(onBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] (buffer, when) in
-            // FIX: Robust guard against empty or zero-size buffers to satisfy AVAudioBuffer requirement
-            guard buffer.frameLength > 0, buffer.audioBufferList.pointee.mBuffers.mDataByteSize > 0 else { return }
-            
-            // 1. Feed Apple STT (Network/On-Device hybrid)
-            self?.recognitionRequest?.append(buffer)
-            
-            // 2. Accumulate for Whisper (Offline High-Accuracy)
-            if let downsampled = self?.convertTo16kHz(buffer: buffer) {
-                self?.whisperSamples.append(contentsOf: downsampled)
-                if (self?.whisperSamples.count ?? 0) % 50000 == 0 {
-                    print("🎙️ [SpeechRecognizer] Captured \(self?.whisperSamples.count ?? 0) samples...")
-                }
-            }
-        }
-        
-        audioEngine.prepare()
-        try audioEngine.start()
-        
+    // MARK: - Autonomous Alert Bridge (UIKit)
+    private func showSettingsAlert() {
         DispatchQueue.main.async {
-            self.recognizedText = ""
-            self.isRecording = true
+            guard let topVC = self.getTopViewController() else { return }
+            
+            let alert = UIAlertController(title: "Speech Recognition Required", message: "Please enable speech recognition in Settings for speaking drills.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+            alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            })
+            
+            topVC.present(alert, animated: true)
         }
     }
     
-    func stopRecording() {
-        // Kill timer immediately to prevent recursive calls
+    private func getTopViewController() -> UIViewController? {
+        let keyWindow = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
+        
+        var top = keyWindow?.rootViewController
+        while let presented = top?.presentedViewController {
+            top = presented
+        }
+        return top
+    }
+
+    func ensureSpeechAccess(completion: @escaping (Bool) -> Void) {
+        let status = SFSpeechRecognizer.authorizationStatus()
+        switch status {
+        case .authorized:
+            completion(true)
+        case .notDetermined:
+            SFSpeechRecognizer.requestAuthorization { status in
+                DispatchQueue.main.async { completion(status == .authorized) }
+            }
+        case .denied, .restricted:
+            self.showSettingsAlert()
+            completion(false)
+        @unknown default:
+            completion(false)
+        }
+    }
+
+    func ensureVoiceAccess(completion: @escaping (Bool) -> Void) {
+        AmbientSoundService.shared.ensureMicrophoneAccess { micGranted in
+            guard micGranted else {
+                completion(false)
+                return
+            }
+            self.ensureSpeechAccess(completion: completion)
+        }
+    }
+
+    // MARK: - Public Control
+    
+    func startRecording() throws {
+        print("🎤 [SpeechRecognizer] startRecording() requested")
+        
+        // Ensure any previous work is stopped first
+        self.internalReset()
+        
+        // 1. Request Mic from Traffic Controller
+        AudioManager.shared.requestMic(owner: .speech, onDetach: { [weak self] in
+            print("⚠️ [SpeechRecognizer] FORCED DETACH by AudioManager")
+            self?.stopRecording()
+        }) { [weak self] in
+            guard let self = self else { return }
+            
+            // 2. Wait for Hardware Stabilization (Polling)
+            self.waitForHardwareStabilization { [weak self] stabilizedFormat in
+                guard let self = self, let recordingFormat = stabilizedFormat else {
+                    print("❌ [SpeechRecognizer] Hardware stabilization failed. Aborting.")
+                    self?.stopRecording()
+                    return
+                }
+                
+                print("🎙️ [SpeechRecognizer] Starting engine with stable format: \(recordingFormat.sampleRate)Hz")
+                
+                do {
+                    // 3. Setup Recognition Request
+                    let recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+                    self.recognitionRequest = recognitionRequest
+                    recognitionRequest.shouldReportPartialResults = true
+                    
+                    if #available(iOS 13, *) {
+                        recognitionRequest.requiresOnDeviceRecognition = false
+                    }
+                    
+                    // 4. Start Recognition Task
+                    self.recognitionTask = self.speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
+                        var isFinal = false
+                        if let result = result {
+                            DispatchQueue.main.async {
+                                self?.recognizedText = result.bestTranscription.formattedString
+                                self?.resetSilenceTimer()
+                            }
+                            isFinal = result.isFinal
+                        }
+                        if error != nil || isFinal {
+                            // Only stop if we are still the recording owner
+                            if self?.isRecording == true {
+                                self?.stopRecording()
+                            }
+                        }
+                    }
+                    
+                    // 5. Setup Audio Tap
+                    let inputNode = self.audioEngine.inputNode
+                    inputNode.removeTap(onBus: 0) // Final safety check
+                    
+                    inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] (buffer, when) in
+                        guard buffer.frameLength > 0 else { return }
+                        self?.recognitionRequest?.append(buffer)
+                        if let downsampled = self?.convertTo16kHz(buffer: buffer) {
+                            self?.whisperSamples.append(contentsOf: downsampled)
+                        }
+                    }
+                    
+                    self.audioEngine.prepare()
+                    try self.audioEngine.start()
+                    
+                    DispatchQueue.main.async {
+                        self.recognizedText = ""
+                        self.isRecording = true
+                        self.isStopping = false
+                    }
+                } catch {
+                    print("❌ [SpeechRecognizer] Engine Start Error: \(error.localizedDescription)")
+                    self.stopRecording()
+                }
+            }
+        }
+    }
+    
+    private func waitForHardwareStabilization(completion: @escaping (AVAudioFormat?) -> Void) {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let timeout = 1.0 // 1 second max wait
+        
+        func probe() {
+            let inputNode = audioEngine.inputNode
+            let format = inputNode.inputFormat(forBus: 0)
+            
+            if format.sampleRate > 0 {
+                print("✅ [SpeechRecognizer] Hardware stabilized in \(CFAbsoluteTimeGetCurrent() - startTime)s")
+                completion(format)
+            } else if CFAbsoluteTimeGetCurrent() - startTime > timeout {
+                print("🚨 [SpeechRecognizer] Hardware stabilization TIMED OUT.")
+                completion(nil)
+            } else {
+                // Poll again in 50ms
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { probe() }
+            }
+        }
+        
+        probe()
+    }
+    
+    /// Internal helper to purge all engine and request state before a fresh start
+    private func internalReset() {
+        print("🧹 [SpeechRecognizer] Purging Engine State...")
         stopSilenceTimer()
         
-        // LOGIC CORRECT: Idempotent guard to prevent recursive disconnect calls
-        guard !isStopping else { return }
+        audioEngine.stop()
+        audioEngine.reset()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        
+        recognitionRequest = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        
+        whisperSamples.removeAll()
+        currentSessionId = UUID()
+    }
+    
+    func stopRecording() {
+        // Kill timer immediately
+        stopSilenceTimer()
+        
+        // Guard against rapid re-entry loops
+        guard isRecording && !isStopping else { return }
         print("🎤 [SpeechRecognizer] stopRecording() execution started")
         isStopping = true
         
-        // 1. Kill the engine immediately (Stops buffer warnings)
-        audioEngine.inputNode.removeTap(onBus: 0)
+        // 1. Kill the engine and tap immediately
         audioEngine.stop()
-        audioEngine.reset() // DEEP RESET: Hardware cleanup
+        audioEngine.inputNode.removeTap(onBus: 0)
         
-        // 2. Gracefully end the request (Signals server cleanly)
+        // 2. Gracefully end the request
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         
@@ -148,14 +251,10 @@ class SpeechRecognizer: ObservableObject {
         print("🤖 [SpeechRecognizer] Checking Whisper: samples=\(whisperSamples.count), isReady=\(WhisperService.shared.isReady)")
         if !whisperSamples.isEmpty && WhisperService.shared.isReady {
             let sessionIdAtStop = currentSessionId
-            print("🤖 [SpeechRecognizer] Finalizing with Whisper Engine (\(whisperSamples.count) samples) for session \(sessionIdAtStop)")
-            
             let samplesToProcess = whisperSamples
+            
             WhisperService.shared.transcribe(samples: samplesToProcess) { [weak self] result in
-                guard let self = self, self.currentSessionId == sessionIdAtStop else {
-                    print("🚫 [SpeechRecognizer] Ignoring stale Whisper result for session \(sessionIdAtStop)")
-                    return
-                }
+                guard let self = self, self.currentSessionId == sessionIdAtStop else { return }
                 
                 switch result {
                 case .success(let text):
@@ -171,13 +270,13 @@ class SpeechRecognizer: ObservableObject {
             }
         }
         
-        // 4. Revert session with 100ms grace period for "Reporter" wind-down
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            AudioManager.shared.configureSession(for: .playback)
-            
-            self?.isRecording = false
-            self?.isStopping = false
-            self?.recognitionTask = nil
+        // 4. Release Mic and Revert Session
+        AudioManager.shared.releaseMic(owner: .speech)
+        
+        DispatchQueue.main.async {
+            self.isRecording = false
+            self.isStopping = false
+            self.recognitionTask = nil
         }
     }
     

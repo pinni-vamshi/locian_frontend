@@ -66,7 +66,7 @@ class PatternVoiceLogic: ObservableObject {
         if isRecording {
             speechRecognizer.stopRecording()
         } else {
-            PermissionsService.shared.ensureVoiceAccess { granted in
+            SpeechRecognizer.shared.ensureVoiceAccess { granted in
                 guard granted else { return }
                 try? self.speechRecognizer.startRecording()
             }
@@ -139,9 +139,16 @@ class PatternVoiceLogic: ObservableObject {
         let language = engine.lessonData?.target_language ?? "es-ES"
         
         self.isAudioPlaying = true
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)]) { [weak self] in
+        self.patternIntroLogic?.isAudioPlaying = true
+        self.practiceLogic?.isAudioPlaying = true
+        self.ghostLogic?.isAudioPlaying = true
+        
+        AudioManager.shared.speak(text: text, language: language) { [weak self] in
             DispatchQueue.main.async {
                 self?.isAudioPlaying = false
+                self?.patternIntroLogic?.isAudioPlaying = false
+                self?.practiceLogic?.isAudioPlaying = false
+                self?.ghostLogic?.isAudioPlaying = false
             }
         }
     }
@@ -159,7 +166,7 @@ class PatternVoiceLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     

@@ -18,7 +18,6 @@ class CheckSessionLogic {
             appState.clearUserData()
             appState.isLoggedIn = false
             appState.isLoadingSession = false
-            appState.shouldCheckGuestLoginVisibility = true
             return
         }
 
@@ -42,11 +41,15 @@ class CheckSessionLogic {
         if appState.hasValidLanguagePair() {
             // Languages are valid in cache. BYPASSING language API calls.
             
-            // Just ensure notifications are ready
-            PermissionsService.shared.ensureNotificationAccess { _ in
-                UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
+            // Sequence Notification Permission AFTER Location Discovery (Delay 8s)
+            // Only ask once per install to prevent spam
+            if !UserDefaults.standard.bool(forKey: "hasRequestedNotificationPermission") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                    NotificationManager.shared.ensureNotificationAccess { _ in
+                        UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
+                    }
+                }
             }
-            
             
             // Ready for Timeline Fetch (SceneView will trigger).
         } else {
@@ -55,8 +58,14 @@ class CheckSessionLogic {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 appState.checkLanguagePairsAndShowModalIfNeeded()
             }
-            PermissionsService.shared.ensureNotificationAccess { _ in
-                UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
+            
+            // Sequence Notification Permission AFTER Language Modal and Location (Delay 15s)
+            if !UserDefaults.standard.bool(forKey: "hasRequestedNotificationPermission") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
+                    NotificationManager.shared.ensureNotificationAccess { _ in
+                        UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
+                    }
+                }
             }
         }
         

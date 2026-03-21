@@ -364,7 +364,7 @@ struct SettingsView: View {
                     get: { appState.isLocationTrackingEnabled },
                     set: { newValue in
                         if newValue {
-                            PermissionsService.shared.ensureLocationAccess { granted in
+                            LocationManager.shared.ensureLocationAccess { granted in
                                 DispatchQueue.main.async {
                                     appState.isLocationTrackingEnabled = granted
                                 }
@@ -404,7 +404,7 @@ struct SettingsView: View {
                     get: { NotificationManager.shared.isNotificationsEnabled },
                     set: { newValue in
                         if newValue {
-                            PermissionsService.shared.ensureNotificationAccess { granted in
+                            NotificationManager.shared.ensureNotificationAccess { granted in
                                 DispatchQueue.main.async {
                                     NotificationManager.shared.isNotificationsEnabled = granted
                                 }

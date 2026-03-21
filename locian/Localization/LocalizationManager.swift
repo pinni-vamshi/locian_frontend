@@ -326,7 +326,6 @@ enum StringKey: String {
     case forReview = "forReview"
     case username = "username"
     case phoneNumber = "phoneNumber"
-    case guestLogin = "guestLogin"
     case authenticatingUser = "authenticatingUser" // Added for redesign
     case bySigningInYouAgreeToOur = "bySigningInYouAgreeToOur" // Added for redesign
     case termsOfService = "termsOfService" // Added for redesign

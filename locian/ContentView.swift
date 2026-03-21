@@ -24,7 +24,7 @@ struct ContentView: View {
         }
         .onAppear {
             if appState.hasCompletedOnboarding {
-                appState.checkUserSession()
+                CheckSessionLogic.shared.checkUserSession()
             }
             // Permission request removed to respect onboarding flow
         }
@@ -72,7 +72,7 @@ struct LoadingView: View {
                     .foregroundColor(.white.opacity(0.8))
                 
                 Button(localizationManager.string(.retry)) {
-                    appState.checkUserSession()
+                    CheckSessionLogic.shared.checkUserSession()
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.black)

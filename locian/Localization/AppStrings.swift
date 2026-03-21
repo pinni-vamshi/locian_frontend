@@ -210,7 +210,6 @@ struct LoginStrings {
     let selectUserProfession: String // Added for redesign
     let username: String
     let phoneNumber: String
-    let guestLogin: String
     let selectProfessionInstruction: String
     let showMore: String
     let showLess: String

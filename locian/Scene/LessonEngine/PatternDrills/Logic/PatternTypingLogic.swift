@@ -11,8 +11,11 @@ class PatternTypingLogic: ObservableObject {
     
     @Published var userInput: String = "" {
         didSet {
-            // Sync input state to parent for Footer Button
-            patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
+            let hasText = !userInput.isEmpty
+            // Sync input state across potential parents for Footer Button
+            patternIntroLogic?.currentBrickHasInput = hasText
+            practiceLogic?.hasInput = hasText
+            ghostLogic?.hasInput = hasText
         }
     }
     @Published var isCorrect: Bool?
@@ -50,13 +53,18 @@ class PatternTypingLogic: ObservableObject {
     }
     
     func bindToParent() {
-        // ✅ Bridge Actions to Parent (Intro Recap Phase)
-        patternIntroLogic?.requestCheckAnswer = { [weak self] in
-            self?.checkAnswer()
-        }
+        // ✅ Bridge Actions to whichever parent is active
+        let checkAction: () -> Void = { [weak self] in self?.checkAnswer() }
         
+        patternIntroLogic?.requestCheckAnswer = checkAction
+        practiceLogic?.requestCheckAnswer = checkAction
+        ghostLogic?.requestCheckAnswer = checkAction
+
         // Sync initial state
-        patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
+        let hasText = !userInput.isEmpty
+        patternIntroLogic?.currentBrickHasInput = hasText
+        practiceLogic?.hasInput = hasText
+        ghostLogic?.hasInput = hasText
     }
     
     var hasInput: Bool {
@@ -127,7 +135,7 @@ class PatternTypingLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
@@ -140,7 +148,18 @@ class PatternTypingLogic: ObservableObject {
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
+        
+        self.patternIntroLogic?.isAudioPlaying = true
+        self.practiceLogic?.isAudioPlaying = true
+        self.ghostLogic?.isAudioPlaying = true
+        
+        AudioManager.shared.speak(text: text, language: language) { [weak self] in
+            DispatchQueue.main.async {
+                self?.patternIntroLogic?.isAudioPlaying = false
+                self?.practiceLogic?.isAudioPlaying = false
+                self?.ghostLogic?.isAudioPlaying = false
+            }
+        }
     }
     
     func selectExploreWord(_ word: String) {
@@ -189,20 +208,13 @@ class PatternTypingLogic: ObservableObject {
                 }
             }
             
-            // NEW: Identify Top 3 Explore Words (FILTERED BY NOUNS/VERBS)
-            // First, tag the target string
-            let tags = TokenTaggerService.tagContent(
-                text: state.drillData.target,
-                languageCode: targetCode
-            )
-
-            // Map results to scoring
+            // NEW: Identify Top 3 Explore Words (ALREADY WEIGHTED by Laser)
+            // The brickMatches already contain the Joint Neural Score (JNS)
+            // so we don't need to tag or filter for nouns/verbs manually anymore.
+            
             let scoredExplore = brickMatches.compactMap { match -> (String, String, Double)? in
                 if let brick = allBricks.first(where: { $0.id == match.brickId }) {
-                    // Only include if it's a noun or a verb
-                    if TokenTaggerService.isNoun(brick.word, in: tags) || TokenTaggerService.isVerb(brick.word, in: tags) {
-                        return (brick.word, brick.meaning, match.similarityScore)
-                    }
+                    return (brick.word, brick.meaning, match.similarityScore)
                 }
                 return nil
             }

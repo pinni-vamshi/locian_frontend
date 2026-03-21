@@ -35,13 +35,16 @@ struct MasteryFilterService {
     
     // MARK: - SEMANTIC CLIFF DETECTION (V4.1)
     
-    /// The "Brain" of the filtration system. 
-    /// Takes raw similarity scores and decides which bricks to include based on 
-    /// the "Semantic Cliff" - the point where relevance breaks.
-    /// Simplified 3-Stage Reveal Logic (Locian-Appropriate)
-    /// 0.00 - 0.25 Mastery: Core (2 bricks)
-    /// 0.25 - 0.50 Mastery: Most (3-4 bricks)
-    /// > 0.50 Mastery: Full (all bricks)
+    /// The "Brain" of the filtration system.
+    /// Uses a mastery-relative threshold to progressively reveal bricks.
+    /// Scores arrive pre-normalized to [0, 1] from WordSimilarityService.
+    /// At low mastery: only top bricks are shown.
+    /// At high mastery: all bricks are revealed.
+    ///
+    /// Relative threshold formula:
+    ///   threshold = T_fraction × (1 - clamp(mastery / M_ceiling, 0, 1))
+    ///   At mastery=0    →  threshold = T_fraction (show only top portion)
+    ///   At mastery=0.5  →  threshold = 0          (show all bricks)
     static func filterBricksBySemanticCliff(
         bricks: [(id: String, score: Double)],
         patternMastery: Double,
@@ -49,28 +52,19 @@ struct MasteryFilterService {
     ) -> [String] {
         guard !bricks.isEmpty else { return [] }
         
-        // 1. Weight = similarity only (keep simple)
+        // 1. Sort by score (highest first) — scores already in [0, 1]
         let ranked = bricks.sorted { $0.score > $1.score }
-        let scores = ranked.map { $0.score }
-        let total = scores.reduce(0, +)
         
-        // 2. Fast growth schedule (full reveal reached by 0.50 mastery)
-        // Formula: C(M) = 0.50 + 0.50 * min(M/0.50, 1.0)
-        let normalized = min(patternMastery / 0.50, 1.0)
-        let coverage = 0.50 + (0.50 * normalized)
-        let requiredTotal = coverage * total
+        // 2. Relative Threshold
+        let T_fraction = 0.65
+        let M_ceiling  = 0.50
+        let masteryProgress = min(patternMastery / M_ceiling, 1.0)
+        let threshold = T_fraction * (1.0 - masteryProgress)
         
-        // 3. Selection loop until coverage reached
-        var selectedIDs: [String] = []
-        var currentSum: Double = 0
+        // 3. Select bricks whose score is above the threshold
+        var selectedIDs = ranked.filter { $0.score >= threshold }.map { $0.id }
         
-        for item in ranked {
-            selectedIDs.append(item.id)
-            currentSum += item.score
-            if currentSum >= requiredTotal { break }
-        }
-        
-        // 4. Locian Guardrails: Minimum 2 bricks
+        // 4. Locian Guardrail: Always show at least 2 bricks
         if selectedIDs.count < 2 && ranked.count >= 2 {
             selectedIDs = Array(ranked.prefix(2)).map { $0.id }
         }

@@ -52,14 +52,19 @@ struct PlaceRecommendation: Codable, Identifiable {
     let confidence: Double
     let grounding: String?
     var patterns: [RecommendationPattern]?
+    var practiced_patterns: [RecommendationPattern]?
 }
 
 struct RecommendationPattern: Codable, Identifiable {
-    var id: String { target ?? UUID().uuidString }
+    let id: String?
     let target: String?
     let meaning: String?
     let phonetic: String?
     let bricks: RecommendationBricks?
+    let moment: String?
+    let position: Int?
+    let chain: [String]?
+    let date: String?
 }
 
 struct RecommendationBricks: Codable {

@@ -187,7 +187,6 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "사용자 이름",
             phoneNumber: "전화번호",
-            guestLogin: "게스트 로그인",
             selectProfessionInstruction: "시작하려면 직업을 선택하세요",
             showMore: "더 보기",
             showLess: "간략히 보기",
@@ -504,7 +503,6 @@ struct KoreanStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService

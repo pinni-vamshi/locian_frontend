@@ -10,8 +10,11 @@ struct Token: Identifiable {
 class PatternBuilderLogic: ObservableObject {
     @Published var selectedTokens: [Token] = [] {
         didSet {
-            // Sync input state to parent for Footer Button
-            patternIntroLogic?.currentBrickHasInput = !selectedTokens.isEmpty
+            let hasInput = !selectedTokens.isEmpty
+            // Sync input state across potential parents for Footer Button
+            patternIntroLogic?.currentBrickHasInput = hasInput
+            practiceLogic?.hasInput = hasInput
+            ghostLogic?.hasInput = hasInput
         }
     }
     @Published var availableTokens: [Token] = []
@@ -52,16 +55,28 @@ class PatternBuilderLogic: ObservableObject {
     }
     
     func bindToParent() {
-        // ✅ Bridge Actions to Parent (Intro Recap Phase)
-        patternIntroLogic?.requestCheckAnswer = { [weak self] in
-            self?.checkAnswer()
-        }
-        patternIntroLogic?.requestClearInput = { [weak self] in
-             self?.removeToken(at: 0) // Example clear
+        // ✅ Bridge Actions to whichever parent is active
+        let checkAction: () -> Void = { [weak self] in self?.checkAnswer() }
+        let clearAction: () -> Void = { [weak self] in 
+            while self?.selectedTokens.isEmpty == false {
+                self?.removeToken(at: 0)
+            }
         }
         
+        patternIntroLogic?.requestCheckAnswer = checkAction
+        patternIntroLogic?.requestClearInput = clearAction
+        
+        practiceLogic?.requestCheckAnswer = checkAction
+        practiceLogic?.requestClearInput = clearAction
+        
+        ghostLogic?.requestCheckAnswer = checkAction
+        ghostLogic?.requestClearInput = clearAction
+
         // Sync initial state
-        patternIntroLogic?.currentBrickHasInput = !selectedTokens.isEmpty
+        let hasInput = !selectedTokens.isEmpty
+        patternIntroLogic?.currentBrickHasInput = hasInput
+        practiceLogic?.hasInput = hasInput
+        ghostLogic?.hasInput = hasInput
     }
     
     private func setupTokens() {
@@ -78,7 +93,7 @@ class PatternBuilderLogic: ObservableObject {
         // Speak what the user JUST tapped
         // Speak what the user JUST tapped
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(segments: [.init(text: token.text, language: language)])
+        AudioManager.shared.speak(text: token.text, language: language)
         
         token.isUsed = true
         availableTokens[index] = token
@@ -147,7 +162,18 @@ class PatternBuilderLogic: ObservableObject {
         // Match standard behavior: Play target audio on correct
         if isCorrect {
             let language = engine.lessonData?.target_language ?? "es-ES"
-            AudioManager.shared.speak(segments: [.init(text: state.drillData.target, language: language)])
+            
+            self.patternIntroLogic?.isAudioPlaying = true
+            self.practiceLogic?.isAudioPlaying = true
+            self.ghostLogic?.isAudioPlaying = true
+            
+            AudioManager.shared.speak(text: state.drillData.target, language: language) { [weak self] in
+                DispatchQueue.main.async {
+                    self?.patternIntroLogic?.isAudioPlaying = false
+                    self?.practiceLogic?.isAudioPlaying = false
+                    self?.ghostLogic?.isAudioPlaying = false
+                }
+            }
         }
         
         // ✅ Notify Wrapper
@@ -170,14 +196,14 @@ class PatternBuilderLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
     private func playFeedback(isCorrect: Bool) {
         if isCorrect {
             let language = engine.lessonData?.target_language ?? "es-ES"
-            AudioManager.shared.speak(segments: [.init(text: state.drillData.target, language: language)])
+            AudioManager.shared.speak(text: state.drillData.target, language: language)
         }
     }
     
@@ -241,20 +267,13 @@ class PatternBuilderLogic: ObservableObject {
                 }
             }
             
-            // NEW: Identify Top 3 Explore Words (FILTERED BY NOUNS/VERBS)
-            // First, tag the target string
-            let tags = TokenTaggerService.tagContent(
-                text: state.drillData.target,
-                languageCode: targetCode
-            )
-
-            // Map results to scoring
+            // NEW: Identify Top 3 Explore Words (ALREADY WEIGHTED by Laser)
+            // The brickMatches already contain the Joint Neural Score (JNS)
+            // so we don't need to tag or filter for nouns/verbs manually anymore.
+            
             let scoredExplore = brickMatches.compactMap { match -> (String, String, Double)? in
                 if let brick = allBricks.first(where: { $0.id == match.brickId }) {
-                    // Only include if it's a noun or a verb
-                    if TokenTaggerService.isNoun(brick.word, in: tags) || TokenTaggerService.isVerb(brick.word, in: tags) {
-                        return (brick.word, brick.meaning, match.similarityScore)
-                    }
+                    return (brick.word, brick.meaning, match.similarityScore)
                 }
                 return nil
             }

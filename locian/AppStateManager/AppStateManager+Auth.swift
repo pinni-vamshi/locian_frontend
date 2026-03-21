@@ -86,11 +86,7 @@ extension AppStateManager {
         self.isLoadingSession = false
         self.isOffline = false
 
-        // Allow guest login visibility to be refreshed on next visit
-        self.showGuestLoginButton = false
-        self.hasCheckedGuestLoginVisibility = false
-        self.shouldCheckGuestLoginVisibility = true
-        
+
         // Clear all UserDefaults except onboarding state
         let domain = Bundle.main.bundleIdentifier!
         UserDefaults.standard.removePersistentDomain(forName: domain)

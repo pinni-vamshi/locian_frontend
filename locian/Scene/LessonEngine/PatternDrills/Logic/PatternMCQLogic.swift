@@ -128,7 +128,7 @@ class PatternMCQLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
@@ -141,7 +141,7 @@ class PatternMCQLogic: ObservableObject {
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
+        AudioManager.shared.speak(text: text, language: language)
     }
     
     static func view(for state: DrillState, mode: DrillMode, engine: LessonEngine, patternIntroLogic: PatternIntroLogic? = nil, practiceLogic: PatternPracticeLogic? = nil, ghostLogic: GhostModeLogic? = nil, onComplete: ((Bool) -> Void)? = nil) -> some View {

@@ -38,25 +38,36 @@ class BrickVoiceLogic: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in 
                 self?.objectWillChange.send() 
-                // ✅ Sync Input State for Footer Button
+                // ✅ Sync Input State across potential parents for Footer Button
                 if let self = self {
-                    self.patternIntroLogic?.currentBrickHasInput = !self.speechRecognizer.recognizedText.isEmpty
+                    let hasText = !self.speechRecognizer.recognizedText.isEmpty
+                    self.patternIntroLogic?.currentBrickHasInput = hasText
+                    self.practiceLogic?.hasInput = hasText
+                    self.ghostLogic?.hasInput = hasText
                 }
             }
             .store(in: &cancellables)
     }
     
     func bindToParent() {
-        // ✅ Bridge Actions to Parent (if present)
-        patternIntroLogic?.requestCheckAnswer = { [weak self] in
-            self?.checkAnswer()
-        }
-        patternIntroLogic?.requestClearInput = { [weak self] in
-            self?.clearInput()
-        }
+        // ✅ Bridge Actions to whichever parent is active
+        let checkAction: () -> Void = { [weak self] in self?.checkAnswer() }
+        let clearAction: () -> Void = { [weak self] in self?.clearInput() }
         
+        patternIntroLogic?.requestCheckAnswer = checkAction
+        patternIntroLogic?.requestClearInput = clearAction
+        
+        practiceLogic?.requestCheckAnswer = checkAction
+        practiceLogic?.requestClearInput = clearAction
+        
+        ghostLogic?.requestCheckAnswer = checkAction
+        ghostLogic?.requestClearInput = clearAction
+
         // Sync initial state
-        patternIntroLogic?.currentBrickHasInput = !recognizedText.isEmpty
+        let hasText = !recognizedText.isEmpty
+        patternIntroLogic?.currentBrickHasInput = hasText
+        practiceLogic?.hasInput = hasText
+        ghostLogic?.hasInput = hasText
     }
     
     // Voice state exposed to view
@@ -78,7 +89,7 @@ class BrickVoiceLogic: ObservableObject {
         if speechRecognizer.isRecording {
             speechRecognizer.stopRecording()
         } else {
-            PermissionsService.shared.ensureVoiceAccess { granted in
+            SpeechRecognizer.shared.ensureVoiceAccess { granted in
                 guard granted else { 
                     return 
                 }
@@ -100,6 +111,12 @@ class BrickVoiceLogic: ObservableObject {
         // Sync with parents
         patternIntroLogic?.currentBrickAnswered = false
         patternIntroLogic?.currentBrickCorrect = false
+        
+        practiceLogic?.isAnswered = false
+        practiceLogic?.isCorrect = false
+        
+        ghostLogic?.isAnswered = false
+        ghostLogic?.isCorrect = false
     }
     
     func checkAnswer() {
@@ -164,7 +181,7 @@ class BrickVoiceLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
@@ -181,7 +198,9 @@ class BrickVoiceLogic: ObservableObject {
         self.isAudioPlaying = true
         self.patternIntroLogic?.isAudioPlaying = true
         self.practiceLogic?.isAudioPlaying = true
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)]) { [weak self] in
+        self.ghostLogic?.isAudioPlaying = true
+        
+        AudioManager.shared.speak(text: text, language: language) { [weak self] in
             DispatchQueue.main.async {
                 self?.isAudioPlaying = false
                 self?.patternIntroLogic?.isAudioPlaying = false

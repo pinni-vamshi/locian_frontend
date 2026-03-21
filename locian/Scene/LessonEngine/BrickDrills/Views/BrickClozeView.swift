@@ -68,6 +68,9 @@ struct BrickClozeView: View {
         }
         .background(Color.black.ignoresSafeArea())
         .onAppear {
+            logic.bindToParent()
+        }
+        .onAppear {
             isFocused = true
         }
     }

@@ -11,8 +11,11 @@ class BrickTypingLogic: ObservableObject {
     
     @Published var userInput: String = "" {
         didSet {
-            // Sync input state to parent for Footer Button
-            patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
+            let hasText = !userInput.isEmpty
+            // Sync input state across potential parents for Footer Button
+            patternIntroLogic?.currentBrickHasInput = hasText
+            practiceLogic?.hasInput = hasText
+            ghostLogic?.hasInput = hasText
         }
     }
     @Published var isCorrect: Bool?
@@ -34,16 +37,24 @@ class BrickTypingLogic: ObservableObject {
     }
     
     func bindToParent() {
-        // ✅ Bridge Actions to Parent (if present)
-        patternIntroLogic?.requestCheckAnswer = { [weak self] in
-            self?.checkAnswer()
-        }
-        patternIntroLogic?.requestClearInput = { [weak self] in
-            self?.clearInput()
-        }
+        // ✅ Bridge Actions to whichever parent is active
+        let checkAction: () -> Void = { [weak self] in self?.checkAnswer() }
+        let clearAction: () -> Void = { [weak self] in self?.clearInput() }
         
+        patternIntroLogic?.requestCheckAnswer = checkAction
+        patternIntroLogic?.requestClearInput = clearAction
+        
+        practiceLogic?.requestCheckAnswer = checkAction
+        practiceLogic?.requestClearInput = clearAction
+        
+        ghostLogic?.requestCheckAnswer = checkAction
+        ghostLogic?.requestClearInput = clearAction
+
         // Sync initial state
-        patternIntroLogic?.currentBrickHasInput = !userInput.isEmpty
+        let hasText = !userInput.isEmpty
+        patternIntroLogic?.currentBrickHasInput = hasText
+        practiceLogic?.hasInput = hasText
+        ghostLogic?.hasInput = hasText
     }
     
     var hasInput: Bool {
@@ -58,6 +69,12 @@ class BrickTypingLogic: ObservableObject {
         // Sync with parents
         patternIntroLogic?.currentBrickAnswered = false
         patternIntroLogic?.currentBrickCorrect = false
+        
+        practiceLogic?.isAnswered = false
+        practiceLogic?.isCorrect = false
+        
+        ghostLogic?.isAnswered = false
+        ghostLogic?.isCorrect = false
     }
     
     func checkAnswer() {
@@ -118,7 +135,7 @@ class BrickTypingLogic: ObservableObject {
     static func playIntro(drill: DrillState, engine: LessonEngine, mode: DrillMode) {
         if let override = drill.overrideVoiceInstructions {
             print("🎙️ Using Voice Override: '\(override)'")
-            AudioManager.shared.speak(segments: [.init(text: override, language: drill.voiceLanguage ?? "en-US")])
+            AudioManager.shared.speak(text: override, language: drill.voiceLanguage ?? "en-US")
         }
     }
     
@@ -131,7 +148,18 @@ class BrickTypingLogic: ObservableObject {
     func playAudio() {
         let text = state.drillData.target
         let language = engine.lessonData?.target_language ?? "es-ES"
-        AudioManager.shared.speak(segments: [.init(text: text, language: language)])
+        
+        self.patternIntroLogic?.isAudioPlaying = true
+        self.practiceLogic?.isAudioPlaying = true
+        self.ghostLogic?.isAudioPlaying = true
+        
+        AudioManager.shared.speak(text: text, language: language) { [weak self] in
+            DispatchQueue.main.async {
+                self?.patternIntroLogic?.isAudioPlaying = false
+                self?.practiceLogic?.isAudioPlaying = false
+                self?.ghostLogic?.isAudioPlaying = false
+            }
+        }
     }
     
     func continueToNext() {

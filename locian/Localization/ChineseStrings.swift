@@ -185,7 +185,6 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
             selectUserProfession: "SELECT_USER_PROFESSION",
             username: "用户名",
             phoneNumber: "电话号码",
-            guestLogin: "访客登录",
             selectProfessionInstruction: "选择您的职业开始",
             showMore: "显示更多",
             showLess: "显示更少",
@@ -501,7 +500,6 @@ struct ChineseStrings: AppStrings, LocalizedStrings {
         case .forReview: return login.forReview
         case .username: return login.username
         case .phoneNumber: return login.phoneNumber
-        case .guestLogin: return login.guestLogin
         case .authenticatingUser: return login.authenticatingUser
         case .bySigningInYouAgreeToOur: return login.bySigningInYouAgreeToOur
         case .termsOfService: return login.termsOfService
