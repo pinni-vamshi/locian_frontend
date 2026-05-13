@@ -14,16 +14,26 @@ struct LearnTabView: View {
     @ObservedObject private var audioManager = AudioManager.shared
     @State private var isLocianQuestionSpeaking = false
     @State private var isUserSentenceSpeaking = false
-    @State private var showPlaceSentencesModal = false
 
     // Hold-to-launch state
     @State private var holdProgress: CGFloat = 0
     @State private var asteriskAngle: Double = 0   // independent rotation; reverses on finger lift
     @State private var holdTimer: Timer? = nil
 
+    @AppStorage("learnCoachTour_userSawIntro_v1") private var learnCoachTourUserSawIntro: Bool = false
+    @State private var showLearnCoachTour = false
+    @State private var learnCoachTourFrames: [String: CGRect] = [:]
+    @State private var sessionScheduledAutoCoachTour = false
+
     private var screenEdgePadding: CGFloat { learnScaled(2.5, hSizeClass: horizontalSizeClass, min: 2.5, max: 6) }
     private var placeRailHeight: CGFloat { learnScaled(130, hSizeClass: horizontalSizeClass, min: 120, max: 170) }
     private var sentenceConversationChromeSize: CGFloat { learnScaled(28, hSizeClass: horizontalSizeClass, min: 28, max: 36) }
+    /// Fixed slot for the full-sentence graph strip only (word graph is intrinsic height).
+    private var learnGraphSlotHeight: CGFloat { learnScaled(340, hSizeClass: horizontalSizeClass, min: 298, max: 380) }
+    /// Minimum height of the dashed panel that wraps the **whole** transformation graph (not individual word boxes).
+    private var learnTransformationGraphSockMinHeight: CGFloat {
+        learnScaled(292, hSizeClass: horizontalSizeClass, min: 268, max: 368)
+    }
 
     // MARK: - Derived values
 
@@ -37,6 +47,12 @@ struct LearnTabView: View {
     }
 
     private var currentPattern: RecommendationPattern? { state.currentPattern }
+
+    /// When the sentence-graph control is hidden, the graph slot always behaves as word scope.
+    private var effectiveLearnGrammarScope: LearnTabState.LearnGrammarScope {
+        state.showLearnSentenceGraphToggle ? state.learnGrammarScope : .word
+    }
+
     private var currentTargetLanguageCode: String {
         AppStateManager.shared
             .userLanguagePairs
@@ -57,9 +73,22 @@ struct LearnTabView: View {
                     brickArea
                         .layoutPriority(1)
                     startButton
+                        .learnCoachTourHighlight(.startLearning)
                 }
                 .diagnosticBorder(.red, width: 1)
-
+            }
+            .onPreferenceChange(LearnCoachTourFramesKey.self) { learnCoachTourFrames = $0 }
+            .overlay {
+                if showLearnCoachTour {
+                    LearnCoachTourOverlayView(
+                        isPresented: $showLearnCoachTour,
+                        frames: learnCoachTourFrames,
+                        onCompleted: {
+                            learnCoachTourUserSawIntro = true
+                        }
+                    )
+                    .transition(.opacity)
+                }
             }
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
@@ -67,6 +96,13 @@ struct LearnTabView: View {
                 state.onAppearSetup()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                     withAnimation(.easeOut(duration: 0.4)) { state.animateIn = true }
+                }
+                if !learnCoachTourUserSawIntro && !sessionScheduledAutoCoachTour {
+                    sessionScheduledAutoCoachTour = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+                        guard !learnCoachTourUserSawIntro else { return }
+                        withAnimation(.easeOut(duration: 0.25)) { showLearnCoachTour = true }
+                    }
                 }
             }
             .onDisappear {
@@ -79,20 +115,24 @@ struct LearnTabView: View {
             .onChange(of: state.isFetchingData) { _, loading in if !loading { state.onRecommendationOrFetchChanged() } }
             .onChange(of: currentPattern?.id) { _, _ in state.onCurrentPatternChanged() }
             .onChange(of: state.showLessonView) { _, shown in if !shown { state.currentLesson = nil } }
+            .onChange(of: state.showLearnSentenceGraphToggle) { _, show in
+                if !show { state.learnGrammarScope = .word }
+            }
             .onChange(of: audioManager.isVoiceSpeaking) { _, speaking in
                 print("📚 [LearnTab] conversation icon state -> \(speaking ? "SPEAKER" : "PERSON")")
-            }
-            .sheet(isPresented: $showPlaceSentencesModal) {
-                if let recommendation = state.activeRecommendation {
-                    LearnPlaceSentencesModal(
-                        recommendation: recommendation,
-                        initialSentenceIndex: state.storyIndex
-                    )
-                }
             }
             .navigationDestination(isPresented: $state.showLessonView) {
                 if let lesson = state.currentLesson {
                     ConversationLessonView(lessonData: lesson).environmentObject(appState)
+                }
+            }
+            .task(id: appState.learnCoachTourManualTrigger) {
+                let trigger = appState.learnCoachTourManualTrigger
+                guard trigger > appState.learnCoachTourManualTriggerPresentedUpTo else { return }
+                try? await Task.sleep(nanoseconds: 420_000_000)
+                await MainActor.run {
+                    appState.learnCoachTourManualTriggerPresentedUpTo = trigger
+                    withAnimation(.easeOut(duration: 0.25)) { showLearnCoachTour = true }
                 }
             }
         }
@@ -161,12 +201,10 @@ struct LearnTabView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     state.selectRecommendation(index: index)
                 }
-            },
-            onOpenActivePlace: {
-                showPlaceSentencesModal = true
             }
         )
         .frame(height: placeRailHeight)
+        .learnCoachTourHighlight(.placeRail)
     }
 
     // MARK: - Brick Area
@@ -176,10 +214,17 @@ struct LearnTabView: View {
 
             VStack(spacing: 0) {
                 brickHeader
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    .learnCoachTourHighlight(.brickHeader)
+
                 VStack(spacing: 0) {
                     storiesSection
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .learnCoachTourHighlight(.sentenceStrip)
+
                     wordSection
                         .frame(maxWidth: .infinity, alignment: .topLeading)
+                        .learnCoachTourHighlight(.transformationGraph)
                 }
                 .contentShape(Rectangle())
                 .onLongPressGesture(minimumDuration: 0.2, maximumDistance: 32, pressing: { pressing in
@@ -198,6 +243,8 @@ struct LearnTabView: View {
             activeRecommendation: state.activeRecommendation,
             currentPattern: currentPattern,
             learnStripShowsTarget: $state.learnStripShowsTarget,
+            learnGrammarScope: $state.learnGrammarScope,
+            showSentenceGraphToggle: state.showLearnSentenceGraphToggle,
             locianQuestionTargetTokens: state.locianQuestionTargetTokens,
             locianQuestionNativeTokens: state.locianQuestionNativeTokens,
             selectedQuestionBrickIndex: $state.selectedQuestionBrickIndex,
@@ -364,22 +411,27 @@ struct LearnTabView: View {
 
     private var wordSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            VStack {
-                Spacer(minLength: 0)
-                if let brick = state.selectedBrick {
-                    tappedWordDetails(brick: brick)
+            Group {
+                if effectiveLearnGrammarScope == .word {
+                    if let brick = state.selectedBrick {
+                        tappedWordDetails(brick: brick)
+                    }
+                } else {
+                    LearnInlineSentenceGraphStrip(
+                        pattern: currentPattern,
+                        line: state.selectedQuestionBrickIndex != nil ? .locianQuestion : .userReply
+                    )
+                    .frame(maxWidth: .infinity, minHeight: learnGraphSlotHeight, maxHeight: learnGraphSlotHeight, alignment: .top)
                 }
-                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, learnScaled(2, hSizeClass: horizontalSizeClass, min: 2, max: 4))
-            .padding(.top, learnScaled(60, hSizeClass: horizontalSizeClass, min: 50, max: 72))
-            .padding(.bottom, learnScaled(30, hSizeClass: horizontalSizeClass, min: 26, max: 36))
             .multilineTextAlignment(.center)
+            .clipped()
 
-            // No outer padding here — the explanation box sits flush against
-            // wordSection's edges. Its own internal padding insets the text.
-            triggerAndChangeBlock
+            if effectiveLearnGrammarScope == .word {
+                triggerAndChangeBlock
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .diagnosticBorder(.purple, width: 1)
@@ -413,7 +465,7 @@ struct LearnTabView: View {
         // (the human-readable string from demo_response.json).
         let pattern = brick?.pattern
 
-        return VStack(alignment: .center, spacing: 8) {
+        return VStack(alignment: .center, spacing: 6) {
             if let pattern, !pattern.isEmpty {
                 Text(pattern)
                     .font(learnFont(size: 13, weight: .regular, hSizeClass: horizontalSizeClass))
@@ -425,7 +477,8 @@ struct LearnTabView: View {
             }
         }
         .padding(.horizontal, learnScaled(2, hSizeClass: horizontalSizeClass, min: 2, max: 4))
-        .padding(.vertical, learnScaled(14, hSizeClass: horizontalSizeClass, min: 12, max: 18))
+        .padding(.top, learnScaled(4, hSizeClass: horizontalSizeClass, min: 2, max: 8))
+        .padding(.bottom, learnScaled(12, hSizeClass: horizontalSizeClass, min: 10, max: 16))
         .frame(maxWidth: .infinity, alignment: .center)
         .background(Color.clear)
         .diagnosticBorder(.pink, width: 1)
@@ -480,7 +533,7 @@ struct LearnTabView: View {
                 fallbackPlainBrickLine(brick: brick)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, minHeight: brick.patternJson != nil ? learnTransformationGraphSockMinHeight : 0, alignment: .center)
         .diagnosticBorder(.white, width: 1, style: .dashed)
     }
 

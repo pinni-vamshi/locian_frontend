@@ -120,6 +120,9 @@ struct MainTabView: View {
                 appState.shouldShowSettingsView = false
             }
         }
+        .onChange(of: appState.learnCoachTourManualTrigger) { _, _ in
+            selectedTab = .learn
+        }
         .onChange(of: appState.pendingDeepLinkPlace) { old, placeName in
             if let placeName = placeName, let hour = appState.pendingDeepLinkHour {
                 print("📱 [MainTabView] Deep link detected: \(placeName). Switching to Learn tab.")

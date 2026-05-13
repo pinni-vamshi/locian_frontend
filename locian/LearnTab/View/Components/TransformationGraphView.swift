@@ -25,13 +25,16 @@ struct TransformationGraphView: View {
     /// (ScrollView proposes infinite width to its child, which otherwise left-aligns).
     @State private var scrollViewportWidth: CGFloat = 0
 
-    private var arrowLineWidth: CGFloat { learnScaled(52, hSizeClass: horizontalSizeClass, min: 52, max: 68) }   // fixed horizontal line length
-    private var stemLen: CGFloat { learnScaled(44, hSizeClass: horizontalSizeClass, min: 44, max: 58) }   // perpendicular line length (extends outside box)
-    private var chipEst: CGFloat { learnScaled(22, hSizeClass: horizontalSizeClass, min: 22, max: 30) }   // estimated chip height for mirror spacer
+    private var arrowLineWidth: CGFloat { learnScaled(64, hSizeClass: horizontalSizeClass, min: 60, max: 82) }
+    private var stemLen: CGFloat { learnScaled(62, hSizeClass: horizontalSizeClass, min: 56, max: 78) }
+    private var chipEst: CGFloat { learnScaled(30, hSizeClass: horizontalSizeClass, min: 28, max: 38) }
+
+    /// Word-stage tiles: max height keeps rows compact; bump when you need more room for three lines.
+    private var wordStageBoxMaxHeight: CGFloat { learnScaled(66, hSizeClass: horizontalSizeClass, min: 60, max: 72) }
 
     var body: some View {
         if let pj = brick.patternJson, let stages = stages(from: pj), !stages.isEmpty {
-            VStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .center, spacing: 0) {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(alignment: .center, spacing: 0) {
                         Spacer(minLength: 0)
@@ -43,8 +46,8 @@ struct TransformationGraphView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, learnScaled(6, hSizeClass: horizontalSizeClass, min: 6, max: 8))
-                        .padding(.vertical, learnScaled(2, hSizeClass: horizontalSizeClass, min: 2, max: 4))
+                        .padding(.horizontal, learnScaled(8, hSizeClass: horizontalSizeClass, min: 8, max: 12))
+                        .padding(.vertical, learnScaled(4, hSizeClass: horizontalSizeClass, min: 3, max: 8))
                         Spacer(minLength: 0)
                     }
                     .frame(minWidth: max(scrollViewportWidth, 1))
@@ -54,6 +57,7 @@ struct TransformationGraphView: View {
                     scrollViewportWidth = newWidth
                 }
             }
+            .padding(.vertical, learnScaled(18, hSizeClass: horizontalSizeClass, min: 14, max: 26))
             .frame(maxWidth: .infinity, alignment: .center)
         } else {
             EmptyView()
@@ -113,38 +117,42 @@ struct TransformationGraphView: View {
     private func stageNode(_ stage: Stage) -> some View {
         let highlights = highlightsFor(stage)
 
-        VStack(alignment: .center, spacing: 4) {
+        VStack(alignment: .center, spacing: 2) {
             // Role label (invisible placeholder keeps height consistent for intermediate nodes)
             Text(stage.role.isEmpty ? " " : stage.role)
-                .font(.system(size: learnScaled(8, hSizeClass: horizontalSizeClass, min: 8, max: 10), weight: .black, design: .monospaced))
-                .kerning(1.2)
+                .font(.system(size: learnScaled(8, hSizeClass: horizontalSizeClass, min: 7, max: 9), weight: .black, design: .monospaced))
+                .kerning(1.0)
                 .foregroundColor(stage.role == "BASE"
                                  ? Color(white: 0.55)
                                  : ThemeColors.secondaryAccent)
                 .opacity(stage.role.isEmpty ? 0 : 1)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
 
             attributedSurface(stage.surface, highlights: highlights)
-                .font(.system(size: learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 26), weight: stage.isAnchor ? .bold : .semibold))
+                .font(.system(size: learnScaled(18, hSizeClass: horizontalSizeClass, min: 16, max: 21), weight: stage.isAnchor ? .bold : .semibold))
                 .lineLimit(1)
+                .minimumScaleFactor(0.72)
                 .fixedSize(horizontal: true, vertical: false)
 
-            // Native translation shown only for BASE / TARGET anchor boxes
+            // Native: larger on first (BASE) and last (TARGET) anchor boxes only.
             if let native = stage.nativeWord {
                 Text(native)
-                    .font(.system(size: learnScaled(11, hSizeClass: horizontalSizeClass, min: 11, max: 14), weight: .medium))
+                    .font(.system(size: learnScaled(12, hSizeClass: horizontalSizeClass, min: 11, max: 14), weight: .medium))
                     .foregroundColor(Color(white: 0.5))
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: true, vertical: false)
             } else {
-                // Invisible spacer keeps all nodes the same height
+                // Same line metrics as anchor natives so column heights stay aligned.
                 Text(" ")
-                    .font(.system(size: learnScaled(11, hSizeClass: horizontalSizeClass, min: 11, max: 14), weight: .medium))
+                    .font(.system(size: learnScaled(12, hSizeClass: horizontalSizeClass, min: 11, max: 14), weight: .medium))
                     .opacity(0)
             }
         }
-        .padding(.horizontal, learnScaled(14, hSizeClass: horizontalSizeClass, min: 14, max: 18))
-        .padding(.vertical, learnScaled(4, hSizeClass: horizontalSizeClass, min: 4, max: 6))
-        .frame(minHeight: learnScaled(48, hSizeClass: horizontalSizeClass, min: 48, max: 62))
+        .padding(.horizontal, learnScaled(14, hSizeClass: horizontalSizeClass, min: 12, max: 18))
+        .padding(.vertical, learnScaled(4, hSizeClass: horizontalSizeClass, min: 3, max: 6))
+        .frame(maxHeight: wordStageBoxMaxHeight)
         .background(Rectangle().fill(
             Color.white.opacity(0.08)
         ))
@@ -188,9 +196,9 @@ struct TransformationGraphView: View {
             HStack(spacing: 0) {
                 Rectangle()
                     .fill(Color.white)
-                    .frame(width: arrowLineWidth, height: 1.5)
+                    .frame(width: arrowLineWidth, height: 2)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: learnScaled(10, hSizeClass: horizontalSizeClass, min: 10, max: 13), weight: .heavy))
+                    .font(.system(size: learnScaled(12, hSizeClass: horizontalSizeClass, min: 11, max: 15), weight: .heavy))
                     .foregroundColor(.white)
             }
 
@@ -203,19 +211,18 @@ struct TransformationGraphView: View {
                 opChipView(op)
             }
         }
-        // Minimum width so the gap never collapses below the arrow length
-        .frame(width: arrowLineWidth + 20)
+        .frame(width: arrowLineWidth + learnScaled(24, hSizeClass: horizontalSizeClass, min: 22, max: 30))
     }
 
     @ViewBuilder
     private func opChipView(_ op: PatternOp?) -> some View {
         if let op {
             Text(op.label)
-                .font(.system(size: learnScaled(9, hSizeClass: horizontalSizeClass, min: 9, max: 12), weight: .black, design: .monospaced))
+                .font(.system(size: learnScaled(10, hSizeClass: horizontalSizeClass, min: 10, max: 13), weight: .black, design: .monospaced))
                 .kerning(1.0)
                 .foregroundColor(.black)
-                .padding(.horizontal, learnScaled(6, hSizeClass: horizontalSizeClass, min: 6, max: 8))
-                .padding(.vertical, learnScaled(3, hSizeClass: horizontalSizeClass, min: 3, max: 5))
+                .padding(.horizontal, learnScaled(8, hSizeClass: horizontalSizeClass, min: 7, max: 10))
+                .padding(.vertical, learnScaled(4, hSizeClass: horizontalSizeClass, min: 3, max: 6))
                 .background(Rectangle().fill(
                     Color.white
                 ))
@@ -229,7 +236,7 @@ struct TransformationGraphView: View {
     private func stemView() -> some View {
         Rectangle()
             .fill(Color.white)
-            .frame(width: 1.5, height: stemLen)
+            .frame(width: 2, height: stemLen)
     }
 
     // MARK: - Letter highlight helpers

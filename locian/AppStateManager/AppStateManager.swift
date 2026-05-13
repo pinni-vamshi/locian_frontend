@@ -120,6 +120,20 @@ class AppStateManager: ObservableObject {
             UserDefaults.standard.set(showDiagnosticBorders, forKey: "showDiagnosticBorders")
         }
     }
+
+    // MARK: - Learn coach tour (Settings → Learn)
+
+    /// Incremented from Settings. ``LearnTabView`` presents when this value is greater than
+    /// ``learnCoachTourManualTriggerPresentedUpTo`` and then advances the latter to match — so tab switches
+    /// never replay the same request.
+    @Published var learnCoachTourManualTrigger: Int = 0
+
+    /// Highest ``learnCoachTourManualTrigger`` value the Learn tab has already opened the tour for.
+    @Published var learnCoachTourManualTriggerPresentedUpTo: Int = 0
+
+    func requestLearnCoachTourFromSettings() {
+        learnCoachTourManualTrigger += 1
+    }
     
 
     

@@ -5,6 +5,8 @@ struct LearnBrickHeaderView: View {
     let activeRecommendation: PlaceRecommendation?
     let currentPattern: RecommendationPattern?
     @Binding var learnStripShowsTarget: Bool
+    @Binding var learnGrammarScope: LearnTabState.LearnGrammarScope
+    let showSentenceGraphToggle: Bool
     let locianQuestionTargetTokens: [SentenceToken]
     let locianQuestionNativeTokens: [SentenceToken]
     @Binding var selectedQuestionBrickIndex: Int?
@@ -189,60 +191,66 @@ struct LearnBrickHeaderView: View {
         }
     }
 
+    /// Native (Aa) ↔ target (文). Optional second control: word vs full sentence graph (`showSentenceGraphToggle`).
     private var learnStripModeToggle: some View {
-        HStack(spacing: 6) {
-            learnStripModeSegment(
-                isSelected: !learnStripShowsTarget,
-                select: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.easeInOut(duration: 0.2)) { learnStripShowsTarget = false }
-                },
-                selectedContent: {
-                    Text("Aa")
-                        .font(LearnHelvetica.font(size: 12, weight: .black))
-                },
-                accessibilityLabel: "Native line",
-                accessibilityHint: "Shows native sentence and glosses."
-            )
+        HStack(spacing: showSentenceGraphToggle ? 10 : 0) {
+            scriptLineToggleButton
 
-            Text("|")
-                .font(LearnHelvetica.font(size: 10, weight: .bold))
-                .foregroundColor(Color.white.opacity(0.35))
+            if showSentenceGraphToggle {
+                Text("|")
+                    .font(LearnHelvetica.font(size: 10, weight: .bold))
+                    .foregroundColor(Color.white.opacity(0.35))
+                    .padding(.horizontal, 2)
 
-            learnStripModeSegment(
-                isSelected: learnStripShowsTarget,
-                select: {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.easeInOut(duration: 0.2)) { learnStripShowsTarget = true }
-                },
-                selectedContent: {
-                    Text("文")
-                        .font(LearnHelvetica.font(size: 15, weight: .black))
-                },
-                accessibilityLabel: "Learning language line",
-                accessibilityHint: "Shows target sentence and pronunciation."
-            )
+                sentenceGraphScopeToggleButton
+            }
         }
     }
 
-    private func learnStripModeSegment<Content: View>(
-        isSelected: Bool,
-        select: @escaping () -> Void,
-        @ViewBuilder selectedContent: () -> Content,
-        accessibilityLabel: String,
-        accessibilityHint: String
-    ) -> some View {
-        Button(action: select) {
-            selectedContent()
-                .foregroundColor(isSelected ? ThemeColors.secondaryAccent : Color.white.opacity(0.4))
+    private var scriptLineToggleButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(.easeInOut(duration: 0.2)) { learnStripShowsTarget.toggle() }
+        } label: {
+            Text(learnStripShowsTarget ? "文" : "Aa")
+                .font(LearnHelvetica.font(size: learnStripShowsTarget ? 15 : 12, weight: .black))
+                .foregroundColor(ThemeColors.secondaryAccent)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .frame(minHeight: 28, alignment: .center)
-                .background(isSelected ? Color.white : Color.clear)
+                .background(Color.white)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint(accessibilityHint)
+        .accessibilityLabel(learnStripShowsTarget ? "Learning language line" : "Native line")
+        .accessibilityHint("Tap to switch between native and learning-language lines.")
+    }
+
+    private var sentenceGraphScopeToggleButton: some View {
+        Button {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            withAnimation(.easeInOut(duration: 0.2)) {
+                learnGrammarScope = learnGrammarScope == .word ? .sentence : .word
+            }
+        } label: {
+            Group {
+                if learnGrammarScope == .word {
+                    Text("-")
+                        .font(LearnHelvetica.font(size: 20, weight: .black))
+                } else {
+                    Image(systemName: "arrow.left.and.right")
+                        .font(.system(size: 14, weight: .bold))
+                }
+            }
+            .foregroundColor(ThemeColors.secondaryAccent)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(minWidth: 28, minHeight: 28, alignment: .center)
+            .background(Color.white)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(learnGrammarScope == .word ? "Word graph" : "Sentence graph")
+        .accessibilityHint("Tap to switch between word graph and full sentence graph.")
     }
 }

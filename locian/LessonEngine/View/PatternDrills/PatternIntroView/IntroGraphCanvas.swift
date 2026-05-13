@@ -16,7 +16,7 @@ struct IntroGraphCanvas: View {
     let activeTeachIndex: Int
     var activeBaseRevealed: Bool = false
     var activeTargetRevealed: Bool = false
-    /// Vertical band for the diagram; scroll is horizontal only inside this height.
+    /// Vertical band for the diagram; content scrolls horizontally and vertically inside this height.
     var stripHeight: CGFloat
 
     private let targetBoxHeight: CGFloat = 38
@@ -24,7 +24,7 @@ struct IntroGraphCanvas: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView([.horizontal, .vertical], showsIndicators: false) {
                 HStack(alignment: .targetBoxCenter, spacing: 0) {
                     ForEach(Array(allBricks.enumerated()), id: \.element.id) { idx, brick in
                         brickNode(brick, index: idx)

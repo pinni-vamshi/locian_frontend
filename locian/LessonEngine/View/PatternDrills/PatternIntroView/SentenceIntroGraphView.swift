@@ -28,7 +28,7 @@ struct SentenceIntroGraphView: View {
 
     var body: some View {
         GeometryReader { geo in
-            // Fixed-height strip: graph scrolls horizontally only; lower area keeps question + interaction stable.
+            // Fixed-height strip: graph scrolls horizontally + vertically inside the strip; lower area stays stable.
             let stripH = min(max(geo.size.height * 0.40, 272), 340)
             VStack(spacing: 0) {
                 IntroGraphCanvas(
@@ -44,12 +44,9 @@ struct SentenceIntroGraphView: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
 
-                VStack(spacing: 0) {
-                    interactionPanel
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .diagnosticBorder(.mint.opacity(0.45))
+                interactionPanel
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                    .diagnosticBorder(.mint.opacity(0.45))
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
@@ -64,11 +61,47 @@ struct SentenceIntroGraphView: View {
     @ViewBuilder
     private var interactionPanel: some View {
         if activeBrick == nil {
-            // All bricks done — proceed to practice
-            finishButton
-                .diagnosticBorder(.orange.opacity(0.6))
+            introFinishedColumn
         } else if let drill = activeDrill {
-            let mode = BrickModeSelector.resolveMode(for: drill, engine: engine)
+            activeInteractionColumn(drill: drill)
+        }
+    }
+
+    /// Same vertical band as drill UI: top = prompt slot, middle flexes, CTA pinned to bottom.
+    private var introFinishedColumn: some View {
+        VStack(spacing: 0) {
+            introDoneQuestionStrip
+            Spacer(minLength: 0)
+            finishButton
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .diagnosticBorder(.orange.opacity(0.6))
+        .transition(.opacity)
+    }
+
+    /// Prompt strip aligned with `GraphMCQPanel` question row (48–80pt) showing intro complete.
+    private var introDoneQuestionStrip: some View {
+        ZStack {
+            Color.black
+            Text("DONE")
+                .font(.custom("Helvetica Neue", size: 11).weight(.bold))
+                .kerning(0.8)
+                .foregroundColor(CyberColors.neonGreen)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: 48, maxHeight: 80)
+        .overlay(Rectangle().fill(Color.white.opacity(0.06)).frame(height: 1), alignment: .top)
+        .diagnosticBorder(.cyan)
+    }
+
+    @ViewBuilder
+    private func activeInteractionColumn(drill: DrillState) -> some View {
+        let mode = BrickModeSelector.resolveMode(for: drill, engine: engine)
+        VStack(spacing: 0) {
             Group {
                 switch mode {
                 case .componentTyping:
@@ -104,30 +137,32 @@ struct SentenceIntroGraphView: View {
                     .id(drill.id)
                 }
             }
-            .diagnosticBorder(.orange)
-            .transition(.opacity)
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .diagnosticBorder(.orange)
+        .transition(.opacity)
     }
 
-    // MARK: - Finish Button
+    // MARK: - Finish (stays in interaction stack only; matches drill `CyberProceedButton` footers)
 
     private var finishButton: some View {
-        Button(action: onContinue) {
-            HStack(spacing: 10) {
-                Text("CONTINUE")
-                    .font(.system(size: 13, weight: .black, design: .monospaced))
-                    .tracking(2.5)
-                    .foregroundColor(.black)
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 13, weight: .black))
-                    .foregroundColor(.black)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 22)
-            .background(CyberColors.neonGreen)
+        VStack(spacing: 0) {
+            Divider().background(Color.white.opacity(0.1))
+            CyberProceedButton(
+                action: { onContinue() },
+                label: "NEXT_STORY_STEP",
+                title: "CONTINUE",
+                color: CyberColors.success,
+                systemImage: "arrow.right",
+                isEnabled: true
+            )
         }
-        .buttonStyle(.plain)
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .padding(.horizontal)
+        .padding(.top, 12)
+        .padding(.bottom, 16)
+        .frame(maxWidth: .infinity)
+        .transition(.opacity)
     }
 
     // MARK: - Advance

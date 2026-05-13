@@ -7,6 +7,80 @@
 
 import Foundation
 
+// MARK: - Grammar (discover-moments wire; mirrors backend `demo_response.json`)
+
+/// Native vs target contrast lines for a catalogued rule.
+struct GrammarRuleContrast: Codable, Hashable, Sendable {
+    let native_form: String?
+    let target_form: String?
+}
+
+/// One entry in `grammar_rule_catalog` (keyed by rule id in JSON).
+struct GrammarRuleCatalogEntry: Codable, Hashable, Sendable {
+    let label: String?
+    let explain: String?
+    let contrast: GrammarRuleContrast?
+    let category: String?
+}
+
+// MARK: - Grammar bricks (current wire; `demo_response.json` → `grammar_bricks`)
+
+/// Q/A chunk embedded in a grammar brick's `pattern_json`.
+struct GrammarBridgeChunkPayload: Codable, Hashable, Sendable {
+    let native: String?
+    let target: String?
+}
+
+struct GrammarBrickContrastPayload: Codable, Hashable, Sendable {
+    let native_linguistic: String?
+    let target_linguistic: String?
+}
+
+/// `pattern_json` for rows in `grammar_bricks` (shape differs from vocab-brick ops).
+struct PatternGrammarBrickPatternJson: Codable, Hashable, Sendable {
+    let kind: String?
+    let rule_id: String?
+    let question: GrammarBridgeChunkPayload?
+    let reply: GrammarBridgeChunkPayload?
+    let contrast: GrammarBrickContrastPayload?
+}
+
+/// One grammar teaching row — same field family as vocab bricks, plus `rule_id`.
+struct PatternGrammarBrick: Codable, Hashable, Sendable {
+    let rule_id: String
+    let native: String?
+    let target: String?
+    let base: String?
+    let base_native: String?
+    let base_transliteration: String?
+    let target_transliteration: String?
+    let base_kind: String?
+    let form_kind: String?
+    let pattern: String?
+    let why: String?
+    let pattern_json: PatternGrammarBrickPatternJson?
+    let why_json: WhyJson?
+}
+
+/// Legacy index anchors (older payloads). Prefer `grammar_bricks`.
+struct PatternGrammarRule: Codable, Hashable, Sendable {
+    let rule_id: String
+    let q_anchor_index: Int
+    let a_brick_index: Int
+}
+
+/// Echo of cleaned request fields from `/api/learning/discover-moments` for client-side filtering.
+struct DiscoverMomentsDiscoverMeta: Codable, Hashable, Sendable {
+    let user_language: String?
+    let target_language: String?
+    let latitude: Double?
+    let longitude: Double?
+    let date: String?
+    let time: String?
+    let hour: Double?
+    let ts: String?
+}
+
 // MARK: - Request
 struct DiscoverMomentsRequest: Codable {
     let session_token: String?
@@ -46,7 +120,11 @@ struct DiscoverPlaceInput: Codable {
 // MARK: - Response
 struct DiscoverMomentsResponse: Decodable {
     let success: Bool?
+    /// Optional global catalog; same keys as backend `grammar_rule_catalog`.
+    let grammar_rule_catalog: [String: GrammarRuleCatalogEntry]?
     let places: [DiscoverPlacePayload]?
+    /// Server echo after cleaning (languages, time, coordinates).
+    let discover_meta: DiscoverMomentsDiscoverMeta?
 
     var recommendations: [PlaceRecommendation] {
         // Resolve target language once for the importance pass.
@@ -111,7 +189,9 @@ struct DiscoverMomentsResponse: Decodable {
                     locian_question: item.locian_question,
                     locian_question_native: item.locian_question_native,
                     locian_question_transliteration: item.locian_question_transliteration,
-                    locian_question_bricks: scoredQBricks.isEmpty ? nil : scoredQBricks
+                    locian_question_bricks: scoredQBricks.isEmpty ? nil : scoredQBricks,
+                    grammar_rules: item.grammar_rules,
+                    grammar_bricks: item.grammar_bricks
                 )
             }
             return PlaceRecommendation(
@@ -119,7 +199,8 @@ struct DiscoverMomentsResponse: Decodable {
                 name: place.place_id?.capitalized ?? "Context",
                 confidence: 1.0,
                 grounding: nil,
-                patterns: patterns
+                patterns: patterns,
+                grammarRuleCatalog: grammar_rule_catalog
             )
         }
     }
@@ -133,19 +214,23 @@ struct PlaceRecommendation: Identifiable {
     let confidence: Double
     let grounding: String?
     var patterns: [RecommendationPattern]?
+    /// Copied from the discover response root for this hydration session.
+    var grammarRuleCatalog: [String: GrammarRuleCatalogEntry]?
 
     init(
         place_id: String,
         name: String?,
         confidence: Double,
         grounding: String?,
-        patterns: [RecommendationPattern]?
+        patterns: [RecommendationPattern]?,
+        grammarRuleCatalog: [String: GrammarRuleCatalogEntry]? = nil
     ) {
         self.place_id = place_id
         self.name = name
         self.confidence = confidence
         self.grounding = grounding
         self.patterns = patterns
+        self.grammarRuleCatalog = grammarRuleCatalog
     }
 }
 
@@ -166,6 +251,10 @@ struct RecommendationPattern: Identifiable {
     /// `bricks`, but for the question Locian asks. Drives the same tappable /
     /// underlined word treatment in Learn Preview.
     var locian_question_bricks: [RecommendationBrickItem]?
+    /// Legacy grammar links (brick indices). Prefer `grammar_bricks`.
+    var grammar_rules: [PatternGrammarRule]?
+    /// Rich grammar rows from `grammar_bricks` on the wire.
+    var grammar_bricks: [PatternGrammarBrick]?
 
     init(
         id: String?,
@@ -180,7 +269,9 @@ struct RecommendationPattern: Identifiable {
         locian_question: String? = nil,
         locian_question_native: String? = nil,
         locian_question_transliteration: String? = nil,
-        locian_question_bricks: [RecommendationBrickItem]? = nil
+        locian_question_bricks: [RecommendationBrickItem]? = nil,
+        grammar_rules: [PatternGrammarRule]? = nil,
+        grammar_bricks: [PatternGrammarBrick]? = nil
     ) {
         self.id = id
         self.topic_id = topic_id
@@ -195,6 +286,8 @@ struct RecommendationPattern: Identifiable {
         self.locian_question_native = locian_question_native
         self.locian_question_transliteration = locian_question_transliteration
         self.locian_question_bricks = locian_question_bricks
+        self.grammar_rules = grammar_rules
+        self.grammar_bricks = grammar_bricks
     }
 }
 
@@ -409,6 +502,8 @@ struct DiscoverSentenceItemPayload: Decodable {
     /// as `bricks`, used to drive tappable underlined words on the
     /// question line in Learn Preview.
     let locian_question_bricks: [DiscoverPatternBrickPayload]?
+    let grammar_rules: [PatternGrammarRule]?
+    let grammar_bricks: [PatternGrammarBrick]?
 }
 
 struct DiscoverPlacePayload: Decodable {

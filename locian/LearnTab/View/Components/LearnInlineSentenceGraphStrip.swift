@@ -1,210 +1,87 @@
 import SwiftUI
 
-struct LearnPlaceSentencesModal: View {
-    @Environment(\.dismiss) private var dismiss
+/// Horizontal full-sentence graph for inline Learn tab: user reply or Locian question, depending on `line`.
+struct LearnInlineSentenceGraphStrip: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-    let recommendation: PlaceRecommendation
-    let initialSentenceIndex: Int
-
-    @State private var selectedSentenceIndex: Int = 0
-    @State private var graphMode: SentenceGraphMode = .userReply
-
-    private enum SentenceGraphMode: String, CaseIterable, Identifiable {
-        case userReply = "USER"
-        case locianQuestion = "LOCIAN"
-        var id: String { rawValue }
+    enum Line {
+        case userReply
+        case locianQuestion
     }
 
-    private var patterns: [RecommendationPattern] {
-        recommendation.patterns ?? []
-    }
+    let pattern: RecommendationPattern?
+    let line: Line
 
-    private var currentPattern: RecommendationPattern? {
-        guard selectedSentenceIndex >= 0, selectedSentenceIndex < patterns.count else { return nil }
-        return patterns[selectedSentenceIndex]
-    }
-
-    private var currentSentenceText: String {
-        switch graphMode {
+    private var sentence: String {
+        switch line {
         case .userReply:
-            return currentPattern?.target_pattern ?? ""
+            return pattern?.target_pattern ?? ""
         case .locianQuestion:
-            return currentPattern?.locian_question ?? ""
+            return pattern?.locian_question ?? ""
         }
     }
 
-    private var currentBricks: [RecommendationBrickItem] {
-        switch graphMode {
+    private var bricks: [RecommendationBrickItem] {
+        guard let p = pattern else { return [] }
+        switch line {
         case .userReply:
-            guard let bricks = currentPattern?.bricks else { return [] }
-            return (bricks.constants ?? []) + (bricks.variables ?? []) + (bricks.structural ?? [])
+            guard let b = p.bricks else { return [] }
+            return (b.constants ?? []) + (b.variables ?? []) + (b.structural ?? [])
         case .locianQuestion:
-            return currentPattern?.locian_question_bricks ?? []
+            return p.locian_question_bricks ?? []
         }
     }
 
     private var orderedSentenceBricks: [RecommendationBrickItem] {
-        let sentence = currentSentenceText
-        guard !sentence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return currentBricks }
-        let orderedIndices = orderedBrickIndices(in: sentence, bricks: currentBricks)
-        guard !orderedIndices.isEmpty else { return currentBricks }
+        let s = sentence
+        guard !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return bricks }
+        let orderedIndices = orderedBrickIndices(in: s, bricks: bricks)
+        guard !orderedIndices.isEmpty else { return bricks }
         return orderedIndices.compactMap { idx in
-            guard idx >= 0, idx < currentBricks.count else { return nil }
-            return currentBricks[idx]
+            guard idx >= 0, idx < bricks.count else { return nil }
+            return bricks[idx]
         }
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
-
-                VStack(alignment: .leading, spacing: 16) {
-                    sentenceRail
-                    graphModeControl
-                    sentenceGraphArea
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, learnScaled(14, hSizeClass: horizontalSizeClass, min: 14, max: 20))
-                .padding(.top, learnScaled(14, hSizeClass: horizontalSizeClass, min: 14, max: 20))
-                .padding(.bottom, learnScaled(8, hSizeClass: horizontalSizeClass, min: 8, max: 12))
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Text(recommendation.place_id.uppercased())
-                        .font(learnFont(size: 13, weight: .black, hSizeClass: horizontalSizeClass))
-                        .foregroundColor(ThemeColors.secondaryAccent)
-                        .lineLimit(1)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .font(learnFont(size: 14, weight: .bold, hSizeClass: horizontalSizeClass))
-                }
-            }
-        }
-        .presentationDragIndicator(.visible)
-        .presentationBackground(Color.black)
-        .onAppear {
-            if patterns.isEmpty {
-                selectedSentenceIndex = 0
+        Group {
+            if pattern == nil {
+                emptyLabel("No sentence selected.")
+            } else if sentence.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                emptyLabel(line == .userReply
+                           ? "No user-reply sentence for this item yet."
+                           : "No Locian question sentence for this item yet.")
+            } else if orderedSentenceBricks.isEmpty {
+                emptyLabel("No word graph data for this sentence yet.")
             } else {
-                selectedSentenceIndex = max(0, min(initialSentenceIndex, patterns.count - 1))
-            }
-        }
-    }
-
-    private var sentenceRail: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Array(patterns.enumerated()), id: \.offset) { index, pattern in
-                    let selected = index == selectedSentenceIndex
-                    Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            selectedSentenceIndex = index
-                        }
-                    } label: {
-                        Text(sentenceTitle(for: pattern))
-                            .font(learnFont(size: 13, weight: .semibold, hSizeClass: horizontalSizeClass))
-                            .foregroundColor(selected ? .black : .white)
-                            .lineLimit(1)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(selected ? Color.white : Color.white.opacity(0.1))
-                            .overlay(
-                                Rectangle()
-                                    .stroke(selected ? Color.clear : Color.white.opacity(0.25), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    sentenceGraphRow
+                        .padding(.horizontal, learnScaled(10, hSizeClass: horizontalSizeClass, min: 8, max: 16))
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
         }
     }
 
-    private var sentenceGraphArea: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 14) {
-                if currentPattern != nil {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(currentSentenceText)
-                            .font(learnFont(size: 19, weight: .bold, hSizeClass: horizontalSizeClass))
-                            .foregroundColor(.white)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    if currentSentenceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text(graphMode == .userReply
-                             ? "No user-reply sentence for this item yet."
-                             : "No Locian question sentence for this item yet.")
-                            .font(learnFont(size: 13, weight: .medium, hSizeClass: horizontalSizeClass))
-                            .foregroundColor(Color.white.opacity(0.5))
-                    } else if orderedSentenceBricks.isEmpty {
-                        Text("No word graph data for this sentence yet.")
-                            .font(learnFont(size: 13, weight: .medium, hSizeClass: horizontalSizeClass))
-                            .foregroundColor(Color.white.opacity(0.5))
-                    } else {
-                        connectedSentenceGraph
-                            .padding(.top, learnScaled(26, hSizeClass: horizontalSizeClass, min: 22, max: 34))
-                    }
-                } else {
-                    Text("No sentence selected.")
-                        .font(learnFont(size: 13, weight: .medium, hSizeClass: horizontalSizeClass))
-                        .foregroundColor(Color.white.opacity(0.5))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.bottom, 14)
-        }
+    private func emptyLabel(_ text: String) -> some View {
+        Text(text)
+            .font(learnFont(size: 13, weight: .medium, hSizeClass: horizontalSizeClass))
+            .foregroundColor(Color.white.opacity(0.5))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
-    private var graphModeControl: some View {
-        HStack(spacing: 8) {
-            ForEach(SentenceGraphMode.allCases) { mode in
-                let selected = graphMode == mode
-                Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        graphMode = mode
-                    }
-                } label: {
-                    Text(mode.rawValue)
-                        .font(learnFont(size: 11, weight: .bold, hSizeClass: horizontalSizeClass))
-                        .foregroundColor(selected ? .black : .white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(selected ? Color.white : Color.white.opacity(0.08))
-                        .overlay(
-                            Rectangle()
-                                .stroke(selected ? Color.clear : Color.white.opacity(0.25), lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    private func sentenceTitle(for pattern: RecommendationPattern) -> String {
-        let text = (pattern.target_pattern ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if text.isEmpty { return "Sentence" }
-        return text
-    }
-
-    private var connectedSentenceGraph: some View {
+    private var sentenceGraphRow: some View {
         let sharedRegionHeight = sentenceExplanationRegionHeight
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .center, spacing: 0) {
-                ForEach(Array(orderedSentenceBricks.enumerated()), id: \.offset) { index, brick in
-                    unifiedSentenceNode(brick: brick, index: index, sharedRegionHeight: sharedRegionHeight)
-                    if index < orderedSentenceBricks.count - 1 {
-                        sentenceConnector
-                    }
+        return HStack(alignment: .center, spacing: learnScaled(8, hSizeClass: horizontalSizeClass, min: 6, max: 12)) {
+            ForEach(Array(orderedSentenceBricks.enumerated()), id: \.offset) { index, brick in
+                unifiedSentenceNode(brick: brick, index: index, sharedRegionHeight: sharedRegionHeight)
+                if index < orderedSentenceBricks.count - 1 {
+                    sentenceConnector
                 }
             }
-            .padding(.horizontal, 0)
-            .padding(.vertical, 0)
         }
+        .padding(.vertical, learnScaled(4, hSizeClass: horizontalSizeClass, min: 2, max: 8))
     }
 
     @ViewBuilder
@@ -344,8 +221,6 @@ struct LearnPlaceSentencesModal: View {
         let detailCount = max(0, chain.stages.count - 1)
         guard detailCount > 0 else { return 0 }
 
-        // Approximate enough vertical room for stacked stages/labels/connectors.
-        // Symmetric top/bottom regions keep target nodes on one exact baseline.
         let stageH = learnScaled(30, hSizeClass: horizontalSizeClass, min: 28, max: 34)
         let labelH = learnScaled(20, hSizeClass: horizontalSizeClass, min: 18, max: 24)
         let connectorH = learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16)

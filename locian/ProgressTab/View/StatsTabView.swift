@@ -26,11 +26,13 @@ struct StatsTabView: View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 Color.black.ignoresSafeArea()
+                    .diagnosticBorder(.white.opacity(0.15), width: 0.5)
                 
                 if state.activePair != nil {
                     VStack(spacing: 0) {
                         // 1. MINIMAL FIXED HEADER
                         StatsHeaderView(state: state)
+                            .diagnosticBorder(.red, width: 1)
                             .opacity(animateIn ? 1 : 0).offset(y: animateIn ? 0 : 10)
                             .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.0), value: animateIn)
                         
@@ -38,6 +40,7 @@ struct StatsTabView: View {
                         VStack(alignment: .leading, spacing: 0) {
                             fullCalendarSection
                         }
+                        .diagnosticBorder(.orange, width: 1)
                         .padding(.top, learnScaled(32, hSizeClass: horizontalSizeClass, min: 28, max: 40))
                         .opacity(animateIn ? 1 : 0)
                         .offset(y: animateIn ? 0 : 15)
@@ -46,28 +49,37 @@ struct StatsTabView: View {
                         // 3. SCROLLABLE DATA SECTION
                         ZStack(alignment: .top) {
                             if state.pullRefreshState != .idle {
-                                CyberRefreshIndicator(state: state.pullRefreshState, height: max(60, state.scrollOffset), accentColor: CyberColors.neonPink).zIndex(0)
+                                CyberRefreshIndicator(state: state.pullRefreshState, height: max(60, state.scrollOffset), accentColor: CyberColors.neonPink)
+                                    .zIndex(0)
+                                    .diagnosticBorder(CyberColors.neonPink.opacity(0.6), width: 1, style: .dashed)
                             }
                             ScrollView(showsIndicators: false) {
                                 dateDetailSection(for: state.selectedHistoryDate ?? currentDayString)
+                                    .diagnosticBorder(.yellow, width: 1)
                                     .transition(.opacity)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.bottom, learnScaled(120, hSizeClass: horizontalSizeClass, min: 110, max: 150))
                                     .background(Color.black)
+                                    .diagnosticBorder(.green.opacity(0.5), width: 1)
                                     .overlay(scrollOffsetTracker, alignment: .top)
                             }
+                            .diagnosticBorder(.cyan, width: 1)
                             .coordinateSpace(name: "statsPullToRefresh")
                             .onPreferenceChange(StatsViewOffsetKey.self) { state.handleRefresh(offset: $0) }
                         }
+                        .diagnosticBorder(.blue, width: 1)
                         .opacity(animateIn ? 1 : 0)
                         .offset(y: animateIn ? 0 : 20)
                         .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.2), value: animateIn)
                     }
+                    .diagnosticBorder(.purple, width: 1)
                 } else {
                     noProgressPlaceholder
                 }
             }
+            .diagnosticBorder(.pink, width: 1)
         }
+        .diagnosticBorder(.mint, width: 1)
         .onAppear { 
             animateIn = false
             state.onAppear()
@@ -117,6 +129,7 @@ struct StatsTabView: View {
                         }) {
                             Text(monthNameAndYear(for: monthsArray[idx]))
                                 .font(learnFont(size: 14, weight: .medium, hSizeClass: horizontalSizeClass))
+                                .diagnosticBorder(.cyan.opacity(0.35), width: 0.5)
                         }
                     }
                 } label: {
@@ -124,27 +137,37 @@ struct StatsTabView: View {
                         Text(monthTitle)
                             .font(learnFont(size: 16, weight: .medium, hSizeClass: horizontalSizeClass))
                             .foregroundColor(.white)
+                            .diagnosticBorder(.orange.opacity(0.5), width: 0.5)
                         
                         Image(systemName: "chevron.down")
                             .font(learnFont(size: 10, weight: .bold, hSizeClass: horizontalSizeClass))
                             .foregroundColor(CyberColors.neonPink)
+                            .diagnosticBorder(CyberColors.neonPink.opacity(0.4), width: 0.5)
                     }
+                    .diagnosticBorder(.yellow.opacity(0.6), width: 1)
                 }
+                .diagnosticBorder(.green.opacity(0.45), width: 1, style: .dashed)
                 
                 Spacer()
+                    .diagnosticBorder(.gray.opacity(0.25), width: 0.5)
                 
                 // MONTH STATS
                 HStack(spacing: 12) {
                     Text("\(monthStats.daysPracticed) DAYS")
                         .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                        .diagnosticBorder(.blue.opacity(0.35), width: 0.5)
                     Text("/")
                         .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                        .diagnosticBorder(.white.opacity(0.2), width: 0.5)
                     Text("\(monthStats.placesVisited) PLACES")
                         .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                        .diagnosticBorder(.purple.opacity(0.4), width: 0.5)
                 }
                 .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
                 .foregroundColor(.white.opacity(0.4))
+                .diagnosticBorder(.pink.opacity(0.5), width: 1)
             }
+            .diagnosticBorder(.red.opacity(0.7), width: 1)
             .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
             .padding(.bottom, learnScaled(16, hSizeClass: horizontalSizeClass, min: 16, max: 22))
             
@@ -153,8 +176,10 @@ struct StatsTabView: View {
                 ForEach(monthsArray.indices, id: \.self) { index in
                     monthGridView(for: monthsArray[index])
                         .tag(index)
+                        .diagnosticBorder(.mint.opacity(0.55), width: 0.5, style: .dashed)
                 }
             }
+            .diagnosticBorder(.cyan, width: 1)
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: learnScaled(80, hSizeClass: horizontalSizeClass, min: 80, max: 100)) // Just tall enough for the single row
             .onAppear {
@@ -164,7 +189,9 @@ struct StatsTabView: View {
             Divider()
                 .background(Color.white.opacity(0.1))
                 .padding(.top, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 26))
+                .diagnosticBorder(.white.opacity(0.3), width: 0.5)
         }
+        .diagnosticBorder(.orange.opacity(0.8), width: 1, style: .dashed)
     }
     
     private func dateDetailSection(for dateStr: String) -> some View {
@@ -184,6 +211,7 @@ struct StatsTabView: View {
                                 .font(learnFont(size: 14, weight: .bold, hSizeClass: horizontalSizeClass))
                                 .foregroundColor(ThemeColors.neonGreen)
                                 .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
+                                .diagnosticBorder(ThemeColors.neonGreen.opacity(0.45), width: 0.5)
                             
                             VStack(alignment: .leading, spacing: 8) {
                                 ForEach(placeSentences, id: \.pattern_id) { item in
@@ -194,15 +222,19 @@ struct StatsTabView: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .background(Color.white.opacity(0.02))
                                         .border(Color.white.opacity(0.05), width: 1)
+                                        .diagnosticBorder(.cyan.opacity(0.35), width: 0.5)
                                 }
                             }
+                            .diagnosticBorder(.blue.opacity(0.4), width: 1)
                             .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
                         }
+                        .diagnosticBorder(.purple.opacity(0.55), width: 1, style: .dashed)
                         .opacity(animateIn ? 1 : 0)
                         .offset(y: animateIn ? 0 : 20)
                         .animation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.3 + (Double(index) * 0.06)), value: animateIn)
                     }
                 }
+                .diagnosticBorder(.pink.opacity(0.5), width: 1)
                 .padding(.top, learnScaled(16, hSizeClass: horizontalSizeClass, min: 16, max: 22))
             } else {
                 // NO DATA PREVIEW
@@ -210,20 +242,28 @@ struct StatsTabView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text("UNKNOWN SECTOR").font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                                .diagnosticBorder(.orange.opacity(0.4), width: 0.5)
                             Spacer()
+                                .diagnosticBorder(.gray.opacity(0.2), width: 0.5)
                             Text("--:-- --").font(learnFont(size: 10, hSizeClass: horizontalSizeClass))
+                                .diagnosticBorder(.yellow.opacity(0.35), width: 0.5)
                         }
+                        .diagnosticBorder(.red.opacity(0.45), width: 1)
                         Text("NO SENTENCES PRACTICED").font(learnFont(size: 16, weight: .medium, hSizeClass: horizontalSizeClass))
+                            .diagnosticBorder(.mint.opacity(0.4), width: 0.5)
                     }
+                    .diagnosticBorder(.green.opacity(0.4), width: 1)
                     .padding(12)
                     .background(Color.white.opacity(0.02))
                     .border(Color.white.opacity(0.05), width: 1)
                     .opacity(0.5)
                 }
+                .diagnosticBorder(.white.opacity(0.35), width: 1, style: .dashed)
                 .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
                 .padding(.top, learnScaled(16, hSizeClass: horizontalSizeClass, min: 16, max: 22))
             }
         }
+        .diagnosticBorder(.yellow.opacity(0.6), width: 1)
     }
     
     private func monthGridView(for monthDate: Date) -> some View {
@@ -256,14 +296,17 @@ struct StatsTabView: View {
                                 }
                             }) {
                                 calendarDayCell(date: date)
+                                    .diagnosticBorder(.cyan.opacity(0.4), width: 0.5)
                             }
                             .buttonStyle(.plain)
                             .disabled(isFuture)
                             .id(date)
                         }
                     }
+                    .diagnosticBorder(.green.opacity(0.55), width: 1)
                     .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
                 }
+                .diagnosticBorder(.orange.opacity(0.65), width: 1, style: .dashed)
                 .onAppear {
                     // Try to scroll to selected date on load
                     if let selectedStr = state.selectedHistoryDate {
@@ -277,6 +320,7 @@ struct StatsTabView: View {
                     }
                 }
             }
+            .diagnosticBorder(.red.opacity(0.4), width: 0.5, style: .dashed)
         )
     }
 
@@ -298,18 +342,23 @@ struct StatsTabView: View {
                 .font(learnFont(size: 8, weight: .bold, hSizeClass: horizontalSizeClass))
                 .foregroundColor(color.opacity(0.6))
                 .frame(maxWidth: .infinity, alignment: .center)
+                .diagnosticBorder(color.opacity(0.35), width: 0.5)
             
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text(value)
                     .font(learnFont(size: 32, weight: .black, hSizeClass: horizontalSizeClass))
                     .foregroundColor(color)
+                    .diagnosticBorder(color.opacity(0.5), width: 0.5)
                 
                 Text(unit)
                     .font(learnFont(size: 10, weight: .bold, hSizeClass: horizontalSizeClass))
                     .foregroundColor(color.opacity(0.4))
                     .padding(.bottom, learnScaled(4, hSizeClass: horizontalSizeClass, min: 4, max: 6))
+                    .diagnosticBorder(color.opacity(0.3), width: 0.5)
             }
+            .diagnosticBorder(color.opacity(0.4), width: 0.5)
         }
+        .diagnosticBorder(color.opacity(0.65), width: 1)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding(learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
         .background(color.opacity(0.03))
@@ -334,23 +383,29 @@ struct StatsTabView: View {
             if isSelected {
                 ChamferedShape(chamferSize: 0)
                     .fill(CyberColors.neonPink)
+                    .diagnosticBorder(CyberColors.neonPink.opacity(0.9), width: 0.5)
             } else {
                 ChamferedShape(chamferSize: 0)
                     .fill(Color.white.opacity(0.05))
+                    .diagnosticBorder(.white.opacity(0.15), width: 0.5)
             }
             
             VStack(spacing: 8) {
                 Text(dayName)
                     .font(learnFont(size: 10, weight: .bold, hSizeClass: horizontalSizeClass))
                     .foregroundColor(isSelected ? .black : Color.white.opacity(0.4))
+                    .diagnosticBorder(.blue.opacity(0.35), width: 0.5)
                 
                 Text("\(dayNum)")
                     .font(learnFont(size: 20, weight: .black, hSizeClass: horizontalSizeClass))
                     .foregroundColor(isSelected ? .black : (isFuture ? Color.white.opacity(0.1) : .white))
+                    .diagnosticBorder(.purple.opacity(0.35), width: 0.5)
             }
+            .diagnosticBorder(.yellow.opacity(0.45), width: 0.5)
             .padding(.vertical, learnScaled(16, hSizeClass: horizontalSizeClass, min: 16, max: 22))
             .frame(width: learnScaled(60, hSizeClass: horizontalSizeClass, min: 60, max: 74))
         }
+        .diagnosticBorder(.pink.opacity(0.6), width: 1)
     }
     
     private func placeListItem(name: String, sentences: [String]) -> some View {
@@ -358,6 +413,7 @@ struct StatsTabView: View {
             Text(name)
                 .font(learnFont(size: 14, weight: .black, hSizeClass: horizontalSizeClass))
                 .foregroundColor(.white)
+                .diagnosticBorder(.orange.opacity(0.45), width: 0.5)
             
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(sentences, id: \.self) { sentence in
@@ -369,10 +425,13 @@ struct StatsTabView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.white.opacity(0.02))
                         .border(Color.white.opacity(0.05), width: 1)
+                        .diagnosticBorder(CyberColors.neonCyan.opacity(0.35), width: 0.5)
                 }
             }
+            .diagnosticBorder(.green.opacity(0.4), width: 1)
             .padding(.leading, 8)
         }
+        .diagnosticBorder(.pink.opacity(0.5), width: 1, style: .dashed)
     }
     
     private func calendarDays(for monthDate: Date) -> [Date] {
@@ -414,20 +473,29 @@ struct StatsTabView: View {
                 .font(learnFont(size: 32, weight: .bold, hSizeClass: horizontalSizeClass))
                 .foregroundColor(.white)
                 .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
+                .diagnosticBorder(.red.opacity(0.5), width: 0.5)
             
             Text(LocalizationManager.shared.string(.addLanguagePairToSeeProgress))
                 .font(learnFont(size: 16, weight: .regular, hSizeClass: horizontalSizeClass))
                 .foregroundColor(.white.opacity(0.7))
                 .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
+                .diagnosticBorder(.cyan.opacity(0.45), width: 0.5)
             
             Spacer()
+                .diagnosticBorder(.purple.opacity(0.25), width: 0.5, style: .dashed)
         }
+        .diagnosticBorder(.yellow.opacity(0.55), width: 1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, learnScaled(40, hSizeClass: horizontalSizeClass, min: 34, max: 52))
     }
 
     private var scrollOffsetTracker: some View {
-        GeometryReader { geo in Color.clear.preference(key: StatsViewOffsetKey.self, value: geo.frame(in: .named("statsPullToRefresh")).minY) }.frame(height: 0)
+        GeometryReader { geo in
+            Color.clear.preference(key: StatsViewOffsetKey.self, value: geo.frame(in: .named("statsPullToRefresh")).minY)
+                .diagnosticBorder(.mint.opacity(0.3), width: 0.5)
+        }
+        .frame(height: 0)
+        .diagnosticBorder(.green.opacity(0.25), width: 0.5)
     }
 }
 
@@ -446,35 +514,46 @@ private struct StatsHeaderView: View {
                 .padding(.horizontal, learnScaled(16, hSizeClass: horizontalSizeClass, min: 16, max: 22))
                 .padding(.vertical, learnScaled(8, hSizeClass: horizontalSizeClass, min: 8, max: 12))
                 .background(CyberColors.neonPink)
+                .diagnosticBorder(.black.opacity(0.45), width: 0.5)
             
             Spacer()
+                .diagnosticBorder(.white.opacity(0.12), width: 0.5)
             
             // Streak Data Right-Aligned
             HStack(spacing: learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16)) {
                 Text("STREAK")
                     .font(learnFont(size: 10, weight: .black, hSizeClass: horizontalSizeClass))
                     .foregroundColor(Color.white.opacity(0.2))
+                    .diagnosticBorder(.cyan.opacity(0.35), width: 0.5)
                 
                 // Current Streak
                 HStack(spacing: learnScaled(4, hSizeClass: horizontalSizeClass, min: 4, max: 6)) {
                     Image(systemName: "flame.fill")
+                        .diagnosticBorder(.orange.opacity(0.35), width: 0.5)
                     Text("\(state.currentStreak)")
                         .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                        .diagnosticBorder(.yellow.opacity(0.35), width: 0.5)
                 }
+                .diagnosticBorder(.green.opacity(0.45), width: 0.5)
                 
                 // Max Streak
                 HStack(spacing: learnScaled(4, hSizeClass: horizontalSizeClass, min: 4, max: 6)) {
                     Image(systemName: "flame.fill")
+                        .diagnosticBorder(.orange.opacity(0.35), width: 0.5)
                     Text("MAX \(state.longestStreak)")
                         .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
+                        .diagnosticBorder(.mint.opacity(0.35), width: 0.5)
                 }
+                .diagnosticBorder(.blue.opacity(0.45), width: 0.5)
             }
             .font(learnFont(size: 12, weight: .bold, hSizeClass: horizontalSizeClass))
             .foregroundColor(.white)
             .padding(.horizontal, learnScaled(12, hSizeClass: horizontalSizeClass, min: 12, max: 16))
             .padding(.vertical, learnScaled(8, hSizeClass: horizontalSizeClass, min: 8, max: 12))
             .background(Color.gray.opacity(0.5))
+            .diagnosticBorder(.purple.opacity(0.55), width: 1)
         }
+        .diagnosticBorder(.pink, width: 1, style: .dashed)
         .padding(.horizontal, 0)
         .padding(.top, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 28))
         .padding(.bottom, 0)

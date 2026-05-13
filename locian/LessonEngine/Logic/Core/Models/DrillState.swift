@@ -20,6 +20,7 @@ enum DrillMode: String, Codable {
     case ghostManager = "Ghost-Manager"
     case prerequisites = "Prerequisites"
     case patternPractice = "Pattern-Practice"
+    case grammarBridge = "Grammar-Bridge"
     case mastered = "Mastery-Victory"
 
     var displayName: String {
@@ -40,6 +41,7 @@ enum DrillMode: String, Codable {
         case .ghostManager: return "REHEARSAL"
         case .prerequisites: return "FOUNDATION"
         case .patternPractice: return "PRACTICE LOOP"
+        case .grammarBridge: return "GRAMMAR BRIDGE"
         case .mastered: return "MASTERED"
         }
     }

@@ -25,9 +25,9 @@ struct TargetLanguageSelectionModal: View {
                     VStack(spacing: 0) {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: -5) {
-                                Text("SELECT").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
+                                Text("Select").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
                                     .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                                Text("TARGET").font(.system(size: 36, weight: .heavy)).foregroundColor(ThemeColors.secondaryAccent)
+                                Text("Target").font(.system(size: 36, weight: .heavy)).foregroundColor(ThemeColors.secondaryAccent)
                                     .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
                             }
                             .diagnosticBorder(.white.opacity(0.2), width: 1)
@@ -89,7 +89,7 @@ struct TargetLanguageSelectionModal: View {
                 .frame(maxHeight: .infinity)
             
             VStack(alignment: .leading, spacing: 0) {
-                Text(names.english.uppercased())
+                Text(names.english)
                     .font(.system(size: 55, weight: .black))
                     .foregroundColor(ThemeColors.secondaryAccent)
                     .lineLimit(1)
@@ -113,7 +113,7 @@ struct TargetLanguageSelectionModal: View {
     
     private func instructionText() -> some View {
         Text(LocalizationManager.shared.string(.chooseTheLanguageYouWantToMaster))
-            .font(.system(size: 14, weight: .black, design: .monospaced))
+            .font(.custom("Helvetica", size: 12))
             .foregroundColor(.gray)
             .padding(.vertical, 5)
     }
@@ -124,7 +124,7 @@ struct TargetLanguageSelectionModal: View {
                 VStack(spacing: 20) {
                     ProgressView()
                         .tint(.white)
-                    Text("SYNCING CATALOG...")
+                    Text("Syncing catalog…")
                         .font(.system(size: 12, weight: .bold, design: .monospaced))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -143,16 +143,22 @@ struct TargetLanguageSelectionModal: View {
 
     private func continueButton() -> some View {
         let currentCode = previewCode ?? "es"
-        let targetName = TargetLanguageMapping.shared.getDisplayNames(for: currentCode).english.uppercased()
+        let targetName = TargetLanguageMapping.shared.getDisplayNames(for: currentCode).english
         
         return Button(action: { saveSelection(code: currentCode) }) {
-            Text("CONTINUE WITH \(targetName)")
-                .font(.system(size: 18, weight: .black, design: .monospaced))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 70)
-                .background(ThemeColors.secondaryAccent)
-                .cornerRadius(0)
+            ZStack {
+                Rectangle()
+                    .fill(ThemeColors.secondaryAccent)
+                continueButtonCornerMarkings()
+                Text("Continue with \(targetName)")
+                    .font(.system(size: 18, weight: .black, design: .monospaced))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 70)
+            .overlay(Rectangle().stroke(Color.white.opacity(0.3), lineWidth: 1))
         }
         .padding(.horizontal, 20)
         .padding(.top, 12) // Remove vertical padding to let it hit the bottom
@@ -161,7 +167,7 @@ struct TargetLanguageSelectionModal: View {
     
     private func languageCard(code: String) -> some View {
         let names = TargetLanguageMapping.shared.getDisplayNames(for: code)
-        let name = names.english.uppercased()
+        let name = names.english
         let nativeName = names.native
         let isSelected = (previewCode ?? "") == code
         
@@ -189,6 +195,25 @@ struct TargetLanguageSelectionModal: View {
             HStack { Spacer(); dot(isSelected ? .white : .gray.opacity(0.4)) }
             Spacer()
             HStack { dot(isSelected ? .white : .gray.opacity(0.4)); Spacer() }
+        }
+        .padding(6)
+    }
+
+    /// Same dot motif as language cards, but on all four corners (primary CTA only).
+    private func continueButtonCornerMarkings() -> some View {
+        let markColor = Color.white
+        return VStack {
+            HStack {
+                dot(markColor)
+                Spacer()
+                dot(markColor)
+            }
+            Spacer()
+            HStack {
+                dot(markColor)
+                Spacer()
+                dot(markColor)
+            }
         }
         .padding(6)
     }

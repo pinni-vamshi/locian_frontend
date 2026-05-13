@@ -22,23 +22,7 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            headerSection
-                .padding(.top, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 28))
-                .background(Color.black)
-                .zIndex(2)
-                .diagnosticBorder(.pink.opacity(0.5))
-            
-            // STRETCHED DIVIDER: End of the fixed stack
-            Rectangle()
-                .fill(Color.white.opacity(0.1))
-                .frame(height: 1)
-                .padding(.horizontal, learnScaled(5, hSizeClass: horizontalSizeClass, min: 5, max: 8))
-                .zIndex(2)
-            
-            scrollableContent.zIndex(1)
-                .diagnosticBorder(.blue.opacity(0.3), width: 1.5)
-        }
+        settingsRoot
         .diagnosticBorder(.white, width: 2)
         .background(Color.black.ignoresSafeArea())
         .onAppear { 
@@ -57,6 +41,27 @@ struct SettingsView: View {
         .alert(languageManager.settings.areYouSureDeleteAccount, isPresented: $state.showingDeleteAlert) {
             Button(languageManager.ui.cancel, role: .cancel) { }
             Button(languageManager.ui.delete, role: .destructive) { state.performDeleteAccount() }
+        }
+    }
+
+    /// Split from `body` so the compiler does not infer `some View` in terms of itself (large VStack + modifiers).
+    private var settingsRoot: some View {
+        VStack(spacing: 0) {
+            headerSection
+                .padding(.top, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 28))
+                .background(Color.black)
+                .zIndex(2)
+                .diagnosticBorder(.pink.opacity(0.5))
+            
+            // STRETCHED DIVIDER: End of the fixed stack
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
+                .padding(.horizontal, learnScaled(5, hSizeClass: horizontalSizeClass, min: 5, max: 8))
+                .zIndex(2)
+            
+            scrollableContent.zIndex(1)
+                .diagnosticBorder(.blue.opacity(0.3), width: 1.5)
         }
     }
 
@@ -463,6 +468,35 @@ struct SettingsView: View {
             .padding(.horizontal, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 28))
             .padding(.top, learnScaled(10, hSizeClass: horizontalSizeClass, min: 10, max: 14))
             .diagnosticBorder(.blue.opacity(0.1))
+
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                appState.requestLearnCoachTourFromSettings()
+            }) {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: learnScaled(4, hSizeClass: horizontalSizeClass, min: 3, max: 6)) {
+                        Text("SEE LEARN TAB TOUR")
+                            .font(learnFont(size: 14, weight: .bold, hSizeClass: horizontalSizeClass))
+                            .foregroundColor(.white.opacity(0.5))
+                        Text("Replay the guided walkthrough on the Learn screen (place cards, sentence, graph, start).")
+                            .font(learnFont(size: 13, weight: .regular, hSizeClass: horizontalSizeClass))
+                            .foregroundColor(ThemeColors.textGray)
+                            .lineSpacing(3)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: learnScaled(14, hSizeClass: horizontalSizeClass, min: 13, max: 16), weight: .bold))
+                        .foregroundColor(ThemeColors.neonCyan)
+                }
+                .padding(.horizontal, learnScaled(20, hSizeClass: horizontalSizeClass, min: 20, max: 28))
+                .padding(.vertical, learnScaled(12, hSizeClass: horizontalSizeClass, min: 10, max: 16))
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .diagnosticBorder(.green.opacity(0.15))
         }
         .opacity(animateIn ? 1 : 0)
         .offset(y: animateIn ? 0 : 20)

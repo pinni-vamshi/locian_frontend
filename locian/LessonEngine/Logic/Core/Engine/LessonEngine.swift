@@ -133,6 +133,20 @@ class LessonEngine: ObservableObject {
         
         return group.bricks
     }
+
+    /// Sentence brick order for grammar anchors: constants → variables → structural.
+    func orderedSentenceBricks(for patternId: String) -> [BrickItem] {
+        guard let b = getBricks(for: patternId) else { return [] }
+        return (b.constants ?? []) + (b.variables ?? []) + (b.structural ?? [])
+    }
+
+    /// Average session-local mastery over ordered sentence bricks (native reply line).
+    func averageSentenceBrickMastery(for patternId: String) -> Double {
+        let bricks = orderedSentenceBricks(for: patternId)
+        guard !bricks.isEmpty else { return 0 }
+        let sum = bricks.reduce(0.0) { $0 + getDecayedMastery(for: $1.word) }
+        return sum / Double(bricks.count)
+    }
     
     // MARK: - Initialization
     func initialize(with data: GenerateSentenceData) {

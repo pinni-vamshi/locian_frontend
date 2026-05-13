@@ -33,6 +33,8 @@ struct GenerateSentenceData: Codable, Sendable {
     // Voice Support
     var voice_url: String?
     var voice_data: String?
+    /// From discover response `grammar_rule_catalog`; one map per lesson load.
+    var grammar_rule_catalog: [String: GrammarRuleCatalogEntry]? = nil
 }
 
 struct LessonGroup: Codable, Sendable {
@@ -103,6 +105,10 @@ struct PatternData: Codable, Sendable, Identifiable {
     var locian_question: String?
     var locian_question_native: String?
     var locian_question_transliteration: String?
+    /// Anchors for grammar bridge UI — legacy index form from discover `grammar_rules`.
+    var grammar_rules: [PatternGrammarRule]? = nil
+    /// Rich grammar rows from discover `grammar_bricks` (preferred).
+    var grammar_bricks: [PatternGrammarBrick]? = nil
 }
 
 @MainActor
@@ -151,7 +157,7 @@ class GenerateSentenceLogic {
                 
                 // 1. Convert pattern → PatternData with vector
                 let patternVector = EmbeddingService.getVector(for: target, languageCode: langCode)
-                let patternData = PatternData(
+                var patternData = PatternData(
                     id: "v3-\(recommendation.place_id)-\(idx)",
                     target: target,
                     meaning: meaning,
@@ -164,6 +170,8 @@ class GenerateSentenceLogic {
                     locian_question_native: rp.locian_question_native,
                     locian_question_transliteration: rp.locian_question_transliteration
                 )
+                patternData.grammar_rules = rp.grammar_rules
+                patternData.grammar_bricks = rp.grammar_bricks
                 allPatterns.append(patternData)
                 
                 // 2. Convert this pattern's own bricks → BrickItem with vectors
@@ -276,7 +284,7 @@ class GenerateSentenceLogic {
             }
             
             // 4. Assemble final GenerateSentenceData
-            let lessonData = GenerateSentenceData(
+            var lessonData = GenerateSentenceData(
                 target_language: langCode,
                 user_language: userLang,
                 place_name: recommendation.place_id,
@@ -292,6 +300,7 @@ class GenerateSentenceLogic {
                 voice_url: allPatterns.first?.voice_url,
                 voice_data: allPatterns.first?.voice_data
             )
+            lessonData.grammar_rule_catalog = recommendation.grammarRuleCatalog
             
             print("✅ [GenerateSentenceLogic] hydrateFromV3 COMPLETE. \(groups.count) groups, \(allPatterns.count) patterns, all vectorized.")
             

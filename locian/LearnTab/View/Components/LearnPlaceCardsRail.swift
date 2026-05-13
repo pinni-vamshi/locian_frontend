@@ -11,7 +11,6 @@ struct LearnPlaceCardsRail: View {
     let screenEdgePadding: CGFloat
     let animateIn: Bool
     let onSelectRecommendation: (Int) -> Void
-    let onOpenActivePlace: () -> Void
 
     var body: some View {
         GeometryReader { geo in
@@ -47,19 +46,7 @@ struct LearnPlaceCardsRail: View {
             let chipSide = max(learnScaled(52, hSizeClass: horizontalSizeClass, min: 52, max: 66), min(topH, totalW * 0.42))
 
             VStack(spacing: 0) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: learnScaled(10, hSizeClass: horizontalSizeClass, min: 10, max: 14)) {
-                        if isFetchingData && recommendations.isEmpty {
-                            ForEach(0..<3, id: \.self) { _ in
-                                skeletonPlaceChip(side: chipSide)
-                            }
-                        }
-                        ForEach(Array(recommendations.enumerated()), id: \.1.id) { index, rec in
-                            placeChip(rec: rec, index: index, side: chipSide)
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: topH, alignment: .center)
+                horizontalPlaceChipsScroll(chipSide: chipSide, topH: topH)
 
                 let placeName = activeRecommendation?.place_id.capitalized ?? "here"
                 Text("your context at \(placeName)")
@@ -74,10 +61,29 @@ struct LearnPlaceCardsRail: View {
                             .frame(height: 1)
                     }
                     .layoutPriority(0)
-                }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .diagnosticBorder(.yellow, width: 1)
+    }
+
+    @ViewBuilder
+    private func horizontalPlaceChipsScroll(chipSide: CGFloat, topH: CGFloat) -> some View {
+        let scroll = ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: learnScaled(10, hSizeClass: horizontalSizeClass, min: 10, max: 14)) {
+                if isFetchingData && recommendations.isEmpty {
+                    ForEach(0..<3, id: \.self) { _ in
+                        skeletonPlaceChip(side: chipSide)
+                    }
+                }
+                ForEach(Array(recommendations.enumerated()), id: \.1.id) { index, rec in
+                    placeChip(rec: rec, index: index, side: chipSide)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: topH, alignment: .center)
+
+        scroll
     }
 
     private func skeletonPlaceChip(side: CGFloat) -> some View {
@@ -217,10 +223,6 @@ struct LearnPlaceCardsRail: View {
             .id(rec.id)
             .transition(.opacity)
             .contentShape(Rectangle())
-            .onTapGesture {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                onOpenActivePlace()
-            }
         } else {
             VStack(spacing: 6) {
                 Image(systemName: "hand.point.right")

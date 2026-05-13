@@ -342,6 +342,9 @@ private struct TurnConveyorView: View {
             case .vocabIntro:
                 PatternIntroManagerView(state: state, engine: engine)
                     .id("intro-\(state.id)")
+            case .grammarBridge:
+                GrammarBridgeManagerView(state: state, engine: engine)
+                    .id("grammar-\(state.id)-\(orchestrator.grammarBridgeStep)")
             case .ghostManager:
                 Color.clear
                     .id("ghost-skip-\(state.id)")

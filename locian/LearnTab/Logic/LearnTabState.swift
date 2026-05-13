@@ -34,6 +34,17 @@ class LearnTabState: ObservableObject {
     @Published var pauseUntil: Date? = nil
     @Published var learnStripShowsTarget: Bool = false
 
+    /// Word-level graph (selected token) vs full user-reply sentence graph in the shared Learn graph slot.
+    enum LearnGrammarScope: Int, CaseIterable {
+        case word = 0
+        case sentence = 1
+    }
+
+    @Published var learnGrammarScope: LearnGrammarScope = .word
+
+    /// Set to `true` to show the extra control (word vs full sentence graph). When `false`, only Aa / target appears and the graph area stays word-level.
+    @Published var showLearnSentenceGraphToggle: Bool = false
+
     /// Second header line on Learn tab (ambient tagline from time + sensors).
     @Published var learnAmbientSubtitle: String = LearnAmbientTagline.line(
         for: LearnAmbientInputs(
