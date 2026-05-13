@@ -212,7 +212,6 @@ class LanguageManager: ObservableObject {
     var onboarding: OnboardingStrings { strings.onboarding }
     var progress: ProgressStrings { strings.progress }
     var ui: UIStrings { strings.ui }
-    var quiz: QuizStrings { strings.quiz }
     var scene: SceneStrings { strings.scene }
 }
 

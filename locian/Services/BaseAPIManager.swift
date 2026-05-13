@@ -96,7 +96,16 @@ extension BaseAPIManagerProtocol {
         timeoutInterval: TimeInterval = 60.0,
         completion: @escaping (Result<Data, Error>) -> Void
     ) {
-        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+        let trimmedBaseURL = baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedEndpoint = endpoint.hasPrefix("/") ? endpoint : "/\(endpoint)"
+        let trimmedEndpoint = normalizedEndpoint.trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawURL = "\(trimmedBaseURL)\(trimmedEndpoint)"
+
+        guard let url = URL(string: rawURL) else {
+            print("❌ [API-URL-ERROR] Invalid URL")
+            print("   baseURL='\(trimmedBaseURL)'")
+            print("   endpoint='\(trimmedEndpoint)'")
+            print("   rawURL='\(rawURL)'")
             completion(.failure(APIError.invalidURL))
             return
         }
@@ -106,8 +115,11 @@ extension BaseAPIManagerProtocol {
         request.timeoutInterval = timeoutInterval
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // FORCED DYNAMIC: Bypass any systemic URL caches for studied places
-        if endpoint.contains("studied-places") || endpoint.contains("generate-sentence") {
+        // FORCED DYNAMIC: Bypass URL caching for on-demand learning endpoints.
+        if endpoint.contains("studied-places")
+            || endpoint.contains("generate-sentence")
+            || endpoint.contains("discover-moments")
+            || endpoint.contains("complete-pattern") {
             request.cachePolicy = .reloadIgnoringLocalCacheData
         }
         

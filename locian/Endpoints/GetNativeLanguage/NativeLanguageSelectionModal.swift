@@ -4,6 +4,7 @@ import SwiftUI
 /// Lives in the GetNativeLanguage domain.
 struct NativeLanguageSelectionModal: View {
     @ObservedObject var appState: AppStateManager
+    @ObservedObject var languageService = GetAvailableLanguagesService.shared
     @Environment(\.dismiss) var dismiss
     
     @State private var isLoading = false
@@ -26,7 +27,7 @@ struct NativeLanguageSelectionModal: View {
                             VStack(alignment: .leading, spacing: -5) {
                                 Text("SELECT").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
                                     .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                                Text("NATIVE").font(.system(size: 36, weight: .heavy)).foregroundColor(.pink)
+                                Text("NATIVE").font(.system(size: 36, weight: .heavy)).foregroundColor(ThemeColors.secondaryAccent)
                                     .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
                             }
                             .diagnosticBorder(.white.opacity(0.2), width: 1)
@@ -36,7 +37,7 @@ struct NativeLanguageSelectionModal: View {
                         }
                         .diagnosticBorder(.pink.opacity(0.3), width: 1.5)
                         .padding().background(Color.black.opacity(0.9))
-                        Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
+                        Rectangle().fill(ThemeColors.neonCyan.opacity(0.3)).frame(height: 1)
                     }
                     
                     VStack(alignment: .leading, spacing: 10) {
@@ -83,7 +84,7 @@ struct NativeLanguageSelectionModal: View {
         
         return HStack(alignment: .center, spacing: 20) {
             Rectangle()
-                .fill(Color.cyan)
+                .fill(ThemeColors.neonCyan)
                 .frame(width: 15)
                 .frame(maxHeight: .infinity)
             
@@ -118,12 +119,26 @@ struct NativeLanguageSelectionModal: View {
     }
 
     private func verticalGrid() -> some View {
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(NativeLanguageMapping.shared.availableCodes, id: \.self) { code in
-                languageCard(code: code)
+        Group {
+            if languageService.isLoading && NativeLanguageMapping.shared.availableCodes.isEmpty {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .tint(.white)
+                    Text("SYNCING CATALOG...")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            } else {
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(NativeLanguageMapping.shared.availableCodes, id: \.self) { code in
+                        languageCard(code: code)
+                    }
+                }
+                .padding(.vertical, 8)
             }
         }
-        .padding(.vertical, 8)
     }
 
     private func continueButton() -> some View {
@@ -136,7 +151,7 @@ struct NativeLanguageSelectionModal: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
-                .background(Color.pink)
+                .background(ThemeColors.secondaryAccent)
                 .cornerRadius(0)
         }
         .padding(.horizontal, 20)
@@ -153,8 +168,8 @@ struct NativeLanguageSelectionModal: View {
         return Button(action: { withAnimation { previewCode = code } }) {
             ZStack {
                 if isSelected {
-                    Rectangle().fill(Color.cyan.opacity(0.05))
-                    Rectangle().stroke(Color.cyan.opacity(0.3), lineWidth: 1).padding(2)
+                    Rectangle().fill(ThemeColors.neonCyan.opacity(0.05))
+                    Rectangle().stroke(ThemeColors.neonCyan.opacity(0.3), lineWidth: 1).padding(2)
                 }
                 cardMarkings(isSelected: isSelected)
                 VStack(spacing: 4) {
@@ -183,9 +198,17 @@ struct NativeLanguageSelectionModal: View {
     }
     
     private func saveSelection(code: String) {
+        // Pre-login flow: persist locally so Login screen updates immediately.
+        if AppStateManager.shared.authToken?.isEmpty != false {
+            appState.nativeLanguage = code
+            appState.selectedTargetLanguages = []
+            appState.userLanguagePairs = []
+            dismiss()
+            return
+        }
+
         isLoading = true
-        let names = NativeLanguageMapping.shared.getDisplayNames(for: code)
-        appState.updateNativeLanguage(newNativeLanguage: names.english) { success in
+        appState.updateNativeLanguage(newNativeLanguage: code) { success in
             DispatchQueue.main.async {
                 isLoading = false
                 if success {

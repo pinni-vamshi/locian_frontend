@@ -4,6 +4,7 @@ import SwiftUI
 /// Lives in the GetTargetLanguages domain.
 struct TargetLanguageSelectionModal: View {
     @ObservedObject var appState: AppStateManager
+    @ObservedObject var languageService = GetAvailableLanguagesService.shared
     @Environment(\.dismiss) var dismiss
     
     @State private var isLoading = false
@@ -26,7 +27,7 @@ struct TargetLanguageSelectionModal: View {
                             VStack(alignment: .leading, spacing: -5) {
                                 Text("SELECT").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
                                     .diagnosticBorder(.white.opacity(0.5), width: 0.5)
-                                Text("TARGET").font(.system(size: 36, weight: .heavy)).foregroundColor(.pink)
+                                Text("TARGET").font(.system(size: 36, weight: .heavy)).foregroundColor(ThemeColors.secondaryAccent)
                                     .diagnosticBorder(.pink.opacity(0.5), width: 0.5)
                             }
                             .diagnosticBorder(.white.opacity(0.2), width: 1)
@@ -36,7 +37,7 @@ struct TargetLanguageSelectionModal: View {
                         }
                         .diagnosticBorder(.pink.opacity(0.3), width: 1.5)
                         .padding().background(Color.black.opacity(0.9))
-                        Rectangle().fill(Color.cyan.opacity(0.3)).frame(height: 1)
+                        Rectangle().fill(ThemeColors.neonCyan.opacity(0.3)).frame(height: 1)
                     }
                     
                     VStack(alignment: .leading, spacing: 10) {
@@ -118,12 +119,26 @@ struct TargetLanguageSelectionModal: View {
     }
 
     private func verticalGrid() -> some View {
-        LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(TargetLanguageMapping.shared.availableCodes, id: \.self) { code in
-                languageCard(code: code)
+        Group {
+            if languageService.isLoading && TargetLanguageMapping.shared.getAvailableCodes(for: appState.nativeLanguage).isEmpty {
+                VStack(spacing: 20) {
+                    ProgressView()
+                        .tint(.white)
+                    Text("SYNCING CATALOG...")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            } else {
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(TargetLanguageMapping.shared.getAvailableCodes(for: appState.nativeLanguage), id: \.self) { code in
+                        languageCard(code: code)
+                    }
+                }
+                .padding(.vertical, 8)
             }
         }
-        .padding(.vertical, 8)
     }
 
     private func continueButton() -> some View {
@@ -136,7 +151,7 @@ struct TargetLanguageSelectionModal: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 70)
-                .background(Color.pink)
+                .background(ThemeColors.secondaryAccent)
                 .cornerRadius(0)
         }
         .padding(.horizontal, 20)
@@ -153,8 +168,8 @@ struct TargetLanguageSelectionModal: View {
         return Button(action: { withAnimation { previewCode = code } }) {
             ZStack {
                 if isSelected {
-                    Rectangle().fill(Color.cyan.opacity(0.05))
-                    Rectangle().stroke(Color.cyan.opacity(0.3), lineWidth: 1).padding(2)
+                    Rectangle().fill(ThemeColors.neonCyan.opacity(0.05))
+                    Rectangle().stroke(ThemeColors.neonCyan.opacity(0.3), lineWidth: 1).padding(2)
                 }
                 cardMarkings(isSelected: isSelected)
                 VStack(spacing: 4) {
@@ -183,9 +198,25 @@ struct TargetLanguageSelectionModal: View {
     }
     
     private func saveSelection(code: String) {
+        // Pre-login flow: persist locally so Login screen updates immediately.
+        if AppStateManager.shared.authToken?.isEmpty != false {
+            appState.selectedTargetLanguages = [code]
+            let nativeCode = appState.nativeLanguage.isEmpty ? "en" : appState.nativeLanguage
+            appState.userLanguagePairs = [
+                LanguagePair(
+                    native_language: nativeCode,
+                    target_language: code,
+                    is_default: true,
+                    user_level: "BEGINNER",
+                    practice_dates: []
+                )
+            ]
+            dismiss()
+            return
+        }
+
         isLoading = true
-        let names = TargetLanguageMapping.shared.getDisplayNames(for: code)
-        appState.addLanguagePair(nativeLanguage: appState.nativeLanguage, targetLanguage: names.english) { success in
+        appState.addLanguagePair(nativeLanguage: appState.nativeLanguage, targetLanguage: code) { success in
             DispatchQueue.main.async {
                 isLoading = false
                 if success {

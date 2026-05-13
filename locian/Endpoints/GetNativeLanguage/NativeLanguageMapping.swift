@@ -2,28 +2,30 @@ import Foundation
 
 /// Dictionary-only mapping for Native Languages.
 /// This file handles the identification and display of languages the user speaks.
+/// It dynamically syncs with /api/system/languages/available
 class NativeLanguageMapping {
     static let shared = NativeLanguageMapping()
     private init() {}
     
-    // Supported native language codes
-    let availableCodes = ["en", "es", "fr", "ja", "de", "ko", "it", "zh", "pt", "ru", "nl", "ar", "tr"]
+    // Supported native language codes dynamically loaded
+    var availableCodes: [String] {
+        return Array(names.keys)
+    }
     
-    private let names: [String: (english: String, native: String)] = [
-        "en": ("English", "English"),
-        "es": ("Spanish", "Español"),
-        "fr": ("French", "Français"),
-        "ja": ("Japanese", "日本語"),
-        "de": ("German", "Deutsch"),
-        "ko": ("Korean", "한국어"),
-        "it": ("Italian", "Italiano"),
-        "zh": ("Chinese", "中文"),
-        "pt": ("Portuguese", "Português"),
-        "ru": ("Russian", "Русский"),
-        "nl": ("Dutch", "Nederlands"),
-        "ar": ("Arabic", "العربية"),
-        "tr": ("Turkish", "Türkçe")
-    ]
+    private var names: [String: (english: String, native: String)] = [:]
+    
+    // MARK: - Integration
+    
+    func update(with catalog: [LanguageCombination]) {
+        var newMap: [String: (english: String, native: String)] = [:]
+        for combo in catalog {
+            let code = combo.native.code.lowercased()
+            newMap[code] = (combo.native.english_name, combo.native.native_name)
+        }
+        self.names = newMap
+    }
+    
+    // MARK: - Accessors
     
     func getDisplayNames(for code: String) -> (english: String, native: String) {
         let normalized = code.lowercased()
@@ -37,8 +39,9 @@ class NativeLanguageMapping {
     /// Helper: Reverse lookup to find code from name (e.g., "Spanish" -> "es")
     func getCode(for name: String) -> String? {
         let cleanName = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        
         // Check if input is already a valid code
-        if availableCodes.contains(cleanName) { return cleanName }
+        if names.keys.contains(cleanName) { return cleanName }
         
         // Reverse search
         for (code, (englishName, nativeName)) in names {
@@ -46,6 +49,6 @@ class NativeLanguageMapping {
                 return code
             }
         }
-        return nil // Default fallback should be handled by caller
+        return nil
     }
 }

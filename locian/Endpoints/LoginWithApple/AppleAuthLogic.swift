@@ -5,8 +5,6 @@ import Combine
 
 struct ApplePendingUserDetails {
     var username: String?
-    var profession: String?
-    var phoneNumber: String?
     var emailOverride: String?
 }
 
@@ -23,20 +21,16 @@ class AppleAuthLogic {
     
     func configureAppleSignIn(_ request: ASAuthorizationAppleIDRequest,
                                username: String?,
-                               profession: String?,
-                               phoneNumber: String?,
                                emailOverride: String?) {
         let appState = AppStateManager.shared
         appState.authError = nil
         appState.showAuthError = false
         appState.isAuthenticating = true
-        
+
         let nonce = randomNonceString()
         self.appleAuthNonce = nonce
         self.applePendingDetails = ApplePendingUserDetails(
             username: sanitized(username),
-            profession: sanitized(profession),
-            phoneNumber: sanitized(phoneNumber),
             emailOverride: sanitized(emailOverride)
         )
         
@@ -122,14 +116,19 @@ class AppleAuthLogic {
                 fullNamePayload = nil
             }
             
+            let selectedPlacesArray = Array(appState.selectedPlaces)
+            let nativeLang = appState.nativeLanguage.isEmpty ? nil : appState.nativeLanguage
+            let targetLangs = appState.selectedTargetLanguages.isEmpty ? nil : Array(appState.selectedTargetLanguages)
+
             let requestBody = AppleLoginRequest(
                 code: code,
                 id_token: sanitized(idToken ?? ""),
                 nonce: appleAuthNonce,
                 username: applePendingDetails?.username,
-                profession: applePendingDetails?.profession,
+                selected_places: selectedPlacesArray.isEmpty ? nil : selectedPlacesArray,
+                native_language: nativeLang,
+                target_languages: targetLangs,
                 email: resolvedEmail,
-                phone_number: applePendingDetails?.phoneNumber,
                 full_name: fullNamePayload,
                 first_name: resolvedFirstName,
                 last_name: resolvedLastName
@@ -160,9 +159,7 @@ class AppleAuthLogic {
                         print("🍎 [AppleAuthLogic] Session obtained. Persisting...")
                         self?.persistAppleSession(
                             data: data,
-                            fallbackUsername: requestBody.username,
-                            fallbackProfession: requestBody.profession,
-                            fallbackPhone: requestBody.phone_number
+                            fallbackUsername: requestBody.username
                         )
                         self?.clearAppleAuthState()
                     }
@@ -174,25 +171,40 @@ class AppleAuthLogic {
     // MARK: - Helpers
     
     private func persistAppleSession(data: AppleLoginData,
-                                     fallbackUsername: String?,
-                                     fallbackProfession: String?,
-                                     fallbackPhone: String?) {
+                                     fallbackUsername: String?) {
         let appState = AppStateManager.shared
         appState.authToken = data.session_token
-        
+
         if let resolvedUsername = sanitized(data.username) ?? fallbackUsername {
             appState.username = resolvedUsername
         }
-        if let resolvedProfession = sanitized(data.profession) ?? fallbackProfession {
-            appState.profession = resolvedProfession
+
+        // Set languages from registration response — no separate API call needed
+        if let native = data.native_language, !native.isEmpty {
+            appState.nativeLanguage = native
         }
-        if let resolvedPhone = sanitized(data.phone_number) ?? fallbackPhone {
-            appState.userPhoneNumber = resolvedPhone
+        if let targets = data.target_languages, !targets.isEmpty {
+            let native = appState.nativeLanguage.isEmpty ? "en" : appState.nativeLanguage
+            let pairs = targets.enumerated().map { index, target in
+                LanguagePair(
+                    native_language: native,
+                    target_language: target,
+                    is_default: index == 0,
+                    user_level: "BEGINNER",
+                    practice_dates: []
+                )
+            }
+            appState.userLanguagePairs = pairs
         }
-        
+
         appState.isLoggedIn = true
-        appState.loadInitialData()
-        appState.checkLanguagePairsAndShowModalIfNeeded()
+        appState.startStartupDiscoverySequence(force: false)
+
+        // Only show language modal if languages are somehow still missing
+        if !appState.hasValidLanguagePair() {
+            appState.checkLanguagePairsAndShowModalIfNeeded()
+        }
+
         NotificationManager.shared.ensureNotificationAccess { _ in
             UserDefaults.standard.set(true, forKey: "hasRequestedNotificationPermission")
         }

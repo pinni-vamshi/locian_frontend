@@ -211,4 +211,9 @@ extension View {
                 )
         }
     }
+
+    /// Applies the standard Locian button press animation (scale to 0.95).
+    func buttonPressAnimation() -> some View {
+        self.buttonStyle(LocianButtonStyle())
+    }
 }

@@ -12,8 +12,6 @@ extension AppStateManager {
         profession = ""
         nativeLanguage = ""
         userLanguagePairs = []
-        intentTimeline = nil
-        currentTimeSpan = nil
         inferredPlaceCategory = nil
         shouldAttemptInferInterest = false
         
@@ -23,8 +21,6 @@ extension AppStateManager {
         UserDefaults.standard.removeObject(forKey: "profession")
         UserDefaults.standard.removeObject(forKey: "userNativeLanguage")
         UserDefaults.standard.removeObject(forKey: "userLanguagePairs")
-        UserDefaults.standard.removeObject(forKey: "intentTimeline")
-        UserDefaults.standard.removeObject(forKey: "currentTimeSpan")
         
         // Clear notification data (keep preferences but clear API times)
         
@@ -41,8 +37,6 @@ extension AppStateManager {
         self.username = ""
         self.userPhoneNumber = ""
         self.profession = ""
-        self.intentTimeline = nil
-        self.currentTimeSpan = nil
         
         
         // Cancel all scheduled notifications
@@ -85,6 +79,12 @@ extension AppStateManager {
         self.isLoggedIn = false
         self.isLoadingSession = false
         self.isOffline = false
+        
+        // Reset startup/branding state
+        self.minAnimationIntervalCompleted = false
+        self.startupMomentsStatus = .idle
+        self.hasTriggeredStartupDiscovery = false
+        self.isRefreshingContext = false
 
 
         // Clear all UserDefaults except onboarding state

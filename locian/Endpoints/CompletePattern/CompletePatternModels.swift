@@ -11,10 +11,13 @@ import Foundation
 struct CompletePatternRequest: Codable {
     let place_id: String
     let pattern_id: String?
+    let topic: String?
+    let target_language: String?
     let time: String
     let date: String
     let latitude: Double?
     let longitude: Double?
+    let wifi_info: [String: String]?
     let places: [DiscoverPlaceInput]?
 }
 

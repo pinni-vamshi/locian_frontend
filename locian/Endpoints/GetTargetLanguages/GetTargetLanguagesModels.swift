@@ -47,6 +47,19 @@ struct TargetLanguage: Codable {
     let is_default: Bool
     let user_level: String
     let practice_dates: [String]
+    let recent_activity: [String: [PracticeActivityItem]]?
+}
+
+// MARK: - Practice Activity Item
+struct PracticeActivityItem: Codable {
+    let pattern_id: String
+    let place_id: String
+    let place_name: String
+    let sentence: String
+    let words: [String]
+    let user_time: String
+    let timestamp: String
+    let target_language: String
 }
 
 // MARK: - Language Pair (Local representation)
@@ -57,5 +70,11 @@ struct LanguagePair: Codable, Identifiable {
     let is_default: Bool
     let user_level: String
     var practice_dates: [String]
+    var recent_activity: [String: [PracticeActivityItem]]?
+    
+    // Computed names for UI (baked into the model)
+    var targetEnglishName: String { TargetLanguageMapping.shared.getDisplayNames(for: target_language).english }
+    var targetNativeName: String { TargetLanguageMapping.shared.getDisplayNames(for: target_language).native }
+    var nativeEnglishName: String { NativeLanguageMapping.shared.getDisplayNames(for: native_language).english }
 }
 

@@ -31,7 +31,11 @@ class CompletePatternLogic {
         engine.visitedPatternIds.insert(patternId)
         
         // 4. Call Service
-        CompletePatternService.shared.completePattern(patternId: patternId, placeId: placeId) { result in
+        CompletePatternService.shared.completePattern(
+            patternId: patternId,
+            placeId: placeId,
+            topic: engine.lessonData?.micro_situation
+        ) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):

@@ -34,8 +34,18 @@ class CheckSessionLogic {
         
         // 4. Trigger REAL-TIME History & Recommendation Load (Discovery will handle live data)
         print("🚀 [CheckSessionLogic] Triggering real-time initial data load...")
-        appState.loadInitialData()
+        appState.startStartupDiscoverySequence(force: false)
         // Initial data loading triggered...
+        
+        // 4b. Trigger User Intent Context refresh on launch/session-valid path.
+        print("🧭 [CheckSessionLogic] Triggering launch intent-context load...")
+        UserIntentContextLogic.shared.discoverDailyIntent { success in
+            if success {
+                print("✅ [CheckSessionLogic] Launch intent-context load succeeded.")
+            } else {
+                print("⚠️ [CheckSessionLogic] Launch intent-context load failed.")
+            }
+        }
 
         // 5. Decision: Do we need to check languages via API?
         if appState.hasValidLanguagePair() {

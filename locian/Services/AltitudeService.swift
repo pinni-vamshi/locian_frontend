@@ -47,20 +47,12 @@ class AltitudeService: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func ensureLocationAccess(completion: @escaping (Bool) -> Void) {
+        // Never request permission here — let onboarding handle it
         let status = locationManager.authorizationStatus
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             completion(true)
-        case .notDetermined:
-            self.locationManager.requestWhenInUseAuthorization()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                let newStatus = self.locationManager.authorizationStatus
-                completion(newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways)
-            }
-        case .denied, .restricted:
-            self.showSettingsAlert()
-            completion(false)
-        @unknown default:
+        default:
             completion(false)
         }
     }

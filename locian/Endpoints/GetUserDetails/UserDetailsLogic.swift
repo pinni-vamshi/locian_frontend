@@ -35,7 +35,7 @@ class UserDetailsLogic {
     
     
     /// Updates local AppStateManager state based on API data
-    private func processUserDetailsResponse(_ data: GetUserDetailsData) {
+    private func processUserDetailsResponse(_ data: UserDetailsData) {
         let appState = AppStateManager.shared
         
         if appState.authToken != data.session_token {

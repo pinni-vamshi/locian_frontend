@@ -34,7 +34,7 @@ struct ContentView: View {
         }
         // First Launch Language Selection Modal - Shows before onboarding
         .fullScreenCover(isPresented: $appState.showFirstLaunchLanguageModal) {
-            FirstLaunchLanguageSelectionModal(appState: appState)
+            AppLanguagePickerModal(appState: appState)
         }
         // Native Language Selection Modal
         .fullScreenCover(isPresented: $appState.shouldShowNativeLanguageModal) {

@@ -1,23 +1,21 @@
 import Foundation
 import CoreLocation
 
-/// Service to handle retrieving the user's current motion state.
-/// This utilizes GPS speed from LocationManager to avoid requiring Motion & Fitness permissions.
-class MotionService {
+/// GPS-only speed for Discover Moments (no Core Motion / no extra motion permission).
+/// Sends speed as **kilometres per hour** in a string; backend `VelocityCleaner` converts to m/s.
+final class MotionService {
     static let shared = MotionService()
-    
+
     private init() {}
-    
-    /// Determines the current velocity of the user as a numeric string for the backend.
-    /// Returns a string like "0 m/s", "5 m/s", etc.
-    func fetchCurrentMotionState(completion: @escaping (String) -> Void) {
-        // Use the instantaneous speed from LocationManager
-        // Speed is already in m/s
-        let speedMS = max(0, LocationManager.shared.currentLocation?.speed ?? 0.0)
-        
-        let velocityString = "\(Int(speedMS)) m/s"
-        
-        print("🚲 [MotionService] GPS Velocity: \(velocityString)")
+
+    /// `CLLocation.speed` is m/s (negative when invalid). We expose **km/h** for the API.
+    func fetchGPSVelocityKmh(completion: @escaping (String) -> Void) {
+        let speedMS = max(0, LocationManager.shared.currentLocation?.speed ?? 0)
+        let kmh = speedMS * 3.6
+        let velocityString = String(format: "%.2f km/h", kmh)
+        print(
+            "🚲 [MotionService] GPS speed: \(String(format: "%.2f", speedMS)) m/s → \(String(format: "%.2f", kmh)) km/h → sending \(velocityString)"
+        )
         completion(velocityString)
     }
 }

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "locian-dev",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "uvicorn", "api.main_app:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+      "port": 8000
+    },
+    {
+      "name": "locian-production",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["main_production.py"],
+      "port": 8000
+    },
+    {
+      "name": "locian-docker",
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": ["-f", "docker-compose.prod.yml", "up", "--build"],
+      "port": 8000
+    }
+  ]
+}

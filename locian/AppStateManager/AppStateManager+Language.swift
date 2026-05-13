@@ -30,25 +30,24 @@ extension AppStateManager {
     
     // MARK: - App Flow Orchestration
     
-    /// Entry point for checking language state at startup or login
+    /// Entry point for checking language state at startup or login.
+    /// Languages are set during registration — this is a fallback if cache is empty.
     func checkLanguagePairsAndShowModalIfNeeded() {
         guard !shouldShowNativeLanguageModal && !shouldShowTargetLanguageModal else { return }
-        
-        NativeLanguageLogic.shared.setNativeLanguageFromPhone { [weak self] success in
-            if success {
-                self?.checkTargetLanguagesAndShowModalIfNeeded()
-            }
-        }
-    }
-    
-    private func checkTargetLanguagesAndShowModalIfNeeded() {
+
+        // If valid pair exists in cache, nothing to do
         if hasValidLanguagePair() { return }
-        
-        TargetLanguageLogic.shared.loadTargetLanguages { [weak self] _ in
+
+        // Try to auto-detect native from phone locale if not set
+        if nativeLanguage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let phoneLocale = Locale.current.language.languageCode?.identifier ?? "en"
+            nativeLanguage = phoneLocale
+        }
+
+        // Still no valid pair — show the modal
+        if !hasValidLanguagePair() {
             DispatchQueue.main.async {
-                if !(self?.hasValidLanguagePair() ?? false) {
-                    self?.showLanguageModal(mode: .addLearning)
-                }
+                self.showLanguageModal(mode: .addLearning)
             }
         }
     }
@@ -71,7 +70,7 @@ extension AppStateManager {
         }
         
         // Placeholder
-        let native = nativeLanguage.isEmpty ? "English" : nativeLanguage
+        let native = nativeLanguage.isEmpty ? "en" : nativeLanguage
         // "ADD LANGUAGE" is a placeholder key. In a real app, this might be localized.
         return LanguagePair(
             native_language: native,

@@ -14,6 +14,8 @@ import SwiftUI
 
 class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     static let shared = LocationManager()
+    static let intentRegionDidEnterNotification = Notification.Name("intentRegionDidEnterNotification")
+    static let intentSignificantChangeNotification = Notification.Name("intentSignificantChangeNotification")
     
     let locationManager = CLLocationManager()
     
@@ -42,9 +44,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        // Don't access authorizationStatus directly in init to avoid UI blocking
-        // Initialize with actual status from the manager instance
-        // This prevents race conditions where checking status immediately after init returns .notDetermined
         authorizationStatus = locationManager.authorizationStatus
     }
     
@@ -91,7 +90,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             completion(true)
         case .notDetermined:
             self.locationManager.requestWhenInUseAuthorization()
-            // Polling for a brief moment to catch the sync update if user clicks "Allow" immediately
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 let newStatus = self.authorizationStatus
                 completion(newStatus == .authorizedWhenInUse || newStatus == .authorizedAlways)
@@ -106,7 +104,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // MARK: - Get Current Location
     func getCurrentLocation(completion: @escaping (Result<CLLocation, Error>) -> Void) {
-        // CRITICAL: Check if user has enabled location tracking in Settings
         guard AppStateManager.shared.isLocationTrackingEnabled else {
             locationStatus = .denied
             let error = NSError(domain: "LocationManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "Location tracking is disabled in Settings"])
@@ -116,14 +113,12 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
         
         locationStatus = .searching
-        // Check authorization using published property (safe, no main thread blocking)
         guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
             let error = NSError(domain: "LocationManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Location permission not granted"])
             completion(.failure(error))
             return
         }
         
-        // Check if location services are enabled (move to background thread to avoid UI blocking)
         DispatchQueue.global(qos: .userInitiated).async {
             guard CLLocationManager.locationServicesEnabled() else {
                 let error = NSError(domain: "LocationManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Location services are disabled"])
@@ -138,10 +133,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                 self.locationCompletions.append(completion)
                 self.locationLock.unlock()
                 
-                // Start updating location
                 self.locationManager.startUpdatingLocation()
                 
-                // Set timeout (10 seconds)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
                     self.locationLock.lock()
                     if !self.locationCompletions.isEmpty {
@@ -187,10 +180,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         latitude = location.coordinate.latitude
         longitude = location.coordinate.longitude
         altitude = location.altitude
-        speed = location.speed // m/s
+        speed = location.speed
         
-        
-        // Call completions if waiting
         locationLock.lock()
         let completions = locationCompletions
         locationCompletions.removeAll()
@@ -200,6 +191,25 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             completions.forEach { $0(.success(location)) }
             locationManager.stopUpdatingLocation()
         }
+        
+        guard isIntentMonitoringEnabled else { return }
+        let now = Date()
+        if let last = lastSignificantBroadcastAt, now.timeIntervalSince(last) < 120 {
+            return
+        }
+        lastSignificantBroadcastAt = now
+        NotificationCenter.default.post(
+            name: Self.intentSignificantChangeNotification,
+            object: nil,
+            userInfo: [
+                "latitude": location.coordinate.latitude,
+                "longitude": location.coordinate.longitude,
+                "speed": location.speed,
+                "course": location.course,
+                "horizontalAccuracy": location.horizontalAccuracy
+            ]
+        )
+        print("📍 [LocationManager] Significant location event broadcast.")
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -213,23 +223,38 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         completions.forEach { $0(.failure(error)) }
     }
     
-
-    
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
         
         switch authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             locationStatus = .idle
-            break
         case .denied, .restricted:
             locationStatus = .denied
-            break
         case .notDetermined:
             break
         @unknown default:
             break
         }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        guard isIntentMonitoringEnabled else { return }
+        guard region.identifier.hasPrefix(intentRegionPrefix) else { return }
+        
+        var userInfo: [String: Any] = ["regionId": region.identifier]
+        if let circular = region as? CLCircularRegion {
+            userInfo["latitude"] = circular.center.latitude
+            userInfo["longitude"] = circular.center.longitude
+            userInfo["radius"] = circular.radius
+        }
+        
+        NotificationCenter.default.post(
+            name: Self.intentRegionDidEnterNotification,
+            object: nil,
+            userInfo: userInfo
+        )
+        print("📍 [LocationManager] Entered monitored intent region: \(region.identifier)")
     }
     
     // MARK: - Nearby Places
@@ -247,17 +272,77 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     private var activeSearch: MKLocalSearch?
     private let searchLock = NSLock()
+    private let intentRegionPrefix = "intent_geo_"
+    private var isIntentMonitoringEnabled = false
+    private var lastSignificantBroadcastAt: Date?
     
     private var currentLanguageCode: String {
         let nativeName = AppStateManager.shared.nativeLanguage
         return NativeLanguageMapping.shared.getCode(for: nativeName) ?? "en"
     }
     
+    struct IntentMonitoringRegion {
+        let id: String
+        let latitude: Double
+        let longitude: Double
+        let radiusMeters: Double
+    }
+    
+    func enableIntentEventMonitoring(regions: [IntentMonitoringRegion]) {
+        guard AppStateManager.shared.isLocationTrackingEnabled else {
+            print("⚠️ [LocationManager] Intent monitoring skipped: location tracking disabled.")
+            return
+        }
+        
+        isIntentMonitoringEnabled = true
+        locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.pausesLocationUpdatesAutomatically = true
+        
+        if authorizationStatus == .authorizedWhenInUse {
+            locationManager.requestAlwaysAuthorization()
+        } else if authorizationStatus == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+        }
+        
+        clearIntentRegions()
+        
+        // Use a wider "approach ring" so notifications can fire *before* arrival.
+        // The NotificationManager computes distance inside the ring to bucket
+        // the event into pre-arrival (outer band) vs in-place (inner band).
+        let boundedRegions = Array(regions.prefix(20))
+        for region in boundedRegions {
+            let center = CLLocationCoordinate2D(latitude: region.latitude, longitude: region.longitude)
+            let monitored = CLCircularRegion(
+                center: center,
+                radius: max(150, min(region.radiusMeters, 400)),
+                identifier: "\(intentRegionPrefix)\(region.id)"
+            )
+            monitored.notifyOnEntry = true
+            monitored.notifyOnExit = false
+            locationManager.startMonitoring(for: monitored)
+        }
+        
+        locationManager.startMonitoringSignificantLocationChanges()
+        print("📍 [LocationManager] Intent monitoring enabled. regions=\(boundedRegions.count)")
+    }
+    
+    func disableIntentEventMonitoring() {
+        isIntentMonitoringEnabled = false
+        locationManager.stopMonitoringSignificantLocationChanges()
+        clearIntentRegions()
+        print("📍 [LocationManager] Intent monitoring disabled.")
+    }
+    
+    private func clearIntentRegions() {
+        for region in locationManager.monitoredRegions where region.identifier.hasPrefix(intentRegionPrefix) {
+            locationManager.stopMonitoring(for: region)
+        }
+    }
+    
     func fetchNearbyPlaces(completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Starting fresh fetchNearbyPlaces (on-demand)...")
         locationStatus = .searching
         
-        // CRITICAL: Check if user has enabled location tracking in Settings
         guard AppStateManager.shared.isLocationTrackingEnabled else {
             locationStatus = .denied
             print("⚠️ [NEARBY] Location tracking is DISABLED. Blocking access.")
@@ -265,7 +350,6 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             return
         }
         
-        // ALWAYS trigger a fresh fetch to ensure zero staleness/persistence
         print("📍 [NEARBY] Requesting dynamic GPS update...")
         self.ensureLocationAccess { [weak self] granted in
             guard granted else {
@@ -301,7 +385,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     private func performLocalSearch(location: CLLocation, completion: @escaping ([NearbyAmbience]) -> Void) {
         print("📍 [NEARBY] Performing MKLocalPointsOfInterestRequest...")
         
-        let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 10000) // Increased to 10km
+        let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 100)
         request.pointOfInterestFilter = .includingAll
         
         searchLock.lock()
@@ -315,53 +399,56 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             self.searchLock.lock()
             self.activeSearch = nil
             self.searchLock.unlock()
+            
             if let error = error {
                 print("❌ [NEARBY] MapKit Search Error: \(error.localizedDescription)")
-                completion([]) // Skip fallback for now to focus on MKPOI structure
-                return
-            }
-            
-            guard let response = response else {
                 completion([])
                 return
             }
             
-            if response.mapItems.isEmpty {
-                 completion([])
-                 return
+            guard let response = response, !response.mapItems.isEmpty else {
+                completion([])
+                return
             }
             
-            // Sort and uniquely name
             let sortedItems = response.mapItems.sorted { item1, item2 in
                 let dist1 = item1.placemark.location?.distance(from: location) ?? Double.greatestFiniteMagnitude
                 let dist2 = item2.placemark.location?.distance(from: location) ?? Double.greatestFiniteMagnitude
                 return dist1 < dist2
             }
-            
-            var ambience: [NearbyAmbience] = []
-            for item in sortedItems {
-                guard let name = item.name, let loc = item.placemark.location else { continue }
-                
-                // 🧠 Semantic Snapping: Harvest URL and Tags for anchoring
-                let rawCat = item.pointOfInterestCategory?.rawValue
+
+            let languageCode = self.currentLanguageCode
+
+            // ─────────────────────────────────────────────────────────────
+            // FIX: Process all places CONCURRENTLY instead of one-by-one.
+            // resolveSemanticCategory and EmbeddingService have no shared
+            // mutable state, so parallel calls are safe.
+            // ─────────────────────────────────────────────────────────────
+            var ambience: [NearbyAmbience?] = Array(repeating: nil, count: sortedItems.count)
+
+            DispatchQueue.concurrentPerform(iterations: sortedItems.count) { i in
+                let item = sortedItems[i]
+                guard let name = item.name, let loc = item.placemark.location else { return }
+
+                let rawCat  = item.pointOfInterestCategory?.rawValue
                 let itemURL = item.url?.absoluteString
                 let itemTags = item.placemark.areasOfInterest
-                
+
                 print("🌾 [LocationManager] Harvested for '\(name)': URL: \(itemURL != nil), Tags: \(itemTags?.count ?? 0)")
-                
+
                 let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(
                     name: name,
                     rawCategory: rawCat,
                     url: itemURL,
                     tags: itemTags
                 )
-                
-                let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode)
-                
-                // Use coordinate hash as stable identifier
+
+                let vector   = EmbeddingService.getVector(for: name, languageCode: languageCode)
                 let distance = loc.distance(from: location)
                 let stableID = "\(loc.coordinate.latitude)_\(loc.coordinate.longitude)"
-                ambience.append(NearbyAmbience(
+
+                // Writing to a unique index — no race condition
+                ambience[i] = NearbyAmbience(
                     id: stableID,
                     name: name,
                     category: snappedCategory,
@@ -371,13 +458,15 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     vector: vector,
                     url: itemURL,
                     tags: itemTags
-                ))
+                )
             }
-            
+
+            let finalAmbience = ambience.compactMap { $0 }
+
             DispatchQueue.main.async {
                 self.locationStatus = .found
-                print("🎨 [NEARBY] Generated ambience for \(ambience.count) places.")
-                completion(ambience)
+                print("🎨 [NEARBY] Generated ambience for \(finalAmbience.count) places.")
+                completion(finalAmbience)
             }
         }
     }
@@ -394,19 +483,28 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             var results: [String] = []
             
-            // Extract meaningful location names
-            if let name = place.name { results.append(name) }
-            if let thoro = place.thoroughfare { results.append(thoro) }
-            if let subLoc = place.subLocality { results.append(subLoc) }
-            if let loc = place.locality { results.append(loc) }
+            if let name = place.name              { results.append(name) }
+            if let thoro = place.thoroughfare     { results.append(thoro) }
+            if let subLoc = place.subLocality     { results.append(subLoc) }
+            if let loc = place.locality           { results.append(loc) }
             if let inlandWater = place.inlandWater { results.append(inlandWater) }
             if let interest = place.areasOfInterest?.first { results.append(interest) }
             
-            var ambience: [NearbyAmbience] = []
-            for name in Array(Set(results)).prefix(8) {
-                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(name: name, rawCategory: nil, url: nil, tags: nil)
-                if let vector = EmbeddingService.getVector(for: name, languageCode: self.currentLanguageCode) {
-                    ambience.append(NearbyAmbience(
+            let languageCode = self.currentLanguageCode
+            let uniqueResults = Array(Set(results)).prefix(8)
+            var ambience: [NearbyAmbience?] = Array(repeating: nil, count: uniqueResults.count)
+
+            // ─────────────────────────────────────────────────────────────
+            // FIX: Same concurrent pattern applied to geocoder fallback
+            // ─────────────────────────────────────────────────────────────
+            let resultArray = Array(uniqueResults)
+            DispatchQueue.concurrentPerform(iterations: resultArray.count) { i in
+                let name = resultArray[i]
+                let snappedCategory = SemanticSnappingService.shared.resolveSemanticCategory(
+                    name: name, rawCategory: nil, url: nil, tags: nil
+                )
+                if let vector = EmbeddingService.getVector(for: name, languageCode: languageCode) {
+                    ambience[i] = NearbyAmbience(
                         id: "\(location.coordinate.latitude)_\(location.coordinate.longitude)_\(name)",
                         name: name,
                         category: snappedCategory,
@@ -416,11 +514,11 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                         vector: vector,
                         url: nil,
                         tags: nil
-                    ))
+                    )
                 }
             }
-            completion(ambience)
+
+            completion(ambience.compactMap { $0 })
         }
     }
-    
 }

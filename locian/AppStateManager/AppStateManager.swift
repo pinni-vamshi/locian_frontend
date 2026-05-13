@@ -8,6 +8,13 @@
 import SwiftUI
 import Combine
 
+enum StartupDiscoveryStatus {
+    case idle
+    case loading
+    case succeeded
+    case failed
+}
+
 class AppStateManager: ObservableObject {
     static let shared = AppStateManager()
     
@@ -46,6 +53,7 @@ class AppStateManager: ObservableObject {
             UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding")
         }
     }
+    @Published var onboardingEntryPage: Int = 0
     
     @Published var minAnimationIntervalCompleted: Bool = false
     
@@ -84,42 +92,8 @@ class AppStateManager: ObservableObject {
         }
     }
     
-    @Published var intentTimeline: [String: TimeSpanSnapshot]?
-    
-    @Published var currentTimeSpan: String? {
-        didSet {
-            UserDefaults.standard.set(currentTimeSpan, forKey: "currentTimeSpan")
-        }
-    }
-    
-    @Published var geoContexts: [String: GeoContextData] = [:]
-    
     // MARK: - Notifications State
-    // Simplified state: tracking is now derived from NotificationManager history
-    
-    @Published var lastNotificationFireDate: Date? {
-        didSet {
-            if let date = lastNotificationFireDate {
-                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastNotificationFireDate")
-            }
-        }
-    }
-    
-    // Removed redundant refresh tracking
-    
-    @Published var notifiedMomentIDs: Set<String> = [] {
-        didSet { UserDefaults.standard.set(Array(notifiedMomentIDs), forKey: "notifiedMomentIDs") }
-    }
-    
-    // Removed ignore streak tracking
-    
-    @Published var lastOpenedNotificationDate: Date? {
-        didSet {
-            if let date = lastOpenedNotificationDate {
-                UserDefaults.standard.set(date.timeIntervalSince1970, forKey: "lastOpenedNotificationDate")
-            }
-        }
-    }
+    // Simple: 3x daily notifications scheduled via NotificationManager.scheduleDailyNotifications()
     
     
     // Removed profile image data as per request
@@ -135,8 +109,7 @@ class AppStateManager: ObservableObject {
             if !isLocationTrackingEnabled {
                 // IMMEDIATELY wipe memory in LocationManager
                 LocationManager.shared.clearLocationMemory()
-                self.geoContexts = [:]
-                self.intentTimeline = nil
+                LocationManager.shared.disableIntentEventMonitoring()
                 print("🧹 [AppStateManager] Location Disabled. Memory wiped.")
             }
         }
@@ -155,6 +128,8 @@ class AppStateManager: ObservableObject {
     @Published var authError: String?
     @Published var showAuthError: Bool = false
     @Published var selectedProfession: String = ""
+    @Published var selectedPlaces: Set<String> = []
+    @Published var selectedTargetLanguages: Set<String> = []
     
     // MARK: - Auth Status Management
     func resetAuthStatus() {
@@ -212,6 +187,14 @@ class AppStateManager: ObservableObject {
     @Published var isAnalyzingImage: Bool = false
     
     @Published var isRefreshingContext: Bool = false
+
+    // MARK: - Startup Discovery Orchestration (Moments -> Intent)
+    @Published var startupMomentsStatus: StartupDiscoveryStatus = .idle
+    @Published var startupIntentStatus: StartupDiscoveryStatus = .idle
+    @Published var startupRecommendations: [PlaceRecommendation] = []
+    @Published var startupDiscoveryErrorMessage: String?
+
+    @Published var hasTriggeredStartupDiscovery: Bool = false
     
     // MARK: - Infer Interest State
     @Published var isInferringInterest: Bool = false
@@ -312,78 +295,71 @@ class AppStateManager: ObservableObject {
         self.isLocationTrackingEnabled = (UserDefaults.standard.object(forKey: "isLocationTrackingEnabled") as? Bool) ?? true
         self.showDiagnosticBorders = UserDefaults.standard.bool(forKey: "showDiagnosticBorders")
         
-        // Initialize Smart Location Notifications - Async to avoid Init Cycle with AppStateManager.shared
-        DispatchQueue.main.async {
-            NotificationManager.shared.startMonitoring()
-        }
-        
-        if let fireInterval = UserDefaults.standard.object(forKey: "lastNotificationFireDate") as? TimeInterval {
-            self.lastNotificationFireDate = Date(timeIntervalSince1970: fireInterval)
-        }
-        
-        if let momentIDs = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
-            self.notifiedMomentIDs = Set(momentIDs)
-        }
-        
-        // Ephemeral only - never load from disk
-        self.intentTimeline = nil
-        self.geoContexts = [:]
-        self.currentTimeSpan = nil
-        
 
         
         // 🚀 PURE ON-DEMAND CLEANSE: Removed persistent audio caching
 
+        // 🌐 Fetch Dynamic Language Combinations from Server (Async to avoid circular initialization)
+        DispatchQueue.main.async {
+            GetAvailableLanguagesService.shared.fetch()
+        }
     }
     
     // MARK: - Load User Data (called after successful session validation)
     func loadUserData() {
-        print("📁 [Cache] Loading user context from UserDefaults...")
+        print("📁 [Cache] Loading user context from UserDefaults (Async)...")
         // Only load user data if we have a valid session token
         guard authToken != nil, !authToken!.isEmpty else {
             print("⚠️ [Cache] No auth token found. Skipping local data load.")
             clearUserData()
             return
         }
-        
-        self.username = UserDefaults.standard.string(forKey: "username") ?? ""
-        self.userPhoneNumber = UserDefaults.standard.string(forKey: "userPhoneNumber") ?? ""
-        self.profession = UserDefaults.standard.string(forKey: "profession") ?? ""
-        self.nativeLanguage = UserDefaults.standard.string(forKey: "userNativeLanguage") ?? ""
-        
-        if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
-           let decoded = try? JSONDecoder().decode([LanguagePair].self, from: data) {
-            self.userLanguagePairs = decoded
+
+        // Perform decoding on a background thread to prevent Main Thread hitches during startup
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            let cachedUsername = UserDefaults.standard.string(forKey: "username") ?? ""
+            let cachedPhone = UserDefaults.standard.string(forKey: "userPhoneNumber") ?? ""
+            let cachedProfession = UserDefaults.standard.string(forKey: "profession") ?? ""
+            let cachedNative = UserDefaults.standard.string(forKey: "userNativeLanguage") ?? ""
+            
+            var cachedPairs: [LanguagePair] = []
+            if let data = UserDefaults.standard.data(forKey: "userLanguagePairs"),
+               let decoded = try? JSONDecoder().decode([LanguagePair].self, from: data) {
+                cachedPairs = decoded
+            }
+            
+            // Proactive model prep also on background
+            var proactiveCodes = Set([cachedNative])
+            cachedPairs.forEach { proactiveCodes.insert($0.target_language) }
+            EmbeddingService.prepareModels(for: proactiveCodes)
+
+            DispatchQueue.main.async {
+                self.username = cachedUsername
+                self.userPhoneNumber = cachedPhone
+                self.profession = cachedProfession
+                self.nativeLanguage = cachedNative
+                self.userLanguagePairs = cachedPairs
+                
+                print("   ✅ [Cache] Background Load Complete.")
+                print("   - Username: \(self.username)")
+                print("   - Profession: \(self.profession)")
+                print("   - Native Lang: \(self.nativeLanguage)")
+            }
         }
-        
-        print("   - Username: \(username)")
-        print("   - Profession: \(profession)")
-        print("   - Native Lang: \(nativeLanguage)")
-        
-        
-        // ---------------------------------------------------------------------
-        // 🚨 PROACTIVE NEURAL DOWNLOADS
-        // Ensure both Native and Target models are ready as soon as user context is loaded
-        // ---------------------------------------------------------------------
-        var proactiveCodes = Set([self.nativeLanguage])
-        self.userLanguagePairs.forEach { proactiveCodes.insert($0.target_language) }
-        EmbeddingService.prepareModels(for: proactiveCodes)
-        
-    
-        
-        // Engagement Tracking
-        // Interaction state cleaned up
-        if let notified = UserDefaults.standard.stringArray(forKey: "notifiedMomentIDs") {
-            self.notifiedMomentIDs = Set(notified)
-        }
-        
-        
     }
     
     
     // MARK: - Methods
     func completeOnboarding() {
+        onboardingEntryPage = 0
         hasCompletedOnboarding = true
+    }
+
+    func reopenOnboarding(at page: Int = 0) {
+        onboardingEntryPage = max(0, page)
+        hasCompletedOnboarding = false
     }
 
     // MARK: - Session Validation
@@ -421,33 +397,54 @@ class AppStateManager: ObservableObject {
     
     /// Fetch studied places and initialize recommendations during app launch
     func loadInitialData() {
-        print("\n🚀 [AppStateManager] Unified Discovery Sequence Started...")
-        
-        guard !isRefreshingContext else {
-            print("⚠️ [AppStateManager] Discovery already in progress. Skipping duplicate.")
+        startStartupDiscoverySequence(force: false)
+    }
+
+    /// Deterministic startup discovery: DiscoverMoments must succeed before intent/points discovery runs.
+    func startStartupDiscoverySequence(force: Bool = false, completion: ((Bool) -> Void)? = nil) {
+        if hasTriggeredStartupDiscovery && !force {
+            completion?(startupMomentsStatus == .succeeded)
             return
         }
-        
-        self.isRefreshingContext = true
-        
-        let group = DispatchGroup()
-        
-        // 1. Discover Daily Intent Map (Brain Profile / Study Points)
-        group.enter()
-        print("🧠 [AppStateManager] Phase 1: Fetching Daily Intent Map (Points/Timeline)...")
-        UserIntentContextLogic.shared.discoverDailyIntent { success in
-            print("🧠 [AppStateManager] Phase 1 Complete (Success: \(success))")
-            group.leave()
+
+        guard !isRefreshingContext || force else {
+            print("⚠️ [AppStateManager] Startup discovery already in progress. Skipping duplicate.")
+            completion?(false)
+            return
         }
+
+        hasTriggeredStartupDiscovery = true
+        isRefreshingContext = true
+        startupDiscoveryErrorMessage = nil
+        startupIntentStatus = .idle
         
-        // 2. Discover Moments (Handled by LearnTabState directly in V3)
-        // Legacy Phase 2 removed as per V3 requirement.
+        // 🚀 PHASE 1: Trigger Moments discovery during startup.
+        self.startupMomentsStatus = .loading
+        print("\n🚀 [AppStateManager] Startup Discovery Started (Phase 1 [Moments])...")
         
-        // Finalize: Unlock UI
-        group.notify(queue: .main) { [weak self] in
+        DiscoverMomentsService.shared.discoverMoments { [weak self] result in
             guard let self = self else { return }
-            print("🏁 [AppStateManager] Unified Discovery Sequence COMPLETED.")
-            self.isRefreshingContext = false
+            
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    self.startupMomentsStatus = .succeeded
+                    self.startupRecommendations = response.recommendations
+                    print("✅ [AppStateManager] Moment Discovery Succeeded. Recommendations: \(self.startupRecommendations.count)")
+                case .failure(let error):
+                    self.startupMomentsStatus = .failed
+                    self.startupDiscoveryErrorMessage = error.localizedDescription
+                    print("❌ [AppStateManager] Moment Discovery Failed: \(error.localizedDescription)")
+                }
+                
+                // Finalize startup discovery
+                self.startupIntentStatus = .idle
+                self.isRefreshingContext = false
+                print("🏁 [AppStateManager] Startup Discovery Completed.")
+                
+                completion?(self.startupMomentsStatus == .succeeded)
+            }
         }
     }
+    
 }

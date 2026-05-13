@@ -18,6 +18,7 @@ class TargetLanguageLogic {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
+                    print("📥 [TargetLanguageLogic] Raw Response: \(response)")
                     let success = self.processTargetLanguagesResponse(response)
                     completion(success)
                 case .failure:
@@ -37,7 +38,7 @@ class TargetLanguageLogic {
         
         // Convert language names to codes using respective mappings
         let nativeCode = NativeLanguageMapping.shared.normalizeAndValidate(nativeLanguage) ?? nativeLanguage.lowercased()
-        let targetCode = TargetLanguageMapping.shared.normalizeAndValidate(targetLanguage) ?? targetLanguage.lowercased()
+        let targetCode = TargetLanguageMapping.shared.normalizeAndValidate(targetLanguage, forNativeCode: nativeCode) ?? targetLanguage.lowercased()
         
         GetTargetLanguagesService.shared.getTargetLanguages(
             sessionToken: token,
@@ -129,6 +130,7 @@ class TargetLanguageLogic {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
+                    print("📥 [TargetLanguageLogic] Raw Response (DELETE): \(response) ")
                     if response.success == true {
                         let success = self.processTargetLanguagesResponse(response)
                         completion(success)
@@ -202,7 +204,8 @@ class TargetLanguageLogic {
                 target_language: validatedTarget,
                 is_default: targetLang.is_default,
                 user_level: targetLang.user_level,
-                practice_dates: targetLang.practice_dates
+                practice_dates: targetLang.practice_dates,
+                recent_activity: targetLang.recent_activity
             )
         }
         
@@ -213,10 +216,6 @@ class TargetLanguageLogic {
             if let defaultPair = pairs.first(where: { $0.is_default }) {
                 NeuralValidator.downloadAssets(for: defaultPair.target_language)
             }
-            
-            // 🚀 PERFECT SEQUENCE: Trigger history/recommendation load once focus is known
-            print("🚀 [TargetLanguageLogic] Focus established (\(pairs.count) pairs). Triggering loadInitialData...")
-            appState.loadInitialData()
         }
         
         return !pairs.isEmpty

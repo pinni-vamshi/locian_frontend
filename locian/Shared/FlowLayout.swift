@@ -5,41 +5,46 @@ struct FlowLayout<Data: RandomAccessCollection, ID: Hashable, Content: View>: Vi
     let data: Data
     let id: KeyPath<Data.Element, ID>
     let spacing: CGFloat
+    let alignment: HorizontalAlignment // ✅ Added alignment support
     let content: (Data.Element) -> Content
     @State private var totalHeight: CGFloat = .zero
 
     /// Initializer for data with a custom ID keypath (like ForEach)
-    init(data: Data, id: KeyPath<Data.Element, ID>, spacing: CGFloat = 8, @ViewBuilder content: @escaping (Data.Element) -> Content) {
+    init(data: Data, id: KeyPath<Data.Element, ID>, spacing: CGFloat = 8, alignment: HorizontalAlignment = .leading, @ViewBuilder content: @escaping (Data.Element) -> Content) {
         self.data = data
         self.id = id
         self.spacing = spacing
+        self.alignment = alignment
         self.content = content
     }
     
     /// Convenience initializer for Hashable data (id is \.self)
-    init(data: Data, spacing: CGFloat = 8, @ViewBuilder content: @escaping (Data.Element) -> Content) where Data.Element: Hashable, ID == Data.Element {
+    init(data: Data, spacing: CGFloat = 8, alignment: HorizontalAlignment = .leading, @ViewBuilder content: @escaping (Data.Element) -> Content) where Data.Element: Hashable, ID == Data.Element {
         self.data = data
         self.id = \.self
         self.spacing = spacing
+        self.alignment = alignment
         self.content = content
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            self.generateContent(in: geometry)
+        VStack(alignment: alignment) {
+            GeometryReader { geometry in
+                self.generateContent(in: geometry)
+            }
+            .frame(height: totalHeight)
         }
-        .frame(height: totalHeight)
     }
 
     private func generateContent(in g: GeometryProxy) -> some View {
         var width = CGFloat.zero
         var height = CGFloat.zero
 
-        return ZStack(alignment: .topLeading) {
+        return ZStack(alignment: Alignment(horizontal: alignment, vertical: .top)) {
             ForEach(data, id: id) { item in
                 self.content(item)
                     .padding([.horizontal, .vertical], spacing / 2)
-                    .alignmentGuide(.leading, computeValue: { d in
+                    .alignmentGuide(alignment == .center ? .center : .leading, computeValue: { d in
                         if (abs(width - d.width) > g.size.width) {
                             width = 0
                             height -= d.height

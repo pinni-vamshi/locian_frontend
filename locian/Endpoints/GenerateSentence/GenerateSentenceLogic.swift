@@ -29,6 +29,10 @@ struct GenerateSentenceData: Codable, Sendable {
     // Legacy support (Flat arrays)
     var bricks: BricksData?
     var patterns: [PatternData]?
+    
+    // Voice Support
+    var voice_url: String?
+    var voice_data: String?
 }
 
 struct LessonGroup: Codable, Sendable {
@@ -49,8 +53,39 @@ struct BrickItem: Codable, Sendable, Identifiable {
     let meaning: String
     let phonetic: String?
     let type: String?
+    var voice_url: String?
+    var voice_data: String?
     var vector: [Double]?
     var mastery: Int?
+
+    // Rich morphology fields (from Discover Moments brick payload). All optional —
+    // populated only for bricks that ship with structured pattern data.
+    var base: String?
+    var base_native: String?
+    var base_kind: String?
+    var form_kind: String?
+    var pattern: String?
+    var why: String?
+    var sibling_targets: [String]?
+
+    /// Per-brick teach-weight in [0, 1] — fused POS × semantic-centrality
+    /// score from `BrickImportanceService`, computed once per sentence in
+    /// `hydrateFromV3`. Consumed by `ContentAnalyzer` (replaces the
+    /// hard-coded 1.0) and surfaced in Learn Preview UI.
+    var importance: Double?
+
+    // ConversationBridgeView graph fields — populated from Discover Moments payload.
+    var isAnchor: Bool = false
+    var expansionBefore: BrickExpansion?
+    var expansionAfter: BrickExpansion?
+
+    // Rich brick fields mirrored from RecommendationBrickItem for bridge graph rendering.
+    var nativeBrick: String?
+    var targetBrick: String?
+    var baseKind: String? { base_kind }
+    var formKind: String? { form_kind }
+    var patternJson: PatternJson?
+    var whyJson: WhyJson?
 }
 
 struct PatternData: Codable, Sendable, Identifiable {
@@ -58,8 +93,16 @@ struct PatternData: Codable, Sendable, Identifiable {
     let target: String
     let meaning: String
     let phonetic: String?
+    var voice_url: String?
+    var voice_data: String?
     var vector: [Double]?
     var mastery: Int?
+
+    // The Locian-side prompt that opens this turn. Optional — populated from
+    // the Discover Moments payload when available.
+    var locian_question: String?
+    var locian_question_native: String?
+    var locian_question_transliteration: String?
 }
 
 @MainActor
@@ -71,10 +114,11 @@ class GenerateSentenceLogic {
     // MARK: - Centralized Writer
     
     
-    /// Update mastery for a specific brick/pattern (called by Lesson Engine)
+    /// No-op shim. Mastery is session-local in `LessonEngine.componentMastery`
+    /// and is intentionally NOT persisted on device. A backend writer will be
+    /// wired here later. Existing callers can remain — this just absorbs them.
     func updateMastery(text: String, vector: [Double]?, languageCode: String, mode: String, isCorrect: Bool, currentStep: Int) {
-        
-        // Memory removal: Skipping persistent update as per user request.
+        // intentionally empty
     }
     
     // MARK: - V3 Direct Hydration (Bypass API, feed discovery data straight to Engine)
@@ -100,7 +144,8 @@ class GenerateSentenceLogic {
             // each carrying its OWN brick set so ContentAnalyzer word-matching works correctly.
             for (idx, rp) in (recommendation.patterns ?? []).enumerated() {
                 // ✅ V3.46: Skip patterns that are missing target or meaning (empty objects from API)
-                guard let target = rp.target, let meaning = rp.meaning else {
+                guard let target = rp.target_pattern, let meaning = rp.native_pattern else {
+                    print("⚠️ [hydrateFromV3] '\(recommendation.place_id)' SKIPPING pattern[\(idx)] — target_pattern=\(rp.target_pattern.map { "'\($0)'" } ?? "nil"), native_pattern=\(rp.native_pattern.map { "'\($0)'" } ?? "nil"). Resulting pattern indices will not be contiguous.")
                     continue
                 }
                 
@@ -111,41 +156,106 @@ class GenerateSentenceLogic {
                     target: target,
                     meaning: meaning,
                     phonetic: rp.phonetic,
+                    voice_url: nil,
+                    voice_data: nil,
                     vector: patternVector,
-                    mastery: 0
+                    mastery: 0,
+                    locian_question: rp.locian_question,
+                    locian_question_native: rp.locian_question_native,
+                    locian_question_transliteration: rp.locian_question_transliteration
                 )
                 allPatterns.append(patternData)
                 
                 // 2. Convert this pattern's own bricks → BrickItem with vectors
-                let constants: [BrickItem] = (rp.bricks?.constants ?? []).map { b in
-                    BrickItem(
-                        id: b.word,
-                        word: b.word,
+                let constantBricks: [RecommendationBrickItem] = rp.bricks?.constants ?? []
+                let constants: [BrickItem] = constantBricks.map { b in
+                    let normalizedWord = GenerateSentenceLogic.normalize(b.word)
+                    var item = BrickItem(
+                        id: normalizedWord,
+                        word: normalizedWord,
                         meaning: b.meaning,
                         phonetic: b.phonetic,
                         type: "constant",
+                        voice_url: nil,
+                        voice_data: nil,
                         vector: EmbeddingService.getVector(for: b.word, languageCode: langCode)
                     )
+                    item.base = b.base
+                    item.base_native = b.baseNative
+                    item.base_kind = b.baseKind
+                    item.form_kind = b.formKind
+                    item.pattern = b.pattern
+                    item.why = b.why
+                    item.sibling_targets = b.siblingTargets
+                    item.importance = b.importance
+                    item.isAnchor = b.isAnchor
+                    item.expansionBefore = b.expansionBefore
+                    item.expansionAfter = b.expansionAfter
+                    item.nativeBrick = b.nativeBrick
+                    item.targetBrick = b.targetBrick
+                    item.patternJson = b.patternJson
+                    item.whyJson = b.whyJson
+                    return item
                 }
-                let variables: [BrickItem] = (rp.bricks?.variables ?? []).map { b in
-                    BrickItem(
-                        id: b.word,
-                        word: b.word,
+                let variableBricks: [RecommendationBrickItem] = rp.bricks?.variables ?? []
+                let variables: [BrickItem] = variableBricks.map { b in
+                    let normalizedWord = GenerateSentenceLogic.normalize(b.word)
+                    var item = BrickItem(
+                        id: normalizedWord,
+                        word: normalizedWord,
                         meaning: b.meaning,
                         phonetic: b.phonetic,
                         type: "variable",
+                        voice_url: nil,
+                        voice_data: nil,
                         vector: EmbeddingService.getVector(for: b.word, languageCode: langCode)
                     )
+                    item.base = b.base
+                    item.base_native = b.baseNative
+                    item.base_kind = b.baseKind
+                    item.form_kind = b.formKind
+                    item.pattern = b.pattern
+                    item.why = b.why
+                    item.sibling_targets = b.siblingTargets
+                    item.importance = b.importance
+                    item.isAnchor = b.isAnchor
+                    item.expansionBefore = b.expansionBefore
+                    item.expansionAfter = b.expansionAfter
+                    item.nativeBrick = b.nativeBrick
+                    item.targetBrick = b.targetBrick
+                    item.patternJson = b.patternJson
+                    item.whyJson = b.whyJson
+                    return item
                 }
-                let structural: [BrickItem] = (rp.bricks?.structural ?? []).map { b in
-                    BrickItem(
-                        id: b.word,
-                        word: b.word,
+                let structuralBricks: [RecommendationBrickItem] = rp.bricks?.structural ?? []
+                let structural: [BrickItem] = structuralBricks.map { b in
+                    let normalizedWord = GenerateSentenceLogic.normalize(b.word)
+                    var item = BrickItem(
+                        id: normalizedWord,
+                        word: normalizedWord,
                         meaning: b.meaning,
                         phonetic: b.phonetic,
                         type: "structural",
+                        voice_url: nil,
+                        voice_data: nil,
                         vector: EmbeddingService.getVector(for: b.word, languageCode: langCode)
                     )
+                    item.base = b.base
+                    item.base_native = b.baseNative
+                    item.base_kind = b.baseKind
+                    item.form_kind = b.formKind
+                    item.pattern = b.pattern
+                    item.why = b.why
+                    item.sibling_targets = b.siblingTargets
+                    item.importance = b.importance
+                    item.isAnchor = b.isAnchor
+                    item.expansionBefore = b.expansionBefore
+                    item.expansionAfter = b.expansionAfter
+                    item.nativeBrick = b.nativeBrick
+                    item.targetBrick = b.targetBrick
+                    item.patternJson = b.patternJson
+                    item.whyJson = b.whyJson
+                    return item
                 }
                 
                 let bricks = BricksData(
@@ -178,7 +288,9 @@ class GenerateSentenceLogic {
                 native_sentence: allPatterns.first?.meaning,
                 groups: groups,
                 bricks: nil,
-                patterns: allPatterns
+                patterns: allPatterns,
+                voice_url: allPatterns.first?.voice_url,
+                voice_data: allPatterns.first?.voice_data
             )
             
             print("✅ [GenerateSentenceLogic] hydrateFromV3 COMPLETE. \(groups.count) groups, \(allPatterns.count) patterns, all vectorized.")
@@ -187,5 +299,14 @@ class GenerateSentenceLogic {
                 completion(lessonData)
             }
         }
+    }
+    
+    // MARK: - 🧼 Normalization Helper
+    
+    /// Normalizes a string for use as a stable ID (lowercase, no punctuation).
+    private nonisolated static func normalize(_ text: String) -> String {
+        return text.lowercased()
+            .trimmingCharacters(in: .punctuationCharacters)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

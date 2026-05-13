@@ -21,15 +21,15 @@ struct GetSimilarWordsResponse: Codable {
 }
 
 struct SimilarWordsData: Codable {
-    let original_word: String
+    let original_word: String?
     let similar_words: [SimilarWord]?
 }
 
 struct SimilarWord: Codable, Identifiable {
     var id: String { word }
     let word: String
-    let meaning: String
+    let translation: String
     let pronunciation: String?
-    let example_sentence: String?
+    let explanation: String?
     let example_meaning: String?
 }

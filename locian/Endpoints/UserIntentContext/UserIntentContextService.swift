@@ -2,45 +2,26 @@
 //  UserIntentContextService.swift
 //  locian
 //
-//  Service for GET /api/user/intent/context
+//  Service for POST /api/user/intent/context
 //
 
 import Foundation
-import Combine
 
 class UserIntentContextService {
     static let shared = UserIntentContextService()
     private init() {}
     
     /// Unified Endpoint: POST /api/user/intent/context
-    /// Fetch habitual context (timeline/routine).
+    /// Reads timeline + geo + user_interests. Optionally writes a pin in the same request.
     func unifyIntentContext(
-        lat: Double,
-        lng: Double,
-        time: String? = nil,
-        date: String? = nil,
+        timelineLimit: Int? = nil,
+        pin: IntentPinRequest? = nil,
         completion: @escaping (Result<UserIntentContextResponse, Error>) -> Void
     ) {
-        // 1. Capture Time/Date if not provided
-        let currentDate = Date()
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm"
-        let timeString = time ?? timeFormatter.string(from: currentDate)
+        let requestPayload = UnifiedIntentRequest(timeline_limit: timelineLimit, pin: pin)
         
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let dateString = date ?? dateFormatter.string(from: currentDate)
+        print("🚀 [UserIntentContextService] POST /api/user/intent/context pin=\(pin == nil ? "no" : "yes")")
         
-        let requestPayload = UnifiedIntentRequest(
-            lat: lat,
-            lng: lng,
-            time: timeString,
-            date: dateString
-        )
-        
-        print("🚀 [UserIntentContextService] POST /api/user/intent/context (V2 Unified)")
-        
-        // DEBUG: Print Raw Request
         if let requestData = try? JSONEncoder().encode(requestPayload),
            let requestString = String(data: requestData, encoding: .utf8) {
             print("📤 [UserIntentContext] Raw Request: \(requestString)")
@@ -53,7 +34,6 @@ class UserIntentContextService {
         ) { result in
             switch result {
             case .success(let data):
-                // DEBUG: Print Raw Response
                 if let jsonString = String(data: data, encoding: .utf8) {
                     print("📥 [UserIntentContext] Raw Response: \(jsonString)")
                 }

@@ -45,5 +45,15 @@
 	<array>
 		<string>_http._tcp</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.locian.intent.refresh</string>
+	</array>
 </dict>
 </plist>

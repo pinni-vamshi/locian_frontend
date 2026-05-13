@@ -1,21 +1,27 @@
 import Foundation
 import NaturalLanguage
 
+/// Internal wrapper for NLContextualEmbedding which is not Sendable.
+/// Access is manually serialized through EmbeddingService.inferenceQueue.
+struct ContextualWrapper: @unchecked Sendable {
+    nonisolated(unsafe) let unsafeModel: Any
+}
+
 /// Centralized factory for creating text embeddings.
 /// Pure input (Text + Language) -> Output (Vector).
 /// Location: locian/Services/EmbeddingService.swift
 class EmbeddingService {
     
     // Cache models to avoid reloading
-    private static var loadedStaticModels: [String: NLEmbedding] = [:]
+    nonisolated(unsafe) private static var loadedStaticModels: [String: NLEmbedding] = [:]
+    nonisolated(unsafe) private static var loadedContextualWrappers: [String: ContextualWrapper] = [:]
     
-    struct ContextualWrapper {
-        let model: Any
-    }
-    private static var loadedContextualWrappers: [String: ContextualWrapper] = [:]
+    // NLContextualEmbedding / BNNS is NOT thread-safe.
+    // All inference must be serialized through this queue.
+    nonisolated private static let inferenceQueue = DispatchQueue(label: "com.locian.embedding.inference", qos: .userInitiated)
     
     /// Proactively prepares neural assets for a language.
-    static func downloadModel(for languageCode: String, completion: @escaping (Bool) -> Void) {
+    nonisolated static func downloadModel(for languageCode: String, completion: @escaping (Bool) -> Void) {
         let code = normalizeCode(languageCode)
         
         if #available(macOS 14.0, iOS 17.0, *) {
@@ -42,14 +48,14 @@ class EmbeddingService {
     }
     
     /// Prepares a batch of languages.
-    static func prepareModels(for codes: Set<String>) {
+    nonisolated static func prepareModels(for codes: Set<String>) {
         for code in codes where !code.isEmpty {
             downloadModel(for: code) { _ in }
         }
     }
     
     /// Checks if a model (either contextual or static) is ready to use immediately.
-    static func isModelAvailable(for languageCode: String) -> Bool {
+    nonisolated static func isModelAvailable(for languageCode: String) -> Bool {
         let code = normalizeCode(languageCode)
         if #available(macOS 14.0, iOS 17.0, *) {
             if let model = NLContextualEmbedding(language: NLLanguage(rawValue: code)) {
@@ -60,7 +66,7 @@ class EmbeddingService {
     }
     
     /// Returns the descriptive mode for a language.
-    static func getAvailableMode(for languageCode: String) -> String {
+    nonisolated static func getAvailableMode(for languageCode: String) -> String {
         let code = normalizeCode(languageCode)
         if #available(macOS 14.0, iOS 17.0, *) {
             if let model = NLContextualEmbedding(language: NLLanguage(rawValue: code)), model.hasAvailableAssets {
@@ -74,48 +80,52 @@ class EmbeddingService {
     }
     
     // Cache vectors to avoid redundant computations (Text_LangCode -> Vector)
-    private static var vectorCache: [String: [Double]] = [:]
+    nonisolated(unsafe) private static var vectorCache: [String: [Double]] = [:]
     
     /// Converts any text (Brick or Pattern) into a vector for the specified language.
-    static func getVector(for text: String, languageCode: String) -> [Double]? {
+    nonisolated static func getVector(for text: String, languageCode: String) -> [Double]? {
         let cleanText = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanText.isEmpty else { 
-            return nil 
-        }
+        guard !cleanText.isEmpty else { return nil }
         
         let code = normalizeCode(languageCode)
         let cacheKey = "\(cleanText)_\(code)"
         
-        if let cached = vectorCache[cacheKey] {
-            return cached
-        }
-        
-        // 1. Try Contextual Embedding (iOS 17+)
-        if #available(macOS 14.0, iOS 17.0, *) {
-            if let vector = getContextualVector(for: cleanText, languageCode: code) {
-                vectorCache[cacheKey] = vector
-                return vector
+        // All cache reads, cache writes, and model inference are serialized
+        // on inferenceQueue. vectorCache is a plain Swift dict — not thread-safe.
+        // LocationManager calls getVector from DispatchQueue.concurrentPerform,
+        // so without this, concurrent r/w corrupts the dict → NSTaggedDate crash.
+        return inferenceQueue.sync {
+            if let cached = vectorCache[cacheKey] {
+                return cached
             }
-        }
-        
-        // 2. Fallback to Static Embedding
-        if let staticModel = getStaticModel(for: code) {
-            if let vector = staticModel.vector(for: cleanText) {
-                vectorCache[cacheKey] = vector
-                return vector
+            
+            // 1. Try Contextual Embedding (iOS 17+)
+            if #available(macOS 14.0, iOS 17.0, *) {
+                if let vector = getContextualVector(for: cleanText, languageCode: code) {
+                    vectorCache[cacheKey] = vector
+                    return vector
+                }
             }
+            
+            // 2. Fallback to Static Embedding
+            if let staticModel = getStaticModel(for: code) {
+                if let vector = staticModel.vector(for: cleanText) {
+                    vectorCache[cacheKey] = vector
+                    return vector
+                }
+            }
+            
+            return nil
         }
-
-        return nil
     }
     
+    // NOTE: Must only be called from within inferenceQueue (via getVector).
+    // Do NOT wrap in inferenceQueue.sync here — getVector already holds the lock.
     @available(macOS 14.0, iOS 17.0, *)
-    private static func getContextualVector(for text: String, languageCode: String) -> [Double]? {
+    nonisolated private static func getContextualVector(for text: String, languageCode: String) -> [Double]? {
         let code = normalizeCode(languageCode)
-        guard let model = getContextualModel(for: code) else { 
-            return nil 
-        }
         let lang = NLLanguage(rawValue: code)
+        guard let model = getContextualModel(for: code) else { return nil }
         
         do {
             let result = try model.embeddingResult(for: text, language: lang)
@@ -131,30 +141,30 @@ class EmbeddingService {
             }
             
             if tokenCount > 0 {
-                let final = sumVector.map { $0 / Double(tokenCount) }
-                return final
+                return sumVector.map { $0 / Double(tokenCount) }
             }
-        } catch {
-        }
+        } catch {}
         return nil
     }
     
     @available(macOS 14.0, iOS 17.0, *)
-    private static func getContextualModel(for languageCode: String) -> NLContextualEmbedding? {
+    nonisolated private static func getContextualModel(for languageCode: String) -> NLContextualEmbedding? {
         let code = normalizeCode(languageCode)
-        if let wrapper = loadedContextualWrappers[code], let model = wrapper.model as? NLContextualEmbedding {
-            return model
+        if let wrapper = loadedContextualWrappers[code] {
+            if let model = wrapper.unsafeModel as? NLContextualEmbedding {
+                return model
+            }
         }
         
         let lang = NLLanguage(rawValue: code)
         if let model = NLContextualEmbedding(language: lang) {
-            loadedContextualWrappers[code] = ContextualWrapper(model: model)
+            loadedContextualWrappers[code] = ContextualWrapper(unsafeModel: model)
             return model
         }
         return nil
     }
     
-    private static func getStaticModel(for code: String) -> NLEmbedding? {
+    nonisolated private static func getStaticModel(for code: String) -> NLEmbedding? {
         if let cached = loadedStaticModels[code] { return cached }
         let lang = NLLanguage(rawValue: code)
         
@@ -170,12 +180,12 @@ class EmbeddingService {
         return nil
     }
     
-    private static func normalizeCode(_ code: String) -> String {
+    nonisolated private static func normalizeCode(_ code: String) -> String {
         if code.lowercased() == "zh" { return "zh-Hans" }
         return code
     }
     
-    static func cosineSimilarity(v1: [Double], v2: [Double]) -> Double {
+    nonisolated static func cosineSimilarity(v1: [Double], v2: [Double]) -> Double {
         let count = min(v1.count, v2.count)
         if count == 0 { return 0.0 }
         
@@ -194,7 +204,7 @@ class EmbeddingService {
     }
     
     /// Public helper to compare two strings in a given language.
-    static func compare(textA: String, textB: String, languageCode: String) -> Double {
+    nonisolated static func compare(textA: String, textB: String, languageCode: String) -> Double {
         guard let v1 = getVector(for: textA, languageCode: languageCode),
               let v2 = getVector(for: textB, languageCode: languageCode) else {
             return 0.0
@@ -203,7 +213,7 @@ class EmbeddingService {
     }
     
     /// Checks if a contextual model is available for the given language.
-    static func isContextualAvailable(for languageCode: String) -> Bool {
+    nonisolated static func isContextualAvailable(for languageCode: String) -> Bool {
         return getAvailableMode(for: languageCode) == "CONTEXTUAL"
     }
 }

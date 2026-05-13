@@ -24,25 +24,13 @@ struct AppleLoginRequest: Codable {
     let id_token: String?
     let nonce: String?
     let username: String?
-    let profession: String?
+    let selected_places: [String]?
+    let native_language: String?
+    let target_languages: [String]?
     let email: String?
-    let phone_number: String?
     let full_name: AppleFullNamePayload?
     let first_name: String?
     let last_name: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case code
-        case id_token
-        case nonce
-        case username
-        case profession
-        case email
-        case phone_number
-        case full_name
-        case first_name
-        case last_name
-    }
 }
 
 // MARK: - Apple Login Data
@@ -50,9 +38,10 @@ struct AppleLoginData: Codable {
     let user_id: String
     let session_token: String
     let username: String?
-    let profession: String?
-    let phone_number: String?
     let email: String?
+    let is_new_user: Bool?
+    let native_language: String?
+    let target_languages: [String]?
 }
 
 // MARK: - Apple Login Response

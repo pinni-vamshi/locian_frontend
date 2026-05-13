@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		EECD2F642F5B606100DD9AED /* SwiftWhisper in Frameworks */ = {isa = PBXBuildFile; productRef = EECD2F632F5B606100DD9AED /* SwiftWhisper */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		EECD2F3C2F5A765600DD9AED /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -24,9 +20,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		EECD2F3F2F5A779C00DD9AED /* MisakiSwift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MisakiSwift; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/MisakiSwift"; sourceTree = "<absolute>"; };
-		EECD2F402F5A77A900DD9AED /* mlx-swift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "mlx-swift"; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/mlx-swift"; sourceTree = "<absolute>"; };
-		EECD2F412F5A77B600DD9AED /* MLXUtilsLibrary */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = MLXUtilsLibrary; path = "/Users/vamshikrishnapinni/Library/Developer/Xcode/DerivedData/locian-ceymxpcykdrkrhduzznqfqspwsop/SourcePackages/checkouts/MLXUtilsLibrary"; sourceTree = "<absolute>"; };
 		EEDDA61B2EAAAA5C00959DDB /* locian.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = locian.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -56,28 +49,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EECD2F642F5B606100DD9AED /* SwiftWhisper in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		EECD2F3E2F5A779C00DD9AED /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				EECD2F3F2F5A779C00DD9AED /* MisakiSwift */,
-				EECD2F402F5A77A900DD9AED /* mlx-swift */,
-				EECD2F412F5A77B600DD9AED /* MLXUtilsLibrary */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		EEDDA6122EAAAA5C00959DDB = {
 			isa = PBXGroup;
 			children = (
 				EEDDA61D2EAAAA5C00959DDB /* locian */,
-				EECD2F3E2F5A779C00DD9AED /* Frameworks */,
 				EEDDA61C2EAAAA5C00959DDB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -111,7 +92,6 @@
 			);
 			name = locian;
 			packageProductDependencies = (
-				EECD2F632F5B606100DD9AED /* SwiftWhisper */,
 			);
 			productName = locian;
 			productReference = EEDDA61B2EAAAA5C00959DDB /* locian.app */;
@@ -145,7 +125,6 @@
 			mainGroup = EEDDA6122EAAAA5C00959DDB;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EEDDA61C2EAAAA5C00959DDB /* Products */;
@@ -231,7 +210,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -290,7 +269,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -401,25 +380,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/exPHAT/SwiftWhisper";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		EECD2F632F5B606100DD9AED /* SwiftWhisper */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EECD2F622F5B606100DD9AED /* XCRemoteSwiftPackageReference "SwiftWhisper" */;
-			productName = SwiftWhisper;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = EEDDA6132EAAAA5C00959DDB /* Project object */;
 }
